@@ -1,57 +1,15 @@
 #!/usr/bin/env python3
 import sys
+import tempfile
+import shutil
 
 import pygame
 from pygame.locals import *
 
 from operators import *
+import sprites
 import latex
 import conversions
-
-class EqSprite(pygame.sprite.Sprite):
-    def __init__(self, eq, pos):
-        pygame.sprite.Sprite.__init__(self)
-        # Create image of the equation in a file
-        eq_png = conversions.eq2png(eq, "overwrite_me")
-        # Load the image
-        try:
-            self.image = pygame.image.load(eq_png).convert_alpha()
-        except pygame.error as message:
-            raise SystemExit(message)
-
-        self.rect = self.image.get_rect(center=pos)
-
-class SelectEqSprite(EqSprite):
-    def __init__(self, eq, pos):
-        EqSprite.__init__(self, eq, pos)
-
-    def clicked(self):
-        pos = pygame.mouse.get_pos()
-        if self.rect.collidepoint(pos):
-            return True
-
-class EditableEqSprite(pygame.sprite.Sprite):
-    def __init__(self, eq, pos):
-        pygame.sprite.Sprite.__init__(self)
-        self.sels = []
-        for sel_code in latex.eq2sels_code(eq):
-            sel_png = conversions.eq2png(sel_code, "foo")
-            self.sels.append(pygame.image.load(sel_png))
-        self.sels_index = 0
-        self.image = self.sels[self.sels_index]
-        self.rect = self.image.get_rect(center=pos)
-
-    def clicked(self):
-        pos = pygame.mouse.get_pos()
-        if self.rect.collidepoint(pos):
-            return True
-
-    def next_sel(self):
-        self.sels_index += 1
-        if self.sels_index == len(self.sels):
-            self.sels_index = 0
-        self.image = self.sels[self.sels_index]
-        #self.rect = self.image.get_rect(center=pos)
 
 def distr_in_circle(n_elems, surf_w, surf_h, r_as_percent):
     import math
@@ -59,15 +17,17 @@ def distr_in_circle(n_elems, surf_w, surf_h, r_as_percent):
     centery = surf_h//2
     r = r_as_percent*min(surf_w, surf_h)/2
     theta_incr = 2.*math.pi/n_elems
-    theta = 0.
-    while theta < 2*math.pi:
+    for i in range(n_elems):
+        theta = i*theta_incr
         yield (centerx + int(r*math.cos(theta)),
                centery + int(r*math.sin(theta)))
-        theta += theta_incr
     else:
         raise StopIteration
 
 if __name__ == "__main__":
+
+    # Prepare a temporal directory to manage all LaTeX files
+    temp_dirpath = tempfile.mkdtemp()
 
     # Prepare pygame
     pygame.init()
@@ -77,35 +37,40 @@ if __name__ == "__main__":
     screen_w = 800
     screen_h = 600
     screen = pygame.display.set_mode((screen_w, screen_h))
-    background = pygame.image.load("pygame-badge-SMA.png")
-    screen.blit(background, (0, 0))
+    bg = pygame.image.load("pygame-badge-SMA.png")
+
+    # Load a nice pygame badge while the user waits
+    screen.blit(bg, ((screen_w-bg.get_width())//2,
+                     (screen_h-bg.get_height())//2))
     pygame.display.set_caption("Visual Equation")
     pygame.display.flip()
 
-    # Display an equation in the middle
-    eq = [Prod, Frac, Prod, Prod, Prod, '2', Pi, 'r', 'j' , Bullet, Pow, 'y', Prod, '2', 'h']
-    main_eqsprite = EditableEqSprite(eq, (screen_w//2, screen_h//2))
+    # Prepare the equation to edit that will be showed by default
+    init_eq = [Square]
+    main_eqsprite = sprites.EditableEqSprite(init_eq, screen, temp_dirpath)
 
-    # Prepare equations to move around the window
-    eqs_select = [[Frac, Bullet, Bullet], ['x'], ['y'], [Pi], ['2'],
-                  [Pow, Bullet, Bullet], [Parenthesis, Bullet]]
+    # Prepare symbols and operators that are around the window
+    eqs_select = [[Frac, SelArg, NewArg], ['x'], ['y'], [Pi], ['2'],
+                  [Pow, SelArg, NewArg], [Parenthesis, SelArg],
+                  [Prod, SelArg, NewArg], [Vec, SelArg]]
     positions = [pos for pos in distr_in_circle(len(eqs_select), screen_w,
                                                 screen_h, 0.7)]
-    eqs_select_sprite = tuple(SelectEqSprite(eq, pos) for eq, pos
+    opers_sprite = tuple(sprites.OperSprite(eq, pos, temp_dirpath) for eq, pos
                               in zip(eqs_select, positions))
  
-    allsprites = pygame.sprite.RenderPlain(eqs_select_sprite
-                                           + (main_eqsprite,))
+    allsprites = pygame.sprite.RenderPlain(opers_sprite + (main_eqsprite,))
 
-    while True:
+    # Pygame loop
+    ongoing = True
+    while ongoing:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                sys.exit(0)
+                ongoing = False
             elif event.type == MOUSEBUTTONDOWN:
-                for eq in eqs_select_sprite:
-                    if eq.clicked():
-                        print("Clicked!")
-                if main_eqsprite.clicked():
+                for eqsprite in opers_sprite:
+                    if eqsprite.mousepointed():
+                        main_eqsprite.replace_sel_by(eqsprite.OP)
+                if main_eqsprite.mousepointed():
                     main_eqsprite.next_sel()
 
         screen.fill((255, 255, 255))
@@ -113,3 +78,8 @@ if __name__ == "__main__":
         allsprites.draw(screen)
         pygame.display.flip()
         clock.tick(30)
+
+    # Delete the temporary directory and files before exit
+    shutil.rmtree(temp_dirpath)
+    sys.exit(0)
+    
