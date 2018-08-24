@@ -36,6 +36,9 @@ def eq2png(eq, f_base):
     dvi_ext = ".dvi"
     png_ext = ".png"
 
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
     latex_f = os.path.join(directory, f_base + latex_ext)
     latex2dvi_log_f = os.path.join(directory, f_base + '_latex2dvi' + log_ext)
     dvi2png_log_f = os.path.join(directory, f_base + '_div2png' + log_ext)
