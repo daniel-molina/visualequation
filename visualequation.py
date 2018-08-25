@@ -87,7 +87,8 @@ if __name__ == "__main__":
                     main_eqsprite.recover_prev_eq()
                 elif event.key == K_y and pygame.key.get_mods() & KMOD_CTRL:
                     main_eqsprite.recover_next_eq()
-
+                elif event.key == K_s and pygame.key.get_mods() & KMOD_CTRL:
+                    main_eqsprite.save_eq()
                     
         screen.fill((255, 255, 255))
         allsprites.update()

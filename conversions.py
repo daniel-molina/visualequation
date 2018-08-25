@@ -33,13 +33,13 @@ def dvi2png(dvi_file, png_file, log_file):
                          "-bg", "Transparent",
                          "-o", png_file, dvi_file], stdout=flog)
 
-def eq2png(eq, directory, fname=None):
-    """ Create a png from a equation, returns the filename of the PNG image.
+def eq2png(eq, directory, png_fpath=None):
+    """ Create a png from a equation, returns the path of PNG image.
 
-    The user specify the dir where it will be created and the name of the
-    image (without extension). If the filename is not specified it is assumed
-    that the directory is temporal and this function will not clean the
-    directory of auxiliary files that it will create.
+    The user specify the dir where auxiliary files will be created.
+    If the path of the image is not specified, it will be created in the same
+    directory (and will be overwritten if this function is called again with
+    the same directory)
     """
 
     # If directory does not exist, raise exception
@@ -47,32 +47,22 @@ def eq2png(eq, directory, fname=None):
         raise ValueError('Directory does not exist.')
         #os.makedirs(directory)
 
-    # If the user want a png, put the rest in a temporal dir
-    # (it prevents overwriting things in a place where you are invited)
-    if fname == None:
-        fname = 'foo'
-        aux_dir = directory
-        rm_aux_files = False
-    else:
-        aux_dir = tempfile.mkdtemp()
-        rm_aux_files = True
-
-    template_file = "eq_template.tex"
+    fname = 'foo'
     latex_ext = ".tex"
     log_ext = ".log"
     dvi_ext = ".dvi"
     png_ext = ".png"
 
-    latex_f = os.path.join(aux_dir, fname + latex_ext)
-    latex2dvi_log_f = os.path.join(aux_dir, fname + '_latex2dvi' + log_ext)
-    dvi2png_log_f = os.path.join(aux_dir, fname + '_div2png' + log_ext)
-    dvi_f = os.path.join(aux_dir, fname + dvi_ext)
-    png_f = os.path.join(directory, fname + png_ext)
-    eq2latex_file(eq, latex_f, template_file)
-    latex_file2dvi(latex_f, aux_dir, latex2dvi_log_f)
-    dvi2png(dvi_f, png_f, dvi2png_log_f)
+    template_fpath = "eq_template.tex"
+    latex_fpath = os.path.join(directory, fname + latex_ext)
+    latex2dvi_log_fpath = os.path.join(directory, fname + '_latex2dvi' + log_ext)
+    dvi2png_log_fpath = os.path.join(directory, fname + '_div2png' + log_ext)
+    dvi_fpath = os.path.join(directory, fname + dvi_ext)
+    if png_fpath == None:
+        png_fpath = os.path.join(directory, fname + png_ext)
 
-    if rm_aux_files:
-        shutil.rmtree(aux_dir)
+    eq2latex_file(eq, latex_fpath, template_fpath)
+    latex_file2dvi(latex_fpath, directory, latex2dvi_log_fpath)
+    dvi2png(dvi_fpath, png_fpath, dvi2png_log_fpath)
 
-    return png_f
+    return png_fpath
