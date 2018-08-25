@@ -72,7 +72,23 @@ if __name__ == "__main__":
                         main_eqsprite.replace_sel_by(eqsprite.OP)
                 if main_eqsprite.mousepointed():
                     main_eqsprite.next_sel()
+            elif event.type == KEYDOWN:
+                if event.key == K_RIGHT:
+                    main_eqsprite.next_sel()
+                elif event.key == K_LEFT:
+                    main_eqsprite.previous_sel()
+                elif event.key == K_SPACE:
+                    main_eqsprite.replace_sel_by(Prod)
+                elif event.key == K_BACKSPACE or event.key == K_DELETE:
+                    main_eqsprite.replace_sel_by(NewArg)
+                # First cases with mods, the last ones the keys alone
+                # It avoids false positives
+                elif event.key == K_z and pygame.key.get_mods() & KMOD_CTRL:
+                    main_eqsprite.recover_prev_eq()
+                elif event.key == K_y and pygame.key.get_mods() & KMOD_CTRL:
+                    main_eqsprite.recover_next_eq()
 
+                    
         screen.fill((255, 255, 255))
         allsprites.update()
         allsprites.draw(screen)

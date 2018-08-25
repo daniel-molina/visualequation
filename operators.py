@@ -19,7 +19,6 @@ class Symbol:
     def __call__(self):
         return self.latex_code
 
-
 Frac = BinaryOperator(r'\frac{%s}{%s}')
 Pow = BinaryOperator(r'{%s}^{%s}')
 Prod = BinaryOperator(r'%s %s')
