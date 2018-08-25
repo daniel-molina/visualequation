@@ -26,55 +26,27 @@ class OperSprite(pygame.sprite.Sprite):
 
 class EditableEqSprite(pygame.sprite.Sprite):
     """ A Sprite for the equation that is going to be edited."""
-    def __init__(self, eq, screen, temp_dir):
+    def __init__(self, eq, screen_center, temp_dir):
         pygame.sprite.Sprite.__init__(self)
         self.eq_hist = [list(eq)]
         self.eq_hist_index = 0
         self.eq = eq # It will be mutated by the replace functions
-        self.screen_center = (screen.get_width()//2, screen.get_height()//2)
-        self.screen = screen
+        self.screen_center = screen_center
         self.temp_dir = temp_dir
-        self.sels_index = 0
-        self._set_sels()
+        self.sel_index = 0
+        self._set_sel()
 
-    def _set_sels(self):
-        """Create a new list with the images of all the possible selections of
-        the equation and set the image to the selection indicated by
-        self.sels_index, which can be freely set by the caller before
-        calling.
+    def _set_sel(self):
+        """ Set the image of the sprite to the equation boxed in the
+        selection indicated by self.sel_index, which can be freely set
+        by the caller before calling this function.
 
-        In addition, firstly, it calculates the selection of that image and
-        show it in the screen so it appears instantaneously to the user.
-        It plots also some advice to the user (red background by now), which
-        will disappear when refreshing the sprites, to indicate that
-        user interaction is suspended due to the loading of the selections
-        (it carries some time, specially for long equations).
+        The box is the way the user know which block of the eq is editing.
         """
-        # Calculate current selection of the new eq and blit it NOW
-        # It is skipped in the first call by __init__
-        if hasattr(self, 'image'):
-            sel_code_current = latex.eq2sel(self.eq, self.sels_index)
-            sel_png_current = conversions.eq2png(sel_code_current,
-                                                 self.temp_dir)
-            sel_image_current = pygame.image.load(sel_png_current)
-            sel_rect_current = sel_image_current.get_rect(
-                center=self.screen_center)
-
-            self.screen.fill((255, 0, 0), self.rect)
-            self.screen.blit(sel_image_current, sel_rect_current)
-            pygame.display.flip()
-            # Update information of displayed image
-            self.image = sel_image_current
-            self.rect = sel_rect_current
-
-        # Now fulfill self.sels, independently of the above code
-        self.sels = []
-        for sel_code in latex.eq2sels_code(self.eq):
-            sel_png = conversions.eq2png(sel_code, self.temp_dir)
-            self.sels.append(pygame.image.load(sel_png))
-
-        # Set the current image as the selection with index self.sels_index
-        self.image = self.sels[self.sels_index]
+        # Calculate the latex code of eq boxed in block given by the selection
+        sel_latex_code = latex.eq2sel(self.eq, self.sel_index)
+        sel_png = conversions.eq2png(sel_latex_code, self.temp_dir)
+        self.image = pygame.image.load(sel_png)
         self.rect = self.image.get_rect(center=self.screen_center)
 
     def mousepointed(self):
@@ -84,24 +56,20 @@ class EditableEqSprite(pygame.sprite.Sprite):
             return True
 
     def next_sel(self):
-        """ Set image to the next selection according to self.sels_index. """
-        if self.sels_index == len(self.sels) - 1:
-            self.sels_index = 0
+        """ Set image to the next selection according to self.sel_index. """
+        if self.sel_index == len(self.eq) - 1:
+            self.sel_index = 0
         else:
-            self.sels_index += 1
-
-        self.image = self.sels[self.sels_index]
-        self.rect = self.image.get_rect(center=self.screen_center)
+            self.sel_index += 1
+        self._set_sel()
 
     def previous_sel(self):
-        """ Set image to the next selection according to self.sels_index. """
-        if self.sels_index == 0:
-            self.sels_index = len(self.sels) - 1
+        """ Set image to the next selection according to self.sel_index. """
+        if self.sel_index == 0:
+            self.sel_index = len(self.eq) - 1
         else:
-            self.sels_index -= 1
-
-        self.image = self.sels[self.sels_index]
-        self.rect = self.image.get_rect(center=self.screen_center)
+            self.sel_index -= 1
+        self._set_sel()
 
     def replace_sel_by(self, op):
         """ 
@@ -122,17 +90,17 @@ class EditableEqSprite(pygame.sprite.Sprite):
         """
         # Replace according to the operator
         if isinstance(op, (str, operators.Symbol)):
-            latex.replace_by_symbol_or_str(self.eq, self.sels_index, op)
+            latex.replace_by_symbol_or_str(self.eq, self.sel_index, op)
         elif isinstance(op, operators.UnaryOperator):
-            latex.insert_unary_operator(self.eq, self.sels_index, op)
+            latex.insert_unary_operator(self.eq, self.sel_index, op)
         elif isinstance(op, operators.BinaryOperator):
             arg2_index = latex.insert_binary_operator(self.eq,
-                                                      self.sels_index, op,
+                                                      self.sel_index, op,
                                                       operators.NewArg)
-            self.sels_index = arg2_index
+            self.sel_index = arg2_index
         else:
-            raise ValueError('Unknown subeq passed.')
-        self._set_sels()
+            raise ValueError('Unknown operator passed.')
+        self._set_sel()
 
         # Save current equation to the history and delete any future elements
         # from this point
@@ -143,15 +111,15 @@ class EditableEqSprite(pygame.sprite.Sprite):
         if self.eq_hist_index != 0:
             self.eq_hist_index -= 1
             self.eq = self.eq_hist[self.eq_hist_index]
-            self.sels_index = 0
-            self._set_sels()
+            self.sel_index = 0
+            self._set_sel()
 
     def recover_next_eq(self):
         if self.eq_hist_index != len(self.eq_hist)-1:
             self.eq_hist_index += 1
             self.eq = self.eq_hist[self.eq_hist_index]
-            self.sels_index = 0
-            self._set_sels()
+            self.sel_index = 0
+            self._set_sel()
 
     def save_eq(self):
         import tkinter

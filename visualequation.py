@@ -37,9 +37,9 @@ if __name__ == "__main__":
     screen_w = 800
     screen_h = 600
     screen = pygame.display.set_mode((screen_w, screen_h))
-    bg = pygame.image.load("pygame-badge-SMA.png")
 
     # Load a nice pygame badge while the user waits
+    bg = pygame.image.load("pygame-badge-SMA.png")
     screen.blit(bg, ((screen_w-bg.get_width())//2,
                      (screen_h-bg.get_height())//2))
     pygame.display.set_caption("Visual Equation")
@@ -47,7 +47,9 @@ if __name__ == "__main__":
 
     # Prepare the equation to edit that will be showed by default
     init_eq = [Square]
-    main_eqsprite = sprites.EditableEqSprite(init_eq, screen, temp_dirpath)
+    screen_center = (screen.get_width()//2, screen.get_height()//2)
+    main_eqsprite = sprites.EditableEqSprite(init_eq, screen_center,
+                                             temp_dirpath)
 
     # Prepare symbols and operators that are around the window
     eqs_select = [[Frac, SelArg, NewArg], ['x'], ['y'], [Pi], ['2'],
