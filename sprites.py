@@ -124,6 +124,11 @@ class EditableEqSprite(pygame.sprite.Sprite):
     def save_eq(self):
         import tkinter
         from tkinter import filedialog
+        # Hide the root window, else it will be present after choosing file
+        root = tkinter.Tk()
+        root.withdraw()
+
         file_path = filedialog.asksaveasfilename(defaultextension='.png')
-        if file_path != '': # Check if it is the documented condition (!= None)
+        # TODO: Check if it is the documented condition (None does not work)
+        if file_path != '':
             conversions.eq2png(self.eq, self.temp_dir, file_path)
