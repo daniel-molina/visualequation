@@ -6,23 +6,11 @@ import shutil
 import pygame
 from pygame.locals import *
 
-from operators import *
-import sprites
+import operators
+import maineq
 import latex
 import conversions
-
-def distr_in_circle(n_elems, surf_w, surf_h, r_as_percent):
-    import math
-    centerx = surf_w//2
-    centery = surf_h//2
-    r = r_as_percent*min(surf_w, surf_h)/2
-    theta_incr = 2.*math.pi/n_elems
-    for i in range(n_elems):
-        theta = i*theta_incr
-        yield (centerx + int(r*math.cos(theta)),
-               centery + int(r*math.sin(theta)))
-    else:
-        raise StopIteration
+import menu
 
 if __name__ == "__main__":
 
@@ -46,21 +34,26 @@ if __name__ == "__main__":
     pygame.display.flip()
 
     # Prepare the equation to edit that will be showed by default
-    init_eq = [Square]
+    init_eq = [operators.NewArg]
     screen_center = (screen.get_width()//2, screen.get_height()//2)
-    main_eqsprite = sprites.EditableEqSprite(init_eq, screen_center,
+    main_eqsprite = maineq.EditableEqSprite(init_eq, screen_center,
                                              temp_dirpath)
 
     # Prepare symbols and operators that are around the window
-    eqs_select = [[Frac, SelArg, NewArg], ['x'], ['y'], [Pi], ['2'],
-                  [Pow, SelArg, NewArg], [Parenthesis, SelArg],
-                  [Prod, SelArg, NewArg], [Vec, SelArg]]
-    positions = [pos for pos in distr_in_circle(len(eqs_select), screen_w,
-                                                screen_h, 0.7)]
-    opers_sprite = tuple(sprites.OperSprite(eq, pos, temp_dirpath) for eq, pos
-                              in zip(eqs_select, positions))
- 
-    allsprites = pygame.sprite.RenderPlain(opers_sprite + (main_eqsprite,))
+    #ops = operators.functions
+    #g_letters = distr_at_top(len(ops), screen_w, 40, 50)
+    #g_math_construct = distr_at_top(len(ops), screen_w, 90, 110)
+    #g_delimiters = distr_at_top(len(ops), screen_w, 120, 60)
+    #g_variable_size =  distr_at_top(len(ops), screen_w, 50, 80)
+    #g_pos =  distr_at_top(len(ops), screen_w, 100, 30)
+
+    # Create the Menu    
+    mainmenu = menu.Menu(screen_w, screen_h, temp_dirpath)
+
+    #menusprites = pygame.sprite.RenderPlain(tuple(menu))
+    #allsprites = pygame.sprite.RenderPlain(
+    #    tuple(ops_sprite) + (main_eqsprite,) + tuple(menu))
+
 
     # Pygame loop
     ongoing = True
@@ -69,9 +62,12 @@ if __name__ == "__main__":
             if event.type == pygame.QUIT:
                 ongoing = False
             elif event.type == MOUSEBUTTONDOWN:
-                for eqsprite in opers_sprite:
-                    if eqsprite.mousepointed():
-                        main_eqsprite.replace_sel_by(eqsprite.OP)
+                for index, menuitem in enumerate(mainmenu.items):
+                    if menuitem.mousepointed():
+                        mainmenu.change_ops(index)
+                for op_sprite in mainmenu.active_ops:
+                    if op_sprite.mousepointed():
+                        main_eqsprite.replace_sel_by(op_sprite.OP)
                 if main_eqsprite.mousepointed():
                     main_eqsprite.next_sel()
             elif event.type == KEYDOWN:
@@ -80,7 +76,7 @@ if __name__ == "__main__":
                 elif event.key == K_LEFT:
                     main_eqsprite.previous_sel()
                 elif event.key == K_SPACE:
-                    main_eqsprite.replace_sel_by(Prod)
+                    main_eqsprite.replace_sel_by(operators.Juxt)
                 elif event.key == K_BACKSPACE or event.key == K_DELETE:
                     main_eqsprite.replace_sel_by(NewArg)
                 # First cases with mods, the last ones the keys alone
@@ -93,8 +89,11 @@ if __name__ == "__main__":
                     main_eqsprite.save_eq()
                     
         screen.fill((255, 255, 255))
-        allsprites.update()
-        allsprites.draw(screen)
+        #mainmenu.active_ops.update()
+        screen.blit(main_eqsprite.image, main_eqsprite.rect)
+        for item in mainmenu.items:
+            screen.blit(item.image, item.rect)
+        mainmenu.active_ops.draw(screen)
         pygame.display.flip()
         clock.tick(30)
 

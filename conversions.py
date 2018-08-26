@@ -24,18 +24,19 @@ def latex_file2dvi(latex_file, output_dir, log_file):
                          "-output-directory=" + output_dir,
                          latex_file], stdout=flog)
 
-def dvi2png(dvi_file, png_file, log_file):
+def dvi2png(dvi_file, png_file, log_file, dpi):
     """ Convert the DVI file with the equation to PNG.
     The log is saved in the specified file.
     """
     with open(log_file, "wt") as flog:
-        subprocess.call(["dvipng", "-T", "tight", "-D", "500",
+        subprocess.call(["dvipng", "-T", "tight", "-D", str(dpi),
                          "-bg", "Transparent",
                          "-o", png_file, dvi_file], stdout=flog)
 
-def eq2png(eq, directory, png_fpath=None):
+def eq2png(eq, dpi, directory, png_fpath=None):
     """ Create a png from a equation, returns the path of PNG image.
 
+    The size of the image is specified (dpi).
     The user specify the dir where auxiliary files will be created.
     If the path of the image is not specified, it will be created in the same
     directory (and will be overwritten if this function is called again with
@@ -63,6 +64,8 @@ def eq2png(eq, directory, png_fpath=None):
 
     eq2latex_file(eq, latex_fpath, template_fpath)
     latex_file2dvi(latex_fpath, directory, latex2dvi_log_fpath)
-    dvi2png(dvi_fpath, png_fpath, dvi2png_log_fpath)
+    if dpi == None:
+        dpi = 300
+    dvi2png(dvi_fpath, png_fpath, dvi2png_log_fpath, dpi)
 
     return png_fpath

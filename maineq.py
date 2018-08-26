@@ -4,25 +4,6 @@ import conversions
 
 import operators
 
-class OperSprite(pygame.sprite.Sprite):
-    """ A Sprite for the operators to construct the main equation"""
-    def __init__(self, eq, center_pos, temp_dir):
-        pygame.sprite.Sprite.__init__(self)
-        # Create image of the equation in a file
-        eq_png = conversions.eq2png(eq, temp_dir)
-        # Load the image
-        try:
-            self.image = pygame.image.load(eq_png).convert_alpha()
-        except pygame.error as message:
-            raise SystemExit(message)
-        self.rect = self.image.get_rect(center=center_pos)
-        self.OP = eq[0]
-
-    def mousepointed(self):
-        """ Return true if the mouse is over the button."""
-        pos = pygame.mouse.get_pos()
-        if self.rect.collidepoint(pos):
-            return True
 
 class EditableEqSprite(pygame.sprite.Sprite):
     """ A Sprite for the equation that is going to be edited."""
@@ -45,7 +26,7 @@ class EditableEqSprite(pygame.sprite.Sprite):
         """
         # Calculate the latex code of eq boxed in block given by the selection
         sel_latex_code = latex.eq2sel(self.eq, self.sel_index)
-        sel_png = conversions.eq2png(sel_latex_code, self.temp_dir)
+        sel_png = conversions.eq2png(sel_latex_code, None, self.temp_dir)
         self.image = pygame.image.load(sel_png)
         self.rect = self.image.get_rect(center=self.screen_center)
 
@@ -131,4 +112,8 @@ class EditableEqSprite(pygame.sprite.Sprite):
         file_path = filedialog.asksaveasfilename(defaultextension='.png')
         # TODO: Check if it is the documented condition (None does not work)
         if file_path != '':
-            conversions.eq2png(self.eq, self.temp_dir, file_path)
+            conversions.eq2png(self.eq, None, self.temp_dir, file_path)
+
+
+
+        
