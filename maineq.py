@@ -2,7 +2,7 @@ import pygame
 import latex
 import conversions
 
-import operators
+import ops
 
 
 class EditableEqSprite(pygame.sprite.Sprite):
@@ -54,12 +54,12 @@ class EditableEqSprite(pygame.sprite.Sprite):
 
     def replace_sel_by(self, op):
         """ 
-        Given an operator, "replace" the equation block pointed by the
-        selection by that operator:
+        Given an operator, the equation block pointed by self.sel_index
+        is "replaced" by that operator:
 
-        If it is really a symbol or str, just replace the selection by it.
+        If op is a str, just replace the selection by it.
 
-        If it is an unary operator, put the selected block as the argument
+        If op is an unary operator, put the selected block as the argument
         of the operator.
         
         If it is a binary operator, put the selected block as the first
@@ -70,14 +70,14 @@ class EditableEqSprite(pygame.sprite.Sprite):
         change that argument.
         """
         # Replace according to the operator
-        if isinstance(op, (str, operators.Symbol)):
-            latex.replace_by_symbol_or_str(self.eq, self.sel_index, op)
-        elif isinstance(op, operators.UnaryOperator):
+        if isinstance(op, str):
+            latex.replace_by_str(self.eq, self.sel_index, op)
+        elif isinstance(op, ops.Op) and op.n_args == 1:
             latex.insert_unary_operator(self.eq, self.sel_index, op)
-        elif isinstance(op, operators.BinaryOperator):
-            arg2_index = latex.insert_binary_operator(self.eq,
-                                                      self.sel_index, op,
-                                                      operators.NewArg)
+        elif isinstance(op, ops.Op) and op.n_args > 1:
+            arg2_index = latex.insert_multiple_operator(self.eq,
+                                                        self.sel_index, op,
+                                                        ops.NewArg)
             self.sel_index = arg2_index
         else:
             raise ValueError('Unknown operator passed.')

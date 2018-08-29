@@ -56,7 +56,8 @@ def eq2png(eq, dpi, directory, png_fpath=None):
 
     template_fpath = "eq_template.tex"
     latex_fpath = os.path.join(directory, fname + latex_ext)
-    latex2dvi_log_fpath = os.path.join(directory, fname + '_latex2dvi' + log_ext)
+    latex2dvi_log_fpath = os.path.join(directory,
+                                       fname + '_latex2dvi' + log_ext)
     dvi2png_log_fpath = os.path.join(directory, fname + '_div2png' + log_ext)
     dvi_fpath = os.path.join(directory, fname + dvi_ext)
     if png_fpath == None:

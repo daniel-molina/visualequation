@@ -1,4 +1,4 @@
-import operators
+import ops
 
 def eqblock2latex(eq, index):
     def block2latex(index):
@@ -10,23 +10,21 @@ def eqblock2latex(eq, index):
         usings as many Prod's at the begining as necessary.
         
         """
-        if isinstance(eq[index], operators.BinaryOperator):
-            # I have to find 2 independent blocks for this operator
-            latex1, index1 = block2latex(index+1)
-            latex2, index2 = block2latex(index1)
-            return (eq[index](latex1, latex2), index2)
-        elif isinstance(eq[index], operators.UnaryOperator):
-            # I have to find 1 independent block for this operator
-            latex1, index1 = block2latex(index+1)
-            return (eq[index](latex1), index1)
-        elif isinstance(eq[index], operators.Symbol):
-            return (eq[index](), index+1)
+        if isinstance(eq[index], ops.Op):
+            # I have to find n_arg independent blocks for this operator
+            index_of_arg = index+1
+            latex_args = ()
+            for _ in range (eq[index].n_args):
+                latex_arg, index_of_arg = block2latex(index_of_arg)
+                latex_args += (latex_arg,)
+            return (eq[index](*latex_args), index_of_arg)
         elif isinstance(eq[index], str):
             return (eq[index], index+1)
         else:
-            raise ValueError('Unknown element in equation %s', eq)
+            raise ValueError('Unknown equation element %s', eq[index])
 
     return block2latex(index)
+
 
 def eq2latex_code(eq):
     """ Returns latex code of the equation.
@@ -41,11 +39,11 @@ def eq2latex_code(eq):
     return latex
 
 def eq2sel(eq, index):
-    """ Given an equation an a selection index, it returns the latex code
+    """ Given an equation and a selection index, it returns the latex code
     of the equation with the selection being boxed.
     """
     sel = list(eq)
-    sel.insert(index, operators.Edit)
+    sel.insert(index, ops.Edit)
     return sel
 
 def eq2sels_code(eq):
@@ -57,26 +55,26 @@ def eq2sels_code(eq):
 #    _, index_end = eqblock2latex(eq, index_start)
 #    eq[index_start:index_end] = sub_eq
 
-def replace_by_symbol_or_str(eq, index, symb):
+def replace_by_str(eq, index, s):
     """" Overwrite equation, inserting symbol in the place of the block
     of equation that starts in the given index.
     """
     _, index_end = eqblock2latex(eq, index)
-    eq[index:index_end] = [symb]
+    eq[index:index_end] = [s]
 
 def insert_unary_operator(eq, index, uop):
     """ Overwrite the equation, putting the unary operator in the place of
     the block pointed by the index and leaving the block as the argument of the    operator """
     eq.insert(index, uop)
 
-def insert_binary_operator(eq, index_start, bop, arg2):
+def insert_multiple_operator(eq, index_start, op, arg):
     """ Overwrite the equation, putting the binary operator in the block
     indicated by the given index. The block is left as the first argument of
-    the operator and the given arg2 is used as second argument.
-    arg2 is supplied as a symbol or str, not as a eq (a list)."""
+    the operator and the given arg is used as second argument.
+    arg2 is supplied as a str, not as a eq (a list)."""
     _, index_end_arg1 = eqblock2latex(eq, index_start)
-    eq[index_start:index_end_arg1] = [bop] + eq[index_start:index_end_arg1] \
-                                     + [arg2]
+    eq[index_start:index_end_arg1] = [op] + eq[index_start:index_end_arg1] \
+                                     + [arg] * (op.n_args-1)
     return index_end_arg1+1
 
     
