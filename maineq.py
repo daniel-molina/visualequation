@@ -62,12 +62,13 @@ class EditableEqSprite(pygame.sprite.Sprite):
         If op is an unary operator, put the selected block as the argument
         of the operator.
         
-        If it is a binary operator, put the selected block as the first
-        argument of the operator. Put NewArg symbol in the second argument.
+        If the operator has more than one argument, put the selected block
+        as the first argument of the operator. Put NewArg symbol in the
+        second argument.
 
-        If operator is binary, selection index is changed to the second
-        argument of the operator because the user probably will want to
-        change that argument.
+        If the operator has more than one argument, selection index is
+        changed to the second argument of the operator because the user
+        probably will want to change that argument.
         """
         # Replace according to the operator
         if isinstance(op, str):
