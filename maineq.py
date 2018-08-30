@@ -52,12 +52,14 @@ class EditableEqSprite(pygame.sprite.Sprite):
             self.sel_index -= 1
         self._set_sel()
 
-    def replace_sel_by(self, op):
+    def clever_insert(self, op):
         """ 
         Given an operator, the equation block pointed by self.sel_index
         is "replaced" by that operator:
 
-        If op is a str, just replace the selection by it.
+        If op is a str, put a Juxt, leave selection as first arg and put op
+        as the second arg.
+        Exception: if selection is a NewArg, just replace it.
 
         If op is an unary operator, put the selected block as the argument
         of the operator.
@@ -72,7 +74,14 @@ class EditableEqSprite(pygame.sprite.Sprite):
         """
         # Replace according to the operator
         if isinstance(op, str):
-            latex.replace_by_str(self.eq, self.sel_index, op)
+            if self.eq[self.sel_index] == ops.NewArg:
+                latex.replace_by_str(self.eq, self.sel_index, op)
+            else:
+                arg2_index = latex.insert_multiple_operator(self.eq,
+                                                            self.sel_index,
+                                                            ops.Juxt,
+                                                            op)
+                self.sel_index = arg2_index
         elif isinstance(op, ops.Op) and op.n_args == 1:
             latex.insert_unary_operator(self.eq, self.sel_index, op)
         elif isinstance(op, ops.Op) and op.n_args > 1:
@@ -84,6 +93,41 @@ class EditableEqSprite(pygame.sprite.Sprite):
             raise ValueError('Unknown operator passed.')
         self._set_sel()
 
+        # Save current equation to the history and delete any future elements
+        # from this point
+        self.eq_hist[self.eq_hist_index+1:] = [list(self.eq)]
+        self.eq_hist_index += 1
+
+    def remove_sel(self):
+        """
+        If self.sel_index points to the first or second arg of a Juxt,
+        it removes the Juxt and leaves the other argument in its place.
+        """
+        cond, Juxt_index, other_arg_index = latex.is_arg_of_Juxt(
+            self.eq, self.sel_index)
+        if cond:
+            _, Juxt_end = latex.eqblock2latex(self.eq, Juxt_index)
+            # If sel_index is the first argument (instead of the second)
+            if Juxt_index + 1 == self.sel_index:
+                self.eq[Juxt_index:Juxt_end] = self.eq[
+                    other_arg_index:Juxt_end]
+            else:
+                self.eq[Juxt_index:Juxt_end] = self.eq[
+                    other_arg_index:self.sel_index]
+            self.sel_index = Juxt_index
+        else:
+            latex.replace_by_str(self.eq, self.sel_index, ops.NewArg)
+
+        self._set_sel()
+        # Save current equation to the history and delete any future elements
+        # from this point
+        self.eq_hist[self.eq_hist_index+1:] = [list(self.eq)]
+        self.eq_hist_index += 1
+
+    def left_NewArg(self):
+        self.eq[self.sel_index:self.sel_index] = [ops.Juxt, ops.NewArg]
+        self.sel_index += 1
+        self._set_sel()
         # Save current equation to the history and delete any future elements
         # from this point
         self.eq_hist[self.eq_hist_index+1:] = [list(self.eq)]

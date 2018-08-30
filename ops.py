@@ -101,7 +101,7 @@ COMMON_OPERATORS = [
 ]
 
 ops1 = Ops(ops_l = LOWER_LATIN+UPPER_LATIN+NUMBERS+COMMON_OPERATORS,
-           clickable_size = (30, 30), dpi = 200, menuitem = ['a\, 9'])
+           clickable_size = (30, 35), dpi = 200, menuitem = ['a\, 9'])
 
 #TODO: Accepts only latin, represented by other thing than CDot
 #Text = UnaryOperator(r'\text{%s}')
@@ -168,9 +168,9 @@ SYMBOLS1 = [
     ('infty', r'\infty '),
     ('nabla', r'\nabla '),
     ('partial', r'\partial '),
-    ('forall', r'\forall '),
-    ('exists', r'\exists '),
-    ('nexists', r'\nexists '),
+    ('times', r'\times '),
+    ('cdot', r'\cdot '),
+    ('div', r'\div '),
 ]
 
 ops2 = Ops(ops_l = LOWER_GREEK + UPPER_GREEK + VAR_GREEK + HEBREW + SYMBOLS1,
@@ -336,8 +336,8 @@ ops8 = Ops(ops_l = VARIABLE_SIZE,
            menuitem = [r'\sum'])
 
 SOME_OPERATORS = [
-    ('cdot', r'\cdot '),
     ('circ', r'\circ '),
+    ('bullet', r'\bullet '),
     ('pm', r'\pm '),
     ('mp', r'\mp '),
     ('odot', r'\odot '),
@@ -349,7 +349,9 @@ SOME_OPERATORS = [
     ('cup', r'\cup '),
     ('wedge', r'\wedge'),
     ('vee', r'\vee '),
-    ('setminus', r'\setminus '),
+    ('forall', r'\forall '),
+    ('exists', r'\exists '),
+    ('nexists', r'\nexists '),
     ('perp', r'\perp '),
     ('parallel', r'\parallel '),
     ('equiv', r'\equiv '),
@@ -359,8 +361,6 @@ SOME_OPERATORS = [
     ('geq', r'\geq '),
     ('ll', r'\ll '),
     ('gg', r'\gg '),
-    ('lll', r'\lll '),
-    ('ggg', r'\ggg '),
     ('sim', r'\sim '),
     ('cong', r'\cong '),
     ('simeq', r'\simeq '),
@@ -427,4 +427,5 @@ ops10 = Ops(ops_l = ARROWS,
 SelArg = r'\cdots '
 NewArg = r'\square '
 Edit = Op(1, r'\boxed{{{0}}}')
+#Edit = Op(1, r'\left.\textcolor{{blue}}{{{0}}}\right|')
 Juxt = Op(2, r'{0} {1}')

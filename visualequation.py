@@ -4,7 +4,6 @@ import tempfile
 import shutil
 import os
 
-
 import pygame
 from pygame.locals import *
 
@@ -70,7 +69,7 @@ if __name__ == "__main__":
         screen.blit(message, (10, screen_h - 40))
         pygame.display.flip()
 
-        ops_l = [ops.ops1, ops.ops2, ops.ops3, ops.ops4,
+        ops_l = [ops.ops2, ops.ops3, ops.ops4,
                  ops.ops5, ops.ops6, ops.ops7, ops.ops8,
                  ops.ops9, ops.ops10]
         for index, opers in enumerate(ops_l):
@@ -118,72 +117,81 @@ if __name__ == "__main__":
                         mainmenu.select_item(index)
                 for op_sprite in mainmenu.active_ops:
                     if op_sprite.mousepointed():
-                        main_eqsprite.replace_sel_by(op_sprite.OP)
+                        main_eqsprite.clever_insert(op_sprite.OP)
                 if main_eqsprite.mousepointed():
                     main_eqsprite.next_sel()
             elif event.type == KEYDOWN:
-                # First cases with mods, the last ones the keys alone
-                # It avoids false positives
+                try:
+                    code = ord(event.unicode)
+                    # If it belongs to 0-9 or A-Z or a-z
+                    if 48 <= code <= 57 or 65 <= code <= 90 \
+                       or 97 <= code <= 122:
+                        main_eqsprite.clever_insert(event.unicode)
+                except TypeError:
+                    pass
+                if event.unicode == '\\':
+                    main_eqsprite.clever_insert(r'\backslash')
+                if event.unicode == '!':
+                    main_eqsprite.clever_insert('!')
+                if event.unicode == '$':
+                    main_eqsprite.clever_insert(r'\$')
+                if event.unicode == '%':
+                    main_eqsprite.clever_insert(r'\%')
+                if event.unicode == '&':
+                    main_eqsprite.clever_insert(r'\&')
+                if event.unicode == '/':
+                    main_eqsprite.clever_insert('/')
+                if event.unicode == ')':
+                    main_eqsprite.clever_insert(')')
+                if event.unicode == '(':
+                    main_eqsprite.clever_insert('(')
+                if event.unicode == '=':
+                    main_eqsprite.clever_insert('=')
+                if event.unicode == '?':
+                    main_eqsprite.clever_insert('?')
+                if event.unicode == "'":
+                    main_eqsprite.clever_insert("'")
+                if event.unicode == '@':
+                    main_eqsprite.clever_insert('@')
+                if event.unicode == '#':
+                    main_eqsprite.clever_insert('\#')
+                if event.unicode == '[':
+                    main_eqsprite.clever_insert('[')
+                if event.unicode == ']':
+                    main_eqsprite.clever_insert(']')
+                if event.unicode == '{':
+                    main_eqsprite.clever_insert(r'\{')
+                if event.unicode == '}':
+                    main_eqsprite.clever_insert(r'\}')
+                if event.unicode == '*':
+                    main_eqsprite.clever_insert('*')
+                if event.unicode == '+':
+                    main_eqsprite.clever_insert('+')
+                if event.unicode == '-':
+                    main_eqsprite.clever_insert('-')
+                if event.unicode == '_':
+                    main_eqsprite.clever_insert(r'\_')
+                if event.unicode == '<':
+                    main_eqsprite.clever_insert('<')
+                if event.unicode == '>':
+                    main_eqsprite.clever_insert('>')
+                if event.unicode == ',':
+                    main_eqsprite.clever_insert(',')
+                if event.unicode == '.':
+                    main_eqsprite.clever_insert('.')
+                if event.unicode == ';':
+                    main_eqsprite.clever_insert(';')
+                if event.unicode == ':':
+                    main_eqsprite.clever_insert(':')
+
+                # First cases with mods, this avoids false positives
                 # CONTROL + letter
-                if event.key == K_z and pygame.key.get_mods() & KMOD_CTRL:
+                elif event.key == K_z and pygame.key.get_mods() & KMOD_CTRL:
                     main_eqsprite.recover_prev_eq()
                 elif event.key == K_y and pygame.key.get_mods() & KMOD_CTRL:
                     main_eqsprite.recover_next_eq()
                 elif event.key == K_s and pygame.key.get_mods() & KMOD_CTRL:
                     main_eqsprite.save_eq()
-                # SHIFT + letter
-                elif event.key == K_a and pygame.key.get_mods() & KMOD_SHIFT:
-                    main_eqsprite.replace_sel_by('A')
-                elif event.key == K_b and pygame.key.get_mods() & KMOD_SHIFT:
-                    main_eqsprite.replace_sel_by('B')
-                elif event.key == K_c and pygame.key.get_mods() & KMOD_SHIFT:
-                    main_eqsprite.replace_sel_by('C')
-                elif event.key == K_d and pygame.key.get_mods() & KMOD_SHIFT:
-                    main_eqsprite.replace_sel_by('D')
-                elif event.key == K_e and pygame.key.get_mods() & KMOD_SHIFT:
-                    main_eqsprite.replace_sel_by('E')
-                elif event.key == K_f and pygame.key.get_mods() & KMOD_SHIFT:
-                    main_eqsprite.replace_sel_by('F')
-                elif event.key == K_g and pygame.key.get_mods() & KMOD_SHIFT:
-                    main_eqsprite.replace_sel_by('G')
-                elif event.key == K_h and pygame.key.get_mods() & KMOD_SHIFT:
-                    main_eqsprite.replace_sel_by('H')
-                elif event.key == K_i and pygame.key.get_mods() & KMOD_SHIFT:
-                    main_eqsprite.replace_sel_by('I')
-                elif event.key == K_j and pygame.key.get_mods() & KMOD_SHIFT:
-                    main_eqsprite.replace_sel_by('J')
-                elif event.key == K_k and pygame.key.get_mods() & KMOD_SHIFT:
-                    main_eqsprite.replace_sel_by('K')
-                elif event.key == K_l and pygame.key.get_mods() & KMOD_SHIFT:
-                    main_eqsprite.replace_sel_by('L')
-                elif event.key == K_m and pygame.key.get_mods() & KMOD_SHIFT:
-                    main_eqsprite.replace_sel_by('M')
-                elif event.key == K_n and pygame.key.get_mods() & KMOD_SHIFT:
-                    main_eqsprite.replace_sel_by('N')
-                elif event.key == K_o and pygame.key.get_mods() & KMOD_SHIFT:
-                    main_eqsprite.replace_sel_by('O')
-                elif event.key == K_p and pygame.key.get_mods() & KMOD_SHIFT:
-                    main_eqsprite.replace_sel_by('P')
-                elif event.key == K_q and pygame.key.get_mods() & KMOD_SHIFT:
-                    main_eqsprite.replace_sel_by('Q')
-                elif event.key == K_r and pygame.key.get_mods() & KMOD_SHIFT:
-                    main_eqsprite.replace_sel_by('R')
-                elif event.key == K_s and pygame.key.get_mods() & KMOD_SHIFT:
-                    main_eqsprite.replace_sel_by('S')
-                elif event.key == K_t and pygame.key.get_mods() & KMOD_SHIFT:
-                    main_eqsprite.replace_sel_by('T')
-                elif event.key == K_u and pygame.key.get_mods() & KMOD_SHIFT:
-                    main_eqsprite.replace_sel_by('U')
-                elif event.key == K_v and pygame.key.get_mods() & KMOD_SHIFT:
-                    main_eqsprite.replace_sel_by('V')
-                elif event.key == K_w and pygame.key.get_mods() & KMOD_SHIFT:
-                    main_eqsprite.replace_sel_by('W')
-                elif event.key == K_x and pygame.key.get_mods() & KMOD_SHIFT:
-                    main_eqsprite.replace_sel_by('X')
-                elif event.key == K_y and pygame.key.get_mods() & KMOD_SHIFT:
-                    main_eqsprite.replace_sel_by('Y')
-                elif event.key == K_z and pygame.key.get_mods() & KMOD_SHIFT:
-                    main_eqsprite.replace_sel_by('Z')
                 # Cases without mods
                 elif event.key == K_RIGHT:
                     main_eqsprite.next_sel()
@@ -194,92 +202,9 @@ if __name__ == "__main__":
                 elif event.key == K_DOWN:
                     mainmenu.prev_item()
                 elif event.key == K_SPACE:
-                    main_eqsprite.replace_sel_by(ops.Juxt)
+                    main_eqsprite.left_NewArg()
                 elif event.key == K_BACKSPACE or event.key == K_DELETE:
-                    main_eqsprite.replace_sel_by(ops.NewArg)
-                elif event.key == K_a:
-                    main_eqsprite.replace_sel_by('a')
-                elif event.key == K_b:
-                    main_eqsprite.replace_sel_by('b')
-                elif event.key == K_c:
-                    main_eqsprite.replace_sel_by('c')
-                elif event.key == K_d:
-                    main_eqsprite.replace_sel_by('d')
-                elif event.key == K_e:
-                    main_eqsprite.replace_sel_by('e')
-                elif event.key == K_f:
-                    main_eqsprite.replace_sel_by('f')
-                elif event.key == K_g:
-                    main_eqsprite.replace_sel_by('g')
-                elif event.key == K_h:
-                    main_eqsprite.replace_sel_by('h')
-                elif event.key == K_i:
-                    main_eqsprite.replace_sel_by('i')
-                elif event.key == K_j:
-                    main_eqsprite.replace_sel_by('j')
-                elif event.key == K_k:
-                    main_eqsprite.replace_sel_by('k')
-                elif event.key == K_l:
-                    main_eqsprite.replace_sel_by('l')
-                elif event.key == K_m:
-                    main_eqsprite.replace_sel_by('m')
-                elif event.key == K_n:
-                    main_eqsprite.replace_sel_by('n')
-                elif event.key == K_o:
-                    main_eqsprite.replace_sel_by('o')
-                elif event.key == K_p:
-                    main_eqsprite.replace_sel_by('p')
-                elif event.key == K_q:
-                    main_eqsprite.replace_sel_by('q')
-                elif event.key == K_r:
-                    main_eqsprite.replace_sel_by('r')
-                elif event.key == K_s:
-                    main_eqsprite.replace_sel_by('s')
-                elif event.key == K_t:
-                    main_eqsprite.replace_sel_by('t')
-                elif event.key == K_u:
-                    main_eqsprite.replace_sel_by('u')
-                elif event.key == K_v:
-                    main_eqsprite.replace_sel_by('v')
-                elif event.key == K_w:
-                    main_eqsprite.replace_sel_by('w')
-                elif event.key == K_x:
-                    main_eqsprite.replace_sel_by('x')
-                elif event.key == K_y:
-                    main_eqsprite.replace_sel_by('y')
-                elif event.key == K_z:
-                    main_eqsprite.replace_sel_by('z')
-                elif event.key == K_0:
-                    main_eqsprite.replace_sel_by('0') 
-                elif event.key == K_1:
-                    main_eqsprite.replace_sel_by('1') 
-                elif event.key == K_2:
-                    main_eqsprite.replace_sel_by('2') 
-                elif event.key == K_3:
-                    main_eqsprite.replace_sel_by('3') 
-                elif event.key == K_4:
-                    main_eqsprite.replace_sel_by('4') 
-                elif event.key == K_5:
-                    main_eqsprite.replace_sel_by('5') 
-                elif event.key == K_6:
-                    main_eqsprite.replace_sel_by('6') 
-                elif event.key == K_7:
-                    main_eqsprite.replace_sel_by('7') 
-                elif event.key == K_8:
-                    main_eqsprite.replace_sel_by('8') 
-                elif event.key == K_9:
-                    main_eqsprite.replace_sel_by('9') 
-                elif event.key == K_PLUS:
-                    main_eqsprite.replace_sel_by('+') 
-                elif event.key == K_MINUS:
-                    main_eqsprite.replace_sel_by('-')
-                elif event.key == K_COMMA:
-                    main_eqsprite.replace_sel_by(',')
-                elif event.key == K_PERIOD:
-                    main_eqsprite.replace_sel_by('.')
-                elif event.key == K_SLASH:                
-                    main_eqsprite.replace_sel_by('/')
- 
+                    main_eqsprite.remove_sel()
 
         screen.fill((255, 255, 255))
         #mainmenu.active_ops.update()
