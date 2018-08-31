@@ -9,7 +9,7 @@ class EditableEqSprite(pygame.sprite.Sprite):
     """ A Sprite for the equation that is going to be edited."""
     def __init__(self, eq, screen_center, temp_dir):
         pygame.sprite.Sprite.__init__(self)
-        self.eq_hist = [list(eq)]
+        self.eq_hist = [(list(eq), 0)]
         self.eq_hist_index = 0
         self.eq = eq # It will be mutated by the replace functions
         self.screen_center = screen_center
@@ -17,13 +17,31 @@ class EditableEqSprite(pygame.sprite.Sprite):
         self.sel_index = 0
         self._set_sel()
 
+    # Check that is a Juxt that is not after operator different to Juxt
+    def is_intermediate_Juxt(self, index):
+        if self.eq[index] == ops.Juxt:
+            cond, _, _ = latex.is_arg_of_Juxt(self.eq, index)
+            if cond:
+                return True
+        return False
+
     def _set_sel(self):
-        """ Set the image of the sprite to the equation boxed in the
+        """ Set the self.image to the equation boxed in the
         selection indicated by self.sel_index, which can be freely set
         by the caller before calling this function.
 
         The box is the way the user know which block of the eq is editing.
         """
+        if not 0 <= self.sel_index < len(self.eq):
+            raise ValueError('Provided index outside the equation.')
+        # Avoid pointing to a intermediate Juxt
+        # That avoids selecting partial products inside a product
+        elif self.is_intermediate_Juxt(self.sel_index):
+            cond = True
+            while cond:
+                self.sel_index += 1
+                cond = self.is_intermediate_Juxt(self.sel_index)
+
         # Calculate the latex code of eq boxed in block given by the selection
         sel_latex_code = latex.eq2sel(self.eq, self.sel_index)
         sel_png = conversions.eq2png(sel_latex_code, None, self.temp_dir)
@@ -42,6 +60,12 @@ class EditableEqSprite(pygame.sprite.Sprite):
             self.sel_index = 0
         else:
             self.sel_index += 1
+        if self.is_intermediate_Juxt(self.sel_index):
+            cond = True
+            while cond:
+                self.sel_index += 1
+                cond = self.is_intermediate_Juxt(self.sel_index)
+
         self._set_sel()
 
     def previous_sel(self):
@@ -50,9 +74,15 @@ class EditableEqSprite(pygame.sprite.Sprite):
             self.sel_index = len(self.eq) - 1
         else:
             self.sel_index -= 1
+        if self.is_intermediate_Juxt(self.sel_index):
+            cond = True
+            while cond:
+                self.sel_index -= 1
+                cond = self.is_intermediate_Juxt(self.sel_index)
+
         self._set_sel()
 
-    def clever_insert(self, op):
+    def insert_substituting(self, op):
         """ 
         Given an operator, the equation block pointed by self.sel_index
         is "replaced" by that operator:
@@ -66,7 +96,7 @@ class EditableEqSprite(pygame.sprite.Sprite):
         
         If the operator has more than one argument, put the selected block
         as the first argument of the operator. Put NewArg symbol in the
-        second argument.
+        rest of the arguments.
 
         If the operator has more than one argument, selection index is
         changed to the second argument of the operator because the user
@@ -75,24 +105,25 @@ class EditableEqSprite(pygame.sprite.Sprite):
         # Replace according to the operator
         if isinstance(op, str):
             if self.eq[self.sel_index] == ops.NewArg:
-                latex.replace_by_str(self.eq, self.sel_index, op)
+                eq[self.sel_index:self.sel_index+1] = [op]
             else:
-                arg2_index = latex.insert_multiple_operator(self.eq,
-                                                            self.sel_index,
-                                                            ops.Juxt,
-                                                            op)
-                self.sel_index = arg2_index
+                _, index_end_block = latex.eqblock2latex(self.eq,
+                                                         self.sel_index)
+                self.eq[self.sel_index:index_end_block] = [ops.Juxt] \
+                                    + self.eq[self.sel_index:index_end_block] \
+                                    + [op]
+                self.sel_index = index_end_block+1
         elif isinstance(op, ops.Op) and op.n_args == 1:
-            latex.insert_unary_operator(self.eq, self.sel_index, op)
+            self.eq.insert(self.sel_index, op)
         elif isinstance(op, ops.Op) and op.n_args > 1:
-            arg2_index = latex.insert_multiple_operator(self.eq,
-                                                        self.sel_index, op,
-                                                        ops.NewArg)
-            self.sel_index = arg2_index
+            _, index_end_arg1 = latex.eqblock2latex(self.eq, self.sel_index)
+            self.eq[self.sel_index:index_end_arg1] = [op] \
+                                    + self.eq[self.sel_index:index_end_arg1] \
+                                    + [ops.NewArg] * (op.n_args-1)
+            self.sel_index = index_end_arg1+1
         else:
             raise ValueError('Unknown operator passed.')
         self._set_sel()
-
         self.add_eq2hist()
 
     def insert(self, op):
@@ -125,8 +156,24 @@ class EditableEqSprite(pygame.sprite.Sprite):
     def add_eq2hist(self):
         # Save current equation to the history and delete any future elements
         # from this point
-        self.eq_hist[self.eq_hist_index+1:] = [list(self.eq)]
+        self.eq_hist[self.eq_hist_index+1:] = [(list(self.eq), self.sel_index)]
         self.eq_hist_index += 1        
+
+    def recover_prev_eq(self):
+        if self.eq_hist_index != 0:
+            self.eq_hist_index -= 1
+            eq, sel_index = self.eq_hist[self.eq_hist_index]
+            self.eq = list(eq)
+            self.sel_index = sel_index
+            self._set_sel()
+
+    def recover_next_eq(self):
+        if self.eq_hist_index != len(self.eq_hist)-1:
+            self.eq_hist_index += 1
+            eq, sel_index = self.eq_hist[self.eq_hist_index]
+            self.eq = list(eq)
+            self.sel_index = sel_index
+            self._set_sel()
 
     def remove_sel(self):
         """
@@ -156,20 +203,6 @@ class EditableEqSprite(pygame.sprite.Sprite):
         self.sel_index += 1
         self._set_sel()
         self.add_eq2hist()
-
-    def recover_prev_eq(self):
-        if self.eq_hist_index != 0:
-            self.eq_hist_index -= 1
-            self.eq = self.eq_hist[self.eq_hist_index]
-            self.sel_index = 0
-            self._set_sel()
-
-    def recover_next_eq(self):
-        if self.eq_hist_index != len(self.eq_hist)-1:
-            self.eq_hist_index += 1
-            self.eq = self.eq_hist[self.eq_hist_index]
-            self.sel_index = 0
-            self._set_sel()
 
     def save_eq(self):
         import tkinter

@@ -117,7 +117,10 @@ if __name__ == "__main__":
                         mainmenu.select_item(index)
                 for op_sprite in mainmenu.active_ops:
                     if op_sprite.mousepointed():
-                        main_eqsprite.insert(op_sprite.OP)
+                        if pygame.key.get_mods() & KMOD_SHIFT:
+                            main_eqsprite.insert_substituting(op_sprite.OP)
+                        else:
+                            main_eqsprite.insert(op_sprite.OP)
                 if main_eqsprite.mousepointed():
                     main_eqsprite.next_sel()
             elif event.type == KEYDOWN:
