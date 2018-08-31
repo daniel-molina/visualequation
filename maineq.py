@@ -1,5 +1,5 @@
 import pygame
-import latex
+import eqtools
 import conversions
 
 import ops
@@ -12,7 +12,7 @@ class EditableEqSprite(pygame.sprite.Sprite):
         self.eq_hist = [(list(eq), 0)]
         self.eq_hist_index = 0
         self.eq_buffer = []
-        self.eq = eq # It will be mutated by the replace functions
+        self.eq = list(eq) # It will be mutated by the replace functions
         self.screen_center = screen_center
         self.temp_dir = temp_dir
         self.sel_index = 0
@@ -21,7 +21,7 @@ class EditableEqSprite(pygame.sprite.Sprite):
     # Check that is a Juxt that is not after operator different to Juxt
     def is_intermediate_Juxt(self, index):
         if self.eq[index] == ops.Juxt:
-            cond, _, _ = latex.is_arg_of_Juxt(self.eq, index)
+            cond, _, _ = eqtools.is_arg_of_Juxt(self.eq, index)
             if cond:
                 return True
         return False
@@ -44,7 +44,7 @@ class EditableEqSprite(pygame.sprite.Sprite):
                 cond = self.is_intermediate_Juxt(self.sel_index)
 
         # Calculate the latex code of eq boxed in block given by the selection
-        sel_latex_code = latex.eq2sel(self.eq, self.sel_index)
+        sel_latex_code = eqtools.eq2sel(self.eq, self.sel_index)
         sel_png = conversions.eq2png(sel_latex_code, None, self.temp_dir)
         self.image = pygame.image.load(sel_png)
         self.rect = self.image.get_rect(center=self.screen_center)
@@ -103,11 +103,11 @@ class EditableEqSprite(pygame.sprite.Sprite):
         """
         # Replace according to the operator
         if isinstance(op, str):
-            latex.replaceby(self.eq, self.sel_index, [op])
+            eqtools.replaceby(self.eq, self.sel_index, [op])
         elif isinstance(op, ops.Op) and op.n_args == 1:
             self.eq.insert(self.sel_index, op)
         elif isinstance(op, ops.Op) and op.n_args > 1:
-            index_end_arg1 = latex.nextblockindex(self.eq, self.sel_index)
+            index_end_arg1 = eqtools.nextblockindex(self.eq, self.sel_index)
             self.eq[self.sel_index:index_end_arg1] = [op] \
                                     + self.eq[self.sel_index:index_end_arg1] \
                                     + [ops.NewArg] * (op.n_args-1)
@@ -126,7 +126,7 @@ class EditableEqSprite(pygame.sprite.Sprite):
             if self.eq[self.sel_index] == ops.NewArg:
                 self.eq[self.sel_index] = op
             else:
-                self.sel_index = latex.appendbyJuxt(self.eq, self.sel_index,
+                self.sel_index = eqtools.appendbyJuxt(self.eq, self.sel_index,
                                                     [op])
         elif isinstance(op, ops.Op):
             opeq = [op] + [ops.NewArg]*op.n_args
@@ -134,7 +134,7 @@ class EditableEqSprite(pygame.sprite.Sprite):
                 self.eq[self.sel_index:self.sel_index+1] = opeq
                 self.sel_index += 1
             else:
-                self.sel_index = 1 + latex.appendbyJuxt(self.eq,
+                self.sel_index = 1 + eqtools.appendbyJuxt(self.eq,
                                                         self.sel_index,
                                                         opeq)
         else:
@@ -169,10 +169,10 @@ class EditableEqSprite(pygame.sprite.Sprite):
         If self.sel_index points to the first or second arg of a Juxt,
         it removes the Juxt and leaves the other argument in its place.
         """
-        cond, Juxt_index, other_arg_index = latex.is_arg_of_Juxt(
+        cond, Juxt_index, other_arg_index = eqtools.is_arg_of_Juxt(
             self.eq, self.sel_index)
         if cond:
-            Juxt_end = latex.nextblockindex(self.eq, Juxt_index)
+            Juxt_end = eqtools.nextblockindex(self.eq, Juxt_index)
             # If sel_index is the first argument (instead of the second)
             if Juxt_index + 1 == self.sel_index:
                 self.eq[Juxt_index:Juxt_end] = self.eq[
@@ -182,20 +182,20 @@ class EditableEqSprite(pygame.sprite.Sprite):
                     other_arg_index:self.sel_index]
             self.sel_index = Juxt_index
         else:
-            latex.replaceby(self.eq, self.sel_index, [ops.NewArg])
+            eqtools.replaceby(self.eq, self.sel_index, [ops.NewArg])
 
         self._set_sel()
         self.add_eq2hist()
 
     def sel2eqbuffer(self):
-        end_sel_index = latex.nextblockindex(self.eq, self.sel_index)
+        end_sel_index = eqtools.nextblockindex(self.eq, self.sel_index)
         self.eq_buffer = self.eq[self.sel_index:end_sel_index]
 
     def eqbuffer2sel(self):
         if self.eq[self.sel_index] == ops.NewArg:
             self.eq[self.sel_index:self.sel_index+1] = self.eq_buffer
         else:
-            self.sel_index = latex.appendbyJuxt(self.eq, self.sel_index,
+            self.sel_index = eqtools.appendbyJuxt(self.eq, self.sel_index,
                                                 self.eq_buffer)
         self._set_sel()
         self.add_eq2hist()

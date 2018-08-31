@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""This is the file to execute the program."""
 import sys
 import tempfile
 import shutil
@@ -9,101 +10,111 @@ from pygame.locals import *
 
 import ops
 import maineq
-import latex
 import conversions
 import menu
 
-if __name__ == "__main__":
-
-    # Prepare a temporal directory to manage all LaTeX files
-    temp_dirpath = tempfile.mkdtemp()
-
-    # Prepare pygame
-    pygame.init()
-    clock = pygame.time.Clock()
-
-    # Prepare display
-    screen_w = 800
-    screen_h = 600
-    screen = pygame.display.set_mode((screen_w, screen_h))
-
-    # Load a nice pygame badge while the user waits
-    bg = pygame.image.load("pygame-badge-SMA.png")
-    screen.blit(bg, ((screen_w-bg.get_width())//2,
-                     (screen_h-bg.get_height())//2))
-    pygame.display.set_caption("Visual Equation")
-    latex_m = r"\color{blue}\& \LaTeX"""
-    latex_png = conversions.eq2png([latex_m], 220, temp_dirpath)
+def display_splash_screen(screen, temp_dir):
+    """ Load a nice pygame badge while the user waits"""
+    # Background image
+    screen_w = screen.get_width()
+    screen_h = screen.get_height()
+    badge = pygame.image.load("pygame-badge-SMA.png")
+    screen.blit(badge, ((screen_w-badge.get_width())//2,
+                        (screen_h-badge.get_height())//2))
+    # Title
+    title = r"\color{white}(\text{Visual Equation})}"
+    title_png = conversions.eq2png([title], 270, temp_dir)
+    title_im = pygame.image.load(title_png)
+    screen.blit(title_im, ((screen_w-title_im.get_width())//2, 30))
+    # LaTeX ackknowledgement
+    latex_m = r"\color{white}\& \LaTeX"
+    latex_png = conversions.eq2png([latex_m], 250, temp_dir)
     latex_im = pygame.image.load(latex_png)
-    screen.blit(latex_im, (510, 400))
+    screen.blit(latex_im, (530, 500))
     pygame.display.flip()
 
-    # Generate operators' images if the folder is not found
-    main_dir = os.path.join(os.path.expanduser('~'), '.visualequation')
-    ops_dir = os.path.join(main_dir, 'data')
-    def generate_ops_images(opers):
-        for op in opers.ops_l:
-            filename = os.path.join(ops_dir, op[0] + ".png")
-            if not os.path.exists(filename):
-                if isinstance(op[1], tuple):
-                    op_eq = op[1][1]
-                elif isinstance(op[1], str):
-                    op_eq = [op[1]]
-                elif isinstance(op[1], ops.Op) and op[1].n_args == 1:
-                    op_eq = [op[1], ops.SelArg]
-                elif isinstance(op[1], ops.Op) and op[1].n_args > 1:
-                    op_eq = [op[1], ops.SelArg] + \
-                            [ops.NewArg]*(op[1].n_args - 1)
-                conversions.eq2png(op_eq, opers.dpi, temp_dirpath,
-                                   filename)
+def print_delay_message(screen, current, total, temp_dir):
+    """ Print a message in the bottom of the screen showing the current/total
+    generation of operators' images.
+    """
+    screen_w = screen.get_width()
+    screen_h = screen.get_height()
+    message = r"""
+    \color{{white}}\text{{It is the first time that the program is running.
+    Generating symbols...............}}{0}/{1}
+    """.format(current, total)
+    message_png = conversions.eq2png([message], 150, temp_dir)
+    message_im = pygame.image.load(message_png)
+    message_pos = ((screen_w-message_im.get_width())//2, screen_h - 40)
+    message_rect = message_im.get_rect()
+    message_rect.topleft = message_pos
+    screen.fill((0, 0, 0), message_rect)
+    screen.blit(message_im, message_pos)
+    pygame.display.flip()
 
-    if not os.path.exists(main_dir):
-        os.makedirs(main_dir)
+def generate_ops_images(menuitem, png_dir, temp_dir):
+    """
+    Generate the png of the operators and place them in a given directory.
+    A temporal directory must be passed too, where auxiliary files are
+    generated.
+    """
+    for oper in menuitem.ops_l:
+        filename = os.path.join(png_dir, oper[0] + ".png")
+        if not os.path.exists(filename):
+            # Determine the appearance of op
+            if isinstance(oper[1], tuple):
+                op_eq = oper[1][1]
+            elif isinstance(oper[1], str):
+                op_eq = [oper[1]]
+            elif isinstance(oper[1], ops.Op) and oper[1].n_args == 1:
+                op_eq = [oper[1], ops.SelArg]
+            elif isinstance(oper[1], ops.Op) and oper[1].n_args > 1:
+                op_eq = [oper[1], ops.SelArg] + \
+                    [ops.NewArg]*(oper[1].n_args - 1)
+            # Create and save image of that op
+            conversions.eq2png(op_eq, menuitem.dpi, temp_dir, filename)
+
+def main(*args):
+    """ This the main function of the program."""
+    # Prepare a temporal directory to manage all LaTeX files
+    temp_dirpath = tempfile.mkdtemp()
+    # Set the path to main directories
+    program_dir = os.path.join(os.path.expanduser('~'), '.visualequation')
+    ops_dir = os.path.join(program_dir, 'data')
+
+    # Prepare pygame
+    screen_w = 800
+    screen_h = 600
+    pygame.init()
+    clock = pygame.time.Clock()
+    screen = pygame.display.set_mode((screen_w, screen_h))
+    pygame.display.set_caption("Visual Equation")
+    display_splash_screen(screen, temp_dirpath)
+
+    # Generate operators' images if the folder is not found
+    if not os.path.exists(program_dir):
+        os.makedirs(program_dir)
     if not os.path.exists(ops_dir):
         os.makedirs(ops_dir)
-        # Print message informing about the delay by creating operators' images
-        message = r"""\color{white}\text{It is the first time that the program
-        is running. Generating symbols...............}"""
-        message_png = conversions.eq2png([message], 150, temp_dirpath)
-        message = pygame.image.load(message_png)
-        screen.blit(message, (10, screen_h - 40))
-        pygame.display.flip()
+        print_message = True
+    else:
+        print_message = False
 
-        ops_l = [ops.ops2, ops.ops3, ops.ops4,
-                 ops.ops5, ops.ops6, ops.ops7, ops.ops8,
-                 ops.ops9, ops.ops10]
-        for index, opers in enumerate(ops_l):
-            message = r"\color{{white}} {0}/{1}".format(index+1, len(ops_l))
-            message_png = conversions.eq2png([message], 150, temp_dirpath)
-            message = pygame.image.load(message_png)
-            pos = (screen_w - 80, screen_h - 40)
-            screen.fill((0, 0, 0), message.get_rect(topleft=pos))
-            screen.blit(message, pos)
-            pygame.display.flip()
-
-            generate_ops_images(opers)
+    for index, menuitem in enumerate(ops.MENUITEMS):
+        if print_message:
+            # Print message about the delay by creating operators' images
+            print_delay_message(screen, index+1, len(ops.MENUITEMS),
+                                temp_dirpath)
+        generate_ops_images(menuitem, ops_dir, temp_dirpath)
 
     # Prepare the equation to edit which will be showed by default
     init_eq = [ops.NewArg]
-    screen_center = (screen.get_width()//2, screen.get_height()//2)
+    screen_center = (screen_w//2, screen_h//2)
     main_eqsprite = maineq.EditableEqSprite(init_eq, screen_center,
-                                             temp_dirpath)
+                                            temp_dirpath)
 
-    # Prepare symbols and operators that are around the window
-    #ops = ops.functions
-    #g_letters = distr_at_top(len(ops), screen_w, 40, 50)
-    #g_math_construct = distr_at_top(len(ops), screen_w, 90, 110)
-    #g_delimiters = distr_at_top(len(ops), screen_w, 120, 60)
-    #g_variable_size =  distr_at_top(len(ops), screen_w, 50, 80)
-    #g_pos =  distr_at_top(len(ops), screen_w, 100, 30)
-
-    # Create the Menu    
+    # Create the menu
     mainmenu = menu.Menu(screen_w, screen_h, ops_dir, temp_dirpath)
-
-    #menusprites = pygame.sprite.RenderPlain(tuple(menu))
-    #allsprites = pygame.sprite.RenderPlain(
-    #    tuple(ops_sprite) + (main_eqsprite,) + tuple(menu))
-
 
     # Pygame loop
     ongoing = True
@@ -134,61 +145,60 @@ if __name__ == "__main__":
                     pass
                 if event.unicode == '\\':
                     main_eqsprite.insert(r'\backslash')
-                if event.unicode == '!':
+                elif event.unicode == '!':
                     main_eqsprite.insert('!')
-                if event.unicode == '$':
+                elif event.unicode == '$':
                     main_eqsprite.insert(r'\$')
-                if event.unicode == '%':
+                elif event.unicode == '%':
                     main_eqsprite.insert(r'\%')
-                if event.unicode == '&':
+                elif event.unicode == '&':
                     main_eqsprite.insert(r'\&')
-                if event.unicode == '/':
+                elif event.unicode == '/':
                     main_eqsprite.insert('/')
-                if event.unicode == ')':
+                elif event.unicode == ')':
                     main_eqsprite.insert(')')
-                if event.unicode == '(':
+                elif event.unicode == '(':
                     main_eqsprite.insert('(')
-                if event.unicode == '=':
+                elif event.unicode == '=':
                     main_eqsprite.insert('=')
-                if event.unicode == '?':
+                elif event.unicode == '?':
                     main_eqsprite.insert('?')
-                if event.unicode == "'":
+                elif event.unicode == "'":
                     main_eqsprite.insert("'")
-                if event.unicode == '@':
+                elif event.unicode == '@':
                     main_eqsprite.insert('@')
-                if event.unicode == '#':
-                    main_eqsprite.insert('\#')
-                if event.unicode == '[':
+                elif event.unicode == '#':
+                    main_eqsprite.insert(r'\#')
+                elif event.unicode == '[':
                     main_eqsprite.insert('[')
-                if event.unicode == ']':
+                elif event.unicode == ']':
                     main_eqsprite.insert(']')
-                if event.unicode == '{':
+                elif event.unicode == '{':
                     main_eqsprite.insert(r'\{')
-                if event.unicode == '}':
+                elif event.unicode == '}':
                     main_eqsprite.insert(r'\}')
-                if event.unicode == '*':
+                elif event.unicode == '*':
                     main_eqsprite.insert('*')
-                if event.unicode == '+':
+                elif event.unicode == '+':
                     main_eqsprite.insert('+')
-                if event.unicode == '-':
+                elif event.unicode == '-':
                     main_eqsprite.insert('-')
-                if event.unicode == '_':
+                elif event.unicode == '_':
                     main_eqsprite.insert(r'\_')
-                if event.unicode == '<':
+                elif event.unicode == '<':
                     main_eqsprite.insert('<')
-                if event.unicode == '>':
+                elif event.unicode == '>':
                     main_eqsprite.insert('>')
-                if event.unicode == ',':
+                elif event.unicode == ',':
                     main_eqsprite.insert(',')
-                if event.unicode == '.':
+                elif event.unicode == '.':
                     main_eqsprite.insert('.')
-                if event.unicode == ';':
+                elif event.unicode == ';':
                     main_eqsprite.insert(';')
-                if event.unicode == ':':
+                elif event.unicode == ':':
                     main_eqsprite.insert(':')
-
-                # First cases with mods, this avoids false positives
-                # CONTROL + letter
+                    # First cases with mods, this avoids false positives
+                    # CONTROL + letter
                 elif event.key == K_z and pygame.key.get_mods() & KMOD_CTRL:
                     main_eqsprite.recover_prev_eq()
                 elif event.key == K_y and pygame.key.get_mods() & KMOD_CTRL:
@@ -202,7 +212,7 @@ if __name__ == "__main__":
                     main_eqsprite.remove_sel()
                 elif event.key == K_v and pygame.key.get_mods() & KMOD_CTRL:
                     main_eqsprite.eqbuffer2sel()
-                # Cases without mods
+                    # Cases without mods
                 elif event.key == K_RIGHT:
                     main_eqsprite.next_sel()
                 elif event.key == K_LEFT:
@@ -228,4 +238,6 @@ if __name__ == "__main__":
     # Delete the temporary directory and files before exit
     shutil.rmtree(temp_dirpath)
     sys.exit(0)
-    
+
+if __name__ == '__main__':
+    main(*sys.argv[1:])

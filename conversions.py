@@ -3,13 +3,13 @@ import subprocess
 import tempfile
 import shutil
 
-import latex
+import eqtools
 
 def eq2latex_file(eq, latex_file, template_file):
     """ Write equation in a LaTeX file according to the template_file.
     It looks for string '%EQ%' in the file and replace it by eq.
     """
-    latex_code = latex.eq2latex_code(eq)
+    latex_code = eqtools.eq2latex_code(eq)
     with open(template_file, "rt") as ftempl:
         with open(latex_file, "wt") as flatex:
             for line in ftempl:

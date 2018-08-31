@@ -421,6 +421,19 @@ ops10 = Ops(ops_l = ARROWS,
            clickable_size = (40, 30), dpi = 200,
            menuitem = [r'\rightarrow'])
 
+MENUITEMS = [
+    ops2,
+    ops3,
+    ops4,
+    ops5,
+    ops6,
+    ops7,
+    ops8,
+    ops9,
+    ops10
+]
+
+
 
 # Use these operators in the code, so it will be easy to change their value
 # in next releases
