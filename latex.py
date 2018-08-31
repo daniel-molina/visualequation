@@ -24,6 +24,27 @@ def eqblock2latex(eq, index):
 
     return block2latex(index)
 
+def nextblockindex(eq, index):
+    """
+    It is a simplification of eqblock2latex that only returns the end index.
+    This function was written because the previous one was called often
+    just to calculate end of blocks.
+    It returns the index after the end of the block,
+    being a valid index or not (when it is passed an ending block of eq).
+    """
+    def block2nextindex(index):
+        if isinstance(eq[index], ops.Op):
+            # I have to find n_arg independent blocks for this operator
+            index_of_arg = index+1
+            for _ in range (eq[index].n_args):
+                index_of_arg = block2nextindex(index_of_arg)
+            return index_of_arg
+        elif isinstance(eq[index], str):
+            return index+1
+        else:
+            raise ValueError('Unknown equation element %s', eq[index])
+
+    return block2nextindex(index)
 
 def eq2latex_code(eq):
     """ Returns latex code of the equation.
@@ -45,37 +66,24 @@ def eq2sel(eq, index):
     sel.insert(index, ops.Edit)
     return sel
 
-def eq2sels_code(eq):
-    """Given an equation, it returns a generator which return the latex code
-    of all the possibles selections boxed.
+def appendbyJuxt(eq, start_index, eqblock):
     """
-    return (eq2sel(eq, index) for index in range(len(eq)))
-
-#def replace_block(eq, index_start, sub_eq):
-#    _, index_end = eqblock2latex(eq, index_start)
-#    eq[index_start:index_end] = sub_eq
-
-def replace_by_str(eq, index, symb):
-    """" Overwrite equation, inserting symbol in the place of the block
-    of equation that starts in the given index.
+    Append eqblock after the block which starts at start_index by using Juxt.
+    Returns the begining index of inserted eqbox.
     """
-    _, index_end = eqblock2latex(eq, index)
-    eq[index:index_end] = [symb]
+    end_index = nextblockindex(eq, start_index)
+    eq[start_index:end_index] = [ops.Juxt] + eq[start_index:end_index] \
+                                + eqblock
+    return end_index+1
 
-def insert_unary_operator(eq, index, uop):
-    """ Overwrite the equation, putting the unary operator in the place of
-    the block pointed by the index and leaving the block as the argument of the    operator """
-    eq.insert(index, uop)
-
-def insert_multiple_operator(eq, index_start, op, arg):
-    """ Overwrite the equation, putting the multiple operator in the block
-    indicated by the given index. The block is left as the first argument of
-    the operator and the given arg is used as second argument.
-    arg2 is supplied as a str, not as a eq (a list)."""
-    _, index_end_arg1 = eqblock2latex(eq, index_start)
-    eq[index_start:index_end_arg1] = [op] + eq[index_start:index_end_arg1] \
-                                     + [arg] * (op.n_args-1)
-    return index_end_arg1+1
+def replaceby(eq, start_index, eqblock):
+    """
+    Replace block starting at start_index by eqblock.
+    Returns the index of the next element (if any) after inserted eqblock
+    """
+    end_index = nextblockindex(eq, start_index)
+    eq[start_index:end_index] = eqblock
+    return start_index + len(eqblock) + 1
 
 def is_arg_of_Juxt(eq, check_index):
     """
@@ -88,7 +96,7 @@ def is_arg_of_Juxt(eq, check_index):
     try:
         while True:
             Juxt_index = eq.index(ops.Juxt, start_index)
-            _, arg2index = eqblock2latex(eq, Juxt_index+1)
+            arg2index = nextblockindex(eq, Juxt_index+1)
             if Juxt_index + 1 == check_index:
                 return True, Juxt_index, arg2index
             elif arg2index == check_index:

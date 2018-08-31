@@ -195,6 +195,13 @@ if __name__ == "__main__":
                     main_eqsprite.recover_next_eq()
                 elif event.key == K_s and pygame.key.get_mods() & KMOD_CTRL:
                     main_eqsprite.save_eq()
+                elif event.key == K_c and pygame.key.get_mods() & KMOD_CTRL:
+                    main_eqsprite.sel2eqbuffer()
+                elif event.key == K_x and pygame.key.get_mods() & KMOD_CTRL:
+                    main_eqsprite.sel2eqbuffer()
+                    main_eqsprite.remove_sel()
+                elif event.key == K_v and pygame.key.get_mods() & KMOD_CTRL:
+                    main_eqsprite.eqbuffer2sel()
                 # Cases without mods
                 elif event.key == K_RIGHT:
                     main_eqsprite.next_sel()
