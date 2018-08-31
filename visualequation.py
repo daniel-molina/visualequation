@@ -222,6 +222,8 @@ def main(*args):
                 elif event.key == K_DOWN:
                     mainmenu.prev_item()
                 elif event.key == K_SPACE:
+                    main_eqsprite.insert(r'\,')
+                elif event.key == K_TAB:
                     main_eqsprite.left_NewArg()
                 elif event.key == K_BACKSPACE or event.key == K_DELETE:
                     main_eqsprite.remove_sel()
