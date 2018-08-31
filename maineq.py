@@ -93,10 +93,40 @@ class EditableEqSprite(pygame.sprite.Sprite):
             raise ValueError('Unknown operator passed.')
         self._set_sel()
 
+        self.add_eq2hist()
+
+    def insert(self, op):
+        """
+        Insert the operator next to selection by Juxt.
+        If operator has one or more args, all of them are set to NewArg.
+        """
+        _, end_sel_block = latex.eqblock2latex(self.eq, self.sel_index)
+        if isinstance(op, str):
+            if self.eq[self.sel_index] == ops.NewArg:
+                self.eq[self.sel_index] = op
+            else:
+                self.eq[self.sel_index:end_sel_block] \
+                    = [ops.Juxt] + self.eq[self.sel_index:end_sel_block] + [op]
+                self.sel_index = end_sel_block + 1
+        elif isinstance(op, ops.Op):
+            opeq = [op] + [ops.NewArg]*op.n_args
+            if self.eq[self.sel_index] == ops.NewArg:
+                self.eq[self.sel_index:self.sel_index+1] = opeq
+                self.sel_index += 1
+            else:
+                self.eq[self.sel_index:end_sel_block] \
+                    = [ops.Juxt] + self.eq[self.sel_index:end_sel_block] + opeq
+                self.sel_index = end_sel_block + 2
+        else:
+            raise ValueError('Unkown type of operator %s' % op)
+        self._set_sel()
+        self.add_eq2hist()
+
+    def add_eq2hist(self):
         # Save current equation to the history and delete any future elements
         # from this point
         self.eq_hist[self.eq_hist_index+1:] = [list(self.eq)]
-        self.eq_hist_index += 1
+        self.eq_hist_index += 1        
 
     def remove_sel(self):
         """
@@ -119,19 +149,13 @@ class EditableEqSprite(pygame.sprite.Sprite):
             latex.replace_by_str(self.eq, self.sel_index, ops.NewArg)
 
         self._set_sel()
-        # Save current equation to the history and delete any future elements
-        # from this point
-        self.eq_hist[self.eq_hist_index+1:] = [list(self.eq)]
-        self.eq_hist_index += 1
+        self.add_eq2hist()
 
     def left_NewArg(self):
         self.eq[self.sel_index:self.sel_index] = [ops.Juxt, ops.NewArg]
         self.sel_index += 1
         self._set_sel()
-        # Save current equation to the history and delete any future elements
-        # from this point
-        self.eq_hist[self.eq_hist_index+1:] = [list(self.eq)]
-        self.eq_hist_index += 1
+        self.add_eq2hist()
 
     def recover_prev_eq(self):
         if self.eq_hist_index != 0:

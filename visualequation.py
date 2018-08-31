@@ -117,7 +117,7 @@ if __name__ == "__main__":
                         mainmenu.select_item(index)
                 for op_sprite in mainmenu.active_ops:
                     if op_sprite.mousepointed():
-                        main_eqsprite.clever_insert(op_sprite.OP)
+                        main_eqsprite.insert(op_sprite.OP)
                 if main_eqsprite.mousepointed():
                     main_eqsprite.next_sel()
             elif event.type == KEYDOWN:
@@ -126,63 +126,63 @@ if __name__ == "__main__":
                     # If it belongs to 0-9 or A-Z or a-z
                     if 48 <= code <= 57 or 65 <= code <= 90 \
                        or 97 <= code <= 122:
-                        main_eqsprite.clever_insert(event.unicode)
+                        main_eqsprite.insert(event.unicode)
                 except TypeError:
                     pass
                 if event.unicode == '\\':
-                    main_eqsprite.clever_insert(r'\backslash')
+                    main_eqsprite.insert(r'\backslash')
                 if event.unicode == '!':
-                    main_eqsprite.clever_insert('!')
+                    main_eqsprite.insert('!')
                 if event.unicode == '$':
-                    main_eqsprite.clever_insert(r'\$')
+                    main_eqsprite.insert(r'\$')
                 if event.unicode == '%':
-                    main_eqsprite.clever_insert(r'\%')
+                    main_eqsprite.insert(r'\%')
                 if event.unicode == '&':
-                    main_eqsprite.clever_insert(r'\&')
+                    main_eqsprite.insert(r'\&')
                 if event.unicode == '/':
-                    main_eqsprite.clever_insert('/')
+                    main_eqsprite.insert('/')
                 if event.unicode == ')':
-                    main_eqsprite.clever_insert(')')
+                    main_eqsprite.insert(')')
                 if event.unicode == '(':
-                    main_eqsprite.clever_insert('(')
+                    main_eqsprite.insert('(')
                 if event.unicode == '=':
-                    main_eqsprite.clever_insert('=')
+                    main_eqsprite.insert('=')
                 if event.unicode == '?':
-                    main_eqsprite.clever_insert('?')
+                    main_eqsprite.insert('?')
                 if event.unicode == "'":
-                    main_eqsprite.clever_insert("'")
+                    main_eqsprite.insert("'")
                 if event.unicode == '@':
-                    main_eqsprite.clever_insert('@')
+                    main_eqsprite.insert('@')
                 if event.unicode == '#':
-                    main_eqsprite.clever_insert('\#')
+                    main_eqsprite.insert('\#')
                 if event.unicode == '[':
-                    main_eqsprite.clever_insert('[')
+                    main_eqsprite.insert('[')
                 if event.unicode == ']':
-                    main_eqsprite.clever_insert(']')
+                    main_eqsprite.insert(']')
                 if event.unicode == '{':
-                    main_eqsprite.clever_insert(r'\{')
+                    main_eqsprite.insert(r'\{')
                 if event.unicode == '}':
-                    main_eqsprite.clever_insert(r'\}')
+                    main_eqsprite.insert(r'\}')
                 if event.unicode == '*':
-                    main_eqsprite.clever_insert('*')
+                    main_eqsprite.insert('*')
                 if event.unicode == '+':
-                    main_eqsprite.clever_insert('+')
+                    main_eqsprite.insert('+')
                 if event.unicode == '-':
-                    main_eqsprite.clever_insert('-')
+                    main_eqsprite.insert('-')
                 if event.unicode == '_':
-                    main_eqsprite.clever_insert(r'\_')
+                    main_eqsprite.insert(r'\_')
                 if event.unicode == '<':
-                    main_eqsprite.clever_insert('<')
+                    main_eqsprite.insert('<')
                 if event.unicode == '>':
-                    main_eqsprite.clever_insert('>')
+                    main_eqsprite.insert('>')
                 if event.unicode == ',':
-                    main_eqsprite.clever_insert(',')
+                    main_eqsprite.insert(',')
                 if event.unicode == '.':
-                    main_eqsprite.clever_insert('.')
+                    main_eqsprite.insert('.')
                 if event.unicode == ';':
-                    main_eqsprite.clever_insert(';')
+                    main_eqsprite.insert(';')
                 if event.unicode == ':':
-                    main_eqsprite.clever_insert(':')
+                    main_eqsprite.insert(':')
 
                 # First cases with mods, this avoids false positives
                 # CONTROL + letter
