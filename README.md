@@ -12,16 +12,17 @@ To run the program successfully, you need:
   * latex
 * Some programs commands that are probably installed:
   * dvipng
-  * python3
+  * python2
   
 In debian or derivatives, it should be enough:
+
 \# apt-get install python-pygame dvipng
 
 Yes, LaTeX will require around 600 MB, but the quality of the equations is incredible too.
 
 To run the program:
 
-$ python3 visualequation.py
+$ python2 visualequation.py
 
 ## Usage/Instructions
 

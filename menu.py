@@ -56,7 +56,7 @@ class OpSprite(pygame.sprite.Sprite):
         # Cases: (filename, str|Op), (filename, (str|Op, eq))
         if isinstance(op[1], tuple):
             self.OP = op[1][0]
-        elif isinstance(op[1], (Op, str)):
+        elif isinstance(op[1], (Op, basestring)):
             self.OP = op[1]
         else:
             raise ValueError('Unknown type of operator %s', op[1])

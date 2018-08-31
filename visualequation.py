@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python2
 """This is the file to execute the program."""
 import sys
 import tempfile
@@ -64,7 +64,7 @@ def generate_ops_images(menuitem, png_dir, temp_dir):
             # Determine the appearance of op
             if isinstance(oper[1], tuple):
                 op_eq = oper[1][1]
-            elif isinstance(oper[1], str):
+            elif isinstance(oper[1], basestring):
                 op_eq = [oper[1]]
             elif isinstance(oper[1], ops.Op) and oper[1].n_args == 1:
                 op_eq = [oper[1], ops.SelArg]

@@ -17,7 +17,7 @@ def eqblock2latex(eq, index):
                 latex_arg, index_of_arg = block2latex(index_of_arg)
                 latex_args += (latex_arg,)
             return (eq[index](*latex_args), index_of_arg)
-        elif isinstance(eq[index], str):
+        elif isinstance(eq[index], basestring):
             return (eq[index], index+1)
         else:
             raise ValueError('Unknown equation element %s', eq[index])
@@ -39,7 +39,7 @@ def nextblockindex(eq, index):
             for _ in range (eq[index].n_args):
                 index_of_arg = block2nextindex(index_of_arg)
             return index_of_arg
-        elif isinstance(eq[index], str):
+        elif isinstance(eq[index], basestring):
             return index+1
         else:
             raise ValueError('Unknown equation element %s', eq[index])

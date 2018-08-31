@@ -102,7 +102,7 @@ class EditableEqSprite(pygame.sprite.Sprite):
         probably will want to change that argument.
         """
         # Replace according to the operator
-        if isinstance(op, str):
+        if isinstance(op, basestring):
             eqtools.replaceby(self.eq, self.sel_index, [op])
         elif isinstance(op, ops.Op) and op.n_args == 1:
             self.eq.insert(self.sel_index, op)
@@ -122,7 +122,7 @@ class EditableEqSprite(pygame.sprite.Sprite):
         Insert the operator next to selection by Juxt.
         If operator has one or more args, all of them are set to NewArg.
         """
-        if isinstance(op, str):
+        if isinstance(op, basestring):
             if self.eq[self.sel_index] == ops.NewArg:
                 self.eq[self.sel_index] = op
             else:
@@ -138,7 +138,7 @@ class EditableEqSprite(pygame.sprite.Sprite):
                                                         self.sel_index,
                                                         opeq)
         else:
-            raise ValueError('Unkown type of operator %s' % op)
+            raise ValueError('Unknown type of operator %s' % op)
         self._set_sel()
         self.add_eq2hist()
 
