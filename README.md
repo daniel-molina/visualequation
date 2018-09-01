@@ -8,13 +8,13 @@ By the moment it has only been tested on GNU/Linux. But it would be interesting 
 To run the program successfully, you need:
 
 * pygame
-* LaTeX (maybe you need to install separatelly some packages). The command used is
+* LaTeX (maybe you need to install separately some packages). The command used is
   * latex
 * Some commands that are probably installed if you have the others:
   * dvipng
   * python2
   
-In debian or derivatives, it should be enough:
+To install everything needed in Debian/Ubuntu or derivatives, it should be enough:
 
 \# apt-get install python-pygame dvipng texlive-math-extra
 
