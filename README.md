@@ -8,15 +8,15 @@ By the moment it has only been tested on GNU/Linux. But it would be interesting 
 To run the program successfully, you need:
 
 * pygame
-* LaTeX (maybe you need to install separatelly some packages like amssymb). The command used is
+* LaTeX (maybe you need to install separatelly some packages). The command used is
   * latex
-* Some programs commands that are probably installed:
+* Some commands that are probably installed if you have the others:
   * dvipng
   * python2
   
 In debian or derivatives, it should be enough:
 
-\# apt-get install python-pygame dvipng
+\# apt-get install python-pygame dvipng texlive-math-extra
 
 Yes, LaTeX will require around 600 MB, but the quality of the equations is incredible too.
 
