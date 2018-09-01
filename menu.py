@@ -20,18 +20,28 @@ import conversions
 #        yield (centerx + int(r*math.cos(theta)),
 #               centery + int(r*math.sin(theta)))
 
-def distr_at_top(surf_w, clickable_size):
+def distr_at_top(n_elems, surf_w, clickable_size):
     """ It returns the center of the rectangles"""
-    start_x = (surf_w%clickable_size[0])//2 + clickable_size[0]//2
+    max_elems_per_row = surf_w//clickable_size[0]
+    if n_elems >= max_elems_per_row:
+        start_x = (surf_w%clickable_size[0])//2 + clickable_size[0]//2
+    else:
+        start_x = (surf_w - n_elems*clickable_size[0])//2 \
+                  + clickable_size[0]//2
     x = start_x
     y = clickable_size[1]//2
     yield (x, y)
-    while True: # We have the first element above
+    for elem in range(1, n_elems): # We have the first element above
         if x+clickable_size[0]+clickable_size[0]//2 <= surf_w:
             x += clickable_size[0]
             yield (x, y)
         else:
             y += clickable_size[1]
+            if n_elems-elem >= max_elems_per_row: # Remaining elems
+                start_x = (surf_w%clickable_size[0])//2 + clickable_size[0]//2
+            else:
+                start_x = (surf_w - (n_elems-elem)*clickable_size[0])//2 \
+                          + clickable_size[0]//2
             x = start_x
             yield (x, y)
 
@@ -84,6 +94,12 @@ class OpSprite(pygame.sprite.Sprite):
                     center_pos[1]-clickable_size[1]//2)
         self.clickable_rect = pygame.Rect(left_top, clickable_size)
 
+    def set_center(self, center_pos, clickable_size):
+        self.rect = self.image.get_rect(center=center_pos)
+        left_top = (center_pos[0]-clickable_size[0]//2,
+                    center_pos[1]-clickable_size[1]//2)
+        self.clickable_rect = pygame.Rect(left_top, clickable_size)
+
     def mousepointed(self):
         """ Return true if the mouse is over the button."""
         pos = pygame.mouse.get_pos()
@@ -107,6 +123,10 @@ class MenuItemSprite(pygame.sprite.Sprite):
             self.image = pygame.image.load(eq_png).convert_alpha()
         except pygame.error as message:
             raise SystemExit(message)
+        self.rect = self.image.get_rect(center=self.center_pos)
+
+    def set_center(self, center_pos):
+        self.center_pos = center_pos
         self.rect = self.image.get_rect(center=self.center_pos)
 
     def mousepointed(self):
@@ -147,6 +167,19 @@ class Menu(object):
         self.items[0].select()
         self.active_ops = self._opsgroups[0]
 
+    def set_screen_size(self, screen_w, screen_h):
+        # Set new Menu items positions
+        g_menuitem_pos = distr_menuitems_hor(len(ops.MENUITEMS), screen_w,
+                                             screen_h, 60, 30)
+        for item in self.items:
+            item.set_center(next(g_menuitem_pos))
+        # Set new ops positions
+        for opsgroup in self._opsgroups:
+            g_ops_pos = distr_at_top(len(opsgroup), screen_w,
+                                     opsgroup.clickable_size)
+            for op in opsgroup:
+                op.set_center(next(g_ops_pos), opsgroup.clickable_size)
+
     def _get_menuitemssprite_opsgroups(self, screen_w, screen_h, ops_dir,
                                        temp_dir):
         """
@@ -160,12 +193,20 @@ class Menu(object):
         opsgroups = []
         for item in ops.MENUITEMS:
             # Create menu items
-            menuitem_pos = next(g_menuitem_pos)
-            item_sprite = MenuItemSprite(item, menuitem_pos, temp_dir, 200)
+            menuitem_center_pos = next(g_menuitem_pos)
+            item_sprite = MenuItemSprite(item, menuitem_center_pos, temp_dir,
+                                         200)
             menuitems.append(item_sprite)
             # Create the group for the symbols associated to that menu item
-            g_ops_pos = distr_at_top(screen_w, item.clickable_size)
-            ops_group = pygame.sprite.Group()
+            g_ops_pos = distr_at_top(len(item.ops_l), screen_w,
+                                     item.clickable_size)
+            # We want to keep the order of the operators since we need
+            # to change its positions (in order) when resizing the window.
+            # So, even if called group, it is not really a group;
+            # This is the only reason I am using OrderedUpdates instead.
+            ops_group = pygame.sprite.OrderedUpdates()
+            # Save clickable size as an attribute of the Group
+            ops_group.clickable_size = item.clickable_size
             for op in item.ops_l:
                 op_center_pos = next(g_ops_pos)
                 op_sprite = OpSprite(op, op_center_pos, item.clickable_size,

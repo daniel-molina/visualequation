@@ -74,10 +74,19 @@ def generate_ops_images(menuitem, png_dir, temp_dir):
             # Create and save image of that op
             conversions.eq2png(op_eq, menuitem.dpi, temp_dir, filename)
 
+def draw_screen(screen, maineq, mainmenu):
+    screen.fill((255, 255, 255))
+    screen.blit(maineq.image, maineq.rect)
+    for item in mainmenu.items:
+        screen.blit(item.image, item.rect)
+    mainmenu.active_ops.draw(screen)
+    #mainmenu.active_ops.update()
+    pygame.display.flip()
+
 def main(*args):
     """ This the main function of the program."""
 
-    version = '0.1.0'
+    version = '0.1.1'
     # Prepare a temporal directory to manage all LaTeX files
     temp_dirpath = tempfile.mkdtemp()
     # Set the path to main directories
@@ -89,7 +98,7 @@ def main(*args):
     screen_h = 600
     pygame.init()
     clock = pygame.time.Clock()
-    screen = pygame.display.set_mode((screen_w, screen_h))
+    screen = pygame.display.set_mode((screen_w, screen_h), RESIZABLE)
     pygame.display.set_caption("Visual Equation")
     display_splash_screen(screen, temp_dirpath, version)
 
@@ -124,6 +133,10 @@ def main(*args):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 ongoing = False
+            elif event.type == VIDEORESIZE:
+                screen = pygame.display.set_mode(event.size, RESIZABLE)
+                main_eqsprite.set_center(event.w//2, event.h//2)
+                mainmenu.set_screen_size(event.w, event.h)
             elif event.type == MOUSEBUTTONDOWN:
                 for index, menuitem in enumerate(mainmenu.items):
                     if menuitem.mousepointed():
@@ -230,13 +243,7 @@ def main(*args):
                 elif event.key == K_BACKSPACE or event.key == K_DELETE:
                     main_eqsprite.remove_sel()
 
-        screen.fill((255, 255, 255))
-        #mainmenu.active_ops.update()
-        screen.blit(main_eqsprite.image, main_eqsprite.rect)
-        for item in mainmenu.items:
-            screen.blit(item.image, item.rect)
-        mainmenu.active_ops.draw(screen)
-        pygame.display.flip()
+        draw_screen(screen, main_eqsprite, mainmenu)
         clock.tick(30)
 
     # Delete the temporary directory and files before exit

@@ -20,6 +20,10 @@ class EditableEqSprite(pygame.sprite.Sprite):
         self.sel_index = 0
         self._set_sel()
 
+    def set_center(self, x, y):
+        self.screen_center = (x, y)
+        self.rect = self.image.get_rect(center=self.screen_center)
+
     def is_intermediate_JUXT(self, index):
         """
         Check whether if index points to a JUXT that is the argument of
