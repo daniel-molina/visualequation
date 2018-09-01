@@ -1,7 +1,9 @@
+"""
+A module to manage creation of LaTeX templatex, generations of DVI and
+conversions to other formats
+"""
 import os
 import subprocess
-import tempfile
-import shutil
 
 import eqtools
 
@@ -10,8 +12,8 @@ def eq2latex_file(eq, latex_file, template_file):
     It looks for string '%EQ%' in the file and replace it by eq.
     """
     latex_code = eqtools.eq2latex_code(eq)
-    with open(template_file, "rt") as ftempl:
-        with open(latex_file, "wt") as flatex:
+    with open(template_file, "r") as ftempl:
+        with open(latex_file, "w") as flatex:
             for line in ftempl:
                 flatex.write(line.replace('%EQ%', latex_code))
 
@@ -19,7 +21,7 @@ def latex_file2dvi(latex_file, output_dir, log_file):
     """ Compile the LaTeX file to DVI image and put the output the given dir.
     The log is saved in the specified file.
     """
-    with open(log_file, "wt") as flog:
+    with open(log_file, "w") as flog:
         subprocess.call(["latex", "-interaction=nonstopmode",
                          "-output-directory=" + output_dir,
                          latex_file], stdout=flog)
@@ -28,7 +30,7 @@ def dvi2png(dvi_file, png_file, log_file, dpi):
     """ Convert the DVI file with the equation to PNG.
     The log is saved in the specified file.
     """
-    with open(log_file, "wt") as flog:
+    with open(log_file, "w") as flog:
         subprocess.call(["dvipng", "-T", "tight", "-D", str(dpi),
                          "-bg", "Transparent",
                          "-o", png_file, dvi_file], stdout=flog)
