@@ -10,13 +10,14 @@ To run the program successfully, you need:
 * pygame
 * LaTeX (maybe you need to install separately some packages). The command used is
   * latex
+* Tk
 * Some commands that are probably installed if you have the others:
   * dvipng
   * python2
   
 To install everything needed in Debian/Ubuntu or derivatives, it should be enough:
 
-\# apt-get install python-pygame dvipng texlive-math-extra
+\# apt-get install python-pygame dvipng texlive-math-extra python-tk
 
 Yes, LaTeX will require around 600 MB, but the quality of the equations is incredible too.
 
