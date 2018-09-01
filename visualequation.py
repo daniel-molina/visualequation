@@ -13,7 +13,7 @@ import maineq
 import conversions
 import menu
 
-def display_splash_screen(screen, temp_dir):
+def display_splash_screen(screen, temp_dir, version):
     """ Load a nice pygame badge while the user waits"""
     # Background image
     screen_w = screen.get_width()
@@ -22,7 +22,7 @@ def display_splash_screen(screen, temp_dir):
     screen.blit(badge, ((screen_w-badge.get_width())//2,
                         (screen_h-badge.get_height())//2))
     # Title
-    title = r"\color{white}(\text{Visual Equation})}"
+    title = r"\color{white}(\text{Visual Equation})}_{\text{%s}}" % version
     title_png = conversions.eq2png([title], 270, temp_dir)
     title_im = pygame.image.load(title_png)
     screen.blit(title_im, ((screen_w-title_im.get_width())//2, 30))
@@ -76,6 +76,8 @@ def generate_ops_images(menuitem, png_dir, temp_dir):
 
 def main(*args):
     """ This the main function of the program."""
+
+    version = '0.1.0'
     # Prepare a temporal directory to manage all LaTeX files
     temp_dirpath = tempfile.mkdtemp()
     # Set the path to main directories
@@ -89,7 +91,7 @@ def main(*args):
     clock = pygame.time.Clock()
     screen = pygame.display.set_mode((screen_w, screen_h))
     pygame.display.set_caption("Visual Equation")
-    display_splash_screen(screen, temp_dirpath)
+    display_splash_screen(screen, temp_dirpath, version)
 
     # Generate operators' images if the folder is not found
     if not os.path.exists(program_dir):
