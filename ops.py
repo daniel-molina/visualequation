@@ -1,6 +1,10 @@
+"""
+A module that contains the list of operators used in the menu.
+"""
 from collections import namedtuple
 
-class Op:
+class Op(object):
+    """ Class for LaTeX operator (which has arguments)"""
     def __init__(self, n_args, latex_code):
         self.n_args = n_args
         self.latex_code = latex_code
@@ -100,10 +104,10 @@ COMMON_OPERATORS = [
     ('rsqbracket', ']'),
 ]
 
-ops1 = Ops(ops_l = LOWER_LATIN+UPPER_LATIN+NUMBERS+COMMON_OPERATORS,
-           clickable_size = (30, 35), dpi = 200, menuitem = ['a\, 9'])
+MENUITEM_KEYBOARD = Ops(
+    ops_l=LOWER_LATIN+UPPER_LATIN+NUMBERS+COMMON_OPERATORS,
+    clickable_size=(30, 35), dpi=200, menuitem=[r'a\, 9'])
 
-#TODO: Accepts only latin, represented by other thing than CDot
 #Text = UnaryOperator(r'\text{%s}')
 
 LOWER_GREEK = [
@@ -173,9 +177,10 @@ SYMBOLS1 = [
     ('div', r'\div '),
 ]
 
-ops2 = Ops(ops_l = LOWER_GREEK + UPPER_GREEK + VAR_GREEK + HEBREW + SYMBOLS1,
-           clickable_size = (30, 30), dpi = 200,
-           menuitem = [r'\alpha\, \infty'])
+MENUITEM_GREEK_HEBREW_SYMBOLS1 = Ops(
+    ops_l=LOWER_GREEK + UPPER_GREEK + VAR_GREEK + HEBREW + SYMBOLS1,
+    clickable_size=(30, 30), dpi=200,
+    menuitem=[r'\alpha\, \infty'])
 
 ACCENTS = [
     ('acute', (Op(1, r'\acute{{{0}}}'), [r'\acute{{{\cdot}}}'])),
@@ -196,9 +201,10 @@ ACCENTS = [
     ('wp', r'\wp '),
 ]
 
-ops3 = Ops(ops_l = ACCENTS,
-           clickable_size = (50, 50), dpi = 300,
-           menuitem = [r'\acute{{a}}\;\tilde{{B}}'])
+MENUITEM_ACCENTS = Ops(
+    ops_l=ACCENTS,
+    clickable_size=(50, 50), dpi=300,
+    menuitem=[r'\acute{{a}}\;\tilde{{B}}'])
 
 INDICES = [
     ('super', (Op(2, r'{0}^{{{1}}}'), [r'\cdot^{{\square}}'])),
@@ -226,13 +232,15 @@ INDICES = [
       [r'{{}}^{{\square}}_{{\square}}\cdot^{{\square}}_{{\square}}'])),
 ]
 
-#    ('binomial', (Op(2, r'\binom{{{0}}}{{{1}}}'), [r'\binom{{\cdot}}{{\square}}'])),
+#    ('binomial', (Op(2, r'\binom{{{0}}}{{{1}}}'),
+#     [r'\binom{{\cdot}}{{\square}}'])),
 
-ops4 = Ops(ops_l = INDICES,
-           clickable_size = (60, 70), dpi = 200,
-           menuitem = [r'a^b'])
+MENUITEM_INDICES = Ops(
+    ops_l=INDICES,
+    clickable_size=(60, 70), dpi=200,
+    menuitem=[r'a^b'])
 
-MATH_CONSTRUCTS = [
+MATHCONSTRUCTS = [
     ('frac', Op(2, r'\frac{{{0}}}{{{1}}}')),
     ('prime', (r"'", [r"\boxed{{\phantom{{|}}'}}"])),
     ('sqrt', Op(1, r'\sqrt{{{0}}}')),
@@ -249,14 +257,15 @@ MATH_CONSTRUCTS = [
     ('underbrace2', Op(2, r'\underbrace{{{0}}}_{{{1}}}')),
 ]
 
-ops5 = Ops(ops_l = MATH_CONSTRUCTS,
-           clickable_size = (55, 70), dpi = 200,
-           menuitem = [r'\underbrace{{abc}}'])
+MENUITEM_MATHCONSTRUCTS = Ops(
+    ops_l=MATHCONSTRUCTS,
+    clickable_size=(55, 70), dpi=200,
+    menuitem=[r'\underbrace{{abc}}'])
 
 DELIMITERS = [
     ('parenthesisb', Op(1, r'\left({0}\right)')),
     ('vertb', Op(1, r'\left|{0}\right|')),
-    ('uppervertb',  Op(1, r'\left\|{0}\right\|')),
+    ('uppervertb', Op(1, r'\left\|{0}\right\|')),
     ('bracketsb', Op(1, r'\left\{{{0}\right\}}')),
     ('angleb', Op(1, r'\left\langle{0}\right\rangle')),
     ('floorb', Op(1, r'\left\lfloor{0}\right\rfloor')),
@@ -267,9 +276,10 @@ DELIMITERS = [
     ('ucornerb', Op(1, r'\left\ulcorner{0}\right\urcorner')),
 ]
 
-ops6 = Ops(ops_l = DELIMITERS,
-           clickable_size = (70, 50), dpi = 200,
-           menuitem = [r'\left(ab\right)'])
+MENUITEM_DELIMITERS = Ops(
+    ops_l=DELIMITERS,
+    clickable_size=(70, 50), dpi=200,
+    menuitem=[r'\left(ab\right)'])
 
 FUNCTIONS = [
     ('arccos', r'\arccos '),
@@ -308,14 +318,15 @@ FUNCTIONS = [
 #liminf = Symbol(r'\liminf ')
 #limsup = Symbol(r'\limsup ')
 
-ops7 = Ops(ops_l = FUNCTIONS,
-           clickable_size = (80, 30), dpi = 200,
-           menuitem = [r'f(x)'])
+MENUITEM_FUNCTIONS = Ops(
+    ops_l=FUNCTIONS,
+    clickable_size=(80, 30), dpi=200,
+    menuitem=[r'f(x)'])
 
-VARIABLE_SIZE = [
+VARIABLESIZE = [
     ('sum', r'\sum'),
     ('prod', r'\prod'),
-    ('coprod', r'\coprod'),    
+    ('coprod', r'\coprod'),
     ('int', r'\int'),
     ('iint', r'\iint'),
     ('iiint', r'\iiint'),
@@ -331,11 +342,12 @@ VARIABLE_SIZE = [
     ('bigsqcup', r'\bigsqcup'),
 ]
 
-ops8 = Ops(ops_l = VARIABLE_SIZE,
-           clickable_size = (50, 60), dpi = 150,
-           menuitem = [r'\sum'])
+MENUITEM_VARIABLESIZE = Ops(
+    ops_l=VARIABLESIZE,
+    clickable_size=(50, 60), dpi=150,
+    menuitem=[r'\sum'])
 
-SOME_OPERATORS = [
+SOMEOPERATORS = [
     ('circ', r'\circ '),
     ('bullet', r'\bullet '),
     ('pm', r'\pm '),
@@ -387,12 +399,13 @@ SOME_OPERATORS = [
     ('nsubseteq', r'\nsubseteq '),
     ('nsupseteq', r'\nsupseteq '),
     ('emptyset', r'\emptyset '),
-    ('varnothing', r'\varnothing '),    
+    ('varnothing', r'\varnothing '),
 ]
 
-ops9 = Ops(ops_l = SOME_OPERATORS,
-           clickable_size = (30, 30), dpi = 200,
-           menuitem = [r'\otimes \in'])
+MENUITEM_SOMEOPERATORS = Ops(
+    ops_l=SOMEOPERATORS,
+    clickable_size=(30, 30), dpi=200,
+    menuitem=[r'\otimes \in'])
 
 ARROWS = [
     ('leftarrow', r'\leftarrow '),
@@ -417,28 +430,29 @@ ARROWS = [
     ('nupperleftrightarrow', r'\nLeftrightarrow '),
 ]
 
-ops10 = Ops(ops_l = ARROWS,
-           clickable_size = (40, 30), dpi = 200,
-           menuitem = [r'\rightarrow'])
+MENUITEM_ARROWS = Ops(
+    ops_l=ARROWS,
+    clickable_size=(40, 30), dpi=200,
+    menuitem=[r'\rightarrow'])
 
 MENUITEMS = [
-    ops2,
-    ops3,
-    ops4,
-    ops5,
-    ops6,
-    ops7,
-    ops8,
-    ops9,
-    ops10
+    MENUITEM_GREEK_HEBREW_SYMBOLS1,
+    MENUITEM_ACCENTS,
+    MENUITEM_INDICES,
+    MENUITEM_MATHCONSTRUCTS,
+    MENUITEM_DELIMITERS,
+    MENUITEM_FUNCTIONS,
+    MENUITEM_VARIABLESIZE,
+    MENUITEM_SOMEOPERATORS,
+    MENUITEM_ARROWS
 ]
 
 
 
 # Use these operators in the code, so it will be easy to change their value
 # in next releases
-SelArg = r'\cdots '
-NewArg = r'\square '
-Edit = Op(1, r'\boxed{{{0}}}')
-#Edit = Op(1, r'\left.\textcolor{{blue}}{{{0}}}\right|')
-Juxt = Op(2, r'{0} {1}')
+SELARG = r'\cdots '
+NEWARG = r'\square '
+EDIT = Op(1, r'\boxed{{{0}}}')
+#EDIT = Op(1, r'\left.\textcolor{{blue}}{{{0}}}\right|')
+JUXT = Op(2, r'{0} {1}')

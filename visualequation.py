@@ -67,10 +67,10 @@ def generate_ops_images(menuitem, png_dir, temp_dir):
             elif isinstance(oper[1], basestring):
                 op_eq = [oper[1]]
             elif isinstance(oper[1], ops.Op) and oper[1].n_args == 1:
-                op_eq = [oper[1], ops.SelArg]
+                op_eq = [oper[1], ops.SELARG]
             elif isinstance(oper[1], ops.Op) and oper[1].n_args > 1:
-                op_eq = [oper[1], ops.SelArg] + \
-                    [ops.NewArg]*(oper[1].n_args - 1)
+                op_eq = [oper[1], ops.SELARG] + \
+                    [ops.NEWARG]*(oper[1].n_args - 1)
             # Create and save image of that op
             conversions.eq2png(op_eq, menuitem.dpi, temp_dir, filename)
 
@@ -110,7 +110,7 @@ def main(*args):
         generate_ops_images(menuitem, ops_dir, temp_dirpath)
 
     # Prepare the equation to edit which will be showed by default
-    init_eq = [ops.NewArg]
+    init_eq = [ops.NEWARG]
     screen_center = (screen_w//2, screen_h//2)
     main_eqsprite = maineq.EditableEqSprite(init_eq, screen_center,
                                             temp_dirpath)
@@ -131,9 +131,9 @@ def main(*args):
                 for op_sprite in mainmenu.active_ops:
                     if op_sprite.mousepointed():
                         if pygame.key.get_mods() & KMOD_SHIFT:
-                            main_eqsprite.insert_substituting(op_sprite.OP)
+                            main_eqsprite.insert_substituting(op_sprite.op)
                         else:
-                            main_eqsprite.insert(op_sprite.OP)
+                            main_eqsprite.insert(op_sprite.op)
                 if main_eqsprite.mousepointed():
                     main_eqsprite.next_sel()
             elif event.type == KEYDOWN:
@@ -226,7 +226,7 @@ def main(*args):
                 elif event.key == K_SPACE:
                     main_eqsprite.insert(r'\,')
                 elif event.key == K_TAB:
-                    main_eqsprite.left_NewArg()
+                    main_eqsprite.left_NEWARG()
                 elif event.key == K_BACKSPACE or event.key == K_DELETE:
                     main_eqsprite.remove_sel()
 

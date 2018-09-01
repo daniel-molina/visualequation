@@ -1,3 +1,7 @@
+"""
+Module to transform equations to latex code and getting information from or
+replacing equation blocks.
+"""
 import ops
 
 def eqblock2latex(eq, index):
@@ -6,14 +10,15 @@ def eqblock2latex(eq, index):
     A block is symbol or str, a unary operator with its first argument or
     a binary operator and their two arguments.
     Our equations should be a single block (with sub-blocks),
-    usings as many Prod's at the begining as necessary.        
+    usings as many Prod's at the begining as necessary.
     """
     def block2latex(index):
+        """ Incredible recursive function that DOES the real job"""
         if isinstance(eq[index], ops.Op):
             # I have to find n_arg independent blocks for this operator
             index_of_arg = index+1
             latex_args = ()
-            for _ in range (eq[index].n_args):
+            for _ in range(eq[index].n_args):
                 latex_arg, index_of_arg = block2latex(index_of_arg)
                 latex_args += (latex_arg,)
             return (eq[index](*latex_args), index_of_arg)
@@ -33,10 +38,11 @@ def nextblockindex(eq, index):
     being a valid index or not (when it is passed an ending block of eq).
     """
     def block2nextindex(index):
+        """ Simplification of the recursive nested function block2latex."""
         if isinstance(eq[index], ops.Op):
             # I have to find n_arg independent blocks for this operator
             index_of_arg = index+1
-            for _ in range (eq[index].n_args):
+            for _ in range(eq[index].n_args):
                 index_of_arg = block2nextindex(index_of_arg)
             return index_of_arg
         elif isinstance(eq[index], basestring):
@@ -63,16 +69,16 @@ def eq2sel(eq, index):
     of the equation with the selection being boxed.
     """
     sel = list(eq)
-    sel.insert(index, ops.Edit)
+    sel.insert(index, ops.EDIT)
     return sel
 
-def appendbyJuxt(eq, start_index, eqblock):
+def appendbyJUXT(eq, start_index, eqblock):
     """
     Append eqblock after the block which starts at start_index by using Juxt.
     Returns the begining index of inserted eqbox.
     """
     end_index = nextblockindex(eq, start_index)
-    eq[start_index:end_index] = [ops.Juxt] + eq[start_index:end_index] \
+    eq[start_index:end_index] = [ops.JUXT] + eq[start_index:end_index] \
                                 + eqblock
     return end_index+1
 
@@ -85,7 +91,7 @@ def replaceby(eq, start_index, eqblock):
     eq[start_index:end_index] = eqblock
     return start_index + len(eqblock) + 1
 
-def is_arg_of_Juxt(eq, check_index):
+def is_arg_of_JUXT(eq, check_index):
     """
     Returns a tuple of three elements:
     The first element says whether check_index is an argument of a Juxt op.
@@ -95,7 +101,7 @@ def is_arg_of_Juxt(eq, check_index):
     start_index = 0
     try:
         while True:
-            Juxt_index = eq.index(ops.Juxt, start_index)
+            Juxt_index = eq.index(ops.JUXT, start_index)
             arg2index = nextblockindex(eq, Juxt_index+1)
             if Juxt_index + 1 == check_index:
                 return True, Juxt_index, arg2index
