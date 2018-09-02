@@ -15,6 +15,14 @@ class Op(object):
 
 Ops = namedtuple('Ops', 'menuitem ops_l clickable_size dpi')
 
+# Use these operators in the code, so it will be easy to change their value
+# in next releases
+SELARG = r'\cdots '
+NEWARG = r'\square '
+EDIT = Op(1, r'\boxed{{{0}}}')
+#EDIT = Op(1, r'\left.\textcolor{{blue}}{{{0}}}\right|')
+JUXT = Op(2, r'{0} {1}')
+
 LOWER_LATIN = [
     ('a', 'a'),
     ('b', 'b'),
@@ -108,8 +116,6 @@ COMMON_OPERATORS = [
 MENUITEM_KEYBOARD = Ops(
     ops_l=LOWER_LATIN+UPPER_LATIN+NUMBERS+COMMON_OPERATORS,
     clickable_size=(30, 35), dpi=200, menuitem=[r'a\, 9'])
-
-#Text = UnaryOperator(r'\text{%s}')
 
 LOWER_GREEK = [
     ('alpha', r'\alpha '),
@@ -243,7 +249,6 @@ MENUITEM_INDICES = Ops(
 
 MATHCONSTRUCTS = [
     ('frac', Op(2, r'\frac{{{0}}}{{{1}}}')),
-    ('prime', (r"'", [r"\boxed{{\phantom{{|}}'}}"])),
     ('sqrt', Op(1, r'\sqrt{{{0}}}')),
     ('nsqrt', Op(2, r'\sqrt[{1}]{{{0}}}')),
     ('overline', Op(1, r'\overline{{{0}}}')),
@@ -436,51 +441,6 @@ MENUITEM_ARROWS = Ops(
     clickable_size=(40, 30), dpi=200,
     menuitem=[r'\rightarrow'])
 
-# Use these operators in the code, so it will be easy to change their value
-# in next releases
-SELARG = r'\cdots '
-NEWARG = r'\square '
-EDIT = Op(1, r'\boxed{{{0}}}')
-#EDIT = Op(1, r'\left.\textcolor{{blue}}{{{0}}}\right|')
-JUXT = Op(2, r'{0} {1}')
-
-def matrix():
-    root = Tkinter.Tk()
-    n_rows_tk = Tkinter.StringVar()
-    label1 = Tkinter.Label(root, text='Number of rows').grid(row=0)
-    n_columns_tk = Tkinter.StringVar()
-    label2 = Tkinter.Label(root, text='Number of columns').grid(row=1)
-    entry1 = Tkinter.Entry(root, textvariable=n_rows_tk)
-    entry2 = Tkinter.Entry(root, textvariable=n_columns_tk)
-    entry1.grid(row=0, column=1)
-    entry2.grid(row=1, column=1)
-    entry1.focus_set()
-    Tkinter.Button(root, text="Accept", command=root.quit).grid(row=3,
-                                                                column=1)
-    # Avoid that the user does not introduce something
-    def disable_event():
-        pass
-    root.protocol("WM_DELETE_WINDOW", disable_event)
-    exit_cond = False
-    while not exit_cond:
-        root.mainloop()
-        try:
-            n_rows = int(n_rows_tk.get())
-            n_columns = int(n_columns_tk.get())
-            assert(n_rows>0)
-            assert(n_columns>0)
-            exit_cond = True
-        except ValueError:
-            pass
-        except AssertionError:
-            pass
-
-    root.destroy()
-    n_args = n_rows*n_columns
-    row_code = r'{}' + r'&{}'*(n_columns-1) + r'\\'
-    latex_code = r'\begin{{matrix}}' + row_code*n_rows + r'\end{{matrix}}'
-    return Op(n_args, latex_code)
-
 def text():
     root = Tkinter.Tk()
     text_tk = Tkinter.StringVar()
@@ -488,7 +448,7 @@ def text():
     entry = Tkinter.Entry(root, textvariable=text_tk)
     entry.grid(row=0, column=1)
     entry.focus_set()
-    Tkinter.Button(root, text="Accept", command=root.destroy).grid(row=2,
+    Tkinter.Button(root, text="Accept", command=root.destroy).grid(row=1,
                                                                    column=1)
     # Avoid that the user does not introduce something
     def disable_event():
@@ -507,7 +467,7 @@ def special_format(latex_command, label_text, only_capital=False):
         entry.grid(row=0, column=1)
         entry.focus_set()
         Tkinter.Button(root, text="Accept",
-                       command=root.quit).grid(row=2, column=1)
+                       command=root.quit).grid(row=1, column=1)
         # Avoid that the user does not introduce something
         def disable_event():
             pass
@@ -529,11 +489,7 @@ def special_format(latex_command, label_text, only_capital=False):
 
     return fun
     
-
-USERINPUT = [
-    ('matrix', (matrix, 
-                [r"\begin{smallmatrix}\cdots&\square&\square\\" \
-                 + r"\square&\square&\square\end{smallmatrix}"])),
+TEXT = [
     ('text', (text, [r"\text{Text}"])),
     ('mathcal', (special_format(r'\mathcal', 'Caligraphic', True),
                  [r"\mathcal{ABC}"])),
@@ -545,12 +501,92 @@ USERINPUT = [
                  [r"\mathsf{Ab1}"])),
     ('mathbf', (special_format(r'\mathbf', 'Mathbf'),
                  [r"\mathbf{Ab1}"])),
-
 ]
 
-MENUITEM_USERINPUT = Ops(
-    ops_l=USERINPUT,
+MENUITEM_TEXT = Ops(
+    ops_l=TEXT,
     clickable_size=(80, 50), dpi=200,
+    menuitem=[r'\mathbb{R}\,\text{if}'])
+
+def matrix():
+    root = Tkinter.Tk()
+    n_rows_tk = Tkinter.StringVar()
+    label1 = Tkinter.Label(root, text='Number of rows').grid(row=0)
+    n_columns_tk = Tkinter.StringVar()
+    label2 = Tkinter.Label(root, text='Number of columns').grid(row=1)
+    entry1 = Tkinter.Entry(root, textvariable=n_rows_tk)
+    entry2 = Tkinter.Entry(root, textvariable=n_columns_tk)
+    entry1.grid(row=0, column=1)
+    entry2.grid(row=1, column=1)
+    entry1.focus_set()
+    Tkinter.Button(root, text="Accept", command=root.quit).grid(row=2,
+                                                                column=1)
+    # Avoid that the user does not introduce something
+    def disable_event():
+        pass
+    root.protocol("WM_DELETE_WINDOW", disable_event)
+    exit_cond = False
+    while not exit_cond:
+        root.mainloop()
+        try:
+            n_rows = int(n_rows_tk.get())
+            n_columns = int(n_columns_tk.get())
+            assert(n_rows > 0)
+            assert(n_columns > 0)
+            exit_cond = True
+        except ValueError:
+            pass
+        except AssertionError:
+            pass
+
+    root.destroy()
+    n_args = n_rows*n_columns
+    row_code = r'{}' + r'&{}'*(n_columns-1) + r'\\'
+    latex_code = r'\begin{{matrix}}' + row_code*n_rows + r'\end{{matrix}}'
+    return Op(n_args, latex_code)
+
+def cases():
+    root = Tkinter.Tk()
+    n_cases_tk = Tkinter.StringVar()
+    label = Tkinter.Label(root, text='Number of cases').grid(row=0)
+    entry = Tkinter.Entry(root, textvariable=n_cases_tk)
+    entry.grid(row=0, column=1)
+    entry.focus_set()
+    Tkinter.Button(root, text="Accept", command=root.quit).grid(row=1,
+                                                                column=1)
+    # Avoid that the user does not introduce something
+    def disable_event():
+        pass
+    root.protocol("WM_DELETE_WINDOW", disable_event)
+    exit_cond = False
+    while not exit_cond:
+        root.mainloop()
+        try:
+            n_cases = int(n_cases_tk.get())
+            assert(n_cases > 0)
+            exit_cond = True
+        except ValueError:
+            pass
+        except AssertionError:
+            pass
+
+    root.destroy()
+    n_args = n_cases*2
+    case_code = r'{}&{}\\'
+    latex_code = r'\begin{{cases}}' + case_code*n_cases + r'\end{{cases}}'
+    return Op(n_args, latex_code)
+
+MANYLINES = [
+    ('matrix', (matrix, 
+                [r"\begin{matrix}\cdots&\square&\square\\" \
+                 + r"\square&\square&\square\end{matrix}"])),
+    ('cases', (cases,
+               [r'\begin{cases}a &\text{if }x>0\\b&\text{if }x<0\end{cases}']))
+]
+
+MENUITEM_MANYLINES = Ops(
+    ops_l=MANYLINES,
+    clickable_size=(190, 90), dpi=200,
     menuitem=[r'\begin{smallmatrix}a&b\\c&d\end{smallmatrix}'])
 
 MENUITEMS = [
@@ -563,5 +599,6 @@ MENUITEMS = [
     MENUITEM_VARIABLESIZE,
     MENUITEM_SOMEOPERATORS,
     MENUITEM_ARROWS,
-    MENUITEM_USERINPUT,
+    MENUITEM_TEXT,
+    MENUITEM_MANYLINES,
 ]
