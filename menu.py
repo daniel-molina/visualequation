@@ -74,7 +74,8 @@ class OpSprite(pygame.sprite.Sprite):
     """
     def __init__(self, op, center_pos, clickable_size, ops_dir):
         pygame.sprite.Sprite.__init__(self)
-        # Cases: (filename, (str|Op, eq)) or, simply, (filename, str|Op)
+        # Cases: 1. (filename, (str|Op|function, eq))
+        # or, simply, 2. (filename, str|Op)
         if isinstance(op[1], tuple):
             self.op = op[1][0]
         elif isinstance(op[1], (ops.Op, basestring)):

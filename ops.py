@@ -1,3 +1,4 @@
+import Tkinter
 """
 A module that contains the list of operators used in the menu.
 """
@@ -435,6 +436,123 @@ MENUITEM_ARROWS = Ops(
     clickable_size=(40, 30), dpi=200,
     menuitem=[r'\rightarrow'])
 
+# Use these operators in the code, so it will be easy to change their value
+# in next releases
+SELARG = r'\cdots '
+NEWARG = r'\square '
+EDIT = Op(1, r'\boxed{{{0}}}')
+#EDIT = Op(1, r'\left.\textcolor{{blue}}{{{0}}}\right|')
+JUXT = Op(2, r'{0} {1}')
+
+def matrix():
+    root = Tkinter.Tk()
+    n_rows_tk = Tkinter.StringVar()
+    label1 = Tkinter.Label(root, text='Number of rows').grid(row=0)
+    n_columns_tk = Tkinter.StringVar()
+    label2 = Tkinter.Label(root, text='Number of columns').grid(row=1)
+    entry1 = Tkinter.Entry(root, textvariable=n_rows_tk)
+    entry2 = Tkinter.Entry(root, textvariable=n_columns_tk)
+    entry1.grid(row=0, column=1)
+    entry2.grid(row=1, column=1)
+    entry1.focus_set()
+    Tkinter.Button(root, text="Accept", command=root.quit).grid(row=3,
+                                                                column=1)
+    # Avoid that the user does not introduce something
+    def disable_event():
+        pass
+    root.protocol("WM_DELETE_WINDOW", disable_event)
+    exit_cond = False
+    while not exit_cond:
+        root.mainloop()
+        try:
+            n_rows = int(n_rows_tk.get())
+            n_columns = int(n_columns_tk.get())
+            assert(n_rows>0)
+            assert(n_columns>0)
+            exit_cond = True
+        except ValueError:
+            pass
+        except AssertionError:
+            pass
+
+    root.destroy()
+    n_args = n_rows*n_columns
+    row_code = r'{}' + r'&{}'*(n_columns-1) + r'\\'
+    latex_code = r'\begin{{matrix}}' + row_code*n_rows + r'\end{{matrix}}'
+    return Op(n_args, latex_code)
+
+def text():
+    root = Tkinter.Tk()
+    text_tk = Tkinter.StringVar()
+    label = Tkinter.Label(root, text='Text').grid(row=0)
+    entry = Tkinter.Entry(root, textvariable=text_tk)
+    entry.grid(row=0, column=1)
+    entry.focus_set()
+    Tkinter.Button(root, text="Accept", command=root.destroy).grid(row=2,
+                                                                   column=1)
+    # Avoid that the user does not introduce something
+    def disable_event():
+        pass
+    root.protocol("WM_DELETE_WINDOW", disable_event)
+    root.mainloop()
+    return r'\text{{' + text_tk.get() + '}}'
+
+
+def special_format(latex_command, label_text, only_capital=False):
+    def fun():
+        root = Tkinter.Tk()
+        text_tk = Tkinter.StringVar()
+        label = Tkinter.Label(root, text=label_text).grid(row=0)
+        entry = Tkinter.Entry(root, textvariable=text_tk)
+        entry.grid(row=0, column=1)
+        entry.focus_set()
+        Tkinter.Button(root, text="Accept",
+                       command=root.quit).grid(row=2, column=1)
+        # Avoid that the user does not introduce something
+        def disable_event():
+            pass
+        root.protocol("WM_DELETE_WINDOW", disable_event)
+        exit_cond = False
+        while not exit_cond:
+            root.mainloop()
+            text = text_tk.get()
+            if(only_capital):
+                if text.isalpha():
+                    text = text.upper()
+                    exit_cond = True
+            else:
+                if text.isalnum():
+                    exit_cond = True
+
+        root.destroy()
+        return latex_command + r'{{' + text + '}}'
+
+    return fun
+    
+
+USERINPUT = [
+    ('matrix', (matrix, 
+                [r"\begin{smallmatrix}\cdots&\square&\square\\" \
+                 + r"\square&\square&\square\end{smallmatrix}"])),
+    ('text', (text, [r"\text{Text}"])),
+    ('mathcal', (special_format(r'\mathcal', 'Caligraphic', True),
+                 [r"\mathcal{ABC}"])),
+    ('mathbb', (special_format(r'\mathbb', 'Mathbb', True),
+                 [r"\mathbb{ABC}"])),
+    ('mathfrak', (special_format(r'\mathfrak', 'Mathfrak'),
+                  [r"\mathfrak{Ab1}"])),
+    ('mathsf', (special_format(r'\mathst', 'Sans serif'),
+                 [r"\mathsf{Ab1}"])),
+    ('mathbf', (special_format(r'\mathbf', 'Mathbf'),
+                 [r"\mathbf{Ab1}"])),
+
+]
+
+MENUITEM_USERINPUT = Ops(
+    ops_l=USERINPUT,
+    clickable_size=(80, 50), dpi=200,
+    menuitem=[r'\begin{smallmatrix}a&b\\c&d\end{smallmatrix}'])
+
 MENUITEMS = [
     MENUITEM_GREEK_HEBREW_SYMBOLS1,
     MENUITEM_ACCENTS,
@@ -444,15 +562,6 @@ MENUITEMS = [
     MENUITEM_FUNCTIONS,
     MENUITEM_VARIABLESIZE,
     MENUITEM_SOMEOPERATORS,
-    MENUITEM_ARROWS
+    MENUITEM_ARROWS,
+    MENUITEM_USERINPUT,
 ]
-
-
-
-# Use these operators in the code, so it will be easy to change their value
-# in next releases
-SELARG = r'\cdots '
-NEWARG = r'\square '
-EDIT = Op(1, r'\boxed{{{0}}}')
-#EDIT = Op(1, r'\left.\textcolor{{blue}}{{{0}}}\right|')
-JUXT = Op(2, r'{0} {1}')

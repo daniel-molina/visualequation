@@ -1,4 +1,6 @@
 """ The module that manages the editing equation. """
+import types
+
 import pygame
 import eqtools
 import conversions
@@ -92,7 +94,7 @@ class EditableEqSprite(pygame.sprite.Sprite):
 
         self._set_sel()
 
-    def insert_substituting(self, op):
+    def insert_substituting(self, oper):
         """
         Given an operator, the equation block pointed by self.sel_index
         is replaced by that operator and the selection is used as follows:
@@ -110,44 +112,68 @@ class EditableEqSprite(pygame.sprite.Sprite):
         changed to the second argument of the operator because the user
         probably will want to change that argument.
         """
-        # Replace according to the operator
-        if isinstance(op, basestring):
-            eqtools.replaceby(self.eq, self.sel_index, [op])
-        elif isinstance(op, ops.Op) and op.n_args == 1:
-            self.eq.insert(self.sel_index, op)
-        elif isinstance(op, ops.Op) and op.n_args > 1:
-            index_end_arg1 = eqtools.nextblockindex(self.eq, self.sel_index)
-            self.eq[self.sel_index:index_end_arg1] = [op] \
+        def replace_op_in_eq(op):
+            """
+            Given an operator, it is replaced in self.eq according to
+            the rules of above. It also modify self.sel_index to point to
+            the smartest block.
+            """
+            if isinstance(op, basestring):
+                eqtools.replaceby(self.eq, self.sel_index, [op])
+            elif isinstance(op, ops.Op) and op.n_args == 1:
+                self.eq.insert(self.sel_index, op)
+            elif isinstance(op, ops.Op) and op.n_args > 1:
+                index_end_arg1 = eqtools.nextblockindex(self.eq, self.sel_index)
+                self.eq[self.sel_index:index_end_arg1] = [op] \
                                     + self.eq[self.sel_index:index_end_arg1] \
                                     + [ops.NEWARG] * (op.n_args-1)
-            self.sel_index = index_end_arg1+1
+                self.sel_index = index_end_arg1+1
+            else:
+                raise ValueError('Unknown operator passed.')
+
+        if isinstance(oper, types.FunctionType):
+            replace_op_in_eq(oper())
         else:
-            raise ValueError('Unknown operator passed.')
+            replace_op_in_eq(oper)
+
         self._set_sel()
         self.add_eq2hist()
 
-    def insert(self, op):
+    def insert(self, oper):
         """
         Insert the operator next to selection by Juxt.
         If operator has one or more args, all of them are set to NewArg.
         """
-        if isinstance(op, basestring):
-            if self.eq[self.sel_index] == ops.NEWARG:
-                self.eq[self.sel_index] = op
+        def replace_op_in_eq(op):
+            """
+            Given an operator, it is replaced in self.eq according to
+            the rules of above. It also modify self.sel_index to point to
+            the smartest block.
+            """            
+            if isinstance(op, basestring):
+                if self.eq[self.sel_index] == ops.NEWARG:
+                    self.eq[self.sel_index] = op
+                else:
+                    self.sel_index = eqtools.appendbyJUXT(self.eq,
+                                                          self.sel_index,
+                                                          [op])
+            elif isinstance(op, ops.Op):
+                opeq = [op] + [ops.NEWARG]*op.n_args
+                if self.eq[self.sel_index] == ops.NEWARG:
+                    self.eq[self.sel_index:self.sel_index+1] = opeq
+                    self.sel_index += 1
+                else:
+                    self.sel_index = 1 + eqtools.appendbyJUXT(self.eq,
+                                                              self.sel_index,
+                                                              opeq)
             else:
-                self.sel_index = eqtools.appendbyJUXT(self.eq, self.sel_index,
-                                                    [op])
-        elif isinstance(op, ops.Op):
-            opeq = [op] + [ops.NEWARG]*op.n_args
-            if self.eq[self.sel_index] == ops.NEWARG:
-                self.eq[self.sel_index:self.sel_index+1] = opeq
-                self.sel_index += 1
-            else:
-                self.sel_index = 1 + eqtools.appendbyJUXT(self.eq,
-                                                        self.sel_index,
-                                                        opeq)
+                raise ValueError('Unknown type of operator %s' % op)
+
+        if isinstance(oper, types.FunctionType):
+            replace_op_in_eq(oper())
         else:
-            raise ValueError('Unknown type of operator %s' % op)
+            replace_op_in_eq(oper)
+
         self._set_sel()
         self.add_eq2hist()
 
