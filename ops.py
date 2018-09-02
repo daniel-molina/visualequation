@@ -266,7 +266,7 @@ MATHCONSTRUCTS = [
 MENUITEM_MATHCONSTRUCTS = Ops(
     ops_l=MATHCONSTRUCTS,
     clickable_size=(55, 70), dpi=200,
-    menuitem=[r'\underbrace{{abc}}'])
+    menuitem=[r'\underbrace{{abc}}'])    
 
 DELIMITERS = [
     ('parenthesisb', Op(1, r'\left({0}\right)')),
@@ -448,6 +448,9 @@ def text():
     entry = Tkinter.Entry(root, textvariable=text_tk)
     entry.grid(row=0, column=1)
     entry.focus_set()
+    def return_destroy(event):
+        root.destroy()
+    root.bind('<Return>', return_destroy)
     Tkinter.Button(root, text="Accept", command=root.destroy).grid(row=1,
                                                                    column=1)
     # Avoid that the user does not introduce something
@@ -468,6 +471,9 @@ def special_format(latex_command, label_text, only_capital=False):
         entry.focus_set()
         Tkinter.Button(root, text="Accept",
                        command=root.quit).grid(row=1, column=1)
+        def return_quit(event):
+            root.quit()
+        root.bind('<Return>', return_quit)
         # Avoid that the user does not introduce something
         def disable_event():
             pass
@@ -521,6 +527,9 @@ def matrix():
     entry1.focus_set()
     Tkinter.Button(root, text="Accept", command=root.quit).grid(row=2,
                                                                 column=1)
+    def return_quit(event):
+        root.quit()
+    root.bind('<Return>', return_quit)
     # Avoid that the user does not introduce something
     def disable_event():
         pass
@@ -554,6 +563,9 @@ def cases():
     entry.focus_set()
     Tkinter.Button(root, text="Accept", command=root.quit).grid(row=1,
                                                                 column=1)
+    def return_quit(event):
+        root.quit()
+    root.bind('<Return>', return_quit)
     # Avoid that the user does not introduce something
     def disable_event():
         pass
