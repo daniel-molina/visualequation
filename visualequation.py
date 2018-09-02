@@ -86,7 +86,7 @@ def draw_screen(screen, maineq, mainmenu):
 def main(*args):
     """ This the main function of the program."""
 
-    version = '0.1.1'
+    version = '0.1.2'
     # Prepare a temporal directory to manage all LaTeX files
     temp_dirpath = tempfile.mkdtemp()
     # Set the path to main directories
