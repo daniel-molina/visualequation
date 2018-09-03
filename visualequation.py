@@ -8,6 +8,7 @@ import os
 import pygame
 from pygame.locals import *
 
+import dirs
 import ops
 import maineq
 import conversions
@@ -52,14 +53,14 @@ def print_delay_message(screen, current, total, temp_dir):
     screen.blit(message_im, message_pos)
     pygame.display.flip()
 
-def generate_ops_images(menuitem, png_dir, temp_dir):
+def generate_ops_images(menuitem, temp_dir):
     """
     Generate the png of the operators and place them in a given directory.
     A temporal directory must be passed too, where auxiliary files are
     generated.
     """
     for oper in menuitem.ops_l:
-        filename = os.path.join(png_dir, oper[0] + ".png")
+        filename = os.path.join(dirs.OPS_DIR, oper[0] + ".png")
         if not os.path.exists(filename):
             # Determine the appearance of op
             if isinstance(oper[1], tuple):
@@ -89,9 +90,6 @@ def main(*args):
     version = '0.1.2'
     # Prepare a temporal directory to manage all LaTeX files
     temp_dirpath = tempfile.mkdtemp()
-    # Set the path to main directories
-    program_dir = os.path.join(os.path.expanduser('~'), '.visualequation')
-    ops_dir = os.path.join(program_dir, 'data')
 
     # Prepare pygame
     screen_w = 800
@@ -103,10 +101,10 @@ def main(*args):
     display_splash_screen(screen, temp_dirpath, version)
 
     # Generate operators' images if the folder is not found
-    if not os.path.exists(program_dir):
-        os.makedirs(program_dir)
-    if not os.path.exists(ops_dir):
-        os.makedirs(ops_dir)
+    if not os.path.exists(dirs.PROGRAM_DIR):
+        os.makedirs(dirs.PROGRAM_DIR)
+    if not os.path.exists(dirs.OPS_DIR):
+        os.makedirs(dirs.OPS_DIR)
         print_message = True
     else:
         print_message = False
@@ -116,7 +114,16 @@ def main(*args):
             # Print message about the delay by creating operators' images
             print_delay_message(screen, index+1, len(ops.MENUITEMS),
                                 temp_dirpath)
-        generate_ops_images(menuitem, ops_dir, temp_dirpath)
+        generate_ops_images(menuitem, temp_dirpath)
+
+    # HACK: Create additional images used by Tk
+    for filename_base, eq in ops.ADDITIONAL_IMAGES:
+        filename = os.path.join(dirs.OPS_DIR, filename_base + ".png")
+        if not os.path.exists(filename):
+            if isinstance(eq, tuple):
+                conversions.eq2png(eq[1], 200, temp_dirpath, filename)
+            else:
+                conversions.eq2png(eq, 200, temp_dirpath, filename)
 
     # Prepare the equation to edit which will be showed by default
     init_eq = [ops.NEWARG]
@@ -125,7 +132,7 @@ def main(*args):
                                             temp_dirpath)
 
     # Create the menu
-    mainmenu = menu.Menu(screen_w, screen_h, ops_dir, temp_dirpath)
+    mainmenu = menu.Menu(screen_w, screen_h, temp_dirpath)
 
     # Pygame loop
     ongoing = True

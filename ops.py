@@ -1,8 +1,12 @@
-import Tkinter
 """
 A module that contains the list of operators used in the menu.
 """
+import os
 from collections import namedtuple
+
+import Tkinter
+
+import dirs
 
 class Op(object):
     """ Class for LaTeX operator (which has arguments)"""
@@ -22,6 +26,9 @@ NEWARG = r'\square '
 EDIT = Op(1, r'\boxed{{{0}}}')
 #EDIT = Op(1, r'\left.\textcolor{{blue}}{{{0}}}\right|')
 JUXT = Op(2, r'{0} {1}')
+
+MENUITEMS = []
+ADDITIONAL_IMAGES = []
 
 LOWER_LATIN = [
     ('a', 'a'),
@@ -184,10 +191,10 @@ SYMBOLS1 = [
     ('div', r'\div '),
 ]
 
-MENUITEM_GREEK_HEBREW_SYMBOLS1 = Ops(
+MENUITEMS.append(Ops(
     ops_l=LOWER_GREEK + UPPER_GREEK + VAR_GREEK + HEBREW + SYMBOLS1,
     clickable_size=(30, 30), dpi=200,
-    menuitem=[r'\alpha\, \infty'])
+    menuitem=[r'\alpha\, \infty']))
 
 ACCENTS = [
     ('acute', (Op(1, r'\acute{{{0}}}'), [r'\acute{{{\cdot}}}'])),
@@ -208,10 +215,10 @@ ACCENTS = [
     ('wp', r'\wp '),
 ]
 
-MENUITEM_ACCENTS = Ops(
+MENUITEMS.append(Ops(
     ops_l=ACCENTS,
     clickable_size=(50, 50), dpi=300,
-    menuitem=[r'\acute{{a}}\;\tilde{{B}}'])
+    menuitem=[r'\acute{{a}}\;\tilde{{B}}']))
 
 INDICES = [
     ('super', (Op(2, r'{0}^{{{1}}}'), [r'\cdot^{{\square}}'])),
@@ -242,10 +249,10 @@ INDICES = [
 #    ('binomial', (Op(2, r'\binom{{{0}}}{{{1}}}'),
 #     [r'\binom{{\cdot}}{{\square}}'])),
 
-MENUITEM_INDICES = Ops(
+MENUITEMS.append(Ops(
     ops_l=INDICES,
     clickable_size=(60, 70), dpi=200,
-    menuitem=[r'a^b'])
+    menuitem=[r'a^b']))
 
 MATHCONSTRUCTS = [
     ('frac', Op(2, r'\frac{{{0}}}{{{1}}}')),
@@ -263,10 +270,81 @@ MATHCONSTRUCTS = [
     ('underbrace2', Op(2, r'\underbrace{{{0}}}_{{{1}}}')),
 ]
 
-MENUITEM_MATHCONSTRUCTS = Ops(
+MENUITEMS.append(Ops(
     ops_l=MATHCONSTRUCTS,
     clickable_size=(55, 70), dpi=200,
-    menuitem=[r'\underbrace{{abc}}'])    
+    menuitem=[r'\underbrace{{abc}}']))
+
+SINGLEDELIMITERS = [
+    ('lparenthesis', '('),
+    ('rparenthesis', ')'),
+    ('vert', '|'),
+    ('uppervert', r'\| '),
+    ('lbracket', r'\{{ '),
+    ('rbracket', r'\}} '),
+    ('langle', r'\langle '),
+    ('rangle', r'\rangle '),
+    ('lfloor', r'\lfloor '),
+    ('rfloor', r'\rfloor '),
+    ('lceil', r'\lceil '),
+    ('rceil', r'\rceil '),
+    ('slash', '/'),
+    ('backslash', r'\backslash '),
+    ('lsqbracket', '['),
+    ('rsqbracket', ']'),
+    ('llcorner', r'\llcorner '),
+    ('lrcorner', r'\lrcorner '),
+    ('ulcorner', r'\ulcorner '),
+    ('urcorner', r'\urcorner '),
+    ('nodelimiter', (r'. ', [' ']))
+]
+
+ADDITIONAL_IMAGES += SINGLEDELIMITERS
+
+def free_delimiters():
+    def get_delimiter(delimiter):
+        root = Tkinter.Tk()
+        label = Tkinter.Label(root,
+                              text='Choose ' + str(delimiter) + ' delimiter'
+                          ).pack(side=Tkinter.TOP)
+        im_dict = {}
+        for f_base, second in SINGLEDELIMITERS:
+            # Create the image
+            if isinstance(second, tuple):
+                delim = second[0]
+            else:
+                delim = second
+            im_dict[f_base] = Tkinter.PhotoImage(
+                file=os.path.join(dirs.OPS_DIR, f_base + '.png'))
+            # Create the button with that image
+            Tkinter.Button(
+                # Trick to avoid the closure: var=var
+                root, command=lambda delim=delim, root=root: delimiter.set(
+                    delim, root),
+                image=im_dict[f_base], width='30', height='40'
+            ).pack(side=Tkinter.LEFT)
+
+        def disable_event():
+            pass
+        root.protocol("WM_DELETE_WINDOW", disable_event)
+        root.mainloop()
+
+    class latex_code(object):
+        def __init__(self, part):
+            self.part = part
+            self.command = '\\' + part
+        def set(self, delim, root):
+            self.command += delim
+            root.destroy()
+        def get(self):
+            return self.command
+        def __str__(self):
+            return self.part
+    left = latex_code(r'left')
+    right = latex_code(r'right')
+    get_delimiter(left)
+    get_delimiter(right)
+    return Op(1, left.get() + r'{0}' + right.get())    
 
 DELIMITERS = [
     ('parenthesisb', Op(1, r'\left({0}\right)')),
@@ -280,12 +358,13 @@ DELIMITERS = [
     ('sqbracketsb', Op(1, r'\left[{0}\right]')),
     ('lcornerb', Op(1, r'\left\llcorner{0}\right\lrcorner')),
     ('ucornerb', Op(1, r'\left\ulcorner{0}\right\urcorner')),
+    ('freedelimiters', (free_delimiters, [r'?\cdots ?']))
 ]
 
-MENUITEM_DELIMITERS = Ops(
+MENUITEMS.append(Ops(
     ops_l=DELIMITERS,
     clickable_size=(70, 50), dpi=200,
-    menuitem=[r'\left(ab\right)'])
+    menuitem=[r'\left(ab\right)']))
 
 FUNCTIONS = [
     ('arccos', r'\arccos '),
@@ -324,10 +403,10 @@ FUNCTIONS = [
 #liminf = Symbol(r'\liminf ')
 #limsup = Symbol(r'\limsup ')
 
-MENUITEM_FUNCTIONS = Ops(
+MENUITEMS.append(Ops(
     ops_l=FUNCTIONS,
     clickable_size=(80, 30), dpi=200,
-    menuitem=[r'f(x)'])
+    menuitem=[r'f(x)']))
 
 VARIABLESIZE = [
     ('sum', r'\sum'),
@@ -348,10 +427,10 @@ VARIABLESIZE = [
     ('bigsqcup', r'\bigsqcup'),
 ]
 
-MENUITEM_VARIABLESIZE = Ops(
+MENUITEMS.append(Ops(
     ops_l=VARIABLESIZE,
     clickable_size=(50, 60), dpi=150,
-    menuitem=[r'\sum'])
+    menuitem=[r'\sum']))
 
 SOMEOPERATORS = [
     ('circ', r'\circ '),
@@ -408,10 +487,10 @@ SOMEOPERATORS = [
     ('varnothing', r'\varnothing '),
 ]
 
-MENUITEM_SOMEOPERATORS = Ops(
+MENUITEMS.append(Ops(
     ops_l=SOMEOPERATORS,
     clickable_size=(30, 30), dpi=200,
-    menuitem=[r'\otimes \in'])
+    menuitem=[r'\otimes \in']))
 
 ARROWS = [
     ('leftarrow', r'\leftarrow '),
@@ -436,10 +515,10 @@ ARROWS = [
     ('nupperleftrightarrow', r'\nLeftrightarrow '),
 ]
 
-MENUITEM_ARROWS = Ops(
+MENUITEMS.append(Ops(
     ops_l=ARROWS,
     clickable_size=(40, 30), dpi=200,
-    menuitem=[r'\rightarrow'])
+    menuitem=[r'\rightarrow']))
 
 def text():
     root = Tkinter.Tk()
@@ -533,10 +612,10 @@ TEXT = [
                  [r"\mathbf{Ab1}"])),
 ]
 
-MENUITEM_TEXT = Ops(
+MENUITEMS.append(Ops(
     ops_l=TEXT,
     clickable_size=(80, 50), dpi=200,
-    menuitem=[r'\mathbb{R}\,\text{if}'])
+    menuitem=[r'\mathbb{R}\,\text{if}']))
 
 def matrix():
     root = Tkinter.Tk()
@@ -612,29 +691,51 @@ def cases():
     latex_code = r'\begin{{cases}}' + case_code*n_cases + r'\end{{cases}}'
     return Op(n_args, latex_code)
 
+def equations_system():
+    root = Tkinter.Tk()
+    n_cases_tk = Tkinter.StringVar()
+    label = Tkinter.Label(root, text='Number of equations').grid(row=0)
+    entry = Tkinter.Entry(root, textvariable=n_cases_tk)
+    entry.grid(row=0, column=1)
+    entry.focus_set()
+    Tkinter.Button(root, text="Accept", command=root.quit).grid(row=1,
+                                                                column=1)
+    def return_quit(event):
+        root.quit()
+    root.bind('<Return>', return_quit)
+    # Avoid that the user does not introduce something
+    def disable_event():
+        pass
+    root.protocol("WM_DELETE_WINDOW", disable_event)
+    exit_cond = False
+    while not exit_cond:
+        root.mainloop()
+        try:
+            n_cases = int(n_cases_tk.get())
+            assert(n_cases > 0)
+            exit_cond = True
+        except ValueError:
+            pass
+        except AssertionError:
+            pass
+
+    root.destroy()
+    n_args = n_cases
+    case_code = r'{}\\'
+    latex_code = r'\begin{{cases}}' + case_code*n_cases + r'\end{{cases}}'
+    return Op(n_args, latex_code)
+
 MANYLINES = [
     ('matrix', (matrix, 
                 [r"\begin{matrix}\cdots&\square&\square\\" \
                  + r"\square&\square&\square\end{matrix}"])),
     ('cases', (cases,
-               [r'\begin{cases}a &\text{if }x>0\\b&\text{if }x<0\end{cases}']))
+            [r'\begin{cases}a &\text{if }x>0\\b&\text{if }x<0\end{cases}'])),
+    ('equations_system', (equations_system,
+                          [r'\begin{cases}x+y=1\\x-y=8\end{cases}'])),
 ]
 
-MENUITEM_MANYLINES = Ops(
+MENUITEMS.append(Ops(
     ops_l=MANYLINES,
     clickable_size=(190, 90), dpi=200,
-    menuitem=[r'\begin{smallmatrix}a&b\\c&d\end{smallmatrix}'])
-
-MENUITEMS = [
-    MENUITEM_GREEK_HEBREW_SYMBOLS1,
-    MENUITEM_ACCENTS,
-    MENUITEM_INDICES,
-    MENUITEM_MATHCONSTRUCTS,
-    MENUITEM_DELIMITERS,
-    MENUITEM_FUNCTIONS,
-    MENUITEM_VARIABLESIZE,
-    MENUITEM_SOMEOPERATORS,
-    MENUITEM_ARROWS,
-    MENUITEM_TEXT,
-    MENUITEM_MANYLINES,
-]
+    menuitem=[r'\begin{smallmatrix}a&b\\c&d\end{smallmatrix}']))

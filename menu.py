@@ -6,6 +6,7 @@ import os
 
 import pygame
 
+import dirs
 import ops
 import conversions
 
@@ -72,7 +73,7 @@ class OpSprite(pygame.sprite.Sprite):
     that is typically greater than the real image size, the name of the
     file (without the png extension) and the directory where it is placed."
     """
-    def __init__(self, op, center_pos, clickable_size, ops_dir):
+    def __init__(self, op, center_pos, clickable_size):
         pygame.sprite.Sprite.__init__(self)
         # Cases: 1. (filename, (str|Op|function, eq))
         # or, simply, 2. (filename, str|Op)
@@ -83,7 +84,7 @@ class OpSprite(pygame.sprite.Sprite):
         else:
             raise ValueError('Unknown type of operator %s', op[1])
         # Load the image
-        filename = os.path.join(ops_dir, op[0] + '.png')
+        filename = os.path.join(dirs.OPS_DIR, op[0] + '.png')
         try:
             self.image = pygame.image.load(filename).convert_alpha()
         except pygame.error as message:
@@ -161,9 +162,9 @@ class MenuItemSprite(pygame.sprite.Sprite):
 
 class Menu(object):
     """ A class that manages the menu items below and the symbols above. """
-    def __init__(self, screen_w, screen_h, ops_dir, temp_dir):
+    def __init__(self, screen_w, screen_h, temp_dir):
         (self.items, self._opsgroups) = self._get_menuitemssprite_opsgroups(
-            screen_w, screen_h, ops_dir, temp_dir)
+            screen_w, screen_h, temp_dir)
         self._item_index = 0
         self.items[0].select()
         self.active_ops = self._opsgroups[0]
@@ -181,8 +182,7 @@ class Menu(object):
             for op in opsgroup:
                 op.set_center(next(g_ops_pos), opsgroup.clickable_size)
 
-    def _get_menuitemssprite_opsgroups(self, screen_w, screen_h, ops_dir,
-                                       temp_dir):
+    def _get_menuitemssprite_opsgroups(self, screen_w, screen_h, temp_dir):
         """
         Read ops.MENUITEMS and returns a list of menu items correctly set
         (position, symbol, etc.) and another list with the associated
@@ -210,8 +210,7 @@ class Menu(object):
             ops_group.clickable_size = item.clickable_size
             for op in item.ops_l:
                 op_center_pos = next(g_ops_pos)
-                op_sprite = OpSprite(op, op_center_pos, item.clickable_size,
-                                     ops_dir)
+                op_sprite = OpSprite(op, op_center_pos, item.clickable_size)
                 ops_group.add(op_sprite)
             opsgroups.append(ops_group)
 
