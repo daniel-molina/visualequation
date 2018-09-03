@@ -184,8 +184,8 @@ class Menu(object):
             menuitem.set_center(next(g_menuitem_pos))
         # Set new symbols' positions
         for symbsgroup in self._symbsgroups:
-            g_ops_pos = distr_at_top(len(symbgroup), screen_w,
-                                     symbgroup.clickable_size)
+            g_ops_pos = distr_at_top(len(symbsgroup), screen_w,
+                                     symbsgroup.clickable_size)
             for symb in symbsgroup:
                 symb.set_center(next(g_ops_pos), symbsgroup.clickable_size)
 

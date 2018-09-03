@@ -119,11 +119,10 @@ ACCENTS = [
     LatexSymb('ell', r'\ell', r'\ell'),
     LatexSymb('hbar', r'\hbar', r'\hbar'),
     LatexSymb('eth', r'\eth', r'\eth'),
-    LatexSymb('wp', r'\wp', r'\wp'),
 ]
 
 MENUITEMSDATA.append(MenuItemData(
-    symb_l=ACCENTS, clickable_size=(40, 50), dpi=200,
+    symb_l=ACCENTS, clickable_size=(40, 30), dpi=200,
     expr=r'\acute{{a}}\;\tilde{{B}}'))
 
 INDICES = [
@@ -156,7 +155,7 @@ INDICES = [
 #     [r'\binom{{\cdot}}{{\square}}'])),
 
 MENUITEMSDATA.append(MenuItemData(
-    symb_l=INDICES, clickable_size=(60, 70), dpi=200, expr=r'a^b'))
+    symb_l=INDICES, clickable_size=(60, 60), dpi=200, expr=r'a^b'))
 
 MATHCONSTRUCTS = [
     LatexSymb('frac', Op(2, r'\frac{{{0}}}{{{1}}}'),
@@ -279,7 +278,7 @@ DELIMITERS = [
 ]
 
 MENUITEMSDATA.append(MenuItemData(
-    symb_l=DELIMITERS, clickable_size=(70, 50), dpi=200,
+    symb_l=DELIMITERS, clickable_size=(80, 50), dpi=200,
     expr=r'\left(ab\right)'))
 
 FUNCTIONS = [
@@ -316,6 +315,7 @@ FUNCTIONS = [
     LatexSymb('tanh', r'\tanh', r'\tanh'),
     LatexSymb('upperre', r'\Re', r'\Re'),
     LatexSymb('upperim', r'\Im', r'\Im'),
+    LatexSymb('wp', r'\wp', r'\wp'),
 ]
 
 MENUITEMSDATA.append(MenuItemData(
@@ -434,7 +434,7 @@ ARROWS = [
 
 MENUITEMSDATA.append(MenuItemData(
     symb_l=ARROWS,
-    clickable_size=(40, 30), dpi=200,
+    clickable_size=(50, 40), dpi=200,
     expr=r'\rightarrow'))
 
 def text():
@@ -530,43 +530,46 @@ MENUITEMSDATA.append(MenuItemData(
     clickable_size=(80, 50), dpi=200,
     expr=r'\mathbb{R}\,\text{if}'))
 
-def matrix():
-    root = Tkinter.Tk()
-    n_rows_tk = Tkinter.StringVar()
-    label1 = Tkinter.Label(root, text='Number of rows').grid(row=0)
-    n_columns_tk = Tkinter.StringVar()
-    label2 = Tkinter.Label(root, text='Number of columns').grid(row=1)
-    entry1 = Tkinter.Entry(root, textvariable=n_rows_tk)
-    entry2 = Tkinter.Entry(root, textvariable=n_columns_tk)
-    entry1.grid(row=0, column=1)
-    entry2.grid(row=1, column=1)
-    entry1.focus_set()
-    Tkinter.Button(root, text="Accept", command=root.quit).grid(row=2,
-                                                                column=1)
-    def return_quit(event):
-        root.quit()
-    root.bind('<Return>', return_quit)
-    # Avoid that the user does not introduce something
-    def disable_event():
-        pass
-    root.protocol("WM_DELETE_WINDOW", disable_event)
-    exit_cond = False
-    while not exit_cond:
-        root.mainloop()
-        try:
-            n_rows = int(n_rows_tk.get())
-            n_columns = int(n_columns_tk.get())
-            assert(n_rows > 0)
-            assert(n_columns > 0)
-            exit_cond = True
-        except ValueError:
+def matrix(matrix_type):
+    def fun():
+        root = Tkinter.Tk()
+        n_rows_tk = Tkinter.StringVar()
+        label1 = Tkinter.Label(root, text='Number of rows').grid(row=0)
+        n_columns_tk = Tkinter.StringVar()
+        label2 = Tkinter.Label(root, text='Number of columns').grid(row=1)
+        entry1 = Tkinter.Entry(root, textvariable=n_rows_tk)
+        entry2 = Tkinter.Entry(root, textvariable=n_columns_tk)
+        entry1.grid(row=0, column=1)
+        entry2.grid(row=1, column=1)
+        entry1.focus_set()
+        Tkinter.Button(root, text="Accept", command=root.quit).grid(row=2,
+                                                                    column=1)
+        def return_quit(event):
+            root.quit()
+        root.bind('<Return>', return_quit)
+        # Avoid that the user does not introduce something
+        def disable_event():
             pass
-        except AssertionError:
-            pass
-    root.destroy()
-    row_code = r'{}' + r'&{}'*(n_columns-1) + r'\\'
-    latex_code = r'\begin{{matrix}}' + row_code*n_rows + r'\end{{matrix}}'
-    return Op(n_rows*n_columns, latex_code)
+        root.protocol("WM_DELETE_WINDOW", disable_event)
+        exit_cond = False
+        while not exit_cond:
+            root.mainloop()
+            try:
+                n_rows = int(n_rows_tk.get())
+                n_columns = int(n_columns_tk.get())
+                assert(n_rows > 0)
+                assert(n_columns > 0)
+                exit_cond = True
+            except ValueError:
+                pass
+            except AssertionError:
+                pass
+        root.destroy()
+        row_code = r'{}' + r'&{}'*(n_columns-1) + r'\\'
+        latex_code = r'\begin{{' + matrix_type + r'}}' + row_code*n_rows \
+                         + r'\end{{' + matrix_type + r'}}'
+        return Op(n_rows*n_columns, latex_code)
+    return fun
 
 def cases():
     root = Tkinter.Tk()
@@ -633,9 +636,11 @@ def equations_system():
     return Op(n_cases, latex_code)
 
 MANYLINES = [
-    LatexSymb('matrix', matrix, 
+    LatexSymb('matrix', matrix('matrix'), 
                 r"\begin{matrix}\cdots&\square&\square\\" \
                  + r"\square&\square&\square\end{matrix}"),
+    LatexSymb('pmatrix', matrix('pmatrix'), 
+                r"\begin{pmatrix}\cdots\\\square\end{pmatrix}"),
     LatexSymb('cases', cases,
             r'\begin{cases}a &\text{if }x>0\\b&\text{if }x<0\end{cases}'),
     LatexSymb('equations_system', equations_system,

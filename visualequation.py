@@ -94,29 +94,24 @@ def main(*args):
         print_message = True
     else:
         print_message = False
-
     for index, menuitemdata in enumerate(symbols.MENUITEMSDATA):
         if print_message:
             # Print message about the delay by creating operators' images
             print_delay_message(screen, index+1, len(symbols.MENUITEMSDATA),
                                 temp_dirpath)
         generate_symb_images(menuitemdata, temp_dirpath)
-
     # Create additional images used by Tk
     for symb in symbols.ADDITIONAL_LS:
         filename = os.path.join(dirs.SYMBOLS_DIR, symb.tag + ".png")
         if not os.path.exists(filename):
             conversions.eq2png(symb.expr, 200, temp_dirpath, filename)
-
     # Prepare the equation to edit which will be showed by default
     init_eq = [symbols.NEWARG]
     screen_center = (screen_w//2, screen_h//2)
-    main_eqsprite = maineq.EditableEqSprite(init_eq, screen_center,
+    editingeq = maineq.EditableEqSprite(init_eq, screen_center,
                                             temp_dirpath)
-
     # Create the menu
     mainmenu = menu.Menu(screen_w, screen_h, temp_dirpath)
-
     # Pygame loop
     ongoing = True
     while ongoing:
@@ -125,117 +120,117 @@ def main(*args):
                 ongoing = False
             elif event.type == VIDEORESIZE:
                 screen = pygame.display.set_mode(event.size, RESIZABLE)
-                main_eqsprite.set_center(event.w//2, event.h//2)
+                editingeq.set_center(event.w//2, event.h//2)
                 mainmenu.set_screen_size(event.w, event.h)
             elif event.type == MOUSEBUTTONDOWN:
                 for index, menuitem in enumerate(mainmenu.menuitems):
                     if menuitem.mousepointed():
                         mainmenu.select_item(index)
-                for op_sprite in mainmenu.active_symbs:
-                    if op_sprite.mousepointed():
+                for symb in mainmenu.active_symbs:
+                    if symb.mousepointed():
                         if pygame.key.get_mods() & KMOD_SHIFT:
-                            main_eqsprite.insert_substituting(op_sprite.code)
+                            editingeq.insert_substituting(symb.code)
                         else:
-                            main_eqsprite.insert(op_sprite.code)
-                if main_eqsprite.mousepointed():
-                    main_eqsprite.next_sel()
+                            editingeq.insert(symb.code)
+                if editingeq.mousepointed():
+                    editingeq.next_sel()
             elif event.type == KEYDOWN:
                 try:
                     code = ord(event.unicode)
                     # If it belongs to 0-9 or A-Z or a-z
                     if 48 <= code <= 57 or 65 <= code <= 90 \
                        or 97 <= code <= 122:
-                        main_eqsprite.insert(event.unicode)
+                        editingeq.insert(event.unicode)
                 except TypeError:
                     pass
                 if event.unicode == '\\ ':
-                    main_eqsprite.insert(r'\backslash ')
+                    editingeq.insert(r'\backslash ')
                 elif event.unicode == '~':
-                    main_eqsprite.insert(r'\sim ')
+                    editingeq.insert(r'\sim ')
                 elif event.unicode == '!':
-                    main_eqsprite.insert('!')
+                    editingeq.insert('!')
                 elif event.unicode == '$':
-                    main_eqsprite.insert(r'\$ ')
+                    editingeq.insert(r'\$ ')
                 elif event.unicode == '%':
-                    main_eqsprite.insert(r'\% ')
+                    editingeq.insert(r'\% ')
                 elif event.unicode == '&':
-                    main_eqsprite.insert(r'\& ')
+                    editingeq.insert(r'\& ')
                 elif event.unicode == '/':
-                    main_eqsprite.insert('/')
+                    editingeq.insert('/')
                 elif event.unicode == ')':
-                    main_eqsprite.insert(')')
+                    editingeq.insert(')')
                 elif event.unicode == '(':
-                    main_eqsprite.insert('(')
+                    editingeq.insert('(')
                 elif event.unicode == '=':
-                    main_eqsprite.insert('=')
+                    editingeq.insert('=')
                 elif event.unicode == '?':
-                    main_eqsprite.insert('?')
+                    editingeq.insert('?')
                 elif event.unicode == "'":
-                    main_eqsprite.insert("'")
+                    editingeq.insert("'")
                 elif event.unicode == '@':
-                    main_eqsprite.insert('@')
+                    editingeq.insert('@')
                 elif event.unicode == '#':
-                    main_eqsprite.insert(r'\# ')
+                    editingeq.insert(r'\# ')
                 elif event.unicode == '[':
-                    main_eqsprite.insert('[')
+                    editingeq.insert('[')
                 elif event.unicode == ']':
-                    main_eqsprite.insert(']')
+                    editingeq.insert(']')
                 elif event.unicode == '{':
-                    main_eqsprite.insert(r'\{ ')
+                    editingeq.insert(r'\{ ')
                 elif event.unicode == '}':
-                    main_eqsprite.insert(r'\} ')
+                    editingeq.insert(r'\} ')
                 elif event.unicode == '*':
-                    main_eqsprite.insert('*')
+                    editingeq.insert('*')
                 elif event.unicode == '+':
-                    main_eqsprite.insert('+')
+                    editingeq.insert('+')
                 elif event.unicode == '-':
-                    main_eqsprite.insert('-')
+                    editingeq.insert('-')
                 elif event.unicode == '_':
-                    main_eqsprite.insert(r'\_ ')
+                    editingeq.insert(r'\_ ')
                 elif event.unicode == '<':
-                    main_eqsprite.insert('<')
+                    editingeq.insert('<')
                 elif event.unicode == '>':
-                    main_eqsprite.insert('>')
+                    editingeq.insert('>')
                 elif event.unicode == ',':
-                    main_eqsprite.insert(',')
+                    editingeq.insert(',')
                 elif event.unicode == '.':
-                    main_eqsprite.insert('.')
+                    editingeq.insert('.')
                 elif event.unicode == ';':
-                    main_eqsprite.insert(';')
+                    editingeq.insert(';')
                 elif event.unicode == ':':
-                    main_eqsprite.insert(':')
+                    editingeq.insert(':')
                     # First cases with mods, this avoids false positives
                     # CONTROL + letter
                 elif event.key == K_z and pygame.key.get_mods() & KMOD_CTRL:
-                    main_eqsprite.recover_prev_eq()
+                    editingeq.recover_prev_eq()
                 elif event.key == K_y and pygame.key.get_mods() & KMOD_CTRL:
-                    main_eqsprite.recover_next_eq()
+                    editingeq.recover_next_eq()
                 elif event.key == K_s and pygame.key.get_mods() & KMOD_CTRL:
-                    main_eqsprite.save_eq()
+                    editingeq.save_eq()
                 elif event.key == K_c and pygame.key.get_mods() & KMOD_CTRL:
-                    main_eqsprite.sel2eqbuffer()
+                    editingeq.sel2eqbuffer()
                 elif event.key == K_x and pygame.key.get_mods() & KMOD_CTRL:
-                    main_eqsprite.sel2eqbuffer()
-                    main_eqsprite.remove_sel()
+                    editingeq.sel2eqbuffer()
+                    editingeq.remove_sel()
                 elif event.key == K_v and pygame.key.get_mods() & KMOD_CTRL:
-                    main_eqsprite.eqbuffer2sel()
+                    editingeq.eqbuffer2sel()
                     # Cases without mods
                 elif event.key == K_RIGHT:
-                    main_eqsprite.next_sel()
+                    editingeq.next_sel()
                 elif event.key == K_LEFT:
-                    main_eqsprite.previous_sel()
+                    editingeq.previous_sel()
                 elif event.key == K_UP:
                     mainmenu.next_item()
                 elif event.key == K_DOWN:
                     mainmenu.prev_item()
                 elif event.key == K_SPACE:
-                    main_eqsprite.insert(r'\,')
+                    editingeq.insert(r'\,')
                 elif event.key == K_TAB:
-                    main_eqsprite.left_NEWARG()
+                    editingeq.left_NEWARG()
                 elif event.key == K_BACKSPACE or event.key == K_DELETE:
-                    main_eqsprite.remove_sel()
+                    editingeq.remove_sel()
 
-        draw_screen(screen, main_eqsprite, mainmenu)
+        draw_screen(screen, editingeq, mainmenu)
         clock.tick(30)
 
     # Delete the temporary directory and files before exit
