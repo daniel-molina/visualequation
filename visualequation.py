@@ -65,9 +65,10 @@ def generate_symb_images(menuitemdata, temp_dir):
             # Create and save image of that op
             conversions.eq2png(symb.expr, menuitemdata.dpi, temp_dir, filename)
 
-def draw_screen(screen, maineq, mainmenu):
+def draw_screen(screen, editingeq, mainmenu):
+    """ Draw equation, menuitems and symbols."""
     screen.fill((255, 255, 255))
-    screen.blit(maineq.image, maineq.rect)
+    screen.blit(editingeq.image, editingeq.rect)
     for menuitem in mainmenu.menuitems:
         screen.blit(menuitem.image, menuitem.rect)
     mainmenu.active_symbs.draw(screen)

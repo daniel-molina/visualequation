@@ -213,9 +213,8 @@ ADDITIONAL_LS += SINGLEDELIMITERS
 def free_delimiters():
     def get_delimiter(delimiter):
         root = Tkinter.Tk()
-        label = Tkinter.Label(root,
-                              text='Choose ' + str(delimiter) + ' delimiter'
-                          ).pack(side=Tkinter.TOP)
+        Tkinter.Label(root, text='Choose ' + str(delimiter) + ' delimiter'
+        ).pack(side=Tkinter.TOP)
         im_dict = {}
         for delim in SINGLEDELIMITERS:
             im_dict[delim.tag] = Tkinter.PhotoImage(
@@ -234,7 +233,7 @@ def free_delimiters():
         root.protocol("WM_DELETE_WINDOW", disable_event)
         root.mainloop()
 
-    class latex_code(object):
+    class LatexCode(object):
         def __init__(self, part):
             self.part = part
             self.command = '\\' + part
@@ -245,11 +244,11 @@ def free_delimiters():
             return self.command
         def __str__(self):
             return self.part
-    left = latex_code('left')
-    right = latex_code('right')
+    left = LatexCode('left')
+    right = LatexCode('right')
     get_delimiter(left)
     get_delimiter(right)
-    return Op(1, left.get() + r' {0} ' + right.get())    
+    return Op(1, left.get() + r' {0} ' + right.get())
 
 DELIMITERS = [
     LatexSymb('parenthesisb', Op(1, r'\left( {0} \right)'),
@@ -440,7 +439,7 @@ MENUITEMSDATA.append(MenuItemData(
 def text():
     root = Tkinter.Tk()
     text_tk = Tkinter.StringVar()
-    label = Tkinter.Label(root, text='Text').grid(row=0)
+    Tkinter.Label(root, text='Text').grid(row=0)
     entry = Tkinter.Entry(root, textvariable=text_tk)
     entry.grid(row=0, column=1)
     entry.focus_set()
@@ -457,33 +456,33 @@ def text():
     while not exit_cond:
         root.mainloop()
         try:
-            text = text_tk.get()
+            text_str = text_tk.get()
             # Check that characters are only ASCII
-            text.decode('ascii')
+            text_str.decode('ascii')
             # Avoid problematic ACII characters
-            assert('^' not in text)
-            assert('~' not in text)
-            assert('\\' not in text)
+            assert '^' not in text_str
+            assert '~' not in text_str
+            assert '\\' not in text_str
             # Change ASCII with special sequencies
             # Be careful: do not include keys that are exactly equal to values
             latexdict = {
                 '$':r'\$', '%':r'\%', '_':r'\_', '}':r'\}', '&':r'\&',
                 '#':r'\#', '{':r'\{'}
             for key in latexdict:
-                text = text.replace(key, latexdict[key])
+                text_str = text_str.replace(key, latexdict[key])
             exit_cond = True
         except UnicodeEncodeError:
             pass
         except AssertionError:
             pass
     root.destroy()
-    return r'\text{{' + text + '}}'
+    return r'\text{{' + text_str + '}}'
 
 def special_format(latex_command, label_text, only_capital=False):
     def fun():
         root = Tkinter.Tk()
         text_tk = Tkinter.StringVar()
-        label = Tkinter.Label(root, text=label_text).grid(row=0)
+        Tkinter.Label(root, text=label_text).grid(row=0)
         entry = Tkinter.Entry(root, textvariable=text_tk)
         entry.grid(row=0, column=1)
         entry.focus_set()
@@ -499,18 +498,18 @@ def special_format(latex_command, label_text, only_capital=False):
         exit_cond = False
         while not exit_cond:
             root.mainloop()
-            text = text_tk.get()
-            if(only_capital):
-                if text.isalpha():
-                    text = text.upper()
+            text_str = text_tk.get()
+            if only_capital:
+                if text_str.isalpha():
+                    text_str = text_str.upper()
                     exit_cond = True
             else:
-                if text.isalnum():
+                if text_str.isalnum():
                     exit_cond = True
         root.destroy()
-        return latex_command + r'{{' + text + '}}'
+        return latex_command + r'{{' + text_str + '}}'
     return fun
-    
+
 TEXT = [
     LatexSymb('text', text, r"\text{Text}"),
     LatexSymb('mathcal', special_format(r'\mathcal', 'Caligraphic', True),
@@ -534,9 +533,9 @@ def matrix(matrix_type):
     def fun():
         root = Tkinter.Tk()
         n_rows_tk = Tkinter.StringVar()
-        label1 = Tkinter.Label(root, text='Number of rows').grid(row=0)
+        Tkinter.Label(root, text='Number of rows').grid(row=0)
         n_columns_tk = Tkinter.StringVar()
-        label2 = Tkinter.Label(root, text='Number of columns').grid(row=1)
+        Tkinter.Label(root, text='Number of columns').grid(row=1)
         entry1 = Tkinter.Entry(root, textvariable=n_rows_tk)
         entry2 = Tkinter.Entry(root, textvariable=n_columns_tk)
         entry1.grid(row=0, column=1)
@@ -557,8 +556,8 @@ def matrix(matrix_type):
             try:
                 n_rows = int(n_rows_tk.get())
                 n_columns = int(n_columns_tk.get())
-                assert(n_rows > 0)
-                assert(n_columns > 0)
+                assert n_rows > 0
+                assert n_columns > 0
                 exit_cond = True
             except ValueError:
                 pass
@@ -574,7 +573,7 @@ def matrix(matrix_type):
 def cases():
     root = Tkinter.Tk()
     n_cases_tk = Tkinter.StringVar()
-    label = Tkinter.Label(root, text='Number of cases').grid(row=0)
+    Tkinter.Label(root, text='Number of cases').grid(row=0)
     entry = Tkinter.Entry(root, textvariable=n_cases_tk)
     entry.grid(row=0, column=1)
     entry.focus_set()
@@ -592,7 +591,7 @@ def cases():
         root.mainloop()
         try:
             n_cases = int(n_cases_tk.get())
-            assert(n_cases > 0)
+            assert n_cases > 0
             exit_cond = True
         except ValueError:
             pass
@@ -606,7 +605,7 @@ def cases():
 def equations_system():
     root = Tkinter.Tk()
     n_cases_tk = Tkinter.StringVar()
-    label = Tkinter.Label(root, text='Number of equations').grid(row=0)
+    Tkinter.Label(root, text='Number of equations').grid(row=0)
     entry = Tkinter.Entry(root, textvariable=n_cases_tk)
     entry.grid(row=0, column=1)
     entry.focus_set()
@@ -624,7 +623,7 @@ def equations_system():
         root.mainloop()
         try:
             n_cases = int(n_cases_tk.get())
-            assert(n_cases > 0)
+            assert n_cases > 0
             exit_cond = True
         except ValueError:
             pass
@@ -636,10 +635,10 @@ def equations_system():
     return Op(n_cases, latex_code)
 
 MANYLINES = [
-    LatexSymb('matrix', matrix('matrix'), 
+    LatexSymb('matrix', matrix('matrix'),
                 r"\begin{matrix}\cdots&\square&\square\\" \
                  + r"\square&\square&\square\end{matrix}"),
-    LatexSymb('pmatrix', matrix('pmatrix'), 
+    LatexSymb('pmatrix', matrix('pmatrix'),
                 r"\begin{pmatrix}\cdots\\\square\end{pmatrix}"),
     LatexSymb('cases', cases,
             r'\begin{cases}a &\text{if }x>0\\b&\text{if }x<0\end{cases}'),
