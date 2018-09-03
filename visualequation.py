@@ -158,16 +158,18 @@ def main(*args):
                         main_eqsprite.insert(event.unicode)
                 except TypeError:
                     pass
-                if event.unicode == '\\':
-                    main_eqsprite.insert(r'\backslash')
+                if event.unicode == '\\ ':
+                    main_eqsprite.insert(r'\backslash ')
+                elif event.unicode == '~':
+                    main_eqsprite.insert(r'\sim ')
                 elif event.unicode == '!':
                     main_eqsprite.insert('!')
                 elif event.unicode == '$':
-                    main_eqsprite.insert(r'\$')
+                    main_eqsprite.insert(r'\$ ')
                 elif event.unicode == '%':
-                    main_eqsprite.insert(r'\%')
+                    main_eqsprite.insert(r'\% ')
                 elif event.unicode == '&':
-                    main_eqsprite.insert(r'\&')
+                    main_eqsprite.insert(r'\& ')
                 elif event.unicode == '/':
                     main_eqsprite.insert('/')
                 elif event.unicode == ')':
@@ -183,15 +185,15 @@ def main(*args):
                 elif event.unicode == '@':
                     main_eqsprite.insert('@')
                 elif event.unicode == '#':
-                    main_eqsprite.insert(r'\#')
+                    main_eqsprite.insert(r'\# ')
                 elif event.unicode == '[':
                     main_eqsprite.insert('[')
                 elif event.unicode == ']':
                     main_eqsprite.insert(']')
                 elif event.unicode == '{':
-                    main_eqsprite.insert(r'\{')
+                    main_eqsprite.insert(r'\{ ')
                 elif event.unicode == '}':
-                    main_eqsprite.insert(r'\}')
+                    main_eqsprite.insert(r'\} ')
                 elif event.unicode == '*':
                     main_eqsprite.insert('*')
                 elif event.unicode == '+':
@@ -199,7 +201,7 @@ def main(*args):
                 elif event.unicode == '-':
                     main_eqsprite.insert('-')
                 elif event.unicode == '_':
-                    main_eqsprite.insert(r'\_')
+                    main_eqsprite.insert(r'\_ ')
                 elif event.unicode == '<':
                     main_eqsprite.insert('<')
                 elif event.unicode == '>':

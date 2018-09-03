@@ -448,17 +448,41 @@ def text():
     entry = Tkinter.Entry(root, textvariable=text_tk)
     entry.grid(row=0, column=1)
     entry.focus_set()
-    def return_destroy(event):
-        root.destroy()
-    root.bind('<Return>', return_destroy)
-    Tkinter.Button(root, text="Accept", command=root.destroy).grid(row=1,
+    def return_quit(event):
+        root.quit()
+    root.bind('<Return>', return_quit)
+    Tkinter.Button(root, text="Accept", command=root.quit).grid(row=1,
                                                                    column=1)
     # Avoid that the user does not introduce something
     def disable_event():
         pass
     root.protocol("WM_DELETE_WINDOW", disable_event)
-    root.mainloop()
-    return r'\text{{' + text_tk.get() + '}}'
+    exit_cond = False
+    while not exit_cond:
+        root.mainloop()
+        try:
+            text = text_tk.get()
+            # Check that characters are only ASCII
+            text.decode('ascii')
+            # Avoid problematic ACII characters
+            assert('^' not in text)
+            assert('~' not in text)
+            assert('\\' not in text)
+            # Change ASCII with special sequencies
+            # Be careful: do not include keys that are exactly equal to values
+            latexdict = {
+                '$':r'\$', '%':r'\%', '_':r'\_', '}':r'\}', '&':r'\&',
+                '#':r'\#', '{':r'\{'}
+            for key in latexdict:
+                text = text.replace(key, latexdict[key])
+            exit_cond = True
+        except UnicodeEncodeError:
+            pass
+        except AssertionError:
+            pass
+
+    root.destroy()
+    return r'\text{{' + text + '}}'
 
 
 def special_format(latex_command, label_text, only_capital=False):
