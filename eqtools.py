@@ -2,7 +2,7 @@
 Module to transform equations to latex code and getting information from or
 replacing equation blocks.
 """
-import ops
+import symbols
 
 def eqblock2latex(eq, index):
     """ Return latex code of the equation block starting at the given index
@@ -14,7 +14,7 @@ def eqblock2latex(eq, index):
     """
     def block2latex(index):
         """ Incredible recursive function that DOES the real job"""
-        if isinstance(eq[index], ops.Op):
+        if isinstance(eq[index], symbols.Op):
             # I have to find n_arg independent blocks for this operator
             index_of_arg = index+1
             latex_args = ()
@@ -39,7 +39,7 @@ def nextblockindex(eq, index):
     """
     def block2nextindex(index):
         """ Simplification of the recursive nested function block2latex."""
-        if isinstance(eq[index], ops.Op):
+        if isinstance(eq[index], symbols.Op):
             # I have to find n_arg independent blocks for this operator
             index_of_arg = index+1
             for _ in range(eq[index].n_args):
@@ -69,7 +69,7 @@ def eq2sel(eq, index):
     of the equation with the selection being boxed.
     """
     sel = list(eq)
-    sel.insert(index, ops.EDIT)
+    sel.insert(index, symbols.EDIT)
     return sel
 
 def appendbyJUXT(eq, start_index, eqblock):
@@ -78,7 +78,7 @@ def appendbyJUXT(eq, start_index, eqblock):
     Returns the begining index of inserted eqbox.
     """
     end_index = nextblockindex(eq, start_index)
-    eq[start_index:end_index] = [ops.JUXT] + eq[start_index:end_index] \
+    eq[start_index:end_index] = [symbols.JUXT] + eq[start_index:end_index] \
                                 + eqblock
     return end_index+1
 
@@ -101,7 +101,7 @@ def is_arg_of_JUXT(eq, check_index):
     start_index = 0
     try:
         while True:
-            Juxt_index = eq.index(ops.JUXT, start_index)
+            Juxt_index = eq.index(symbols.JUXT, start_index)
             arg2index = nextblockindex(eq, Juxt_index+1)
             if Juxt_index + 1 == check_index:
                 return True, Juxt_index, arg2index

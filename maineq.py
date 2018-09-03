@@ -2,10 +2,10 @@
 import types
 
 import pygame
+
 import eqtools
 import conversions
-
-import ops
+import symbols
 
 class EditableEqSprite(pygame.sprite.Sprite):
     """ A Sprite for the equation that is going to be edited."""
@@ -31,7 +31,7 @@ class EditableEqSprite(pygame.sprite.Sprite):
         Check whether if index points to a JUXT that is the argument of
         other JUXT.
         """
-        if self.eq[index] == ops.JUXT:
+        if self.eq[index] == symbols.JUXT:
             cond, _, _ = eqtools.is_arg_of_JUXT(self.eq, index)
             if cond:
                 return True
@@ -120,13 +120,13 @@ class EditableEqSprite(pygame.sprite.Sprite):
             """
             if isinstance(op, basestring):
                 eqtools.replaceby(self.eq, self.sel_index, [op])
-            elif isinstance(op, ops.Op) and op.n_args == 1:
+            elif isinstance(op, symbols.Op) and op.n_args == 1:
                 self.eq.insert(self.sel_index, op)
-            elif isinstance(op, ops.Op) and op.n_args > 1:
+            elif isinstance(op, symbols.Op) and op.n_args > 1:
                 index_end_arg1 = eqtools.nextblockindex(self.eq, self.sel_index)
                 self.eq[self.sel_index:index_end_arg1] = [op] \
                                     + self.eq[self.sel_index:index_end_arg1] \
-                                    + [ops.NEWARG] * (op.n_args-1)
+                                    + [symbols.NEWARG] * (op.n_args-1)
                 self.sel_index = index_end_arg1+1
             else:
                 raise ValueError('Unknown operator passed.')
@@ -151,15 +151,15 @@ class EditableEqSprite(pygame.sprite.Sprite):
             the smartest block.
             """            
             if isinstance(op, basestring):
-                if self.eq[self.sel_index] == ops.NEWARG:
+                if self.eq[self.sel_index] == symbols.NEWARG:
                     self.eq[self.sel_index] = op
                 else:
                     self.sel_index = eqtools.appendbyJUXT(self.eq,
                                                           self.sel_index,
                                                           [op])
-            elif isinstance(op, ops.Op):
-                opeq = [op] + [ops.NEWARG]*op.n_args
-                if self.eq[self.sel_index] == ops.NEWARG:
+            elif isinstance(op, symbols.Op):
+                opeq = [op] + [symbols.NEWARG]*op.n_args
+                if self.eq[self.sel_index] == symbols.NEWARG:
                     self.eq[self.sel_index:self.sel_index+1] = opeq
                     self.sel_index += 1
                 else:
@@ -222,7 +222,7 @@ class EditableEqSprite(pygame.sprite.Sprite):
                     other_arg_index:self.sel_index]
             self.sel_index = JUXT_index
         else:
-            eqtools.replaceby(self.eq, self.sel_index, [ops.NEWARG])
+            eqtools.replaceby(self.eq, self.sel_index, [symbols.NEWARG])
 
         self._set_sel()
         self.add_eq2hist()
@@ -237,7 +237,7 @@ class EditableEqSprite(pygame.sprite.Sprite):
         Append self.eq_buffer to the right of the block pointed by
         self.sel_index. If the block is a NEWARG, just replace it.
         """
-        if self.eq[self.sel_index] == ops.NEWARG:
+        if self.eq[self.sel_index] == symbols.NEWARG:
             self.eq[self.sel_index:self.sel_index+1] = self.eq_buffer
         else:
             self.sel_index = eqtools.appendbyJUXT(self.eq, self.sel_index,
@@ -249,7 +249,7 @@ class EditableEqSprite(pygame.sprite.Sprite):
         """
         Append by JUXT a NEWARG at the left of the block pointed by
         self.sel_index. """
-        self.eq[self.sel_index:self.sel_index] = [ops.JUXT, ops.NEWARG]
+        self.eq[self.sel_index:self.sel_index] = [symbols.JUXT, symbols.NEWARG]
         self.sel_index += 1
         self._set_sel()
         self.add_eq2hist()

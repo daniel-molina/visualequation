@@ -9,7 +9,7 @@ import pygame
 from pygame.locals import *
 
 import dirs
-import ops
+import symbols
 import maineq
 import conversions
 import menu
@@ -53,44 +53,31 @@ def print_delay_message(screen, current, total, temp_dir):
     screen.blit(message_im, message_pos)
     pygame.display.flip()
 
-def generate_ops_images(menuitem, temp_dir):
+def generate_symb_images(menuitemdata, temp_dir):
     """
-    Generate the png of the operators and place them in a given directory.
+    Generate the png of the symbols and place them in a given directory.
     A temporal directory must be passed too, where auxiliary files are
     generated.
     """
-    for oper in menuitem.ops_l:
-        filename = os.path.join(dirs.OPS_DIR, oper[0] + ".png")
+    for symb in menuitemdata.symb_l:
+        filename = os.path.join(dirs.SYMBOLS_DIR, symb.tag + ".png")
         if not os.path.exists(filename):
-            # Determine the appearance of op
-            if isinstance(oper[1], tuple):
-                op_eq = oper[1][1]
-            elif isinstance(oper[1], basestring):
-                op_eq = [oper[1]]
-            elif isinstance(oper[1], ops.Op) and oper[1].n_args == 1:
-                op_eq = [oper[1], ops.SELARG]
-            elif isinstance(oper[1], ops.Op) and oper[1].n_args > 1:
-                op_eq = [oper[1], ops.SELARG] + \
-                    [ops.NEWARG]*(oper[1].n_args - 1)
             # Create and save image of that op
-            conversions.eq2png(op_eq, menuitem.dpi, temp_dir, filename)
+            conversions.eq2png(symb.expr, menuitemdata.dpi, temp_dir, filename)
 
 def draw_screen(screen, maineq, mainmenu):
     screen.fill((255, 255, 255))
     screen.blit(maineq.image, maineq.rect)
-    for item in mainmenu.items:
-        screen.blit(item.image, item.rect)
-    mainmenu.active_ops.draw(screen)
-    #mainmenu.active_ops.update()
+    for menuitem in mainmenu.menuitems:
+        screen.blit(menuitem.image, menuitem.rect)
+    mainmenu.active_symbs.draw(screen)
     pygame.display.flip()
 
 def main(*args):
     """ This the main function of the program."""
-
     version = '0.1.2'
     # Prepare a temporal directory to manage all LaTeX files
     temp_dirpath = tempfile.mkdtemp()
-
     # Prepare pygame
     screen_w = 800
     screen_h = 600
@@ -99,34 +86,30 @@ def main(*args):
     screen = pygame.display.set_mode((screen_w, screen_h), RESIZABLE)
     pygame.display.set_caption("Visual Equation")
     display_splash_screen(screen, temp_dirpath, version)
-
     # Generate operators' images if the folder is not found
     if not os.path.exists(dirs.PROGRAM_DIR):
         os.makedirs(dirs.PROGRAM_DIR)
-    if not os.path.exists(dirs.OPS_DIR):
-        os.makedirs(dirs.OPS_DIR)
+    if not os.path.exists(dirs.SYMBOLS_DIR):
+        os.makedirs(dirs.SYMBOLS_DIR)
         print_message = True
     else:
         print_message = False
 
-    for index, menuitem in enumerate(ops.MENUITEMS):
+    for index, menuitemdata in enumerate(symbols.MENUITEMSDATA):
         if print_message:
             # Print message about the delay by creating operators' images
-            print_delay_message(screen, index+1, len(ops.MENUITEMS),
+            print_delay_message(screen, index+1, len(symbols.MENUITEMSDATA),
                                 temp_dirpath)
-        generate_ops_images(menuitem, temp_dirpath)
+        generate_symb_images(menuitemdata, temp_dirpath)
 
-    # HACK: Create additional images used by Tk
-    for filename_base, eq in ops.ADDITIONAL_IMAGES:
-        filename = os.path.join(dirs.OPS_DIR, filename_base + ".png")
+    # Create additional images used by Tk
+    for symb in symbols.ADDITIONAL_LS:
+        filename = os.path.join(dirs.SYMBOLS_DIR, symb.tag + ".png")
         if not os.path.exists(filename):
-            if isinstance(eq, tuple):
-                conversions.eq2png(eq[1], 200, temp_dirpath, filename)
-            else:
-                conversions.eq2png(eq, 200, temp_dirpath, filename)
+            conversions.eq2png(symb.expr, 200, temp_dirpath, filename)
 
     # Prepare the equation to edit which will be showed by default
-    init_eq = [ops.NEWARG]
+    init_eq = [symbols.NEWARG]
     screen_center = (screen_w//2, screen_h//2)
     main_eqsprite = maineq.EditableEqSprite(init_eq, screen_center,
                                             temp_dirpath)
@@ -145,15 +128,15 @@ def main(*args):
                 main_eqsprite.set_center(event.w//2, event.h//2)
                 mainmenu.set_screen_size(event.w, event.h)
             elif event.type == MOUSEBUTTONDOWN:
-                for index, menuitem in enumerate(mainmenu.items):
+                for index, menuitem in enumerate(mainmenu.menuitems):
                     if menuitem.mousepointed():
                         mainmenu.select_item(index)
-                for op_sprite in mainmenu.active_ops:
+                for op_sprite in mainmenu.active_symbs:
                     if op_sprite.mousepointed():
                         if pygame.key.get_mods() & KMOD_SHIFT:
-                            main_eqsprite.insert_substituting(op_sprite.op)
+                            main_eqsprite.insert_substituting(op_sprite.code)
                         else:
-                            main_eqsprite.insert(op_sprite.op)
+                            main_eqsprite.insert(op_sprite.code)
                 if main_eqsprite.mousepointed():
                     main_eqsprite.next_sel()
             elif event.type == KEYDOWN:

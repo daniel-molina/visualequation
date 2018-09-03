@@ -11,7 +11,12 @@ def eq2latex_file(eq, latex_file, template_file):
     """ Write equation in a LaTeX file according to the template_file.
     It looks for string '%EQ%' in the file and replace it by eq.
     """
-    latex_code = eqtools.eq2latex_code(eq)
+    if isinstance(eq, basestring):
+        latex_code = eq
+    elif isinstance(eq, list):
+        latex_code = eqtools.eq2latex_code(eq)
+    else:
+        raise ValueError('Cannot understand equation type.')
     with open(template_file, "r") as ftempl:
         with open(latex_file, "w") as flatex:
             for line in ftempl:
