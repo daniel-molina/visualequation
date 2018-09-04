@@ -11,13 +11,13 @@ To run the program successfully, you need:
 * LaTeX (maybe you need to install separately some packages). The command used is
   * latex
 * Tk
-* Some commands that are probably installed if you have the others:
   * dvipng
+  * pdf2svg
   * python2
   
 To install everything needed in Debian/Ubuntu or derivatives, it should be enough:
 
-\# apt-get install python-pygame dvipng texlive-math-extra python-tk
+\# apt-get install python-pygame dvipng pdf2svg texlive-math-extra python-tk
 
 Yes, LaTeX will require around 600 MB, but the quality of the equations is incredible too.
 
@@ -85,3 +85,5 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ## Acknowledgements
 
 * The badge was done by SMA-DEV (http://www.supermagicadventure.net/) licensed under the WTFPL.
+
+* I have been inspired by Ekee (http://rlehy.free.fr/) features. It is a pity that the program is not mantained (2018) and it did not work for me.

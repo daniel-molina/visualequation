@@ -2,6 +2,7 @@
 import types
 
 import pygame
+import Tkinter, tkFileDialog
 
 import eqtools
 import conversions
@@ -55,8 +56,9 @@ class EditableEqSprite(pygame.sprite.Sprite):
                 cond = self.is_intermediate_JUXT(self.sel_index)
 
         # Calculate the latex code of eq boxed in block given by the selection
-        sel_latex_code = eqtools.eq2sel(self.eq, self.sel_index)
-        sel_png = conversions.eq2png(sel_latex_code, None, self.temp_dir)
+        sel_latex_code = eqtools.sel_eq(self.eq, self.sel_index)
+        sel_png = conversions.eq2png(sel_latex_code, None, None,
+                                     self.temp_dir)
         self.image = pygame.image.load(sel_png)
         self.rect = self.image.get_rect(center=self.screen_center)
 
@@ -256,13 +258,46 @@ class EditableEqSprite(pygame.sprite.Sprite):
 
     def save_eq(self):
         """ Open Dialog to save the equation to PNG """
-        import Tkinter, tkFileDialog
-        # Hide the root window, else it will be present after choosing file
+        class FileFormat(object):
+            """Choose a file format."""
+            def __init__(self):
+                self.fileformat = ''
+            def set(self, root, fileformat):
+                self.fileformat = fileformat
+                root.quit()
+            def get_ext(self):
+                return '.' + self.fileformat
+        fileformat = FileFormat()
         root = Tkinter.Tk()
-        root.withdraw()
-
-        file_path = tkFileDialog.asksaveasfilename(defaultextension='.png')
-        # TODO: Check if it is the documented condition for closing
-        # win and cancelling (None does not work)
-        if file_path != '' and file_path != ():
-            conversions.eq2png(self.eq, None, self.temp_dir, file_path)
+        Tkinter.Label(root, text='Choose format').pack(side=Tkinter.TOP)
+        Tkinter.Button(root, text='PNG',
+                       command=lambda *args: fileformat.set(root, 'png')
+        ).pack(side=Tkinter.TOP)
+        Tkinter.Button(root, text='SVG',
+                       command=lambda *args: fileformat.set(root, 'svg')
+        ).pack(side=Tkinter.TOP)
+        Tkinter.Button(root, text='EPS',
+                       command=lambda *args: fileformat.set(root, 'eps')
+        ).pack(side=Tkinter.TOP)
+        Tkinter.Button(root, text='PDF',
+                       command=lambda *args: fileformat.set(root, 'pdf')
+        ).pack(side=Tkinter.TOP)
+        root.mainloop()
+        # Hide the root window
+        if fileformat.get_ext() != '.':
+            root.withdraw()
+            file_path = tkFileDialog.asksaveasfilename(
+                defaultextension=fileformat.get_ext())
+            # TODO: Check if it is the documented condition for closing
+            # win and cancelling (None does not work)
+            if file_path != '' and file_path != ():
+                if fileformat.get_ext() == '.png':
+                    conversions.eq2png(self.eq, None, None, self.temp_dir,
+                                       file_path)
+                elif fileformat.get_ext() == '.svg':
+                    conversions.eq2svg(self.eq, self.temp_dir, file_path)
+                elif fileformat.get_ext() == '.eps':
+                    conversions.eq2eps(self.eq, self.temp_dir, file_path)
+                elif fileformat.get_ext() == '.pdf':
+                    conversions.eq2pdf(self.eq, self.temp_dir, file_path)
+            root.destroy()

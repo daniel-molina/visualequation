@@ -93,7 +93,7 @@ class MenuItemSprite(pygame.sprite.Sprite):
         self.center_pos = center_pos
         self.temp_dir = temp_dir
         self.dpi = dpi
-        eq_png = conversions.eq2png(self.eq, dpi, temp_dir)
+        eq_png = conversions.eq2png(self.eq, dpi, None, temp_dir)
         try:
             self.image = pygame.image.load(eq_png).convert_alpha()
         except pygame.error as message:
@@ -114,7 +114,7 @@ class MenuItemSprite(pygame.sprite.Sprite):
         """ Put a box around the menuitem symbol"""
         sel_eq = list(self.eq)
         sel_eq.insert(0, symbols.EDIT)
-        eq_png = conversions.eq2png(sel_eq, self.dpi, self.temp_dir)
+        eq_png = conversions.eq2png(sel_eq, self.dpi, None, self.temp_dir)
         try:
             self.image = pygame.image.load(eq_png).convert_alpha()
         except pygame.error as message:
@@ -126,7 +126,7 @@ class MenuItemSprite(pygame.sprite.Sprite):
         Set the menuitem to its original symbolic equation
         (becuase, probably, it was previously boxed)
         """
-        eq_png = conversions.eq2png(self.eq, self.dpi, self.temp_dir)
+        eq_png = conversions.eq2png(self.eq, self.dpi, None, self.temp_dir)
         try:
             self.image = pygame.image.load(eq_png).convert_alpha()
         except pygame.error as message:

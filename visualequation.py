@@ -24,12 +24,12 @@ def display_splash_screen(screen, temp_dir, version):
                         (screen_h-badge.get_height())//2))
     # Title
     title = r"\color{white}(\text{Visual Equation})}_{\text{%s}}" % version
-    title_png = conversions.eq2png([title], 270, temp_dir)
+    title_png = conversions.eq2png([title], 270, None, temp_dir)
     title_im = pygame.image.load(title_png)
     screen.blit(title_im, ((screen_w-title_im.get_width())//2, 30))
     # LaTeX ackknowledgement
     latex_m = r"\color{white}\& \LaTeX"
-    latex_png = conversions.eq2png([latex_m], 250, temp_dir)
+    latex_png = conversions.eq2png([latex_m], 250, None, temp_dir)
     latex_im = pygame.image.load(latex_png)
     screen.blit(latex_im, (530, 500))
     pygame.display.flip()
@@ -44,7 +44,7 @@ def print_delay_message(screen, current, total, temp_dir):
     \color{{white}}\text{{It is the first time that the program is running.
     Generating symbols...............}}{0}/{1}
     """.format(current, total)
-    message_png = conversions.eq2png([message], 150, temp_dir)
+    message_png = conversions.eq2png([message], 150, None, temp_dir)
     message_im = pygame.image.load(message_png)
     message_pos = ((screen_w-message_im.get_width())//2, screen_h - 40)
     message_rect = message_im.get_rect()
@@ -63,7 +63,8 @@ def generate_symb_images(menuitemdata, temp_dir):
         filename = os.path.join(dirs.SYMBOLS_DIR, symb.tag + ".png")
         if not os.path.exists(filename):
             # Create and save image of that op
-            conversions.eq2png(symb.expr, menuitemdata.dpi, temp_dir, filename)
+            conversions.eq2png(symb.expr, menuitemdata.dpi, None, temp_dir,
+                               filename)
 
 def draw_screen(screen, editingeq, mainmenu):
     """ Draw equation, menuitems and symbols."""
@@ -105,7 +106,7 @@ def main(*args):
     for symb in symbols.ADDITIONAL_LS:
         filename = os.path.join(dirs.SYMBOLS_DIR, symb.tag + ".png")
         if not os.path.exists(filename):
-            conversions.eq2png(symb.expr, 200, temp_dirpath, filename)
+            conversions.eq2png(symb.expr, 200, None, temp_dirpath, filename)
     # Prepare the equation to edit which will be showed by default
     init_eq = [symbols.NEWARG]
     screen_center = (screen_w//2, screen_h//2)
@@ -144,18 +145,20 @@ def main(*args):
                         editingeq.insert(event.unicode)
                 except TypeError:
                     pass
-                if event.unicode == '\\ ':
-                    editingeq.insert(r'\backslash ')
+                if event.unicode == '\\':
+                    editingeq.insert(r'\backslash')
                 elif event.unicode == '~':
-                    editingeq.insert(r'\sim ')
+                    editingeq.insert(r'\sim')
+                elif event.unicode == '|':
+                    editingeq.insert(r'|')
                 elif event.unicode == '!':
                     editingeq.insert('!')
                 elif event.unicode == '$':
-                    editingeq.insert(r'\$ ')
+                    editingeq.insert(r'\$')
                 elif event.unicode == '%':
-                    editingeq.insert(r'\% ')
+                    editingeq.insert(r'\%')
                 elif event.unicode == '&':
-                    editingeq.insert(r'\& ')
+                    editingeq.insert(r'\&')
                 elif event.unicode == '/':
                     editingeq.insert('/')
                 elif event.unicode == ')':
@@ -177,9 +180,9 @@ def main(*args):
                 elif event.unicode == ']':
                     editingeq.insert(']')
                 elif event.unicode == '{':
-                    editingeq.insert(r'\{ ')
+                    editingeq.insert(r'\{')
                 elif event.unicode == '}':
-                    editingeq.insert(r'\} ')
+                    editingeq.insert(r'\}')
                 elif event.unicode == '*':
                     editingeq.insert('*')
                 elif event.unicode == '+':
@@ -187,7 +190,7 @@ def main(*args):
                 elif event.unicode == '-':
                     editingeq.insert('-')
                 elif event.unicode == '_':
-                    editingeq.insert(r'\_ ')
+                    editingeq.insert(r'\_')
                 elif event.unicode == '<':
                     editingeq.insert('<')
                 elif event.unicode == '>':

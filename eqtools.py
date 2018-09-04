@@ -64,9 +64,9 @@ def eq2latex_code(eq):
 
     return latex
 
-def eq2sel(eq, index):
-    """ Given an equation and a selection index, it returns the latex code
-    of the equation with the selection being boxed.
+def sel_eq(eq, index):
+    """ Given an equation and a selection index, it returns a new equation
+    with the selection being boxed.
     """
     sel = list(eq)
     sel.insert(index, symbols.EDIT)

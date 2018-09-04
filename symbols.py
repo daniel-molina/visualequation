@@ -429,6 +429,11 @@ ARROWS = [
     LatexSymb('nupperleftarrow', r'\nLeftarrow', r'\nLeftarrow'),
     LatexSymb('nupperleftrightarrow', r'\nLeftrightarrow',
               r'\nLeftrightarrow'),
+    LatexSymb('cdots', r'\cdots', r'\cdots'),
+    LatexSymb('vdots', r'\vdots', r'\vdots'),
+    LatexSymb('ldots', r'\ldots',
+              r'\colorbox{white}{$\phantom{|}\ldots\phantom{|}$}'),
+    LatexSymb('ddots', r'\ddots', r'\ddots'),
 ]
 
 MENUITEMSDATA.append(MenuItemData(
@@ -510,6 +515,93 @@ def special_format(latex_command, label_text, only_capital=False):
         return latex_command + r'{{' + text_str + '}}'
     return fun
 
+COLORS = [
+    LatexSymb('black', 'black', r'\textcolor{black}{\text{black}}'),
+    LatexSymb('blue', 'blue', r'\textcolor{blue}{\text{blue}}'),
+    LatexSymb('brown', 'brown', r'\textcolor{brown}{\text{brown}}'),
+    LatexSymb('cyan', 'cyan', r'\textcolor{cyan}{\text{cyan}}'),
+    LatexSymb('darkgrey', 'darkgrey',
+              r'\textcolor{darkgrey}{\text{darkgrey}}'),
+    LatexSymb('grey', 'grey', r'\textcolor{grey}{\text{grey}}'),
+    LatexSymb('green', 'green', r'\textcolor{green}{\text{green}}'),
+    LatexSymb('lightgrey', 'lightgrey',
+              r'\textcolor{lightgrey}{\text{lightgrey}}'),
+    LatexSymb('lime', 'lime', r'\textcolor{lime}{\text{lime}}'),
+    LatexSymb('magenta', 'magenta', r'\textcolor{magenta}{\text{magenta}}'),
+    LatexSymb('olive', 'olive', r'\textcolor{olive}{\text{olive}}'),
+    LatexSymb('orange', 'orange', r'\textcolor{orange}{\text{orange}}'),
+    LatexSymb('pink', 'pink', r'\textcolor{pink}{\text{pink}}'),
+    LatexSymb('purple', 'purple', r'\textcolor{purple}{\text{purple}}'),
+    LatexSymb('red', 'red', r'\textcolor{red}{\text{red}}'),
+    LatexSymb('teal', 'teal', r'\textcolor{teal}{\text{teal}}'),
+    LatexSymb('viiolet', 'violet', r'\textcolor{violet}{\text{violet}}'),
+    LatexSymb('white', 'white', r'\textcolor{white}{\text{white}}'),
+    LatexSymb('yellow', 'yellow', r'\textcolor{yellow}{\text{yellow}}'),
+]
+
+ADDITIONAL_LS += COLORS
+
+def color():
+    class LatexCode(object):
+        def set(self, root, color_code):
+            self.color_code = color_code
+            root.destroy()
+        def get(self):
+            return self.color_code
+    code = LatexCode()
+    root = Tkinter.Tk()
+    Tkinter.Label(root, text='Choose color').pack(side=Tkinter.TOP)
+    im_dict = {}
+    for color in COLORS:
+        im_dict[color.tag] = Tkinter.PhotoImage(
+            file=os.path.join(dirs.SYMBOLS_DIR, color.tag + '.png'))
+        # Create the button with that image
+        Tkinter.Button(
+            # Trick to avoid the closure: var=var
+            root,
+            command=lambda root=root, color_code=color.code: code.set(
+                root, color_code),
+            image=im_dict[color.tag], width='140', height='30'
+        ).pack(side=Tkinter.TOP)
+
+    def disable_event():
+        pass
+    root.protocol("WM_DELETE_WINDOW", disable_event)
+    root.mainloop()
+
+    return Op(1, r'\begingroup\color{{' + code.get() + r'}}{0}\endgroup')
+
+def colorbox():
+    class LatexCode(object):
+        def set(self, root, color_code):
+            self.color_code = color_code
+            root.destroy()
+        def get(self):
+            return self.color_code
+    code = LatexCode()
+    root = Tkinter.Tk()
+    Tkinter.Label(root, text='Choose color').pack(side=Tkinter.TOP)
+    im_dict = {}
+    for color in COLORS:
+        im_dict[color.tag] = Tkinter.PhotoImage(
+            file=os.path.join(dirs.SYMBOLS_DIR, color.tag + '.png'))
+        # Create the button with that image
+        Tkinter.Button(
+            # Trick to avoid the closure: var=var
+            root,
+            command=lambda root=root, color_code=color.code: code.set(
+                root, color_code),
+            image=im_dict[color.tag], width='140', height='30'
+        ).pack(side=Tkinter.TOP)
+
+    def disable_event():
+        pass
+    root.protocol("WM_DELETE_WINDOW", disable_event)
+    root.mainloop()
+
+    return Op(1, r'\colorbox{{' + code.get() + r'}}{{$\displaystyle {0}$}}')
+
+
 TEXT = [
     LatexSymb('text', text, r"\text{Text}"),
     LatexSymb('mathcal', special_format(r'\mathcal', 'Caligraphic', True),
@@ -522,6 +614,10 @@ TEXT = [
               r"\mathsf{Ab1}"),
     LatexSymb('mathbf', special_format(r'\mathbf', 'Mathbf'),
               r"\mathbf{Ab1}"),
+    LatexSymb('color', color, r'\textcolor{red}{C}\textcolor{blue}'
+              + r'{o}\textcolor{olive}{|}\textcolor{pink}{0}'
+              + r'\textcolor{purple}{r}'),
+    LatexSymb('colorbox', colorbox, r'\colorbox{yellow}{$x^2$}/2'),
 ]
 
 MENUITEMSDATA.append(MenuItemData(
