@@ -292,7 +292,7 @@ class EditableEqSprite(pygame.sprite.Sprite):
             # win and cancelling (None does not work)
             if file_path != '' and file_path != ():
                 if fileformat.get_ext() == '.png':
-                    conversions.eq2png(self.eq, None, None, self.temp_dir,
+                    conversions.eq2png(self.eq, 600, None, self.temp_dir,
                                        file_path)
                 elif fileformat.get_ext() == '.svg':
                     conversions.eq2svg(self.eq, self.temp_dir, file_path)

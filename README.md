@@ -11,9 +11,9 @@ To run the program successfully, you need:
 * LaTeX (maybe you need to install separately some packages). The command used is
   * latex
 * Tk
-  * dvipng
-  * pdf2svg
-  * python2
+* dvipng
+* pdf2svg
+* python2
   
 To install everything needed in Debian/Ubuntu or derivatives, it should be enough:
 

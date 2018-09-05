@@ -47,7 +47,8 @@ def dvi2png(dvi_file, png_file, log_file, dpi, bg):
 def dvi2eps(dvi_file, eps_file, log_file):
     """ Convert the DVI file to PostScript. """
     with open(log_file, "w") as flog:
-        subprocess.call(["dvips", "-E", "-o", eps_file, dvi_file], stderr=flog)
+        subprocess.call(["dvips", "-E", "-D", "600", "-y", "5000", 
+                         "-o", eps_file, dvi_file], stderr=flog)
 
 def eps2pdf(eps_file, pdf_file):
     subprocess.call(["epstopdf", "--outfile", pdf_file, eps_file])
