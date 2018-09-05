@@ -1,19 +1,19 @@
 # visualequation
 
-Visualequation creates equations visually, in a WYSIWYG (What You See Is What You Get) style. By the moment, they can be exported to transparent png (CTRL+s). Probably it will be extended to other formats.
+Visualequation creates equations visually, in a WYSIWYG (What You See Is What You Get) style. By the moment, they can be exported to PNG, EPS, PDF and SVG. PNG and SVG does not have background. If you want it you can put a white (or whatever color) background to the whole equation in the editor before saving.
 
 ## Requirements
 By the moment it has only been tested on GNU/Linux. But it would be interesting to have installation instructions for the dependencies on other operative systems.
 
 To run the program successfully, you need:
 
+* python2
 * pygame
-* LaTeX (maybe you need to install separately some packages). The command used is
-  * latex
-* Tk
+* LaTeX
+ * Maybe you need to install separately some extra AMS LaTeX packages.
+* Tkinter
 * dvipng
 * pdf2svg
-* python2
   
 To install everything needed in Debian/Ubuntu or derivatives, it should be enough:
 
@@ -23,7 +23,7 @@ Yes, LaTeX will require around 600 MB, but the quality of the equations is incre
 
 To run the program:
 
-$ python2 visualequation.py
+$ ./visualequation.py
 
 ## Usage/Instructions
 
