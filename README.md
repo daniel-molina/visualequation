@@ -73,6 +73,10 @@ If the element is a symbol, the selection is replaced by the symbol. If it is an
 * TAB:
 Create a square at the left of the selection box, ready to be overwritten. Useful if you forgot to write something at the left of a block and you do not want to delete the first character/operator until you write the missing part.
 
+## Known Issues
+
+Conversion to SVG fails in Ubuntu Xenial (16.04), dvisvgm 1.9.2. (The application will wait forever)
+It is known to work in Ubuntu 14.04 and 18.04 (dvisvgm 1.2.2 and 2.1.3)
 
 ## License
 
