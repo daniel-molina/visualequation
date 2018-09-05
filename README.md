@@ -10,10 +10,9 @@ To run the program successfully, you need:
 * python2
 * pygame
 * LaTeX
- * Maybe you need to install separately some extra AMS LaTeX packages.
+  * Maybe you need to install separately some extra AMS LaTeX packages.
 * Tkinter
 * dvipng
-* pdf2svg
   
 To install everything needed in Debian/Ubuntu or derivatives, it should be enough:
 
@@ -86,4 +85,4 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 * The badge was done by SMA-DEV (http://www.supermagicadventure.net/) licensed under the WTFPL.
 
-* I have been inspired by Ekee (http://rlehy.free.fr/) features. It is a pity that the program is not mantained (2018) and it did not work for me.
+* I have been inspired by Ekee (http://rlehy.free.fr/) features. It is a pity that the program is not mantained (2018).

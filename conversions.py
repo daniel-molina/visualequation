@@ -60,8 +60,23 @@ def eps2pdf(eps_file, pdf_file):
 #        subprocess.call(["pstoedit", "-dt", "-ssp", "-f", "plot-svg",
 #                         eps_file, svg_file], stderr=flog)
 
-def pdf2svg(pdf_file, svg_file):
-    subprocess.call(["pdf2svg", pdf_file, svg_file])
+# It does not work so good in some sytems (eps produced),
+# specially the \text fields (very bad pixeled)
+#def pdf2svg(pdf_file, svg_file):
+#    subprocess.call(["pdf2svg", pdf_file, svg_file])
+
+def dvi2svg(dvi_file, svg_file, log_file):
+    """
+    Convert the DVI file to SVG with dvisvgm (it comes with texlive).
+    It is the best option found until now:
+    * ps2edit creates does not create the image with a tight bounding box.
+    * pdf2svg does not work well with pixeled text that dvips create
+      in some systems, even when resolution is high in the pdf.
+      (it is an issue of \text{} fields, or whatever outside math environment)
+    """
+    with open(log_file, "w") as flog:
+        subprocess.call(["dvisvgm", "-n", "-c5,5", 
+                         "-o", svg_file, dvi_file], stderr=flog)
 
 def eq2png(eq, dpi, bg, directory, png_fpath=None):
     """ Create a png from a equation, returns the path of PNG image.
@@ -77,19 +92,13 @@ def eq2png(eq, dpi, bg, directory, png_fpath=None):
         raise ValueError('Directory does not exist.')
         #os.makedirs(directory)
     fname = 'foo'
-    latex_ext = ".tex"
-    log_ext = ".log"
-    dvi_ext = ".dvi"
-    png_ext = ".png"
-
-    latex_fpath = os.path.join(directory, fname + latex_ext)
+    latex_fpath = os.path.join(directory, fname + '.tex')
     latex2dvilog_fpath = os.path.join(directory,
-                                      fname + '_latex2dvi' + log_ext)
-    dvi2pnglog_fpath = os.path.join(directory, fname + '_div2png' + log_ext)
-    dvi_fpath = os.path.join(directory, fname + dvi_ext)
+                                      fname + '_latex2dvi.log')
+    dvi2pnglog_fpath = os.path.join(directory, fname + '_div2png.log')
+    dvi_fpath = os.path.join(directory, fname + '.dvi')
     if png_fpath == None:
-        png_fpath = os.path.join(directory, fname + png_ext)
-
+        png_fpath = os.path.join(directory, fname + '.png')
     eq2latex_file(eq, latex_fpath, dirs.LATEX_TEMPLATE)
     latex_file2dvi(latex_fpath, directory, latex2dvilog_fpath)
     if dpi == None:
@@ -110,19 +119,13 @@ def eq2eps(eq, directory, eps_fpath=None):
         raise ValueError('Directory does not exist.')
         #os.makedirs(directory)
     fname = 'foo'
-    latex_ext = ".tex"
-    log_ext = ".log"
-    dvi_ext = ".dvi"
-    eps_ext = ".eps"
-
-    latex_fpath = os.path.join(directory, fname + latex_ext)
+    latex_fpath = os.path.join(directory, fname + '.tex')
     latex2dvilog_fpath = os.path.join(directory,
-                                      fname + '_latex2dvi' + log_ext)
-    dvi2epslog_fpath = os.path.join(directory, fname + '_div2eps' + log_ext)
-    dvi_fpath = os.path.join(directory, fname + dvi_ext)
+                                      fname + '_latex2dvi.log')
+    dvi2epslog_fpath = os.path.join(directory, fname + '_div2eps.log')
+    dvi_fpath = os.path.join(directory, fname + '.dvi')
     if eps_fpath == None:
-        eps_fpath = os.path.join(directory, fname + eps_ext)
-
+        eps_fpath = os.path.join(directory, fname + '.ps')
     eq2latex_file(eq, latex_fpath, dirs.LATEX_TEMPLATE)
     latex_file2dvi(latex_fpath, directory, latex2dvilog_fpath)
     dvi2eps(dvi_fpath, eps_fpath, dvi2epslog_fpath)
@@ -136,5 +139,17 @@ def eq2pdf(eq, directory, pdf_fpath=None):
     return pdf_fpath
 
 def eq2svg(eq, directory, svg_fpath):
-    pdf_fpath = eq2pdf(eq, directory)
-    pdf2svg(pdf_fpath, svg_fpath)
+
+    # If directory does not exist, raise exception
+    if not os.path.exists(directory):
+        raise ValueError('Directory does not exist.')
+    fname = 'foo'
+    latex_fpath = os.path.join(directory, fname + '.tex')
+    latex2dvilog_fpath = os.path.join(directory,
+                                      fname + '_latex2dvi.log')
+    dvi_fpath = os.path.join(directory, fname + '.dvi')    
+    dvi2svglog_path = os.path.join(directory,
+                                   fname + '_dvi2svg.log')
+    eq2latex_file(eq, latex_fpath, dirs.LATEX_TEMPLATE)
+    latex_file2dvi(latex_fpath, directory, latex2dvilog_fpath)
+    dvi2svg(dvi_fpath, svg_fpath, dvi2svglog_path)
