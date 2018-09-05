@@ -22,6 +22,7 @@ To install everything needed in Debian/Ubuntu or derivatives, it should be enoug
 * python-pygame
 * texlive-latex-recommended
 * dvipng
+* texlive-font-utils (it provides epstopdf in newer versions)
 * texlive-math-extra (or textlive-science in newer versions)
 * python-tk
 
