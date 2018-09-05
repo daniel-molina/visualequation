@@ -13,12 +13,19 @@ To run the program successfully, you need:
   * Maybe you need to install separately some extra AMS LaTeX packages.
 * Tkinter
 * dvipng
+* dvips
+* dvisvgm
+* epstopdf
   
 To install everything needed in Debian/Ubuntu or derivatives, it should be enough:
 
-\# apt-get install python-pygame dvipng texlive-math-extra python-tk
+* python-pygame
+* texlive-latex-recommended
+* dvipng
+* texlive-math-extra (or textlive-science in newer versions)
+* python-tk
 
-Yes, LaTeX will require around 600 MB, but the quality of the equations is incredible too.
+Yes, LaTeX will require around a lot of MB, but the quality of the equations is incredible too.
 
 To run the program:
 
