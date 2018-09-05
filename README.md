@@ -16,7 +16,7 @@ To run the program successfully, you need:
   
 To install everything needed in Debian/Ubuntu or derivatives, it should be enough:
 
-\# apt-get install python-pygame dvipng pdf2svg texlive-math-extra python-tk
+\# apt-get install python-pygame dvipng texlive-math-extra python-tk
 
 Yes, LaTeX will require around 600 MB, but the quality of the equations is incredible too.
 
