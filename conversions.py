@@ -75,7 +75,7 @@ def dvi2svg(dvi_file, svg_file, log_file):
       (it is an issue of \text{} fields, or whatever outside math environment)
     """
     with open(log_file, "w") as flog:
-        subprocess.call(["dvisvgm", "-n", "-c5,5", 
+        subprocess.call(["dvisvgm", "--no-fonts", "--scale=5,5", 
                          "-o", svg_file, dvi_file], stderr=flog)
 
 def eq2png(eq, dpi, bg, directory, png_fpath=None):

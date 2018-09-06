@@ -1,6 +1,6 @@
 # visualequation
 
-Visualequation creates equations visually, in a WYSIWYG (What You See Is What You Get) style. By the moment, they can be exported to PNG, EPS, PDF and SVG. PNG and SVG does not have background. If you want it you can put a white (or whatever color) background to the whole equation in the editor before saving.
+Visualequation creates equations visually, in a WYSIWYG (What You See Is What You Get) style. By the moment, equations can be exported to PNG, EPS, PDF and SVG. PNG and SVG are transparent. If you want a background you can put a white (or whatever color) colorbox to the whole equation in the editor before exporting.
 
 ## Requirements
 By the moment it has only been tested on GNU/Linux. But it would be interesting to have installation instructions for the dependencies on other operative systems.
@@ -9,28 +9,34 @@ To run the program successfully, you need:
 
 * python2
 * pygame
-* LaTeX
-  * Maybe you need to install separately some extra AMS LaTeX packages.
 * Tkinter
-* dvipng
-* dvips
-* dvisvgm
-* epstopdf
+* LaTeX
+* Some specific LaTeX packages (you can find them in the preamble of the equation template).
+* Some command-line programs to manipulate LaTeX output:
+  * dvipng
+  * dvips
+  * dvisvgm
+  * epstopdf
   
-To install everything needed in Debian/Ubuntu or derivatives, it should be enough:
+### Debian/Ubuntu or derivatives
+
+The following packages should be enough:
 
 * python-pygame
+* python-tk
 * texlive-latex-recommended
 * dvipng
-* texlive-font-utils (it provides epstopdf in newer versions)
+* texlive-font-utils
 * texlive-math-extra (or textlive-science in newer versions)
-* python-tk
 
-Yes, LaTeX will require around a lot of MB, but the quality of the equations is incredible too.
+LaTeX will require a lot of MB, but the quality of the equations is incredible too.
 
 To run the program:
 
 $ ./visualequation.py
+
+### Microsoft Windows and MacOS
+Beta testers needed!
 
 ## Usage/Instructions
 
@@ -40,7 +46,7 @@ Instead of a cursor, you navigate with a box that surrounds blocks of the equati
 
 The following key combinations work: (They can be changed or extended in the future)
 
-* LEFT and RIGHT (or clicking the equation):
+* LEFT and RIGHT (or TAB or clicking the equation):
 Change the selection box.
 
 * UP and DOWN (or clicking in the menu items of the panel below):
@@ -67,16 +73,18 @@ Paste the last copied or cut selection.
 * CTRL+s:
 Save the equation to a transparent PNG file.
 
+* Ctr+p:
+Create a square at the left of the selection box, ready to be overwritten. It is useful if you forgot to write something at the left of a block and you do not want to delete the first symbol/operator until you write the missing part.
+
 * SHIFT+click on an element of the panel above:
 If the element is a symbol, the selection is replaced by the symbol. If it is an operator, the selection is replaced by the operator and the first argument of it is set to the selection. (The first argument is the one represented by one dot or three dots instead of a square)
 
-* TAB:
-Create a square at the left of the selection box, ready to be overwritten. Useful if you forgot to write something at the left of a block and you do not want to delete the first character/operator until you write the missing part.
-
 ## Known Issues
 
-Conversion to SVG fails in Ubuntu Xenial (16.04), dvisvgm 1.9.2. (The application will wait forever)
-It is known to work in Ubuntu 14.04 and 18.04 (dvisvgm 1.2.2 and 2.1.3)
+* Conversion to SVG fails when the equation contain a Text. The application will wait forever while converting, so the user has to force the exit of the execution.
+  * Affected environments: Ubuntu Xenial (16.04) (dvisvgm 1.9.2)
+  * It is known to work in Ubuntu 14.04 and 18.04 (dvisvgm 1.2.2 and 2.1.3, respectively)
+  * Solutions: There are not so many programs that transform images into a nice SVG, most of them have issues. pdf2svg does normally a good work, but it does an ugly output in the affected system for the so-called Text block. Maybe that shows that the problem is caused by something related with the associated font.
 
 ## License
 

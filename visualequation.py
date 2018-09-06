@@ -218,6 +218,8 @@ def main(*args):
                     editingeq.remove_sel()
                 elif event.key == K_v and pygame.key.get_mods() & KMOD_CTRL:
                     editingeq.eqbuffer2sel()
+                elif event.key == K_p and pygame.key.get_mods() & KMOD_CTRL:
+                    editingeq.left_NEWARG()
                     # Cases without mods
                 elif event.key == K_RIGHT:
                     editingeq.next_sel()
@@ -230,7 +232,7 @@ def main(*args):
                 elif event.key == K_SPACE:
                     editingeq.insert(r'\,')
                 elif event.key == K_TAB:
-                    editingeq.left_NEWARG()
+                    editingeq.next_sel()
                 elif event.key == K_BACKSPACE or event.key == K_DELETE:
                     editingeq.remove_sel()
 
