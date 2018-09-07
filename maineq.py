@@ -269,6 +269,7 @@ class EditableEqSprite(pygame.sprite.Sprite):
                 return '.' + self.fileformat
         fileformat = FileFormat()
         root = Tkinter.Tk()
+        root.title("Save equation")
         Tkinter.Label(root, text='Choose format').pack(side=Tkinter.TOP)
         Tkinter.Button(root, text='PNG',
                        command=lambda *args: fileformat.set(root, 'png')
@@ -283,7 +284,7 @@ class EditableEqSprite(pygame.sprite.Sprite):
                        command=lambda *args: fileformat.set(root, 'ps')
         ).pack(side=Tkinter.TOP)
         Tkinter.Label(root,
-                      text="* It will NOT be possible\nto open equation\n" +
+                      text="* It will NOT be possible\nto open equations\n" +
                       "for further edition\nfrom files in this format."
                       ).pack(side=Tkinter.TOP)
         root.mainloop()

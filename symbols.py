@@ -196,7 +196,7 @@ MENUITEMSDATA.append(MenuItemData(
     expr=r'\underbrace{{abc}}'))
 
 SINGLEDELIMITERS = [
-    LatexSymb('lparenthesis', '(', ')'),
+    LatexSymb('lparenthesis', '(', '('),
     LatexSymb('rparenthesis', ')', ')'),
     LatexSymb('vert', '|', '|'),
     LatexSymb('uppervert', r'\|', r'\|'),
@@ -224,6 +224,7 @@ ADDITIONAL_LS += SINGLEDELIMITERS
 def free_delimiters():
     def get_delimiter(delimiter):
         root = Tkinter.Tk()
+        root.title(str(delimiter).capitalize() + " delimiter")
         Tkinter.Label(root, text='Choose ' + str(delimiter) + ' delimiter'
         ).pack(side=Tkinter.TOP)
         im_dict = {}
@@ -454,6 +455,7 @@ MENUITEMSDATA.append(MenuItemData(
 
 def text():
     root = Tkinter.Tk()
+    root.title("Text")
     text_tk = Tkinter.StringVar()
     Tkinter.Label(root, text='Text').grid(row=0)
     entry = Tkinter.Entry(root, textvariable=text_tk)
@@ -497,6 +499,7 @@ def text():
 def special_format(latex_command, label_text, only_capital=False):
     def fun():
         root = Tkinter.Tk()
+        root.title(label_text + " characters")
         text_tk = Tkinter.StringVar()
         Tkinter.Label(root, text=label_text).grid(row=0)
         entry = Tkinter.Entry(root, textvariable=text_tk)
@@ -561,6 +564,7 @@ def color():
             return self.color_code
     code = LatexCode()
     root = Tkinter.Tk()
+    root.title("Color")
     Tkinter.Label(root, text='Choose color').pack(side=Tkinter.TOP)
     im_dict = {}
     for color in COLORS:
@@ -591,6 +595,7 @@ def colorbox():
             return self.color_code
     code = LatexCode()
     root = Tkinter.Tk()
+    root.title("Color box")
     Tkinter.Label(root, text='Choose color').pack(side=Tkinter.TOP)
     im_dict = {}
     for color in COLORS:
@@ -639,6 +644,7 @@ MENUITEMSDATA.append(MenuItemData(
 def matrix(matrix_type):
     def fun():
         root = Tkinter.Tk()
+        root.title(matrix_type.capitalize())
         n_rows_tk = Tkinter.StringVar()
         Tkinter.Label(root, text='Number of rows').grid(row=0)
         n_columns_tk = Tkinter.StringVar()
@@ -679,6 +685,7 @@ def matrix(matrix_type):
 
 def cases():
     root = Tkinter.Tk()
+    root.title("Cases")
     n_cases_tk = Tkinter.StringVar()
     Tkinter.Label(root, text='Number of cases').grid(row=0)
     entry = Tkinter.Entry(root, textvariable=n_cases_tk)
@@ -711,6 +718,7 @@ def cases():
 
 def equations_system():
     root = Tkinter.Tk()
+    root.title("Equations system")
     n_cases_tk = Tkinter.StringVar()
     Tkinter.Label(root, text='Number of equations').grid(row=0)
     entry = Tkinter.Entry(root, textvariable=n_cases_tk)

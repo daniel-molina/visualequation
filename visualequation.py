@@ -77,7 +77,7 @@ def draw_screen(screen, editingeq, mainmenu):
 
 def main(*args):
     """ This the main function of the program."""
-    version = '0.2.0'
+    version = '0.1.3'
     # Prepare a temporal directory to manage all LaTeX files
     temp_dirpath = tempfile.mkdtemp()
     # Prepare pygame
