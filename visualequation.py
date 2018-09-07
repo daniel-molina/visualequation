@@ -77,7 +77,7 @@ def draw_screen(screen, editingeq, mainmenu):
 
 def main(*args):
     """ This the main function of the program."""
-    version = '0.1.2'
+    version = '0.2.0'
     # Prepare a temporal directory to manage all LaTeX files
     temp_dirpath = tempfile.mkdtemp()
     # Prepare pygame
@@ -122,6 +122,7 @@ def main(*args):
                 ongoing = False
             elif event.type == VIDEORESIZE:
                 screen = pygame.display.set_mode(event.size, RESIZABLE)
+                screen_center = (event.w//2, event.h//2)
                 editingeq.set_center(event.w//2, event.h//2)
                 mainmenu.set_screen_size(event.w, event.h)
             elif event.type == MOUSEBUTTONDOWN:
@@ -190,7 +191,9 @@ def main(*args):
                 elif event.unicode == '-':
                     editingeq.insert('-')
                 elif event.unicode == '_':
-                    editingeq.insert(r'\_')
+                    editingeq.insert_substituting(symbols.SUBINDEX)
+                elif event.unicode == '^':
+                    editingeq.insert_substituting(symbols.SUPERINDEX)
                 elif event.unicode == '<':
                     editingeq.insert('<')
                 elif event.unicode == '>':
@@ -220,6 +223,12 @@ def main(*args):
                     editingeq.eqbuffer2sel()
                 elif event.key == K_p and pygame.key.get_mods() & KMOD_CTRL:
                     editingeq.left_NEWARG()
+                elif event.key == K_o and pygame.key.get_mods() & KMOD_CTRL:
+                    neweq = conversions.open_eq()
+                    if neweq is not None:
+                        editingeq = maineq.EditableEqSprite(neweq,
+                                                            screen_center,
+                                                            temp_dirpath)
                     # Cases without mods
                 elif event.key == K_RIGHT:
                     editingeq.next_sel()

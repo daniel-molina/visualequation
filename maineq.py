@@ -273,31 +273,34 @@ class EditableEqSprite(pygame.sprite.Sprite):
         Tkinter.Button(root, text='PNG',
                        command=lambda *args: fileformat.set(root, 'png')
         ).pack(side=Tkinter.TOP)
-        Tkinter.Button(root, text='SVG',
-                       command=lambda *args: fileformat.set(root, 'svg')
-        ).pack(side=Tkinter.TOP)
-        Tkinter.Button(root, text='EPS',
-                       command=lambda *args: fileformat.set(root, 'eps')
-        ).pack(side=Tkinter.TOP)
         Tkinter.Button(root, text='PDF',
                        command=lambda *args: fileformat.set(root, 'pdf')
         ).pack(side=Tkinter.TOP)
+        Tkinter.Button(root, text='SVG*',
+                       command=lambda *args: fileformat.set(root, 'svg')
+        ).pack(side=Tkinter.TOP)
+        Tkinter.Button(root, text='EPS*',
+                       command=lambda *args: fileformat.set(root, 'ps')
+        ).pack(side=Tkinter.TOP)
+        Tkinter.Label(root,
+                      text="* It will NOT be possible\nto open equation\n" +
+                      "for further edition\nfrom files in this format."
+                      ).pack(side=Tkinter.TOP)
         root.mainloop()
         # Hide the root window
         if fileformat.get_ext() != '.':
             root.withdraw()
             file_path = tkFileDialog.asksaveasfilename(
                 defaultextension=fileformat.get_ext())
-            # TODO: Check if it is the documented condition for closing
-            # win and cancelling (None does not work)
-            if file_path != '' and file_path != ():
+            # It returns () or '' if file is not chosen (Exit or Cancel)
+            if file_path:
                 if fileformat.get_ext() == '.png':
                     conversions.eq2png(self.eq, 600, None, self.temp_dir,
                                        file_path)
-                elif fileformat.get_ext() == '.svg':
-                    conversions.eq2svg(self.eq, self.temp_dir, file_path)
-                elif fileformat.get_ext() == '.eps':
-                    conversions.eq2eps(self.eq, self.temp_dir, file_path)
                 elif fileformat.get_ext() == '.pdf':
                     conversions.eq2pdf(self.eq, self.temp_dir, file_path)
+                elif fileformat.get_ext() == '.svg':
+                    conversions.eq2svg(self.eq, self.temp_dir, file_path)
+                elif fileformat.get_ext() == '.ps':
+                    conversions.eq2eps(self.eq, self.temp_dir, file_path)
             root.destroy()

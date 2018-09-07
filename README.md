@@ -17,6 +17,7 @@ To run the program successfully, you need:
   * dvips
   * dvisvgm
   * epstopdf
+* exiftool
   
 ### Debian/Ubuntu or derivatives
 
@@ -28,6 +29,7 @@ The following packages should be enough:
 * dvipng
 * texlive-font-utils
 * texlive-math-extra (or textlive-science in newer versions)
+* libimage-exiftool-perl
 
 LaTeX will require a lot of MB, but the quality of the equations is incredible too.
 
@@ -55,6 +57,9 @@ Change the symbols and operators showed in the panel above.
 * DELETE or BACKSPACE:
 Remove current selection. If it was the entire argument of an operator, a square will remain so you can select it and add something in the future. There is no way to remove those squares without deleting the entire operator.
 
+* ^ and _:
+Put a superindex or subindex.
+
 * CTRL+z:
 Recover the equation as it was before last change. You can use it all the times that you need.
 
@@ -71,9 +76,12 @@ Cut the current selection.
 Paste the last copied or cut selection.
 
 * CTRL+s:
-Save the equation to a transparent PNG file.
+Save the equation to PNG, PDF, EPS or SVG format. If format is either PNG or PDF, you will be able to recover the equation (see CTR+o).
 
-* Ctr+p:
+* CTR+o:
+Open an equation from a PNG or PDF previously created with this program (see CTR+s). The current equation being edited will be lost.
+
+* CTR+p:
 Create a square at the left of the selection box, ready to be overwritten. It is useful if you forgot to write something at the left of a block and you do not want to delete the first symbol/operator until you write the missing part.
 
 * SHIFT+click on an element of the panel above:
@@ -81,7 +89,7 @@ If the element is a symbol, the selection is replaced by the symbol. If it is an
 
 ## Known Issues
 
-* Conversion to SVG fails when the equation contain a Text. The application will wait forever while converting, so the user has to force the exit of the execution.
+* Conversion to SVG fails when the equation contains a Text. The application will wait forever while converting, so the user has to force the exit of the execution.
   * Affected environments: Ubuntu Xenial (16.04) (dvisvgm 1.9.2)
   * It is known to work in Ubuntu 14.04 and 18.04 (dvisvgm 1.2.2 and 2.1.3, respectively)
   * Solutions: There are not so many programs that transform images into a nice SVG, most of them have issues. pdf2svg does normally a good work, but it does an ugly output in the affected system for the so-called Text block. Maybe that shows that the problem is caused by something related with the associated font.

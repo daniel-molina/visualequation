@@ -17,6 +17,15 @@ class Op(object):
     def __call__(self, *args):
         return self.latex_code.format(*args)
 
+    def __eq__(self, other):
+        if type(self) is type(other):
+            return self.__dict__ == other.__dict__
+        else:
+            return NotImplemented
+
+    def __ne__(self, other):
+        return not self == other 
+
 LatexSymb = namedtuple('LatexSymb', 'tag code expr')
 MenuItemData = namedtuple('MenuItem', 'symb_l clickable_size dpi expr')
 
@@ -27,6 +36,8 @@ NEWARG = r'\square'
 EDIT = Op(1, r'\boxed{{{0}}}')
 #EDIT = Op(1, r'\left.\textcolor{{blue}}{{{0}}}\right|')
 JUXT = Op(2, r'{0} {1}')
+SUPERINDEX = Op(2, r'{0}^{{{1}}}')
+SUBINDEX = Op(2, r'{0}_{{{1}}}')
 
 MENUITEMSDATA = []
 ADDITIONAL_LS = []
@@ -126,8 +137,8 @@ MENUITEMSDATA.append(MenuItemData(
     expr=r'\acute{{a}}\;\tilde{{B}}'))
 
 INDICES = [
-    LatexSymb('super', Op(2, r'{0}^{{{1}}}'), r'\cdot^{{\square}}'),
-    LatexSymb('sub', Op(2, r'{0}_{{{1}}}'), r'\cdot_{{\square}}'),
+    LatexSymb('super', SUPERINDEX, r'\cdot^{{\square}}'),
+    LatexSymb('sub', SUBINDEX, r'\cdot_{{\square}}'),
     LatexSymb('lsuper', Op(2, r'{{}}^{{{1}}}{0}'), r'{{}}^{{\square}}\cdot'),
     LatexSymb('lsub', Op(2, r'{{}}_{{{1}}}{0}'), r'{{}}_{{\square}}\cdot'),
     LatexSymb('supersub', Op(3, r'{0}^{{{2}}}_{{{1}}}'),

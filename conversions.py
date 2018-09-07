@@ -4,6 +4,9 @@ conversions to other formats
 """
 import os
 import subprocess
+import pickle
+import Tkinter
+from tkFileDialog import askopenfilename
 
 import dirs
 import eqtools
@@ -99,11 +102,22 @@ def eq2png(eq, dpi, bg, directory, png_fpath=None):
     dvi_fpath = os.path.join(directory, fname + '.dvi')
     if png_fpath == None:
         png_fpath = os.path.join(directory, fname + '.png')
+        save_eq = False
+    else:
+        save_eq = True
     eq2latex_file(eq, latex_fpath, dirs.LATEX_TEMPLATE)
     latex_file2dvi(latex_fpath, directory, latex2dvilog_fpath)
     if dpi == None:
         dpi = 300
     dvi2png(dvi_fpath, png_fpath, dvi2pnglog_fpath, dpi, bg)
+    if save_eq:
+        # Save the equation into the file
+        eq_str = pickle.dumps(eq)
+        exiftoollog_fpath = os.path.join(directory, fname + '_exif.log')
+        with open(exiftoollog_fpath, "w") as flog:
+            subprocess.call(["exiftool", "-overwrite_original",
+                             "-description=" + eq_str,
+                             png_fpath], stdout=flog)
     return png_fpath
 
 def eq2eps(eq, directory, eps_fpath=None):
@@ -134,8 +148,19 @@ def eq2eps(eq, directory, eps_fpath=None):
 def eq2pdf(eq, directory, pdf_fpath=None):
     if pdf_fpath == None:
         pdf_fpath = os.path.join(directory, 'foo.pdf')
+        save_eq = False
+    else:
+        save_eq = True
     eps_fpath = eq2eps(eq, directory)
     eps2pdf(eps_fpath, pdf_fpath)
+    if save_eq:
+        # Save the equation into the file
+        eq_str = pickle.dumps(eq)
+        exiftoollog_fpath = os.path.join(directory, 'foo_exif.log')
+        with open(exiftoollog_fpath, "w") as flog:
+            subprocess.call(["exiftool", "-overwrite_original",
+                             "-description=" + eq_str,
+                             pdf_fpath], stdout=flog)
     return pdf_fpath
 
 def eq2svg(eq, directory, svg_fpath):
@@ -153,3 +178,37 @@ def eq2svg(eq, directory, svg_fpath):
     eq2latex_file(eq, latex_fpath, dirs.LATEX_TEMPLATE)
     latex_file2dvi(latex_fpath, directory, latex2dvilog_fpath)
     dvi2svg(dvi_fpath, svg_fpath, dvi2svglog_path)
+
+def open_eq():
+    "Return equation inside a file chosen interactively by the user or None."
+    root = Tkinter.Tk()
+    root.withdraw()
+    filename = askopenfilename()
+    root.destroy()
+    def show_message(message):
+        root = Tkinter.Tk()
+        Tkinter.Label(root, text=message).pack(side=Tkinter.TOP)
+        def return_destroy(event):
+            root.destroy()
+        root.bind('<Return>', return_destroy)
+        Tkinter.Button(root, text="Accept", command=root.destroy
+        ).pack(side=Tkinter.TOP)
+        root.mainloop()
+    if not filename:
+        return None
+    try:
+        eq_str = subprocess.check_output(["exiftool", "-b", "-s3",
+                                          "-description", filename])
+        if not eq_str:
+            show_message("No equation inside this file.")
+            return None
+        return pickle.loads(eq_str)
+    except subprocess.CalledProcessError:
+        show_message("Error by exiftool when trying to extract equation "
+                     + "from file.")
+        return None
+    except (KeyError, EOFError):
+        show_message("Error while trying to translate equation from file.\n"
+                     + "Did you create it with another program or "
+                     + "change metadata?")
+        return None
