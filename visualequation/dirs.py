@@ -2,5 +2,6 @@
 import os
 
 # Set the path to main directories
-SYMBOLS_DIR = os.path.join('data', 'symbols')
-LATEX_TEMPLATE = os.path.join('data', 'eq_template.tex')
+SYMBOLS_DIR = os.path.join(os.path.dirname(__file__), 'data', 'symbols')
+LATEX_TEMPLATE = os.path.join(os.path.dirname(__file__), 'data',
+                              'eq_template.tex')

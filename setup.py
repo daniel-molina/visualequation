@@ -13,6 +13,11 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/daniel-molina/visualequation",
     packages=setuptools.find_packages(),
+    entry_points={
+        'gui_scripts': ['visualequation = visualequation.__main__:main']
+    },
+    package_data={'visualequation': ['data/*', 'data/symbols/*']},
+    zip_safe=False,
     classifiers=[
         "Programming Language :: Python :: 2",
         "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
@@ -20,5 +25,6 @@ setuptools.setup(
         "Topic :: Scientific/Engineering :: Mathematics",
         "Intended Audience :: Science/Research",
         "Intended Audience :: Education",
-    ]
+    ],
+    keywords='mathematics equation editor latex wysiwyg formulas'
 )

@@ -8,11 +8,11 @@ import os
 import pygame
 from pygame.locals import *
 
-import dirs
-import symbols
-import maineq
-import conversions
-import menu
+import dirs as dirs
+import symbols as symbols
+import maineq as maineq
+import conversions as conversions
+import menu as menu
 
 def draw_screen(screen, editingeq, mainmenu):
     """ Draw equation, menuitems and symbols."""
@@ -23,9 +23,8 @@ def draw_screen(screen, editingeq, mainmenu):
     mainmenu.active_symbs.draw(screen)
     pygame.display.flip()
 
-def main(*args):
+def main():
     """ This the main function of the program."""
-    version = '0.1.3'
     # Prepare a temporal directory to manage all intermediate files
     temp_dirpath = tempfile.mkdtemp()
     # Prepare pygame
@@ -40,7 +39,7 @@ def main(*args):
     init_eq = [symbols.NEWARG]
     screen_center = (screen_w//2, screen_h//2)
     editingeq = maineq.EditableEqSprite(init_eq, screen_center,
-                                            temp_dirpath)
+                                        temp_dirpath)
     # Create the menu
     mainmenu = menu.Menu(screen_w, screen_h, temp_dirpath)
     # Pygame loop
@@ -182,4 +181,4 @@ def main(*args):
     sys.exit(0)
 
 if __name__ == '__main__':
-    main(*sys.argv[1:])
+    main()

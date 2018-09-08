@@ -548,7 +548,7 @@ COLORS = [
     LatexSymb('purple', 'purple', r'\textcolor{purple}{\text{purple}}'),
     LatexSymb('red', 'red', r'\textcolor{red}{\text{red}}'),
     LatexSymb('teal', 'teal', r'\textcolor{teal}{\text{teal}}'),
-    LatexSymb('viiolet', 'violet', r'\textcolor{violet}{\text{violet}}'),
+    LatexSymb('violet', 'violet', r'\textcolor{violet}{\text{violet}}'),
     LatexSymb('white', 'white', r'\textcolor{white}{\text{white}}'),
     LatexSymb('yellow', 'yellow', r'\textcolor{yellow}{\text{yellow}}'),
 ]
