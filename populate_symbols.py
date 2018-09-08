@@ -28,6 +28,9 @@ if __name__ == '__main__':
     # Prepare a temporal directory to manage all LaTeX files
     temp_dirpath = tempfile.mkdtemp()
 
+    if not os.path.exists(dirs.SYMBOLS_DIR):
+        os.makedirs(dirs.SYMBOLS_DIR)
+
     for index, menuitemdata in enumerate(symbols.MENUITEMSDATA):
         print "Generating menu symbols...", index+1, "/", \
             len(symbols.MENUITEMSDATA)
