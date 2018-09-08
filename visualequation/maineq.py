@@ -297,7 +297,7 @@ class EditableEqSprite(pygame.sprite.Sprite):
             if file_path:
                 if fileformat.get_ext() == '.png':
                     conversions.eq2png(self.eq, 600, None, self.temp_dir,
-                                       file_path)
+                                       file_path, True)
                 elif fileformat.get_ext() == '.pdf':
                     conversions.eq2pdf(self.eq, self.temp_dir, file_path)
                 elif fileformat.get_ext() == '.svg':

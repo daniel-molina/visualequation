@@ -81,7 +81,7 @@ def dvi2svg(dvi_file, svg_file, log_file):
         subprocess.call(["dvisvgm", "--no-fonts", "--scale=5,5", 
                          "-o", svg_file, dvi_file], stderr=flog)
 
-def eq2png(eq, dpi, bg, directory, png_fpath=None):
+def eq2png(eq, dpi, bg, directory, png_fpath=None, add_metadata=False):
     """ Create a png from a equation, returns the path of PNG image.
 
     The size of the image is specified (dpi).
@@ -102,15 +102,12 @@ def eq2png(eq, dpi, bg, directory, png_fpath=None):
     dvi_fpath = os.path.join(directory, fname + '.dvi')
     if png_fpath == None:
         png_fpath = os.path.join(directory, fname + '.png')
-        save_eq = False
-    else:
-        save_eq = True
     eq2latex_file(eq, latex_fpath, dirs.LATEX_TEMPLATE)
     latex_file2dvi(latex_fpath, directory, latex2dvilog_fpath)
     if dpi == None:
         dpi = 300
     dvi2png(dvi_fpath, png_fpath, dvi2pnglog_fpath, dpi, bg)
-    if save_eq:
+    if add_metadata:
         # Save the equation into the file
         eq_str = pickle.dumps(eq)
         exiftoollog_fpath = os.path.join(directory, fname + '_exif.log')
@@ -146,6 +143,9 @@ def eq2eps(eq, directory, eps_fpath=None):
     return eps_fpath
 
 def eq2pdf(eq, directory, pdf_fpath=None):
+    """
+    Convert equation to pdf file. It always adds the equation to metadata.
+    """
     if pdf_fpath == None:
         pdf_fpath = os.path.join(directory, 'foo.pdf')
         save_eq = False
@@ -164,6 +164,7 @@ def eq2pdf(eq, directory, pdf_fpath=None):
     return pdf_fpath
 
 def eq2svg(eq, directory, svg_fpath):
+    """ Converts the equation to SVG"""
 
     # If directory does not exist, raise exception
     if not os.path.exists(directory):
@@ -180,7 +181,7 @@ def eq2svg(eq, directory, svg_fpath):
     dvi2svg(dvi_fpath, svg_fpath, dvi2svglog_path)
 
 def open_eq():
-    "Return equation inside a file chosen interactively by the user or None."
+    "Return equation inside a file chosen interactively. Else, None."
     root = Tkinter.Tk()
     root.withdraw()
     filename = askopenfilename()
