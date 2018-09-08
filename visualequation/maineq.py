@@ -59,7 +59,10 @@ class EditableEqSprite(pygame.sprite.Sprite):
         sel_latex_code = eqtools.sel_eq(self.eq, self.sel_index)
         sel_png = conversions.eq2png(sel_latex_code, None, None,
                                      self.temp_dir)
-        self.image = pygame.image.load(sel_png)
+        try:
+            self.image = pygame.image.load(sel_png)
+        except pygame.error as message:
+            raise SystemExit(message)
         self.rect = self.image.get_rect(center=self.screen_center)
 
     def mousepointed(self):

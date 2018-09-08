@@ -26,14 +26,18 @@ def eq2latex_file(eq, latex_file, template_file):
             for line in ftempl:
                 flatex.write(line.replace('%EQ%', latex_code))
 
-def latex_file2dvi(latex_file, output_dir, log_file):
-    """ Compile the LaTeX file to DVI image and put the output the given dir.
+def latex_file2dvi(latex_file, output_dir):
+    """
+    Compile the LaTeX file to DVI image and put the output in the given dir.
     The log is saved in the specified file.
     """
-    with open(log_file, "w") as flog:
-        subprocess.call(["latex", "-interaction=nonstopmode",
-                         "-output-directory=" + output_dir,
-                         latex_file], stdout=flog)
+    try:
+        subprocess.check_output(["latex", "-interaction=nonstopmode",
+                                 "-halt-on-error",
+                                 "-output-directory=" + output_dir,
+                                 latex_file])
+    except subprocess.CalledProcessError:
+        raise SystemExit("Internal error: Bad LaTeX formula.")
 
 def dvi2png(dvi_file, png_file, log_file, dpi, bg):
     """ Convert a DVI file to PNG.
@@ -208,7 +212,7 @@ def open_eq():
         show_message("Error by exiftool when trying to extract equation "
                      + "from file.")
         return None
-    except (KeyError, EOFError):
+    except (KeyError, EOFError, IndexError):
         show_message("Error while trying to translate equation from file.\n"
                      + "Did you create it with another program or "
                      + "change metadata?")
