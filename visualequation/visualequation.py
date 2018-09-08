@@ -14,58 +14,6 @@ import maineq
 import conversions
 import menu
 
-def display_splash_screen(screen, temp_dir, version):
-    """ Load a nice pygame badge while the user waits"""
-    # Background image
-    screen_w = screen.get_width()
-    screen_h = screen.get_height()
-    badge = pygame.image.load("pygame-badge-SMA.png")
-    screen.blit(badge, ((screen_w-badge.get_width())//2,
-                        (screen_h-badge.get_height())//2))
-    # Title
-    title = r"\color{white}(\text{Visual Equation})}_{\text{%s}}" % version
-    title_png = conversions.eq2png([title], 270, None, temp_dir)
-    title_im = pygame.image.load(title_png)
-    screen.blit(title_im, ((screen_w-title_im.get_width())//2, 30))
-    # LaTeX ackknowledgement
-    latex_m = r"\color{white}\& \LaTeX"
-    latex_png = conversions.eq2png([latex_m], 250, None, temp_dir)
-    latex_im = pygame.image.load(latex_png)
-    screen.blit(latex_im, (530, 500))
-    pygame.display.flip()
-
-def print_delay_message(screen, current, total, temp_dir):
-    """ Print a message in the bottom of the screen showing the current/total
-    generation of operators' images.
-    """
-    screen_w = screen.get_width()
-    screen_h = screen.get_height()
-    message = r"""
-    \color{{white}}\text{{It is the first time that the program is running.
-    Generating symbols...............}}{0}/{1}
-    """.format(current, total)
-    message_png = conversions.eq2png([message], 150, None, temp_dir)
-    message_im = pygame.image.load(message_png)
-    message_pos = ((screen_w-message_im.get_width())//2, screen_h - 40)
-    message_rect = message_im.get_rect()
-    message_rect.topleft = message_pos
-    screen.fill((0, 0, 0), message_rect)
-    screen.blit(message_im, message_pos)
-    pygame.display.flip()
-
-def generate_symb_images(menuitemdata, temp_dir):
-    """
-    Generate the png of the symbols and place them in a given directory.
-    A temporal directory must be passed too, where auxiliary files are
-    generated.
-    """
-    for symb in menuitemdata.symb_l:
-        filename = os.path.join(dirs.SYMBOLS_DIR, symb.tag + ".png")
-        if not os.path.exists(filename):
-            # Create and save image of that op
-            conversions.eq2png(symb.expr, menuitemdata.dpi, None, temp_dir,
-                               filename)
-
 def draw_screen(screen, editingeq, mainmenu):
     """ Draw equation, menuitems and symbols."""
     screen.fill((255, 255, 255))
@@ -78,7 +26,7 @@ def draw_screen(screen, editingeq, mainmenu):
 def main(*args):
     """ This the main function of the program."""
     version = '0.1.3'
-    # Prepare a temporal directory to manage all LaTeX files
+    # Prepare a temporal directory to manage all intermediate files
     temp_dirpath = tempfile.mkdtemp()
     # Prepare pygame
     screen_w = 800
@@ -87,26 +35,7 @@ def main(*args):
     clock = pygame.time.Clock()
     screen = pygame.display.set_mode((screen_w, screen_h), RESIZABLE)
     pygame.display.set_caption("Visual Equation")
-    display_splash_screen(screen, temp_dirpath, version)
-    # Generate operators' images if the folder is not found
-    if not os.path.exists(dirs.PROGRAM_DIR):
-        os.makedirs(dirs.PROGRAM_DIR)
-    if not os.path.exists(dirs.SYMBOLS_DIR):
-        os.makedirs(dirs.SYMBOLS_DIR)
-        print_message = True
-    else:
-        print_message = False
-    for index, menuitemdata in enumerate(symbols.MENUITEMSDATA):
-        if print_message:
-            # Print message about the delay by creating operators' images
-            print_delay_message(screen, index+1, len(symbols.MENUITEMSDATA),
-                                temp_dirpath)
-        generate_symb_images(menuitemdata, temp_dirpath)
-    # Create additional images used by Tk
-    for symb in symbols.ADDITIONAL_LS:
-        filename = os.path.join(dirs.SYMBOLS_DIR, symb.tag + ".png")
-        if not os.path.exists(filename):
-            conversions.eq2png(symb.expr, 200, None, temp_dirpath, filename)
+
     # Prepare the equation to edit which will be showed by default
     init_eq = [symbols.NEWARG]
     screen_center = (screen_w//2, screen_h//2)

@@ -1,0 +1,24 @@
+import setuptools
+
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
+setuptools.setup(
+    name="visualequation",
+    version="0.2.0",
+    author="Daniel Molina Garcia",
+    author_email="lluvia@autistici.org",
+    description="A WYSIWYG equation editor",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.com/daniel-molina/visualequation",
+    packages=setuptools.find_packages(),
+    classifiers=[
+        "Programming Language :: Python :: 2",
+        "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+        "Operating System :: POSIX :: Linux",
+        "Topic :: Scientific/Engineering :: Mathematics",
+        "Intended Audience :: Science/Research",
+        "Intended Audience :: Education",
+    ]
+)
