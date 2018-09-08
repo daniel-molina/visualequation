@@ -111,6 +111,4 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ## Acknowledgements
 
-* The badge was done by SMA-DEV (http://www.supermagicadventure.net/) licensed under the WTFPL.
-
 * I have been inspired by Ekee (http://rlehy.free.fr/) features. It is a pity that the program is not mantained (2018).
