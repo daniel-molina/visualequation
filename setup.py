@@ -17,7 +17,7 @@ setuptools.setup(
     entry_points={
         'gui_scripts': ['visualequation = visualequation.__main__:main']
     },
-    package_data={'visualequation': ['data/*', 'data/symbols/*']},
+    package_data={'visualequation': ['data/eq_template.tex', 'data/symbols/*']},
     zip_safe=False,
     classifiers=[
         "Programming Language :: Python :: 2",
