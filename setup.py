@@ -12,7 +12,8 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/daniel-molina/visualequation",
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(exclude=['tests']),
+    test_suite='tests',
     entry_points={
         'gui_scripts': ['visualequation = visualequation.__main__:main']
     },

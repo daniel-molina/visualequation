@@ -39,7 +39,7 @@ LaTeX will require a lot of MB, but the quality of the equations is incredible t
 
 To see if everything is installed properly you can run:
 
-$ python2 -m tests.test_dependencies
+$ python2 setup.py test
 
 ## Building
 
