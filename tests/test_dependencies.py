@@ -22,7 +22,9 @@ class DependenciesTest(unittest.TestCase):
                                      "-output-directory=" + temp_dirpath,
                                      latex_fpath])
         except subprocess.CalledProcessError:
-            raise ValueError("Latex code was not valid?")
+            raise SystemExit("Suggestion: Do you have the AMS LaTeX packages?")
+        except OSError:
+            raise SystemExit("Suggestion: Do you have command latex?")
         shutil.rmtree(temp_dirpath)
 
     def test_dvipng(self):
@@ -34,7 +36,9 @@ class DependenciesTest(unittest.TestCase):
                                      "-bg", "Transparent",
                                      "-o", png_fpath, dvi_fpath])
         except subprocess.CalledProcessError:
-            raise SystemExit("DVI image not found in the directory?")
+            raise SystemExit("Was DVI image not found in the directory?")
+        except OSError:
+            raise SystemExit("Suggestion: Do you have command dvipng?")
         shutil.rmtree(temp_dirpath)
 
     def test_dvips(self):
@@ -46,6 +50,9 @@ class DependenciesTest(unittest.TestCase):
                                      "-o", eps_fpath, dvi_fpath])
         except subprocess.CalledProcessError:
             raise SystemExit("DVI image not found in the directory?")
+        except OSError:
+            raise SystemExit("Suggestion: Do you have command dvips?")
+
         shutil.rmtree(temp_dirpath)
 
     def test_epstopdf(self):
@@ -57,6 +64,9 @@ class DependenciesTest(unittest.TestCase):
                                      eps_fpath])
         except subprocess.CalledProcessError:
             raise SystemExit("EPS image not found in the directory?")
+        except OSError:
+            raise SystemExit("Suggestion: Do you have command epstopdf?")
+
         shutil.rmtree(temp_dirpath)
 
     def test_dvisvgm(self):
@@ -64,8 +74,12 @@ class DependenciesTest(unittest.TestCase):
         dvi_fpath = os.path.join(os.path.dirname(__file__), 'im.dvi')
         svg_fpath = os.path.join(temp_dirpath, 'im.svg')
         # dvisgvm does not return error code when file is not found
-        subprocess.call(["dvisvgm", "--no-fonts", "--scale=5,5", 
-                                 "-o", svg_fpath, dvi_fpath])
+        try:
+            subprocess.call(["dvisvgm", "--no-fonts", "--scale=5,5", 
+                             "-o", svg_fpath, dvi_fpath])
+        except OSError:
+            raise SystemExit("Suggestion: Do you have command dvisvgm?")
+
         shutil.rmtree(temp_dirpath)
 
     def test_exiftool_read(self):
@@ -85,7 +99,12 @@ class DependenciesTest(unittest.TestCase):
             except (KeyError, EOFError, IndexError):
                 raise SystemExit("Error while translating read equation "
                            + "from file. Was metadata changed?")
+            except OSError:
+                raise SystemExit("Suggestion: Do you have command exiftool?")
+        fun(png_fpath)
+        fun(pdf_fpath)
 
+            
     def test_exiftool_write(self):
         temp_dirpath = tempfile.mkdtemp()
         png_fpath = os.path.join(os.path.dirname(__file__), 'im.png')
@@ -96,9 +115,23 @@ class DependenciesTest(unittest.TestCase):
                                          "-description=Hi", fpath])
             except subprocess.CalledProcessError:
                 raise SystemExit("Exiftool error.")
+            except OSError:
+                raise SystemExit("Suggestion: Do you have command exiftool?")
         fun(png_fpath)
         fun(pdf_fpath)
         shutil.rmtree(temp_dirpath)
+
+    def test_tkinter(self):
+        try:
+            import Tkinter, tkFileDialog
+        except ImportError:
+            raise SystemExit("You must have Tk installed for python.")
+
+    def test_pygame(self):
+        try:
+            import pygame
+        except ImportError:
+            raise SystemExit("You must have pygame installed.")
 
 if __name__ == "__main__":
     unittest.main()
