@@ -41,10 +41,6 @@ To see if everything is installed properly you can run:
 
 $ python2 -m tests/test_dependencies
 
-If you want to run all the tests use (you need setuptools),
-
-$ python2 setup.py test
-
 ## Building
 
 If you have the sources and you want build the program, generate the LaTeX symbols used by the program:
@@ -55,27 +51,61 @@ It will late a bit.
 
 ## Installation
 
-To install the program you can use pip. To download it and install or upgrade it from PYPI (not uploaded yet), just
+_Personal note:_ I prefer installing programs with the tools of my operative system, however, I did not package visualequation for any distribution yet. In the case of python, installing software with pip and related tools is almost a standard. If you know how to manage pip in your system, perfect, follow your way. If you have no clue and want me to explain all the details about how to install visualequation, I feel that I have certain responsability of saying you something that works. I will show a recipe to install locally pip because the version that comes in some distributions does not work totally for the instructions I will give later. Said that, if you want further lecture, I just leave [this well-written link](http://matthew-brett.github.io/pydagogue/installing_on_debian.html).
+
+### Installing pip locally
+
+Download it
+
+$ curl -LO https://bootstrap.pypa.io/get-pip.py
+
+Install it locally
+
+$ python2 get-pip.py --user
+
+Add to your path the directory where pip is installed and where it will install the other programs. You can do it by writting at the end of your .bashrc the following line
+
+PATH=${PATH}:${HOME}/.local/bin
+
+If you want this change to take effect in the current terminal, run
+
+$ source ~/.bashrc
+
+Both
+
+$ pip --version
+
+and
+
+$ python2 -m pip --version
+
+should give the same valid output (the current last version of pip). Else, look for help elsewhere, something failed!
+
+I recommend now to remove the package python-setuptools of your distribution and install it with pip
+
+$ python2 -m pip install --user setuptools
+
+### Installing visualequation using pip
+
+The fastest way is to download it and install from PYPI (not uploaded yet, but soon), just
 
 $ python2 -m pip install --user --upgrade visualequation
 
-On the other hand, if you have the sources, after running the Building instructions you can generate a package (setuptools of python is needed)
+On the other hand, if you have the sources, after running the Building instructions you can generate a package
 
-$ python2 setup.py sdist
+$ python2 setup.py bdist_wheel
 
-To install it, you can do
+and install it
 
-$ python2 -m pip install --user dist/visualequation-\<version\>.tar.gz
+$ cd dist
+$ python2 -m pip install --user visualequation-\<version\>-py2-none-any.whl
+$ cd -
 
-where you substitute <version> by the version number of the file generated in dist/.
+where you substitute <version> by the version number of the file generated in dist/. Changing current directory is important because pip refuse to install it from sources directory
 
-By default, the program should be installed in ~/.local/bin . If you do not have it in your path you can extend it by
+## Running visualequation
 
-$ PATH=${PATH}:${HOME}/.local/bin
-
-To have this available always that you open a terminal, you can add the previous command to your .bashrc by hand.
-
-To execute the program, just run
+To execute the program, just run in whatever directory
 
 $ visualequation 
 
