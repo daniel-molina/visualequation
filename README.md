@@ -18,6 +18,10 @@ To run the program successfully, you need:
   * dvisvgm
   * epstopdf
 * exiftool
+
+### Microsoft Windows and MacOS
+
+Volunteers needed!
   
 ### Debian/Ubuntu or derivatives
 
@@ -37,17 +41,43 @@ To see if everything is installed properly you can run:
 
 $ python2 -m tests.test_dependencies
 
-To build the program, first generate the LaTeX symbols used by the program:
+## Building
 
-$ ./populate_symbols.py
+If you have the sources and you want build the program, generate the LaTeX symbols used by the program:
 
-It will late a bit. After that, if you want simply to run the program you can do
+$ python2 populate_symbols.py
 
-$ cd visualequation
-$ ./__main__.py
+It will late a bit. After that, if you simply want to run the program you can do
 
-### Microsoft Windows and MacOS
-Volunteers needed!
+$ python2 visualequation/__main__.py
+
+## Installation
+
+To install the program you can use pip. To download it and install it from PYPI (not uploaded yet), just
+
+$ python2 -m pip install --user --upgrade visualequation
+
+If you have the sources, after running the Building instructions you can generate a package if you have setuptools installed
+
+$ python setup.py sdist
+
+To install it, you can do
+
+$ python2 -m pip install --user dist/visualequation-<version>.tar.gz
+
+where you substitute <version> by the version number of the file generated in dist/.
+
+By default, the program should be installed in ~/.local/bin . If you do not have it in your path you can extend it by
+
+$ PATH=${PATH}:${HOME}/.local/bin
+
+To have this available always that you open a terminal, you can add the previous command to your .bashrc by hand.
+
+To execute the program, just run
+
+$ visualequation 
+
+in whatever current directory.
 
 ## Usage/Instructions
 
