@@ -100,14 +100,14 @@ def eq2png(eq, dpi, bg, directory, png_fpath=None, add_metadata=False):
         #os.makedirs(directory)
     fname = 'foo'
     latex_fpath = os.path.join(directory, fname + '.tex')
-    latex2dvilog_fpath = os.path.join(directory,
-                                      fname + '_latex2dvi.log')
+    #latex2dvilog_fpath = os.path.join(directory,
+    #                                  fname + '_latex2dvi.log')
     dvi2pnglog_fpath = os.path.join(directory, fname + '_div2png.log')
     dvi_fpath = os.path.join(directory, fname + '.dvi')
     if png_fpath == None:
         png_fpath = os.path.join(directory, fname + '.png')
     eq2latex_file(eq, latex_fpath, dirs.LATEX_TEMPLATE)
-    latex_file2dvi(latex_fpath, directory, latex2dvilog_fpath)
+    latex_file2dvi(latex_fpath, directory)
     if dpi == None:
         dpi = 300
     dvi2png(dvi_fpath, png_fpath, dvi2pnglog_fpath, dpi, bg)
