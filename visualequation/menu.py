@@ -58,6 +58,10 @@ class SymbSprite(pygame.sprite.Sprite):
         self.code = symb.code
         # Load the image
         filename = os.path.join(dirs.SYMBOLS_DIR, symb.tag + '.png')
+        if not os.path.exists(filename):
+            raise SystemExit("Error: Menu symbol was not found. If you "
+                             + "installed from source, did you forget to run "
+                             + "the populate_symbols.py script?")
         try:
             self.image = pygame.image.load(filename).convert_alpha()
         except pygame.error as message:

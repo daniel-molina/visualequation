@@ -295,7 +295,8 @@ class EditableEqSprite(pygame.sprite.Sprite):
         if fileformat.get_ext() != '.':
             root.withdraw()
             file_path = tkFileDialog.asksaveasfilename(
-                defaultextension=fileformat.get_ext())
+                defaultextension=fileformat.get_ext(),
+                filetypes=[(fileformat.get_ext()[1:], fileformat.get_ext())])
             # It returns () or '' if file is not chosen (Exit or Cancel)
             if file_path:
                 if fileformat.get_ext() == '.png':

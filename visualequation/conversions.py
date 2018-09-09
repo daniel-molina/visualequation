@@ -20,7 +20,7 @@ def eq2latex_file(eq, latex_file, template_file):
     elif isinstance(eq, list):
         latex_code = eqtools.eq2latex_code(eq)
     else:
-        raise ValueError('Cannot understand equation type.')
+        raise SystemExit('Internal Error: Cannot understand equation type.')
     with open(template_file, "r") as ftempl:
         with open(latex_file, "w") as flatex:
             for line in ftempl:
@@ -36,9 +36,17 @@ def latex_file2dvi(latex_file, output_dir):
                                  "-halt-on-error",
                                  "-output-directory=" + output_dir,
                                  latex_file])
-    except subprocess.CalledProcessError:
-        raise SystemExit("Internal error: Bad LaTeX formula.")
+    except subprocess.CalledProcessError as error:
+        raise SystemExit("Error reported by latex. It can be because:\n"
+                         + " * You do not have installed required packages.\n"
+                         + "   (Do you success running test test_latex?)\n"
+                         + " * An internal error. Please, report it with all "
+                         + "the text returned above and the files inside "
+                         + "this directory:\n%s" % output_dir)
+    except OSError:
+        raise SystemExit("Command latex was not found.")
 
+    
 def dvi2png(dvi_file, png_file, log_file, dpi, bg):
     """ Convert a DVI file to PNG.
     The log is saved in the specified file.
@@ -47,19 +55,29 @@ def dvi2png(dvi_file, png_file, log_file, dpi, bg):
         bg = "Transparent"
 
     with open(log_file, "w") as flog:
-        subprocess.call(["dvipng", "-T", "tight", "-D", str(dpi),
-                         "-bg", bg,
-                         "-o", png_file, dvi_file], stdout=flog)
+        try:
+            subprocess.call(["dvipng", "-T", "tight", "-D", str(dpi),
+                             "-bg", bg,
+                             "-o", png_file, dvi_file], stdout=flog)
+        except OSError:
+            raise SystemExit("Command dvipng was not found.")
 
 def dvi2eps(dvi_file, eps_file, log_file):
     """ Convert the DVI file to PostScript. """
     with open(log_file, "w") as flog:
-        subprocess.call(["dvips", "-E", "-D", "600", "-Ppdf", 
-                         "-o", eps_file, dvi_file], stderr=flog)
-
+        try:
+            subprocess.call(["dvips", "-E", "-D", "600", "-Ppdf", 
+                             "-o", eps_file, dvi_file], stderr=flog)
+        except OSError:
+            raise SystemExit("Command dvips was not found.")
+            
 def eps2pdf(eps_file, pdf_file):
-    subprocess.call(["epstopdf", "--outfile", pdf_file, eps_file])
+    try:
+        subprocess.call(["epstopdf", "--outfile", pdf_file, eps_file])
+    except OSError:
+        raise SystemExit("Command epstopdf was not found.")
 
+        
 # eps2svg: Ouput SVG has bounding box problems
 # In Ekee it seems solved by hand but I am not able to reproduce the fix
 #def eps2svg(eps_file, svg_file, log_file):
@@ -82,8 +100,11 @@ def dvi2svg(dvi_file, svg_file, log_file):
       (it is an issue of \text{} fields, or whatever outside math environment)
     """
     with open(log_file, "w") as flog:
-        subprocess.call(["dvisvgm", "--no-fonts", "--scale=5,5", 
-                         "-o", svg_file, dvi_file], stderr=flog)
+        try:
+            subprocess.call(["dvisvgm", "--no-fonts", "--scale=5,5", 
+                             "-o", svg_file, dvi_file], stderr=flog)
+        except OSError:
+            raise SystemExit("Command dvisvgm was not found.")
 
 def eq2png(eq, dpi, bg, directory, png_fpath=None, add_metadata=False):
     """ Create a png from a equation, returns the path of PNG image.
@@ -116,9 +137,15 @@ def eq2png(eq, dpi, bg, directory, png_fpath=None, add_metadata=False):
         eq_str = pickle.dumps(eq)
         exiftoollog_fpath = os.path.join(directory, fname + '_exif.log')
         with open(exiftoollog_fpath, "w") as flog:
-            subprocess.call(["exiftool", "-overwrite_original",
-                             "-description=" + eq_str,
-                             png_fpath], stdout=flog)
+            try:
+                subprocess.call(["exiftool", "-overwrite_original",
+                                 "-description=" + eq_str,
+                                 png_fpath], stdout=flog)
+            except subprocess.CalledProcessError:
+                raise SystemExit("Exiftool error. Please, report it.")
+            except OSError:
+                raise SystemExit("Command exiftool was not found.")
+
     return png_fpath
 
 def eq2eps(eq, directory, eps_fpath=None):
@@ -135,14 +162,12 @@ def eq2eps(eq, directory, eps_fpath=None):
         #os.makedirs(directory)
     fname = 'foo'
     latex_fpath = os.path.join(directory, fname + '.tex')
-    latex2dvilog_fpath = os.path.join(directory,
-                                      fname + '_latex2dvi.log')
     dvi2epslog_fpath = os.path.join(directory, fname + '_div2eps.log')
     dvi_fpath = os.path.join(directory, fname + '.dvi')
     if eps_fpath == None:
         eps_fpath = os.path.join(directory, fname + '.ps')
     eq2latex_file(eq, latex_fpath, dirs.LATEX_TEMPLATE)
-    latex_file2dvi(latex_fpath, directory, latex2dvilog_fpath)
+    latex_file2dvi(latex_fpath, directory)
     dvi2eps(dvi_fpath, eps_fpath, dvi2epslog_fpath)
     return eps_fpath
 
@@ -162,9 +187,15 @@ def eq2pdf(eq, directory, pdf_fpath=None):
         eq_str = pickle.dumps(eq)
         exiftoollog_fpath = os.path.join(directory, 'foo_exif.log')
         with open(exiftoollog_fpath, "w") as flog:
-            subprocess.call(["exiftool", "-overwrite_original",
-                             "-description=" + eq_str,
-                             pdf_fpath], stdout=flog)
+            try:
+                subprocess.call(["exiftool", "-overwrite_original",
+                                 "-description=" + eq_str,
+                                 pdf_fpath], stdout=flog)
+            except subprocess.CalledProcessError:
+                raise SystemExit("Exiftool error. Please, report it.")
+            except OSError:
+                raise SystemExit("Command exiftool was not found.")
+
     return pdf_fpath
 
 def eq2svg(eq, directory, svg_fpath):
@@ -175,20 +206,20 @@ def eq2svg(eq, directory, svg_fpath):
         raise ValueError('Directory does not exist.')
     fname = 'foo'
     latex_fpath = os.path.join(directory, fname + '.tex')
-    latex2dvilog_fpath = os.path.join(directory,
-                                      fname + '_latex2dvi.log')
     dvi_fpath = os.path.join(directory, fname + '.dvi')    
     dvi2svglog_path = os.path.join(directory,
                                    fname + '_dvi2svg.log')
     eq2latex_file(eq, latex_fpath, dirs.LATEX_TEMPLATE)
-    latex_file2dvi(latex_fpath, directory, latex2dvilog_fpath)
+    latex_file2dvi(latex_fpath, directory)
     dvi2svg(dvi_fpath, svg_fpath, dvi2svglog_path)
 
 def open_eq():
     "Return equation inside a file chosen interactively. Else, None."
     root = Tkinter.Tk()
     root.withdraw()
-    filename = askopenfilename()
+    # We allow only two types of format to save equation
+    filename = askopenfilename(filetypes=[('Available files',
+                                           ('.png', '.pdf'))])
     root.destroy()
     def show_message(message):
         root = Tkinter.Tk()
@@ -211,6 +242,9 @@ def open_eq():
     except subprocess.CalledProcessError:
         show_message("Error by exiftool when trying to extract equation "
                      + "from file.")
+    except OSError:
+        raise SystemExit("Command exiftool was not found.")
+
         return None
     except (KeyError, EOFError, IndexError):
         show_message("Error while trying to translate equation from file.\n"
