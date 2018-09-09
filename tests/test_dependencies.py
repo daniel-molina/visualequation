@@ -22,7 +22,7 @@ class DependenciesTest(unittest.TestCase):
                                      "-output-directory=" + temp_dirpath,
                                      latex_fpath])
         except subprocess.CalledProcessError:
-            raise ValueError("Latex code was not valid.")
+            raise ValueError("Latex code was not valid?")
         shutil.rmtree(temp_dirpath)
 
     def test_dvipng(self):
@@ -68,7 +68,7 @@ class DependenciesTest(unittest.TestCase):
                                  "-o", svg_fpath, dvi_fpath])
         shutil.rmtree(temp_dirpath)
 
-    def test_exiftool(self):
+    def test_exiftool_read(self):
         png_fpath = os.path.join(os.path.dirname(__file__), 'im.png')
         pdf_fpath = os.path.join(os.path.dirname(__file__), 'im.pdf')
 
@@ -83,11 +83,22 @@ class DependenciesTest(unittest.TestCase):
                 raise SystemExit("Error by exiftool when trying to extract"
                                  + "equation from file.")
             except (KeyError, EOFError, IndexError):
-                raise SystemExit("Error while trying to translate equation "
+                raise SystemExit("Error while translating read equation "
                            + "from file. Was metadata changed?")
 
+    def test_exiftool_write(self):
+        temp_dirpath = tempfile.mkdtemp()
+        png_fpath = os.path.join(os.path.dirname(__file__), 'im.png')
+        pdf_fpath = os.path.join(os.path.dirname(__file__), 'im.pdf')
+        def fun(fpath):
+            try:
+                subprocess.check_output(["exiftool", "-out", temp_dirpath,
+                                         "-description=Hi", fpath])
+            except subprocess.CalledProcessError:
+                raise SystemExit("Exiftool error.")
         fun(png_fpath)
         fun(pdf_fpath)
+        shutil.rmtree(temp_dirpath)
 
 if __name__ == "__main__":
     unittest.main()
