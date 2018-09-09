@@ -33,11 +33,15 @@ The following packages should be enough:
 
 LaTeX will require a lot of MB, but the quality of the equations is incredible too.
 
-To run the program, first generate the LaTeX images used by the program:
+To see if everything is installed properly you can run:
+
+$ python2 -m tests.test_dependencies
+
+To build the program, first generate the LaTeX symbols used by the program:
 
 $ ./populate_symbols.py
 
-It will late a bit. After that, if you want simply to run the program you can
+It will late a bit. After that, if you want simply to run the program you can do
 
 $ cd visualequation
 $ ./__main__.py
