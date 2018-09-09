@@ -51,23 +51,21 @@ If you have the sources and you want build the program, generate the LaTeX symbo
 
 $ python2 populate_symbols.py
 
-It will late a bit. After that, if you simply want to run the program you can do
-
-$ python2 visualequation/__main__.py
+It will late a bit.
 
 ## Installation
 
-To install the program you can use pip. To download it and install it from PYPI (not uploaded yet), just
+To install the program you can use pip. To download it and install or upgrade it from PYPI (not uploaded yet), just
 
 $ python2 -m pip install --user --upgrade visualequation
 
-If you have the sources, after running the Building instructions you can generate a package if you have setuptools installed
+On the other hand, if you have the sources, after running the Building instructions you can generate a package (setuptools of python is needed)
 
-$ python setup.py sdist
+$ python2 setup.py sdist
 
 To install it, you can do
 
-$ python2 -m pip install --user dist/visualequation-<version>.tar.gz
+$ python2 -m pip install --user dist/visualequation-\<version\>.tar.gz
 
 where you substitute <version> by the version number of the file generated in dist/.
 
