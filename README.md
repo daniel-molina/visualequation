@@ -38,7 +38,7 @@ $ python2 -m tests.test_dependencies
 
 ## Installation
 
-I did not package visualequation for any distribution yet. In the case of python, installing software with pip and related tools is almost a standard so I decided to use it first. If you know how to manage pip in your system, perfect, follow your way to install visualequation from source (development version) or PyPI (released versions). If you have no clue and want me to explain all the details about how to install it, I feel that I have certain responsability of telling you something that works. If you use Debian 9.0 or Ubuntu 18.04/16.04 it worked for me to install the provided packages (if you install are going to install from PyPI you only need python-pip)
+I did not package visualequation for any distribution yet. In the case of python, installing software with pip and related tools is almost a standard so I decided to use it first. If you know how to manage pip in your system, perfect, follow your way to install visualequation from source (development version) or PyPI (released versions). If you have no clue and want me to explain all the details about how to install it, I feel that I have certain responsability of telling you something that works. If you use Debian 9.0 or Ubuntu 18.04/16.04 it worked for me to install the provided packages (if you are going to install from PyPI you only need python-pip)
 
 $ sudo apt-get install python-pip python-setuptools python-wheel
 
@@ -50,7 +50,7 @@ apply the changes to your current terminal
 
 $ source ~/.bashrc
 
-and continue the instructions in "Installing visualequation locally".
+and continue the instructions in "Installing visualequation using pip".
 
 
 ### Installing pip locally (recommended for old distributions)
@@ -109,7 +109,7 @@ and install it
 
 $ python2 -m pip install --user dist/visualequation-\<version\>-py2-none-any.whl
 
-where you substitute <version> by the version number of the file generated in dist/.
+where you substitute \<version\> by the version number of the file generated in dist/.
 
 ## Running visualequation
 
@@ -175,7 +175,7 @@ If the element is a symbol, the selection is replaced by the symbol. If it is an
 
 * Several problems when running in Ubuntu 12.04.
   * Tk and epstopdf related.
-  * This version of Ubuntu is out of support, so we are not going have no interest in these bugs by the moment.
+  * This version of Ubuntu is out of support, so we have no interest in these bugs by the moment.
 
 ## License
 
