@@ -23,19 +23,15 @@ To run the program successfully, you need:
 
 Volunteers needed!
   
-### Debian/Ubuntu or derivatives
+### Debian 9.0 and Ubuntu 18.04 or derivatives
 
-The following packages should be enough:
+$ sudo apt-get install python-pygame python-tk texlive-latex-recommended dvipng texlive-font-utils textlive-science libimage-exiftool-perl
 
-* python-pygame
-* python-tk
-* texlive-latex-recommended
-* dvipng
-* texlive-font-utils
-* texlive-math-extra (or textlive-science in newer versions)
-* libimage-exiftool-perl
+### Ubuntu 14.04 and 16.04 or derivatives
 
-LaTeX will require a lot of MB, but the quality of the equations is incredible too.
+$ sudo apt-get install python-pygame python-tk texlive-latex-recommended dvipng texlive-font-utils textlive-math-extra libimage-exiftool-perl
+
+## Checking that dependencies are fulfilled
 
 If you have the sources you can see if everything is installed properly running the test:
 
@@ -43,7 +39,7 @@ $ python2 -m tests.test_dependencies
 
 ## Installation
 
-_Personal note_: I prefer installing programs with the tools of my operative system, however, I did not package visualequation for any distribution yet. In the case of python, installing software with pip and related tools is almost a standard. If you know how to manage pip in your system, perfect, follow your way. If you have no clue and want me to explain all the details about how to install visualequation, I feel that I have certain responsability of telling you something that works. If you use Ubuntu 18.04 or 16.04 it worked for me to install the provided packages (if you install from PyPI you only need pip)
+I did not package visualequation for any distribution yet. In the case of python, installing software with pip and related tools is almost a standard so I decided to use it first. If you know how to manage pip in your system, perfect, follow your way to install visualequation. If you have no clue and want me to explain all the details about how to install it, I feel that I have certain responsability of telling you something that works. If you use Debian 9.0 or Ubuntu 18.04/16.04 it worked for me to install the provided packages (if you install from PyPI you only need pip)
 
 $ sudo apt-get install python-pip python-setuptools python-wheel
 
