@@ -38,7 +38,7 @@ $ python2 -m tests.test_dependencies
 
 ## Installation
 
-I did not package visualequation for any distribution yet. In the case of python, installing software with pip and related tools is almost a standard so I decided to use it first. If you know how to manage pip in your system, perfect, follow your way to install visualequation. If you have no clue and want me to explain all the details about how to install it, I feel that I have certain responsability of telling you something that works. If you use Debian 9.0 or Ubuntu 18.04/16.04 it worked for me to install the provided packages (if you install from PyPI you only need pip)
+I did not package visualequation for any distribution yet. In the case of python, installing software with pip and related tools is almost a standard so I decided to use it first. If you know how to manage pip in your system, perfect, follow your way to install visualequation from source (development version) or PyPI (released versions). If you have no clue and want me to explain all the details about how to install it, I feel that I have certain responsability of telling you something that works. If you use Debian 9.0 or Ubuntu 18.04/16.04 it worked for me to install the provided packages (if you install are going to install from PyPI you only need python-pip)
 
 $ sudo apt-get install python-pip python-setuptools python-wheel
 
@@ -52,9 +52,10 @@ $ source ~/.bashrc
 
 and continue the instructions in "Installing visualequation locally".
 
-Now, I will show a recipe to install locally pip because the version that comes in some distributions (like Ubuntu 14.04) does not work totally for the instructions I will give later. Said that, if you want further lecture, I just leave [this well-written link](http://matthew-brett.github.io/pydagogue/installing_on_debian.html).
 
 ### Installing pip locally (recommended for old distributions)
+
+I will show a recipe to install locally pip because the version that comes in some distributions (like Ubuntu 14.04) does not work totally for the instructions I will give later. Said that, if you want further lecture, I just leave [this well-written link](http://matthew-brett.github.io/pydagogue/installing_on_debian.html).
 
 Download it
 
@@ -82,7 +83,7 @@ $ python2 -m pip --version
 
 should give the same valid output (the current last version of pip).
 
-I recommend now to remove the package setuptools (it could be installed) of your distribution and install it with pip
+If you are going to install from the sources, I recommend now to remove the package setuptools (if it is installed) of your distribution and install it with pip
 
 $ sudo apt-get remove python-setuptools
 
@@ -90,7 +91,7 @@ $ python2 -m pip install --user setuptools
 
 ### Installing visualequation using pip
 
-The fastest way is to download it and install from PYPI (not uploaded yet, but soon), just
+The fastest way is to download it and install from PyPI, just
 
 $ python2 -m pip install --user --upgrade visualequation
 
@@ -106,13 +107,9 @@ $ python2 setup.py bdist_wheel
 
 and install it
 
-$ cd dist
+$ python2 -m pip install --user dist/visualequation-\<version\>-py2-none-any.whl
 
-$ python2 -m pip install --user visualequation-\<version\>-py2-none-any.whl
-
-$ cd -
-
-where you substitute <version> by the version number of the file generated in dist/. Changing current directory, as done, is important in some cases because some versions of pip can refuse to install it while placed in the sources directory.
+where you substitute <version> by the version number of the file generated in dist/.
 
 ## Running visualequation
 
@@ -197,4 +194,4 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ## Acknowledgements
 
-* I have been inspired by Ekee (http://rlehy.free.fr/) features. It is a pity that the program is not mantained (2018).
+* I have been inspired by [Ekee](http://rlehy.free.fr/) features. It is a pity that the program is not mantained (2018).

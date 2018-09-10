@@ -30,7 +30,7 @@ import menu as menu
 
 def draw_splash_screen(screen, temp_dir):
     """ Blit a nice splash screen while images are being loaded. """
-    message = r"\textcolor{white}{(\text{Visual Equation})_{0.2.0}}"
+    message = r"\textcolor{white}{(\text{Visual Equation})_{0.2}}"
     message_png = conversions.eq2png(message, None, None, temp_dir)
     try:
         message_im = pygame.image.load(message_png)
