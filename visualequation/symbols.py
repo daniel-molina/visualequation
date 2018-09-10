@@ -130,60 +130,6 @@ MENUITEMSDATA.append(MenuItemData(
     clickable_size=(30, 30), dpi=200,
     expr=r'\alpha\, \infty'))
 
-ACCENTS = [
-    LatexSymb('acute', Op(1, r'\acute{{{0}}}'), r'\acute{{{\cdot}}}'),
-    LatexSymb('breve', Op(1, r'\breve{{{0}}}'), r'\breve{{{\cdot}}}'),
-    LatexSymb('ddot', Op(1, r'\ddot{{{0}}}'), r'\ddot{{{\cdot}}}'),
-    LatexSymb('grave', Op(1, r'\grave{{{0}}}'), r'\grave{{{\cdot}}}'),
-    LatexSymb('tilde', Op(1, r'\tilde{{{0}}}'), r'\tilde{{{\cdot}}}'),
-    LatexSymb('bar', Op(1, r'\bar{{{0}}}'), r'\bar{{{\cdot}}}'),
-    LatexSymb('check', Op(1, r'\check{{{0}}}'), r'\check{{{\cdot}}}'),
-    LatexSymb('dot', Op(1, r'\dot{{{0}}}'), r'\dot{{{\cdot}}}'),
-    LatexSymb('hat', Op(1, r'\hat{{{0}}}'), r'\hat{{{\cdot}}}'),
-    LatexSymb('vec', Op(1, r'\vec{{{0}}}'), r'\vec{{{\cdot}}}'),
-    LatexSymb('imath', r'\imath', r'\imath'),
-    LatexSymb('jmath', r'\jmath', r'\jmath'),
-    LatexSymb('ell', r'\ell', r'\ell'),
-    LatexSymb('hbar', r'\hbar', r'\hbar'),
-    LatexSymb('eth', r'\eth', r'\eth'),
-]
-
-MENUITEMSDATA.append(MenuItemData(
-    symb_l=ACCENTS, clickable_size=(40, 30), dpi=200,
-    expr=r'\acute{{a}}\;\tilde{{B}}'))
-
-INDICES = [
-    LatexSymb('super', SUPERINDEX, r'\cdot^{{\square}}'),
-    LatexSymb('sub', SUBINDEX, r'\cdot_{{\square}}'),
-    LatexSymb('lsuper', Op(2, r'{{}}^{{{1}}}{0}'), r'{{}}^{{\square}}\cdot'),
-    LatexSymb('lsub', Op(2, r'{{}}_{{{1}}}{0}'), r'{{}}_{{\square}}\cdot'),
-    LatexSymb('supersub', Op(3, r'{0}^{{{2}}}_{{{1}}}'),
-                  r'\cdot^{{\square}}_{{\square}}'),
-    LatexSymb('lsuperlsub', Op(3, r'{{}}^{{{2}}}_{{{1}}}{0}'),
-                    r'{{}}^{{\square}}_{{\square}}\cdot'),
-    LatexSymb('superlsuper', Op(3, r'{{}}^{{{1}}}{0}^{{{2}}}'),
-                     r'{{}}^{{\square}}\cdot^{{\square}}'),
-    LatexSymb('sublsub', Op(3, r'{{}}_{{{1}}}{0}_{{{2}}}'),
-                     r'{{}}_{{\square}}\cdot_{{\square}}'),
-    LatexSymb('supersublsuper', Op(4, r'{{}}^{{{1}}}{0}^{{{3}}}_{{{2}}}'),
-                  r'{{}}^{{\square}}\cdot^{{\square}}_{{\square}}'),
-    LatexSymb('supersublsub', Op(4, r'{{}}_{{{1}}}{0}^{{{3}}}_{{{2}}}'),
-                  r'{{}}_{{\square}}\cdot^{{\square}}_{{\square}}'),
-    LatexSymb('sublsublsuper', Op(4, r'{{}}_{{{1}}}^{{{3}}}{0}_{{{2}}}'),
-                  r'{{}}_{{\square}}^{{\square}}\cdot_{{\square}}'),
-    LatexSymb('superlsuperlsub', Op(4, r'{{}}^{{{1}}}_{{{2}}}{0}^{{{3}}}'),
-                  r'{{}}^{{\square}}_{{\square}}\cdot^{{\square}}'),
-    LatexSymb('supersublsuperlsub',
-              Op(5, r'{{}}^{{{2}}}_{{{1}}}{0}^{{{4}}}_{{{3}}}'),
-              r'{{}}^{{\square}}_{{\square}}\cdot^{{\square}}_{{\square}}'),
-]
-
-#    ('binomial', (Op(2, r'\binom{{{0}}}{{{1}}}'),
-#     [r'\binom{{\cdot}}{{\square}}'])),
-
-MENUITEMSDATA.append(MenuItemData(
-    symb_l=INDICES, clickable_size=(60, 60), dpi=200, expr=r'a^b'))
-
 MATHCONSTRUCTS = [
     LatexSymb('frac', Op(2, r'\frac{{{0}}}{{{1}}}'),
               r'\frac{\cdots}{\square}'),
@@ -781,3 +727,57 @@ MENUITEMSDATA.append(MenuItemData(
     symb_l=MANYLINES,
     clickable_size=(190, 90), dpi=200,
     expr=r'\begin{smallmatrix}a&b\\c&d\end{smallmatrix}'))
+
+ACCENTS = [
+    LatexSymb('acute', Op(1, r'\acute{{{0}}}'), r'\acute{{{\cdot}}}'),
+    LatexSymb('breve', Op(1, r'\breve{{{0}}}'), r'\breve{{{\cdot}}}'),
+    LatexSymb('ddot', Op(1, r'\ddot{{{0}}}'), r'\ddot{{{\cdot}}}'),
+    LatexSymb('grave', Op(1, r'\grave{{{0}}}'), r'\grave{{{\cdot}}}'),
+    LatexSymb('tilde', Op(1, r'\tilde{{{0}}}'), r'\tilde{{{\cdot}}}'),
+    LatexSymb('bar', Op(1, r'\bar{{{0}}}'), r'\bar{{{\cdot}}}'),
+    LatexSymb('check', Op(1, r'\check{{{0}}}'), r'\check{{{\cdot}}}'),
+    LatexSymb('dot', Op(1, r'\dot{{{0}}}'), r'\dot{{{\cdot}}}'),
+    LatexSymb('hat', Op(1, r'\hat{{{0}}}'), r'\hat{{{\cdot}}}'),
+    LatexSymb('vec', Op(1, r'\vec{{{0}}}'), r'\vec{{{\cdot}}}'),
+    LatexSymb('imath', r'\imath', r'\imath'),
+    LatexSymb('jmath', r'\jmath', r'\jmath'),
+    LatexSymb('ell', r'\ell', r'\ell'),
+    LatexSymb('hbar', r'\hbar', r'\hbar'),
+    LatexSymb('eth', r'\eth', r'\eth'),
+]
+
+MENUITEMSDATA.append(MenuItemData(
+    symb_l=ACCENTS, clickable_size=(40, 30), dpi=200,
+    expr=r'\acute{{a}}\;\tilde{{B}}'))
+
+INDICES = [
+    LatexSymb('super', SUPERINDEX, r'\cdot^{{\square}}'),
+    LatexSymb('sub', SUBINDEX, r'\cdot_{{\square}}'),
+    LatexSymb('lsuper', Op(2, r'{{}}^{{{1}}}{0}'), r'{{}}^{{\square}}\cdot'),
+    LatexSymb('lsub', Op(2, r'{{}}_{{{1}}}{0}'), r'{{}}_{{\square}}\cdot'),
+    LatexSymb('supersub', Op(3, r'{0}^{{{2}}}_{{{1}}}'),
+                  r'\cdot^{{\square}}_{{\square}}'),
+    LatexSymb('lsuperlsub', Op(3, r'{{}}^{{{2}}}_{{{1}}}{0}'),
+                    r'{{}}^{{\square}}_{{\square}}\cdot'),
+    LatexSymb('superlsuper', Op(3, r'{{}}^{{{1}}}{0}^{{{2}}}'),
+                     r'{{}}^{{\square}}\cdot^{{\square}}'),
+    LatexSymb('sublsub', Op(3, r'{{}}_{{{1}}}{0}_{{{2}}}'),
+                     r'{{}}_{{\square}}\cdot_{{\square}}'),
+    LatexSymb('supersublsuper', Op(4, r'{{}}^{{{1}}}{0}^{{{3}}}_{{{2}}}'),
+                  r'{{}}^{{\square}}\cdot^{{\square}}_{{\square}}'),
+    LatexSymb('supersublsub', Op(4, r'{{}}_{{{1}}}{0}^{{{3}}}_{{{2}}}'),
+                  r'{{}}_{{\square}}\cdot^{{\square}}_{{\square}}'),
+    LatexSymb('sublsublsuper', Op(4, r'{{}}_{{{1}}}^{{{3}}}{0}_{{{2}}}'),
+                  r'{{}}_{{\square}}^{{\square}}\cdot_{{\square}}'),
+    LatexSymb('superlsuperlsub', Op(4, r'{{}}^{{{1}}}_{{{2}}}{0}^{{{3}}}'),
+                  r'{{}}^{{\square}}_{{\square}}\cdot^{{\square}}'),
+    LatexSymb('supersublsuperlsub',
+              Op(5, r'{{}}^{{{2}}}_{{{1}}}{0}^{{{4}}}_{{{3}}}'),
+              r'{{}}^{{\square}}_{{\square}}\cdot^{{\square}}_{{\square}}'),
+]
+
+#    ('binomial', (Op(2, r'\binom{{{0}}}{{{1}}}'),
+#     [r'\binom{{\cdot}}{{\square}}'])),
+
+MENUITEMSDATA.append(MenuItemData(
+    symb_l=INDICES, clickable_size=(60, 60), dpi=200, expr=r'a^b'))
