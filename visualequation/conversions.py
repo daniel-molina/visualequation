@@ -37,7 +37,8 @@ def eq2latex_file(eq, latex_file, template_file):
     with open(template_file, "r") as ftempl:
         with open(latex_file, "w") as flatex:
             for line in ftempl:
-                flatex.write(line.replace('%EQ%', latex_code))
+                flatex.write(line.replace('%EQ%',
+                                          '%' + repr(eq) + "\n" + latex_code))
 
 def latex_file2dvi(latex_file, output_dir):
     """

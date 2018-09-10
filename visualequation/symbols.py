@@ -39,6 +39,9 @@ class Op(object):
     def __ne__(self, other):
         return not self == other 
 
+    def __repr__(self):
+        return "Op(" + repr(self.n_args) + ", " + repr(self.latex_code) + ")"
+
 LatexSymb = namedtuple('LatexSymb', 'tag code expr')
 MenuItemData = namedtuple('MenuItem', 'symb_l clickable_size dpi expr')
 
@@ -539,7 +542,7 @@ def special_format(latex_command, label_text, only_capital=False):
                 if text_str.isalnum():
                     exit_cond = True
         root.destroy()
-        return latex_command + r'{{' + text_str + '}}'
+        return latex_command + r'{' + text_str + '}'
     return fun
 
 COLORS = [
@@ -639,7 +642,7 @@ TEXT = [
               r"\mathbb{ABC}"),
     LatexSymb('mathfrak', special_format(r'\mathfrak', 'Mathfrak'),
               r"\mathfrak{Ab1}"),
-    LatexSymb('mathsf', special_format(r'\mathst', 'Sans serif'),
+    LatexSymb('mathsf', special_format(r'\mathsf', 'Sans serif'),
               r"\mathsf{Ab1}"),
     LatexSymb('mathbf', special_format(r'\mathbf', 'Mathbf'),
               r"\mathbf{Ab1}"),
