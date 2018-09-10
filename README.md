@@ -37,17 +37,17 @@ The following packages should be enough:
 
 LaTeX will require a lot of MB, but the quality of the equations is incredible too.
 
-To see if everything is installed properly you can run:
+If you have the sources you can see if everything is installed properly running the test:
 
-$ python2 -m tests/test_dependencies
+$ python2 -m tests.test_dependencies
 
 ## Installation
 
-_Personal note_: I prefer installing programs with the tools of my operative system, however, I did not package visualequation for any distribution yet. In the case of python, installing software with pip and related tools is almost a standard. If you know how to manage pip in your system, perfect, follow your way. If you have no clue and want me to explain all the details about how to install visualequation, I feel that I have certain responsability of telling you something that works. If you use Ubuntu 18.04 or 16.04 it worked for me to install the provided packages
+_Personal note_: I prefer installing programs with the tools of my operative system, however, I did not package visualequation for any distribution yet. In the case of python, installing software with pip and related tools is almost a standard. If you know how to manage pip in your system, perfect, follow your way. If you have no clue and want me to explain all the details about how to install visualequation, I feel that I have certain responsability of telling you something that works. If you use Ubuntu 18.04 or 16.04 it worked for me to install the provided packages (if you install from PyPI you only need pip)
 
 $ sudo apt-get install python-pip python-setuptools python-wheel
 
-add the local pip path to your ~/.bashrc
+add the pip path to your ~/.bashrc
 
 PATH=${PATH}:${HOME}/.local/bin
 
@@ -117,7 +117,7 @@ $ python2 -m pip install --user visualequation-\<version\>-py2-none-any.whl
 
 $ cd -
 
-where you substitute <version> by the version number of the file generated in dist/. Changing current directory, as done, is important in some cases because some versions of pip can refuse to install it where placed in the sources directory.
+where you substitute <version> by the version number of the file generated in dist/. Changing current directory, as done, is important in some cases because some versions of pip can refuse to install it while placed in the sources directory.
 
 ## Running visualequation
 
