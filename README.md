@@ -41,19 +41,25 @@ To see if everything is installed properly you can run:
 
 $ python2 -m tests/test_dependencies
 
-## Building
-
-If you have the sources and you want build the program, generate the LaTeX symbols used by the program:
-
-$ python2 populate_symbols.py
-
-It will late a bit.
-
 ## Installation
 
-_Personal note:_ I prefer installing programs with the tools of my operative system, however, I did not package visualequation for any distribution yet. In the case of python, installing software with pip and related tools is almost a standard. If you know how to manage pip in your system, perfect, follow your way. If you have no clue and want me to explain all the details about how to install visualequation, I feel that I have certain responsability of saying you something that works. I will show a recipe to install locally pip because the version that comes in some distributions does not work totally for the instructions I will give later. Said that, if you want further lecture, I just leave [this well-written link](http://matthew-brett.github.io/pydagogue/installing_on_debian.html).
+_Personal note_: I prefer installing programs with the tools of my operative system, however, I did not package visualequation for any distribution yet. In the case of python, installing software with pip and related tools is almost a standard. If you know how to manage pip in your system, perfect, follow your way. If you have no clue and want me to explain all the details about how to install visualequation, I feel that I have certain responsability of telling you something that works. If you use Ubuntu 18.04 or 16.04 it worked for me to install the provided packages
 
-### Installing pip locally
+$ sudo apt-get install python-pip python-setuptools python-wheel
+
+add the local pip path to your ~/.bashrc
+
+PATH=${PATH}:${HOME}/.local/bin
+
+apply the changes to your current terminal
+
+$ source ~/.bashrc
+
+and continue the instructions in "Installing visualequation locally".
+
+Now, I will show a recipe to install locally pip because the version that comes in some distributions (like Ubuntu 14.04) does not work totally for the instructions I will give later. Said that, if you want further lecture, I just leave [this well-written link](http://matthew-brett.github.io/pydagogue/installing_on_debian.html).
+
+### Installing pip locally (recommended for old distributions)
 
 Download it
 
@@ -79,9 +85,11 @@ and
 
 $ python2 -m pip --version
 
-should give the same valid output (the current last version of pip). Else, look for help elsewhere, something failed!
+should give the same valid output (the current last version of pip).
 
-I recommend now to remove the package python-setuptools of your distribution and install it with pip
+I recommend now to remove the package setuptools (it could be installed) of your distribution and install it with pip
+
+$ sudo apt-get remove python-setuptools
 
 $ python2 -m pip install --user setuptools
 
@@ -91,25 +99,33 @@ The fastest way is to download it and install from PYPI (not uploaded yet, but s
 
 $ python2 -m pip install --user --upgrade visualequation
 
-On the other hand, if you have the sources, after running the Building instructions you can generate a package
+On the other hand, if you have the sources, the first step is to generate the LaTeX symbols used by the program:
+
+$ python2 populate_symbols.py
+
+It will late a bit.
+
+After that, you can generate a package
 
 $ python2 setup.py bdist_wheel
 
 and install it
 
 $ cd dist
+
 $ python2 -m pip install --user visualequation-\<version\>-py2-none-any.whl
+
 $ cd -
 
-where you substitute <version> by the version number of the file generated in dist/. Changing current directory is important because pip refuse to install it from sources directory
+where you substitute <version> by the version number of the file generated in dist/. Changing current directory, as done, is important in some cases because some versions of pip can refuse to install it where placed in the sources directory.
 
 ## Running visualequation
 
-To execute the program, just run in whatever directory
+To execute the program, just run
 
 $ visualequation 
 
-in whatever current directory.
+in whatever current directory. It should work if you included ~/.local/bin in your PATH as indicated above.
 
 ## Usage/Instructions
 
