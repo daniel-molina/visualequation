@@ -25,11 +25,11 @@ Volunteers needed!
   
 ### Debian 9.0 and Ubuntu 18.04 or derivatives
 
-$ sudo apt-get install python-pygame python-tk texlive-latex-recommended dvipng texlive-font-utils textlive-science libimage-exiftool-perl
+$ sudo apt-get install python-pygame python-tk texlive-latex-recommended dvipng texlive-font-utils texlive-science libimage-exiftool-perl
 
 ### Ubuntu 14.04 and 16.04 or derivatives
 
-$ sudo apt-get install python-pygame python-tk texlive-latex-recommended dvipng texlive-font-utils textlive-math-extra libimage-exiftool-perl
+$ sudo apt-get install python-pygame python-tk texlive-latex-recommended dvipng texlive-font-utils texlive-math-extra libimage-exiftool-perl
 
 ## Checking that dependencies are fulfilled
 
