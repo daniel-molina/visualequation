@@ -1,9 +1,8 @@
 # visualequation
 
-Visualequation creates equations visually, in a WYSIWYG (What You See Is What You Get) style. By the moment, equations can be exported to PNG, EPS, PDF and SVG. PNG and SVG are transparent. If you want a background you can put a white (or whatever color) colorbox to the whole equation in the editor before exporting.
+Visualequation creates equations visually, in a WYSIWYG (What You See Is What You Get) style. Equations can be exported to PNG, EPS, PDF and SVG. PNG and SVG are transparent. If you want a background you can put a white (or whatever color) colorbox to the whole equation in the editor before exporting. You can recover equations from previously created images in PNG and PDF format and continue editing them!
 
 ## Requirements
-By the moment it has only been tested on GNU/Linux. But it would be interesting to have installation instructions for the dependencies on other operative systems.
 
 To run the program successfully, you need:
 
@@ -11,7 +10,7 @@ To run the program successfully, you need:
 * pygame
 * Tkinter
 * LaTeX
-* Some specific LaTeX packages (you can find them in the preamble of the equation template).
+* Some specific LaTeX packages (you can find them in the preamble of the equation template _visualequation/data/eq_template.tex_).
 * Some command-line programs to manipulate LaTeX output:
   * dvipng
   * dvips
@@ -21,7 +20,7 @@ To run the program successfully, you need:
 
 ### Microsoft Windows and MacOS
 
-Volunteers needed!
+By the moment it has only been tested on GNU/Linux. But it would be interesting to have installation instructions for the dependencies on other operative systems. Volunteers needed!
   
 ### Debian 9.0 and Ubuntu 18.04 or derivatives
 
@@ -168,7 +167,7 @@ Open an equation from a PNG or PDF previously created with this program (see CTR
 Create a square at the left of the selection box, ready to be overwritten. It is useful if you forgot to write something at the left of a block and you do not want to delete the first symbol/operator until you write the missing part.
 
 * SHIFT+click on an element of the panel above:
-If the element is a symbol, the selection is replaced by the symbol. If it is an operator, the selection is replaced by the operator and the first argument of it is set to the selection. (The first argument is the one represented by one dot or three dots instead of a square)
+If the element is a symbol, the selection is replaced by the symbol. If it is an operator, the selection is replaced by the operator and the first argument of it is set to the selection. (The first argument is the one represented by dots instead of a square)
 
 ## Known Issues
 
@@ -177,14 +176,18 @@ If the element is a symbol, the selection is replaced by the symbol. If it is an
   * It is known to work in Ubuntu 14.04 and 18.04 (dvisvgm 1.2.2 and 2.1.3, respectively)
   * Solutions: There are not so many programs that transform images into a nice SVG, most of them have issues. pdf2svg does normally a good work, but it does an ugly output in the affected system for the so-called Text block. Maybe that shows that the problem is caused by something related with the associated font.
 
+* Several problems when running in Ubuntu 12.04.
+  * Tk and epstopdf related.
+  * This version of Ubuntu is out of support, so we are not going have no interest in these bugs by the moment.
+
 ## License
 
-This program is free software: you can redistribute it and/or modify
+visualequation is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
+visualequation is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.

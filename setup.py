@@ -6,9 +6,9 @@ with open("README.md", "r") as fh:
 setuptools.setup(
     name="visualequation",
     version="0.2.0",
-    author="Daniel Molina Garcia",
+    author="Daniel Molina",
     author_email="lluvia@autistici.org",
-    description="A WYSIWYG equation editor",
+    description="An equation editor powered by LaTeX",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/daniel-molina/visualequation",

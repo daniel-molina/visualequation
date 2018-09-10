@@ -1,4 +1,18 @@
 #!/usr/bin/env python2
+
+# visualequation is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# visualequation is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 """This is the file to execute the program."""
 import sys
 import tempfile
@@ -13,6 +27,19 @@ import symbols as symbols
 import maineq as maineq
 import conversions as conversions
 import menu as menu
+
+def draw_splash_screen(screen, temp_dir):
+    """ Blit a nice splash screen while images are being loaded. """
+    message = r"\textcolor{white}{(\text{Visual Equation})_{0.2.0}}"
+    message_png = conversions.eq2png(message, None, None, temp_dir)
+    try:
+        message_im = pygame.image.load(message_png)
+    except pygame.error as message:
+        raise SystemExit(message)
+    message_rect = message_im.get_rect(center=(screen.get_width()*2//3,
+                                               screen.get_height()*5//8))
+    screen.blit(message_im, message_rect)
+    pygame.display.flip()
 
 def draw_screen(screen, editingeq, mainmenu):
     """ Draw equation, menuitems and symbols."""
@@ -34,7 +61,8 @@ def main():
     clock = pygame.time.Clock()
     screen = pygame.display.set_mode((screen_w, screen_h), RESIZABLE)
     pygame.display.set_caption("Visual Equation")
-
+    # Display splash screen
+    draw_splash_screen(screen, temp_dirpath)
     # Prepare the equation to edit which will be showed by default
     init_eq = [symbols.NEWARG]
     screen_center = (screen_w//2, screen_h//2)
