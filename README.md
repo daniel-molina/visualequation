@@ -6,8 +6,8 @@ Visualequation creates equations visually, in a WYSIWYG (What You See Is What Yo
 
 To run the program successfully, you need:
 
-* python2
-* pygame
+* python3
+* PyQt5
 * Tkinter
 * LaTeX
 * Some specific LaTeX packages (you can find them in the preamble of the equation template _visualequation/data/eq_template.tex_).
@@ -24,17 +24,17 @@ By the moment it has only been tested on GNU/Linux. But it would be interesting 
   
 ### Debian 9.0 and Ubuntu 18.04 or derivatives
 
-$ sudo apt-get install python-pygame python-tk texlive-latex-recommended dvipng texlive-font-utils texlive-science libimage-exiftool-perl
+$ sudo apt-get install python3-pyqt5 texlive-latex-recommended dvipng texlive-font-utils texlive-science libimage-exiftool-perl
 
 ### Ubuntu 14.04 and 16.04 or derivatives
 
-$ sudo apt-get install python-pygame python-tk texlive-latex-recommended dvipng texlive-font-utils texlive-math-extra libimage-exiftool-perl
+$ sudo apt-get install python3-pyqt5 texlive-latex-recommended dvipng texlive-font-utils texlive-math-extra libimage-exiftool-perl
 
 ## Checking that dependencies are fulfilled
 
 If you have the sources you can see if everything is installed properly running the test:
 
-$ python2 -m tests.test_dependencies
+$ python -m tests.test_dependencies
 
 ## Installation
 
@@ -63,7 +63,7 @@ $ curl -LO https://bootstrap.pypa.io/get-pip.py
 
 Install it locally
 
-$ python2 get-pip.py --user
+$ python get-pip.py --user
 
 Add to your path the directory where pip is installed and where it will install the other programs. You can do it by writting at the end of your .bashrc the following line
 
@@ -79,7 +79,7 @@ $ pip --version
 
 and
 
-$ python2 -m pip --version
+$ python -m pip --version
 
 should give the same valid output (the current last version of pip).
 
@@ -87,27 +87,27 @@ If you are going to install from the sources, I recommend now to remove the pack
 
 $ sudo apt-get remove python-setuptools
 
-$ python2 -m pip install --user setuptools
+$ python -m pip install --user setuptools
 
 ### Installing visualequation using pip
 
 The fastest way is to download it and install from PyPI, just
 
-$ python2 -m pip install --user --upgrade visualequation
+$ python -m pip install --user --upgrade visualequation
 
 On the other hand, if you have the sources, the first step is to generate the LaTeX symbols used by the program:
 
-$ python2 populate_symbols.py
+$ python populate_symbols.py
 
 It will late a bit.
 
 After that, you can generate a package
 
-$ python2 setup.py bdist_wheel
+$ python setup.py bdist_wheel
 
 and install it
 
-$ python2 -m pip install --user dist/visualequation-\<version\>-py2-none-any.whl
+$ python -m pip install --user dist/visualequation-\<version\>-py2-none-any.whl
 
 where you substitute \<version\> by the version number of the file generated in dist/.
 
@@ -174,7 +174,7 @@ If the element is a symbol, the selection is replaced by the symbol. If it is an
   * Solutions: There are not so many programs that transform images into a nice SVG, most of them have issues. pdf2svg does normally a good work, but it does an ugly output in the affected system for the so-called Text block. Maybe that shows that the problem is caused by something related with the associated font.
 
 * Several problems when running in Ubuntu 12.04.
-  * Tk and epstopdf related.
+  * epstopdf related.
   * This version of Ubuntu is out of support, so we have no interest in these bugs by the moment.
 
 ## License
