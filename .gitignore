@@ -1,0 +1,6 @@
+*.pyc
+*~
+visualequation/data/symbols/
+visualequation.egg-info/
+build/
+dist/
