@@ -17,12 +17,13 @@ conversions to other formats
 """
 import os
 import subprocess
-import pickle
+import json
 import Tkinter
 from tkFileDialog import askopenfilename
 
 import dirs
 import eqtools
+import symbols
 
 def eq2latex_file(eq, latex_file, template_file):
     """ Write equation in a LaTeX file according to the template_file.
@@ -120,6 +121,14 @@ def dvi2svg(dvi_file, svg_file, log_file):
         except OSError:
             raise SystemExit("Command dvisvgm was not found.")
 
+class MyEncoder(json.JSONEncoder):
+    def default(self, o):
+        return o.__dict__
+
+def from_json(json_o):
+    if isinstance(json_o, dict):
+        return symbols.Op(json_o['n_args'], json_o['latex_code'])
+
 def eq2png(eq, dpi, bg, directory, png_fpath=None, add_metadata=False):
     """ Create a png from a equation, returns the path of PNG image.
 
@@ -148,7 +157,7 @@ def eq2png(eq, dpi, bg, directory, png_fpath=None, add_metadata=False):
     dvi2png(dvi_fpath, png_fpath, dvi2pnglog_fpath, dpi, bg)
     if add_metadata:
         # Save the equation into the file
-        eq_str = pickle.dumps(eq)
+        eq_str = json.dumps(eq, cls=MyEncoder)
         exiftoollog_fpath = os.path.join(directory, fname + '_exif.log')
         with open(exiftoollog_fpath, "w") as flog:
             try:
@@ -198,7 +207,7 @@ def eq2pdf(eq, directory, pdf_fpath=None):
     eps2pdf(eps_fpath, pdf_fpath)
     if save_eq:
         # Save the equation into the file
-        eq_str = pickle.dumps(eq)
+        eq_str = json.dumps(eq, cls=MyEncoder)
         exiftoollog_fpath = os.path.join(directory, 'foo_exif.log')
         with open(exiftoollog_fpath, "w") as flog:
             try:
@@ -252,16 +261,12 @@ def open_eq():
         if not eq_str:
             show_message("No equation inside this file.")
             return None
-        return pickle.loads(eq_str)
+        return json.JSONDecoder(object_hook=from_json).decode(eq_str)
     except subprocess.CalledProcessError:
         show_message("Error by exiftool when trying to extract equation "
                      + "from file.")
     except OSError:
         raise SystemExit("Command exiftool was not found.")
-
-        return None
-    except (KeyError, EOFError, IndexError):
-        show_message("Error while trying to translate equation from file.\n"
-                     + "Did you create it with another program or "
-                     + "change metadata?")
-        return None
+    except ValueError as error:
+        raise SystemExit("Error parsing equation: %s" % error)
+        

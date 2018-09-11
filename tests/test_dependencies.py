@@ -18,9 +18,10 @@ import unittest
 import tempfile
 import shutil
 import subprocess
-import pickle
+import json
 
 from visualequation import dirs
+from visualequation import conversions
 
 class DependenciesTest(unittest.TestCase):
 
@@ -107,13 +108,13 @@ class DependenciesTest(unittest.TestCase):
                                                   "-description", fpath])
                 if not eq_str:
                     raise SystemExit("No equation inside file %s!" % fpath)
-                pickle.loads(eq_str)
+                json.JSONDecoder(object_hook=conversions.from_json
+                ).decode(eq_str)
             except subprocess.CalledProcessError:
                 raise SystemExit("Error by exiftool when trying to extract"
                                  + "equation from file.")
-            except (KeyError, EOFError, IndexError):
-                raise SystemExit("Error while translating read equation "
-                           + "from file. Was metadata changed?")
+            except ValueError as error:
+                raise SystemExit(error)
             except OSError:
                 raise SystemExit("Suggestion: Do you have command exiftool?")
         fun(png_fpath)
