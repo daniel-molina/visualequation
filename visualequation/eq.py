@@ -14,49 +14,95 @@
 """ The module that manages the editing equation. """
 import types
 
-import pygame
-import Tkinter, tkFileDialog
+#import pygame
+import tkinter
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
 
-import eqtools
-import conversions
-import symbols
+from . import eqtools
+from . import conversions
+from . import symbols
 
-class EditableEqSprite(pygame.sprite.Sprite):
-    """ A Sprite for the equation that is going to be edited."""
-    def __init__(self, eq, screen_center, temp_dir):
-        pygame.sprite.Sprite.__init__(self)
-        self.image = None
-        self.rect = None
+# TODO (maybe in a differnt module)
+class EqHisto:
+    def __init__(self, eq):
+        pass
+
+class Eq(QLabel):
+    def __init__(self, eq, temp_dir, parent):
+        super().__init__(parent)
+        
         self.eq_hist = [(list(eq), 0)]
         self.eq_hist_index = 0
         self.eq_buffer = []
         self.eq = list(eq) # It will be mutated by the replace functions
-        self.screen_center = screen_center
         self.temp_dir = temp_dir
         self.sel_index = 0
         self._set_sel()
 
-    def set_center(self, x, y):
-        self.screen_center = (x, y)
-        self.rect = self.image.get_rect(center=self.screen_center)
+    def event(self, event):
+        if event.type() == QEvent.KeyPress and event.key() == Qt.Key_Tab:
+            self.next_sel()
+            # The True value prevents the event to be sent to other objects
+            return True
+        else:
+            return QLabel.event(self, event)
 
-    def is_intermediate_JUXT(self, index):
-        """
-        Check whether if index points to a JUXT that is the argument of
-        other JUXT.
-        """
-        if self.eq[index] == symbols.JUXT:
-            cond, _, _ = eqtools.is_arg_of_JUXT(self.eq, index)
-            if cond:
-                return True
-        return False
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.next_sel()
+        elif event.button() == Qt.RightButton:
+            self.previous_sel()
+        else:
+            QLabel.mousePressEvent(self, event)
+
+    def keyPressEvent(self, event):
+        if QApplication.keyboardModifiers() != Qt.ControlModifier:
+            self.on_key_pressed_no_ctrl(event)
+        else:
+            self.on_key_pressed_ctrl(event)
+
+    def on_key_pressed_no_ctrl(self, event):
+        # 0-9 or A-Z or a-z exluding Ctr modifier
+        try:
+            code = ord(event.text())
+            if (48 <= code <= 57 or 65 <= code <= 90 or 97 <= code <= 122) \
+               and QApplication.keyboardModifiers() != Qt.ControlModifier:
+                self.insert(event.text())
+        except TypeError:
+            pass
+        try:
+            self.insert(symbols.ASCII_LATEX_TRANSLATION[event.text()])
+        except KeyError:
+            pass
+        key = event.key()
+        if key == Qt.Key_AsciiCircum: # It does not work for kbmap es
+            self.insert_substituting(symbols.SUPERINDEX)
+        elif key == Qt.Key_Underscore:
+            self.insert_substituting(symbols.SUBINDEX)
+        elif key == Qt.Key_Backslash:
+            self.insert(r'\backslash')
+        elif key == Qt.Key_AsciiTilde:
+            self.insert(r'\sim')
+        elif key == Qt.Key_Backspace or key == Qt.Key_Delete:
+            self.remove_sel()
+        elif key == Qt.Key_Right:
+            self.next_sel()
+        elif key == Qt.Key_Left:
+            self.previous_sel()
+        elif key == Qt.Key_Space:
+            self.insert(r'\,')
+
+    def on_key_pressed_ctrl(self, event):
+        pass
 
     def _set_sel(self):
-        """ Set the self.image to the equation boxed in the
+        """ Set pixmap to the equation boxed in the
         selection indicated by self.sel_index, which can be freely set
         by the caller before calling this function.
 
-        The box is the way the user know which block of the eq is editing.
+        (The box is the way the user know which block of the eq is editing).
         """
         if not 0 <= self.sel_index < len(self.eq):
             raise ValueError('Provided index outside the equation.')
@@ -72,17 +118,20 @@ class EditableEqSprite(pygame.sprite.Sprite):
         sel_latex_code = eqtools.sel_eq(self.eq, self.sel_index)
         sel_png = conversions.eq2png(sel_latex_code, None, None,
                                      self.temp_dir)
-        try:
-            self.image = pygame.image.load(sel_png)
-        except pygame.error as message:
-            raise SystemExit(message)
-        self.rect = self.image.get_rect(center=self.screen_center)
+        self.setPixmap(QPixmap(sel_png))
+        # This helps catching all the keys
+        self.setFocus()
 
-    def mousepointed(self):
-        """ Returns true if the mouse is over """
-        pos = pygame.mouse.get_pos()
-        if self.rect.collidepoint(pos):
-            return True
+    def is_intermediate_JUXT(self, index):
+        """
+        Check whether if index points to a JUXT that is the argument of
+        other JUXT.
+        """
+        if self.eq[index] == symbols.JUXT:
+            cond, _, _ = eqtools.is_arg_of_JUXT(self.eq, index)
+            if cond:
+                return True
+        return False
 
     def next_sel(self):
         """ Set image to the next selection according to self.sel_index. """
@@ -112,51 +161,6 @@ class EditableEqSprite(pygame.sprite.Sprite):
 
         self._set_sel()
 
-    def insert_substituting(self, oper):
-        """
-        Given an operator, the equation block pointed by self.sel_index
-        is replaced by that operator and the selection is used as follows:
-
-        If op is a str, just replace it.
-
-        If op is an unary operator, put the selected block as the argument
-        of the operator.
-
-        If the operator has more than one argument, put the selected block
-        as the first argument of the operator. Put NewArg symbols in the
-        rest of the arguments.
-
-        If the operator has more than one argument, selection index is
-        changed to the second argument of the operator because the user
-        probably will want to change that argument.
-        """
-        def replace_op_in_eq(op):
-            """
-            Given an operator, it is replaced in self.eq according to
-            the rules of above. It also modify self.sel_index to point to
-            the smartest block.
-            """
-            if isinstance(op, basestring):
-                eqtools.replaceby(self.eq, self.sel_index, [op])
-            elif isinstance(op, symbols.Op) and op.n_args == 1:
-                self.eq.insert(self.sel_index, op)
-            elif isinstance(op, symbols.Op) and op.n_args > 1:
-                index_end_arg1 = eqtools.nextblockindex(self.eq, self.sel_index)
-                self.eq[self.sel_index:index_end_arg1] = [op] \
-                                    + self.eq[self.sel_index:index_end_arg1] \
-                                    + [symbols.NEWARG] * (op.n_args-1)
-                self.sel_index = index_end_arg1+1
-            else:
-                raise ValueError('Unknown operator passed.')
-
-        if isinstance(oper, types.FunctionType):
-            replace_op_in_eq(oper())
-        else:
-            replace_op_in_eq(oper)
-
-        self._set_sel()
-        self.add_eq2hist()
-
     def insert(self, oper):
         """
         Insert the operator next to selection by Juxt.
@@ -168,7 +172,7 @@ class EditableEqSprite(pygame.sprite.Sprite):
             the rules of above. It also modify self.sel_index to point to
             the smartest block.
             """            
-            if isinstance(op, basestring):
+            if isinstance(op, str):
                 if self.eq[self.sel_index] == symbols.NEWARG:
                     self.eq[self.sel_index] = op
                 else:
@@ -195,6 +199,51 @@ class EditableEqSprite(pygame.sprite.Sprite):
         self._set_sel()
         self.add_eq2hist()
 
+    def insert_substituting(self, oper):
+        """
+        Given an operator, the equation block pointed by self.sel_index
+        is replaced by that operator and the selection is used as follows:
+
+        If op is a str, just replace it.
+
+        If op is an unary operator, put the selected block as the argument
+        of the operator.
+
+        If the operator has more than one argument, put the selected block
+        as the first argument of the operator. Put NewArg symbols in the
+        rest of the arguments.
+
+        If the operator has more than one argument, selection index is
+        changed to the second argument of the operator because the user
+        probably will want to change that argument.
+        """
+        def replace_op_in_eq(op):
+            """
+            Given an operator, it is replaced in self.eq according to
+            the rules of above. It also modify self.sel_index to point to
+            the smartest block.
+            """
+            if isinstance(op, str):
+                eqtools.replaceby(self.eq, self.sel_index, [op])
+            elif isinstance(op, symbols.Op) and op.n_args == 1:
+                self.eq.insert(self.sel_index, op)
+            elif isinstance(op, symbols.Op) and op.n_args > 1:
+                index_end_arg1 = eqtools.nextblockindex(self.eq, self.sel_index)
+                self.eq[self.sel_index:index_end_arg1] = [op] \
+                                    + self.eq[self.sel_index:index_end_arg1] \
+                                    + [symbols.NEWARG] * (op.n_args-1)
+                self.sel_index = index_end_arg1+1
+            else:
+                raise ValueError('Unknown operator passed.')
+
+        if isinstance(oper, types.FunctionType):
+            replace_op_in_eq(oper())
+        else:
+            replace_op_in_eq(oper)
+
+        self._set_sel()
+        self.add_eq2hist()
+
     def add_eq2hist(self):
         """
         Save current equation to the historial and delete any future elements
@@ -202,24 +251,6 @@ class EditableEqSprite(pygame.sprite.Sprite):
         """
         self.eq_hist[self.eq_hist_index+1:] = [(list(self.eq), self.sel_index)]
         self.eq_hist_index += 1
-
-    def recover_prev_eq(self):
-        """ Recover previous equation from the historial, if any """
-        if self.eq_hist_index != 0:
-            self.eq_hist_index -= 1
-            eq, sel_index = self.eq_hist[self.eq_hist_index]
-            self.eq = list(eq)
-            self.sel_index = sel_index
-            self._set_sel()
-
-    def recover_next_eq(self):
-        """ Recover next equation from the historial, if any """
-        if self.eq_hist_index != len(self.eq_hist)-1:
-            self.eq_hist_index += 1
-            eq, sel_index = self.eq_hist[self.eq_hist_index]
-            self.eq = list(eq)
-            self.sel_index = sel_index
-            self._set_sel()
 
     def remove_sel(self):
         """
@@ -245,35 +276,16 @@ class EditableEqSprite(pygame.sprite.Sprite):
         self._set_sel()
         self.add_eq2hist()
 
-    def sel2eqbuffer(self):
-        """ Copy block pointed by self.sel_index to self.eq_buffer """
-        end_sel_index = eqtools.nextblockindex(self.eq, self.sel_index)
-        self.eq_buffer = self.eq[self.sel_index:end_sel_index]
-
-    def eqbuffer2sel(self):
-        """
-        Append self.eq_buffer to the right of the block pointed by
-        self.sel_index. If the block is a NEWARG, just replace it.
-        """
-        if self.eq[self.sel_index] == symbols.NEWARG:
-            self.eq[self.sel_index:self.sel_index+1] = self.eq_buffer
-        else:
-            self.sel_index = eqtools.appendbyJUXT(self.eq, self.sel_index,
-                                                self.eq_buffer)
-        self._set_sel()
-        self.add_eq2hist()
-
-    def left_NEWARG(self):
-        """
-        Append by JUXT a NEWARG at the left of the block pointed by
-        self.sel_index. """
-        self.eq[self.sel_index:self.sel_index] = [symbols.JUXT, symbols.NEWARG]
-        self.sel_index += 1
-        self._set_sel()
-        self.add_eq2hist()
+    def open_eq(self):
+        neweq = conversions.open_eq()
+        if neweq != None:
+            self.eq = list(neweq)
+            self.sel_index = 0
+            self._set_sel()
+            self.add_eq2hist()
 
     def save_eq(self):
-        """ Open Dialog to save the equation to PNG """
+        """ Open Dialog to save the equation to PNG, EPS, PDF or SVG. """
         class FileFormat(object):
             """Choose a file format."""
             def __init__(self):
@@ -284,30 +296,30 @@ class EditableEqSprite(pygame.sprite.Sprite):
             def get_ext(self):
                 return '.' + self.fileformat
         fileformat = FileFormat()
-        root = Tkinter.Tk()
+        root = tkinter.Tk()
         root.title("Save equation")
-        Tkinter.Label(root, text='Choose format').pack(side=Tkinter.TOP)
-        Tkinter.Button(root, text='PNG',
+        tkinter.Label(root, text='Choose format').pack(side=tkinter.TOP)
+        tkinter.Button(root, text='PNG',
                        command=lambda *args: fileformat.set(root, 'png')
-        ).pack(side=Tkinter.TOP)
-        Tkinter.Button(root, text='PDF',
+        ).pack(side=tkinter.TOP)
+        tkinter.Button(root, text='PDF',
                        command=lambda *args: fileformat.set(root, 'pdf')
-        ).pack(side=Tkinter.TOP)
-        Tkinter.Button(root, text='SVG*',
+        ).pack(side=tkinter.TOP)
+        tkinter.Button(root, text='SVG*',
                        command=lambda *args: fileformat.set(root, 'svg')
-        ).pack(side=Tkinter.TOP)
-        Tkinter.Button(root, text='EPS*',
+        ).pack(side=tkinter.TOP)
+        tkinter.Button(root, text='EPS*',
                        command=lambda *args: fileformat.set(root, 'ps')
-        ).pack(side=Tkinter.TOP)
-        Tkinter.Label(root,
+        ).pack(side=tkinter.TOP)
+        tkinter.Label(root,
                       text="* It will NOT be possible\nto open equations\n" +
                       "for further edition\nfrom files in this format."
-                      ).pack(side=Tkinter.TOP)
+                      ).pack(side=tkinter.TOP)
         root.mainloop()
         # Hide the root window
         if fileformat.get_ext() != '.':
             root.withdraw()
-            file_path = tkFileDialog.asksaveasfilename(
+            file_path = tkinter.filedialog.asksaveasfilename(
                 defaultextension=fileformat.get_ext(),
                 filetypes=[(fileformat.get_ext()[1:], fileformat.get_ext())])
             # It returns () or '' if file is not chosen (Exit or Cancel)
@@ -322,3 +334,50 @@ class EditableEqSprite(pygame.sprite.Sprite):
                 elif fileformat.get_ext() == '.ps':
                     conversions.eq2eps(self.eq, self.temp_dir, file_path)
             root.destroy()
+
+    def recover_prev_eq(self):
+        """ Recover previous equation from the historial, if any """
+        if self.eq_hist_index != 0:
+            self.eq_hist_index -= 1
+            eq, sel_index = self.eq_hist[self.eq_hist_index]
+            self.eq = list(eq)
+            self.sel_index = sel_index
+            self._set_sel()
+
+    def recover_next_eq(self):
+        """ Recover next equation from the historial, if any """
+        if self.eq_hist_index != len(self.eq_hist)-1:
+            self.eq_hist_index += 1
+            eq, sel_index = self.eq_hist[self.eq_hist_index]
+            self.eq = list(eq)
+            self.sel_index = sel_index
+            self._set_sel()
+
+    def sel2eqbuffer(self):
+        """ Copy block pointed by self.sel_index to self.eq_buffer """
+        end_sel_index = eqtools.nextblockindex(self.eq, self.sel_index)
+        self.eq_buffer = self.eq[self.sel_index:end_sel_index]
+
+    def eqbuffer2sel(self):
+        """
+        Append self.eq_buffer to the right of the block pointed by
+        self.sel_index. If the block is a NEWARG, just replace it.
+        """
+        if self.eq_buffer != []:
+            if self.eq[self.sel_index] == symbols.NEWARG:
+                self.eq[self.sel_index:self.sel_index+1] = self.eq_buffer
+            else:
+                self.sel_index = eqtools.appendbyJUXT(self.eq, self.sel_index,
+                                                      self.eq_buffer)
+            self._set_sel()
+            self.add_eq2hist()
+
+    def left_NEWARG(self):
+        """
+        Append by JUXT a NEWARG at the left of the block pointed by
+        self.sel_index.
+        """
+        self.eq[self.sel_index:self.sel_index] = [symbols.JUXT, symbols.NEWARG]
+        self.sel_index += 1
+        self._set_sel()
+        self.add_eq2hist()

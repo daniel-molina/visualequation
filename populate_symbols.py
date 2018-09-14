@@ -17,13 +17,16 @@
 Run this script before installing.
 It requires the LaTeX system to be installed.
 """
+import sys
 import os
 import tempfile
 import shutil
 
-import visualequation.symbols as symbols
-import visualequation.conversions as conversions
-import visualequation.dirs as dirs
+#sys.path.append(os.path.join(os.path.dirname(__file__), 'visualequation'))
+#os.chdir('visualequation')
+from visualequation import symbols
+from visualequation import conversions
+from visualequation import dirs
 
 def generate_symb_images(menuitemdata, temp_dir):
     """
@@ -46,11 +49,14 @@ if __name__ == '__main__':
         os.makedirs(dirs.SYMBOLS_DIR)
 
     for index, menuitemdata in enumerate(symbols.MENUITEMSDATA):
-        print "Generating menu symbols...", index+1, "/", \
-            len(symbols.MENUITEMSDATA)
+        print("Generating menu symbols...", index+1, "/", \
+            len(symbols.MENUITEMSDATA))
+        filename = os.path.join(dirs.SYMBOLS_DIR, menuitemdata.tag + '.png')
+        conversions.eq2png(menuitemdata.expr, None, None, temp_dirpath,
+                           filename)
         generate_symb_images(menuitemdata, temp_dirpath)
 
-    print "Generating Tk symbols..."
+    print("Generating Tk symbols...")
     for symb in symbols.ADDITIONAL_LS:
         filename = os.path.join(dirs.SYMBOLS_DIR, symb.tag + ".png")
         conversions.eq2png(symb.expr, 200, None, temp_dirpath, filename)

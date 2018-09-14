@@ -8,7 +8,7 @@ To run the program successfully, you need:
 
 * python3
 * PyQt5
-* Tkinter
+* Tkinter (it will be removed soon)
 * LaTeX
 * Some specific LaTeX packages (you can find them in the preamble of the equation template _visualequation/data/eq_template.tex_).
 * Some command-line programs to manipulate LaTeX output:
@@ -34,7 +34,7 @@ $ sudo apt-get install python3-pyqt5 texlive-latex-recommended dvipng texlive-fo
 
 If you have the sources you can see if everything is installed properly running the test:
 
-$ python -m tests.test_dependencies
+$ python3 -m tests.test_dependencies
 
 ## Installation
 
@@ -97,7 +97,7 @@ $ python -m pip install --user --upgrade visualequation
 
 On the other hand, if you have the sources, the first step is to generate the LaTeX symbols used by the program:
 
-$ python populate_symbols.py
+$ python3 populate_symbols.py
 
 It will late a bit.
 
@@ -127,17 +127,17 @@ Instead of a cursor, you navigate with a box that surrounds blocks of the equati
 
 The following key combinations work: (They can be changed or extended in the future)
 
-* LEFT and RIGHT (or TAB or clicking the equation):
-Change the selection box.
+* LEFT or right-clicking the equation:
+Change the selection box backwards.
 
-* UP and DOWN (or clicking in the menu items of the panel below):
-Change the symbols and operators showed in the panel above.
+* RIGHT or TAB or left-clicking the equation:
+Change the selection box forwards.
 
 * DELETE or BACKSPACE:
 Remove current selection. If it was the entire argument of an operator, a square will remain so you can select it and add something in the future. There is no way to remove those squares without deleting the entire operator.
 
 * ^ and _:
-Put a superindex or subindex.
+Put a superindex or subindex. The former does not work in some keyboard maps.
 
 * CTRL+z:
 Recover the equation as it was before last change. You can use it all the times that you need.

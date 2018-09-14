@@ -18,18 +18,18 @@ conversions to other formats
 import os
 import subprocess
 import json
-import Tkinter
-from tkFileDialog import askopenfilename
+import tkinter
+from tkinter.filedialog import askopenfilename
 
-import dirs
-import eqtools
-import symbols
+from . import dirs
+from . import eqtools
+from . import symbols
 
 def eq2latex_file(eq, latex_file, template_file):
     """ Write equation in a LaTeX file according to the template_file.
     It looks for string '%EQ%' in the file and replace it by eq.
     """
-    if isinstance(eq, basestring):
+    if isinstance(eq, str):
         latex_code = eq
     elif isinstance(eq, list):
         latex_code = eqtools.eq2latex_code(eq)
@@ -238,26 +238,26 @@ def eq2svg(eq, directory, svg_fpath):
 
 def open_eq():
     "Return equation inside a file chosen interactively. Else, None."
-    root = Tkinter.Tk()
+    root = tkinter.Tk()
     root.withdraw()
     # We allow only two types of format to save equation
     filename = askopenfilename(filetypes=[('Available files',
                                            ('.png', '.pdf'))])
     root.destroy()
     def show_message(message):
-        root = Tkinter.Tk()
-        Tkinter.Label(root, text=message).pack(side=Tkinter.TOP)
+        root = tkinter.Tk()
+        tkinter.Label(root, text=message).pack(side=tkinter.TOP)
         def return_destroy(event):
             root.destroy()
         root.bind('<Return>', return_destroy)
-        Tkinter.Button(root, text="Accept", command=root.destroy
-        ).pack(side=Tkinter.TOP)
+        tkinter.Button(root, text="Accept", command=root.destroy
+        ).pack(side=tkinter.TOP)
         root.mainloop()
     if not filename:
         return None
     try:
-        eq_str = subprocess.check_output(["exiftool", "-b", "-s3",
-                                          "-description", filename])
+        eq_str = subprocess.check_output(
+            ["exiftool", "-b", "-s3", "-description", filename]).decode('utf8')
         if not eq_str:
             show_message("No equation inside this file.")
             return None

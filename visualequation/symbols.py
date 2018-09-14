@@ -17,9 +17,9 @@ A module that contains the list of operators used in the menu.
 import os
 from collections import namedtuple
 
-import Tkinter
+import tkinter
 
-import dirs
+from . import dirs
 
 class Op(object):
     """ Class for LaTeX operator (that has arguments)"""
@@ -43,7 +43,7 @@ class Op(object):
         return "Op(" + repr(self.n_args) + ", " + repr(self.latex_code) + ")"
 
 LatexSymb = namedtuple('LatexSymb', 'tag code expr')
-MenuItemData = namedtuple('MenuItem', 'symb_l clickable_size dpi expr')
+MenuItemData = namedtuple('MenuItem', 'tag symb_l clickable_size dpi expr')
 
 # Use these operators in the code, so it will be easy to change their value
 # in next releases
@@ -57,6 +57,37 @@ SUBINDEX = Op(2, r'{0}_{{{1}}}')
 
 MENUITEMSDATA = []
 ADDITIONAL_LS = []
+
+# It does NOT include ' ', '^', '_', '\\' and '~'
+# so it is valid for both text and math environments
+ASCII_LATEX_TRANSLATION = {
+    '|': r'|',
+    '!': r'!',
+    '$': r'\$',
+    '%': r'\%',
+    '&': r'\&',
+    '/': r'/',
+    '(': r'(',
+    ')': r')',
+    '=': r'=',
+    '?': r'?',
+    "'": r"'",
+    '@': r'@',
+    '#': r'\#',
+    '[': r'[',
+    ']': r']',
+    '{': r'\{',
+    '}': r'\}',
+    '*': r'*',
+    '+': r'+',
+    '-': r'-',
+    '<': r'<',
+    '>': r'>',
+    ',': r',',
+    '.': r'.',
+    ';': r';',
+    ':': r':',
+}
 
 LOWER_GREEK = [
     LatexSymb('alpha', r'\alpha', r'\alpha'),
@@ -126,6 +157,7 @@ SYMBOLS1 = [
 ]
 
 MENUITEMSDATA.append(MenuItemData(
+    tag="tab_greek_hebrew_symb1",
     symb_l=LOWER_GREEK + UPPER_GREEK + VAR_GREEK + HEBREW + SYMBOLS1,
     clickable_size=(30, 30), dpi=200,
     expr=r'\alpha\, \infty'))
@@ -153,6 +185,7 @@ MATHCONSTRUCTS = [
 ]
 
 MENUITEMSDATA.append(MenuItemData(
+    tag="tab_mathconstructs",
     symb_l=MATHCONSTRUCTS,
     clickable_size=(55, 70), dpi=200,
     expr=r'\underbrace{{abc}}'))
@@ -185,22 +218,22 @@ ADDITIONAL_LS += SINGLEDELIMITERS
 
 def free_delimiters():
     def get_delimiter(delimiter):
-        root = Tkinter.Tk()
+        root = tkinter.Tk()
         root.title(str(delimiter).capitalize() + " delimiter")
-        Tkinter.Label(root, text='Choose ' + str(delimiter) + ' delimiter'
-        ).pack(side=Tkinter.TOP)
+        tkinter.Label(root, text='Choose ' + str(delimiter) + ' delimiter'
+        ).pack(side=tkinter.TOP)
         im_dict = {}
         for delim in SINGLEDELIMITERS:
-            im_dict[delim.tag] = Tkinter.PhotoImage(
+            im_dict[delim.tag] = tkinter.PhotoImage(
                 file=os.path.join(dirs.SYMBOLS_DIR, delim.tag + '.png'))
             # Create the button with that image
-            Tkinter.Button(
+            tkinter.Button(
                 # Trick to avoid the closure: var=var
                 root,
                 command=lambda root=root, delim_code=delim.code: delimiter.set(
                     root, delim_code),
                 image=im_dict[delim.tag], width='30', height='40'
-            ).pack(side=Tkinter.LEFT)
+            ).pack(side=tkinter.LEFT)
 
         def disable_event():
             pass
@@ -251,6 +284,7 @@ DELIMITERS = [
 ]
 
 MENUITEMSDATA.append(MenuItemData(
+    tag="tab_delimiters",
     symb_l=DELIMITERS, clickable_size=(80, 50), dpi=200,
     expr=r'\left(ab\right)'))
 
@@ -292,6 +326,7 @@ FUNCTIONS = [
 ]
 
 MENUITEMSDATA.append(MenuItemData(
+    tag="tab_functions",
     symb_l=FUNCTIONS, clickable_size=(100, 30), dpi=200,
     expr=r'f(x)'))
 
@@ -315,6 +350,7 @@ VARIABLESIZE = [
 ]
 
 MENUITEMSDATA.append(MenuItemData(
+    tag="tab_variablesize",
     symb_l=VARIABLESIZE,
     clickable_size=(50, 60), dpi=150,
     expr=r'\sum'))
@@ -375,6 +411,7 @@ SOMEOPERATORS = [
 ]
 
 MENUITEMSDATA.append(MenuItemData(
+    tag="tab_someoperators",
     symb_l=SOMEOPERATORS,
     clickable_size=(30, 30), dpi=200,
     expr=r'\otimes \in'))
@@ -411,63 +448,58 @@ ARROWS = [
 ]
 
 MENUITEMSDATA.append(MenuItemData(
+    tag="tab_arrows",
     symb_l=ARROWS,
     clickable_size=(50, 40), dpi=200,
     expr=r'\rightarrow'))
 
 def text():
-    root = Tkinter.Tk()
+    root = tkinter.Tk()
     root.title("Text")
-    text_tk = Tkinter.StringVar()
-    Tkinter.Label(root, text='Text').grid(row=0)
-    entry = Tkinter.Entry(root, textvariable=text_tk)
+    text_tk = tkinter.StringVar()
+    tkinter.Label(root, text='Text').grid(row=0)
+    entry = tkinter.Entry(root, textvariable=text_tk)
     entry.grid(row=0, column=1)
     entry.focus_set()
     def return_quit(event):
         root.quit()
     root.bind('<Return>', return_quit)
-    Tkinter.Button(root, text="Accept", command=root.quit).grid(row=1,
+    tkinter.Button(root, text="Accept", command=root.quit).grid(row=1,
                                                                 column=1)
     # Avoid that the user does not introduce something
     def disable_event():
         pass
     root.protocol("WM_DELETE_WINDOW", disable_event)
+    def valid_char(char):
+        code = ord(char)
+        # 0-9 or A-Z or a-z
+        if 48 <= code <= 57 or 65 <= code <= 90 or 97 <= code <= 122 \
+           or char in ASCII_LATEX_TRANSLATION:
+            return True
+        else:
+            return False
+    # Loop until string has valid characters
     exit_cond = False
     while not exit_cond:
         root.mainloop()
-        try:
-            text_str = text_tk.get()
-            # Check that characters are only ASCII
-            text_str.decode('ascii')
-            # Avoid problematic ACII characters
-            assert '^' not in text_str
-            assert '~' not in text_str
-            assert '\\' not in text_str
-            # Change ASCII with special sequencies
-            # Be careful: do not include keys that are exactly equal to values
-            latexdict = {
-                '$':r'\$', '%':r'\%', '_':r'\_', '}':r'\}', '&':r'\&',
-                '#':r'\#', '{':r'\{'}
-            for key in latexdict:
-                text_str = text_str.replace(key, latexdict[key])
-            exit_cond = True
-        except UnicodeEncodeError:
-            pass
-        except AssertionError:
-            pass
+        text_str = text_tk.get()
+        exit_cond = all(valid_char(char) for char in text_str)
     root.destroy()
+    # Correct string
+    for key in ASCII_LATEX_TRANSLATION:
+        text_str = text_str.replace(key, ASCII_LATEX_TRANSLATION[key])
     return r'\text{{' + text_str + '}}'
 
 def special_format(latex_command, label_text, only_capital=False):
     def fun():
-        root = Tkinter.Tk()
+        root = tkinter.Tk()
         root.title(label_text + " characters")
-        text_tk = Tkinter.StringVar()
-        Tkinter.Label(root, text=label_text).grid(row=0)
-        entry = Tkinter.Entry(root, textvariable=text_tk)
+        text_tk = tkinter.StringVar()
+        tkinter.Label(root, text=label_text).grid(row=0)
+        entry = tkinter.Entry(root, textvariable=text_tk)
         entry.grid(row=0, column=1)
         entry.focus_set()
-        Tkinter.Button(root, text="Accept",
+        tkinter.Button(root, text="Accept",
                        command=root.quit).grid(row=1, column=1)
         def return_quit(event):
             root.quit()
@@ -525,21 +557,21 @@ def color():
         def get(self):
             return self.color_code
     code = LatexCode()
-    root = Tkinter.Tk()
+    root = tkinter.Tk()
     root.title("Color")
-    Tkinter.Label(root, text='Choose color').pack(side=Tkinter.TOP)
+    tkinter.Label(root, text='Choose color').pack(side=tkinter.TOP)
     im_dict = {}
     for color in COLORS:
-        im_dict[color.tag] = Tkinter.PhotoImage(
+        im_dict[color.tag] = tkinter.PhotoImage(
             file=os.path.join(dirs.SYMBOLS_DIR, color.tag + '.png'))
         # Create the button with that image
-        Tkinter.Button(
+        tkinter.Button(
             # Trick to avoid the closure: var=var
             root,
             command=lambda root=root, color_code=color.code: code.set(
                 root, color_code),
             image=im_dict[color.tag], width='140', height='30'
-        ).pack(side=Tkinter.TOP)
+        ).pack(side=tkinter.TOP)
 
     def disable_event():
         pass
@@ -556,21 +588,21 @@ def colorbox():
         def get(self):
             return self.color_code
     code = LatexCode()
-    root = Tkinter.Tk()
+    root = tkinter.Tk()
     root.title("Color box")
-    Tkinter.Label(root, text='Choose color').pack(side=Tkinter.TOP)
+    tkinter.Label(root, text='Choose color').pack(side=tkinter.TOP)
     im_dict = {}
     for color in COLORS:
-        im_dict[color.tag] = Tkinter.PhotoImage(
+        im_dict[color.tag] = tkinter.PhotoImage(
             file=os.path.join(dirs.SYMBOLS_DIR, color.tag + '.png'))
         # Create the button with that image
-        Tkinter.Button(
+        tkinter.Button(
             # Trick to avoid the closure: var=var
             root,
             command=lambda root=root, color_code=color.code: code.set(
                 root, color_code),
             image=im_dict[color.tag], width='140', height='30'
-        ).pack(side=Tkinter.TOP)
+        ).pack(side=tkinter.TOP)
 
     def disable_event():
         pass
@@ -599,24 +631,25 @@ TEXT = [
 ]
 
 MENUITEMSDATA.append(MenuItemData(
+    tag="tab_text",
     symb_l=TEXT,
     clickable_size=(80, 50), dpi=200,
     expr=r'\mathbb{R}\,\text{if}'))
 
 def matrix(matrix_type):
     def fun():
-        root = Tkinter.Tk()
+        root = tkinter.Tk()
         root.title(matrix_type.capitalize())
-        n_rows_tk = Tkinter.StringVar()
-        Tkinter.Label(root, text='Number of rows').grid(row=0)
-        n_columns_tk = Tkinter.StringVar()
-        Tkinter.Label(root, text='Number of columns').grid(row=1)
-        entry1 = Tkinter.Entry(root, textvariable=n_rows_tk)
-        entry2 = Tkinter.Entry(root, textvariable=n_columns_tk)
+        n_rows_tk = tkinter.StringVar()
+        tkinter.Label(root, text='Number of rows').grid(row=0)
+        n_columns_tk = tkinter.StringVar()
+        tkinter.Label(root, text='Number of columns').grid(row=1)
+        entry1 = tkinter.Entry(root, textvariable=n_rows_tk)
+        entry2 = tkinter.Entry(root, textvariable=n_columns_tk)
         entry1.grid(row=0, column=1)
         entry2.grid(row=1, column=1)
         entry1.focus_set()
-        Tkinter.Button(root, text="Accept", command=root.quit).grid(row=2,
+        tkinter.Button(root, text="Accept", command=root.quit).grid(row=2,
                                                                     column=1)
         def return_quit(event):
             root.quit()
@@ -646,14 +679,14 @@ def matrix(matrix_type):
     return fun
 
 def cases():
-    root = Tkinter.Tk()
+    root = tkinter.Tk()
     root.title("Cases")
-    n_cases_tk = Tkinter.StringVar()
-    Tkinter.Label(root, text='Number of cases').grid(row=0)
-    entry = Tkinter.Entry(root, textvariable=n_cases_tk)
+    n_cases_tk = tkinter.StringVar()
+    tkinter.Label(root, text='Number of cases').grid(row=0)
+    entry = tkinter.Entry(root, textvariable=n_cases_tk)
     entry.grid(row=0, column=1)
     entry.focus_set()
-    Tkinter.Button(root, text="Accept", command=root.quit).grid(row=1,
+    tkinter.Button(root, text="Accept", command=root.quit).grid(row=1,
                                                                 column=1)
     def return_quit(event):
         root.quit()
@@ -679,14 +712,14 @@ def cases():
     return Op(n_cases*2, latex_code)
 
 def equations_system():
-    root = Tkinter.Tk()
+    root = tkinter.Tk()
     root.title("Equations system")
-    n_cases_tk = Tkinter.StringVar()
-    Tkinter.Label(root, text='Number of equations').grid(row=0)
-    entry = Tkinter.Entry(root, textvariable=n_cases_tk)
+    n_cases_tk = tkinter.StringVar()
+    tkinter.Label(root, text='Number of equations').grid(row=0)
+    entry = tkinter.Entry(root, textvariable=n_cases_tk)
     entry.grid(row=0, column=1)
     entry.focus_set()
-    Tkinter.Button(root, text="Accept", command=root.quit).grid(row=1,
+    tkinter.Button(root, text="Accept", command=root.quit).grid(row=1,
                                                                 column=1)
     def return_quit(event):
         root.quit()
@@ -724,6 +757,7 @@ MANYLINES = [
 ]
 
 MENUITEMSDATA.append(MenuItemData(
+    tag="tab_manylines",
     symb_l=MANYLINES,
     clickable_size=(190, 90), dpi=200,
     expr=r'\begin{smallmatrix}a&b\\c&d\end{smallmatrix}'))
@@ -747,6 +781,7 @@ ACCENTS = [
 ]
 
 MENUITEMSDATA.append(MenuItemData(
+    tag="tab_accents",
     symb_l=ACCENTS, clickable_size=(40, 30), dpi=200,
     expr=r'\acute{{a}}\;\tilde{{B}}'))
 
@@ -780,4 +815,5 @@ INDICES = [
 #     [r'\binom{{\cdot}}{{\square}}'])),
 
 MENUITEMSDATA.append(MenuItemData(
+    tag="tab_indices",
     symb_l=INDICES, clickable_size=(60, 60), dpi=200, expr=r'a^b'))
