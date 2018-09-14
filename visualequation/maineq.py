@@ -255,13 +255,14 @@ class EditableEqSprite(pygame.sprite.Sprite):
         Append self.eq_buffer to the right of the block pointed by
         self.sel_index. If the block is a NEWARG, just replace it.
         """
-        if self.eq[self.sel_index] == symbols.NEWARG:
-            self.eq[self.sel_index:self.sel_index+1] = self.eq_buffer
-        else:
-            self.sel_index = eqtools.appendbyJUXT(self.eq, self.sel_index,
-                                                self.eq_buffer)
-        self._set_sel()
-        self.add_eq2hist()
+        if self.eq_buffer != []:
+            if self.eq[self.sel_index] == symbols.NEWARG:
+                self.eq[self.sel_index:self.sel_index+1] = self.eq_buffer
+            else:
+                self.sel_index = eqtools.appendbyJUXT(self.eq, self.sel_index,
+                                                      self.eq_buffer)
+            self._set_sel()
+            self.add_eq2hist()
 
     def left_NEWARG(self):
         """
