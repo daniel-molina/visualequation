@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="visualequation",
-    version="0.2.1",
+    version="0.2.3",
     author="Daniel Molina",
     author_email="lluvia@autistici.org",
     description="An equation editor powered by LaTeX",

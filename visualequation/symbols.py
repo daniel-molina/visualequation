@@ -162,8 +162,8 @@ SINGLEDELIMITERS = [
     LatexSymb('rparenthesis', ')', ')'),
     LatexSymb('vert', '|', '|'),
     LatexSymb('uppervert', r'\|', r'\|'),
-    LatexSymb('lbracket', r'\{', r'\{'),
-    LatexSymb('rbracket', r'\}', r'\}'),
+    LatexSymb('lbracket', r'\{{', r'\{'), # They will be part of an operator:
+    LatexSymb('rbracket', r'\}}', r'\}'), # so double brackets
     LatexSymb('langle', r'\langle', r'\langle'),
     LatexSymb('rangle', r'\rangle', r'\rangle'),
     LatexSymb('lfloor', r'\lfloor', r'\lfloor'),
