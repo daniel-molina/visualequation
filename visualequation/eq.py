@@ -24,7 +24,7 @@ from . import eqtools
 from . import conversions
 from . import symbols
 
-# TODO (maybe in a differnt module)
+# TODO (maybe in a different module)
 class EqHisto:
     def __init__(self, eq):
         pass
@@ -32,7 +32,8 @@ class EqHisto:
 class Eq(QLabel):
     def __init__(self, eq, temp_dir, parent):
         super().__init__(parent)
-        
+
+        self.parent = parent
         self.eq_hist = [(list(eq), 0)]
         self.eq_hist_index = 0
         self.eq_buffer = []
@@ -192,7 +193,11 @@ class Eq(QLabel):
                 raise ValueError('Unknown type of operator %s' % op)
 
         if isinstance(oper, types.FunctionType):
-            replace_op_in_eq(oper())
+            op = oper(self.parent)
+            if op:
+                replace_op_in_eq(op)
+            else:
+                return None
         else:
             replace_op_in_eq(oper)
 
@@ -237,7 +242,11 @@ class Eq(QLabel):
                 raise ValueError('Unknown operator passed.')
 
         if isinstance(oper, types.FunctionType):
-            replace_op_in_eq(oper())
+            op = oper(self.parent)
+            if op:
+                replace_op_in_eq(op)
+            else:
+                return None
         else:
             replace_op_in_eq(oper)
 

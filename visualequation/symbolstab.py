@@ -25,42 +25,54 @@ from . import symbols
 from . import dirs
 
 class TabWidget(QTabWidget):
-   def __init__(self, parent, maineq):
-      super().__init__(parent)
+    def __init__(self, parent, maineq):
+        super().__init__(parent)
 
-      self.maineq = maineq
-      self.tabs = []
-      for index, menuitemdata in enumerate(symbols.MENUITEMSDATA):
-         self.tabs.append(QWidget())
-         icon = QIcon(os.path.join(dirs.SYMBOLS_DIR,
-                                   menuitemdata.tag + ".png"))
-         self.setIconSize(QSize(50, 30))
-         self.addTab(self.tabs[index], icon, "")
-         #self.setTabToolTip(index, "Hello")
-         #self.setTabWhatsThis(index, "Hello")
-         layout = QGridLayout(self)
-         row = 0
-         column = 0
-         for symb_index, symb in enumerate(menuitemdata.symb_l):
-             button = QPushButton('')
-             button.setIcon(QIcon(os.path.join(dirs.SYMBOLS_DIR,
-                                               symb.tag + ".png")))
-             button.setIconSize(QSize(menuitemdata.clickable_size[0],
-                                      menuitemdata.clickable_size[1]))
-             cmd = lambda state, code=symb.code: \
-                   self.handle_button(state, code)
-             button.clicked.connect(cmd)
-             layout.addWidget(button, row, column)
-             column += 1
-             if column > 8:
-                 column = 0
-                 row += 1
+        self.maineq = maineq
+        self.tabs = []
+        for index, menuitemdata in enumerate(symbols.MENUITEMSDATA):
+            self.tabs.append(QWidget())
+            icon = QIcon(os.path.join(dirs.SYMBOLS_DIR,
+                                      menuitemdata.tag + ".png"))
+            self.setIconSize(QSize(50, 30))
+            self.addTab(self.tabs[index], icon, "")
+            #self.setTabToolTip(index, "Hello")
+            #self.setTabWhatsThis(index, "Hello")
+            layout = QGridLayout(self)
+            row = 0
+            column = 0
+            for symb_index, symb in enumerate(menuitemdata.symb_l):
+                symbols_as_buttons = False
+                if symbols_as_buttons:
+                    button = QPushButton('')
+                    button.setIcon(QIcon(os.path.join(dirs.SYMBOLS_DIR,
+                                                      symb.tag + ".png")))
+                    button.setIconSize(QSize(menuitemdata.clickable_size[0],
+                                             menuitemdata.clickable_size[1]))
+                    cmd = lambda state, code=symb.code: \
+                          self.handle_click(state, code)
+                    button.clicked.connect(cmd)
+                    layout.addWidget(button, row, column)
+                else:
+                    label = QLabel('')
+                    label.setPixmap(QPixmap(os.path.join(dirs.SYMBOLS_DIR,
+                                                         symb.tag + ".png")))
+                    cmd = lambda state, code=symb.code: \
+                          self.handle_click(state, code)
+                    label.mousePressEvent = cmd
+                    layout.addWidget(label, row, column)
+                    label.setAlignment(Qt.AlignCenter)
+                    
+                column += 1
+                if column > 9:
+                    column = 0
+                    row += 1
              
-         self.tabs[index].setLayout(layout)
+            self.tabs[index].setLayout(layout)
 
-   def handle_button(self, state, code):
-      modifiers = QApplication.keyboardModifiers()
-      if modifiers == Qt.ShiftModifier:
-         self.maineq.insert_substituting(code)
-      else:
-         self.maineq.insert(code)
+    def handle_click(self, state, code):
+        modifiers = QApplication.keyboardModifiers()
+        if modifiers == Qt.ShiftModifier:
+            self.maineq.insert_substituting(code)
+        else:
+            self.maineq.insert(code)

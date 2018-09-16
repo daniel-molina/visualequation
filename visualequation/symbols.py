@@ -17,7 +17,9 @@ A module that contains the list of operators used in the menu.
 import os
 from collections import namedtuple
 
-import tkinter
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
 
 from . import dirs
 
@@ -195,8 +197,8 @@ SINGLEDELIMITERS = [
     LatexSymb('rparenthesis', ')', ')'),
     LatexSymb('vert', '|', '|'),
     LatexSymb('uppervert', r'\|', r'\|'),
-    LatexSymb('lbracket', r'\{', r'\{'),
-    LatexSymb('rbracket', r'\}', r'\}'),
+    LatexSymb('lbracket', r'\{{', r'\{'), # {{: It will be part of an operator
+    LatexSymb('rbracket', r'\}}', r'\}'), # }}: Idem
     LatexSymb('langle', r'\langle', r'\langle'),
     LatexSymb('rangle', r'\rangle', r'\rangle'),
     LatexSymb('lfloor', r'\lfloor', r'\lfloor'),
@@ -216,46 +218,55 @@ SINGLEDELIMITERS = [
 
 ADDITIONAL_LS += SINGLEDELIMITERS
 
-def free_delimiters():
-    def get_delimiter(delimiter):
-        root = tkinter.Tk()
-        root.title(str(delimiter).capitalize() + " delimiter")
-        tkinter.Label(root, text='Choose ' + str(delimiter) + ' delimiter'
-        ).pack(side=tkinter.TOP)
-        im_dict = {}
-        for delim in SINGLEDELIMITERS:
-            im_dict[delim.tag] = tkinter.PhotoImage(
-                file=os.path.join(dirs.SYMBOLS_DIR, delim.tag + '.png'))
-            # Create the button with that image
-            tkinter.Button(
-                # Trick to avoid the closure: var=var
-                root,
-                command=lambda root=root, delim_code=delim.code: delimiter.set(
-                    root, delim_code),
-                image=im_dict[delim.tag], width='30', height='40'
-            ).pack(side=tkinter.LEFT)
+def free_delimiters(parent):
+    class Dialog(QDialog):
+        def __init__(self, parent=None):
+            super().__init__(parent)
 
-        def disable_event():
-            pass
-        root.protocol("WM_DELETE_WINDOW", disable_event)
-        root.mainloop()
+            self.setWindowTitle('Free delimiters')
+            label_l = QLabel('Left delimiter:')
+            self.combo_l = QComboBox()
+            self.combo_l.setIconSize(QSize(200, 50))
+            for delim in SINGLEDELIMITERS:
+                self.combo_l.addItem(QIcon(os.path.join(dirs.SYMBOLS_DIR,
+                                                        delim.tag + '.png')),
+                                     '')
+            label_r = QLabel('Right delimiter:')
+            self.combo_r = QComboBox()
+            self.combo_r.setIconSize(QSize(200, 50))
+            for delim in SINGLEDELIMITERS:
+                self.combo_r.addItem(QIcon(os.path.join(dirs.SYMBOLS_DIR,
+                                                        delim.tag + '.png')),
+                                     '')
+            self.buttons = QDialogButtonBox(
+                QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+                Qt.Horizontal, self)
+            vbox = QVBoxLayout(self)
+            vbox.addWidget(label_l)
+            vbox.addWidget(self.combo_l)
+            vbox.addWidget(label_r)
+            vbox.addWidget(self.combo_r)
+            vbox.addWidget(self.buttons)
 
-    class LatexCode(object):
-        def __init__(self, part):
-            self.part = part
-            self.command = '\\' + part
-        def set(self, root, delim_code):
-            self.command += delim_code
-            root.destroy()
-        def get(self):
-            return self.command
-        def __str__(self):
-            return self.part
-    left = LatexCode('left')
-    right = LatexCode('right')
-    get_delimiter(left)
-    get_delimiter(right)
-    return Op(1, left.get() + r' {0} ' + right.get())
+            self.buttons.accepted.connect(self.accept)
+            self.buttons.rejected.connect(self.reject)
+
+        @staticmethod
+        def get_delimiter(parent=None):
+            dialog = Dialog(parent)
+            result = dialog.exec_()
+            if result == QDialog.Accepted:
+                return ((SINGLEDELIMITERS[dialog.combo_l.currentIndex()].code,
+                         SINGLEDELIMITERS[dialog.combo_r.currentIndex()].code),
+                        True)
+            else:
+                return ((None, None), False)
+            
+    (delim_l, delim_r), ok = Dialog.get_delimiter(parent)
+    if ok:
+        return Op(1, r'\left' + delim_l + r' {0} ' + r'\right' +  delim_r)
+    else:
+        return None
 
 DELIMITERS = [
     LatexSymb('parenthesisb', Op(1, r'\left( {0} \right)'),
@@ -453,74 +464,107 @@ MENUITEMSDATA.append(MenuItemData(
     clickable_size=(50, 40), dpi=200,
     expr=r'\rightarrow'))
 
-def text():
-    root = tkinter.Tk()
-    root.title("Text")
-    text_tk = tkinter.StringVar()
-    tkinter.Label(root, text='Text').grid(row=0)
-    entry = tkinter.Entry(root, textvariable=text_tk)
-    entry.grid(row=0, column=1)
-    entry.focus_set()
-    def return_quit(event):
-        root.quit()
-    root.bind('<Return>', return_quit)
-    tkinter.Button(root, text="Accept", command=root.quit).grid(row=1,
-                                                                column=1)
-    # Avoid that the user does not introduce something
-    def disable_event():
-        pass
-    root.protocol("WM_DELETE_WINDOW", disable_event)
-    def valid_char(char):
-        code = ord(char)
-        # 0-9 or A-Z or a-z
-        if 48 <= code <= 57 or 65 <= code <= 90 or 97 <= code <= 122 \
-           or char in ASCII_LATEX_TRANSLATION:
-            return True
-        else:
-            return False
-    # Loop until string has valid characters
-    exit_cond = False
-    while not exit_cond:
-        root.mainloop()
-        text_str = text_tk.get()
-        exit_cond = all(valid_char(char) for char in text_str)
-    root.destroy()
-    # Correct string
-    for key in ASCII_LATEX_TRANSLATION:
-        text_str = text_str.replace(key, ASCII_LATEX_TRANSLATION[key])
-    return r'\text{{' + text_str + '}}'
+def text(parent):
+    class Dialog(QDialog):
+        def __init__(self, parent=None):
+            super().__init__(parent)
+
+            self.setWindowTitle('Text')
+            label = QLabel('Text:')
+            self.ledit = QLineEdit()
+            regexp = QRegExp("^[a-zA-Z\d\s|!\\$%&/()=?'@#\\[\\]{}*+-<>,.;:]+$")
+            self.validator = QRegExpValidator(regexp)
+            self.ledit.setValidator(self.validator)
+            self.buttons = QDialogButtonBox(
+                QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+                Qt.Horizontal, self)
+            vbox = QVBoxLayout(self)
+            vbox.addWidget(label)
+            vbox.addWidget(self.ledit)
+            vbox.addWidget(self.buttons)
+            self.buttons.button(QDialogButtonBox.Ok).setDisabled(True)
+            self.ledit.setFocus()
+
+            self.ledit.textChanged.connect(self.check_state)
+            self.buttons.accepted.connect(self.accept)
+            self.buttons.rejected.connect(self.reject)
+
+        def check_state(self, *args, **kargs):
+            state = self.validator.validate(self.ledit.text(), 0)[0]
+            if state == QValidator.Acceptable:
+                self.buttons.button(QDialogButtonBox.Ok).setEnabled(True)
+            else:
+                self.buttons.button(QDialogButtonBox.Ok).setDisabled(True)
+
+        @staticmethod
+        def get_text(parent=None):
+            dialog = Dialog(parent)
+            result = dialog.exec_()
+            if result == QDialog.Accepted:
+                return (dialog.ledit.text(), True)
+            else:
+                return (None, False)
+            
+    text, ok = Dialog.get_text(parent)
+    if ok:
+        # Correct string
+        for key in ASCII_LATEX_TRANSLATION:
+            text = text.replace(key, ASCII_LATEX_TRANSLATION[key])
+        return r'\text{{' + text + '}}'
+    else:
+        return None
 
 def special_format(latex_command, label_text, only_capital=False):
-    def fun():
-        root = tkinter.Tk()
-        root.title(label_text + " characters")
-        text_tk = tkinter.StringVar()
-        tkinter.Label(root, text=label_text).grid(row=0)
-        entry = tkinter.Entry(root, textvariable=text_tk)
-        entry.grid(row=0, column=1)
-        entry.focus_set()
-        tkinter.Button(root, text="Accept",
-                       command=root.quit).grid(row=1, column=1)
-        def return_quit(event):
-            root.quit()
-        root.bind('<Return>', return_quit)
-        # Avoid that the user does not introduce something
-        def disable_event():
-            pass
-        root.protocol("WM_DELETE_WINDOW", disable_event)
-        exit_cond = False
-        while not exit_cond:
-            root.mainloop()
-            text_str = text_tk.get()
+    class Dialog(QDialog):
+        def __init__(self, parent=None):
+            super().__init__(parent)
+
+            self.setWindowTitle(label_text + " characters")
+            label = QLabel(label_text + ':')
+            self.ledit = QLineEdit()
             if only_capital:
-                if text_str.isalpha():
-                    text_str = text_str.upper()
-                    exit_cond = True
+                regexp = QRegExp("^[A-Z]+$")
             else:
-                if text_str.isalnum():
-                    exit_cond = True
-        root.destroy()
-        return latex_command + r'{' + text_str + '}'
+                regexp = QRegExp("^[a-zA-Z\d]+$")
+            self.validator = QRegExpValidator(regexp)
+            self.ledit.setValidator(self.validator)
+            self.buttons = QDialogButtonBox(
+                QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+                Qt.Horizontal, self)
+            vbox = QVBoxLayout(self)
+            vbox.addWidget(label)
+            vbox.addWidget(self.ledit)
+            vbox.addWidget(self.buttons)
+            self.buttons.button(QDialogButtonBox.Ok).setDisabled(True)
+            self.ledit.setFocus()
+
+            self.ledit.textChanged.connect(self.check_state)
+            self.buttons.accepted.connect(self.accept)
+            self.buttons.rejected.connect(self.reject)
+
+        def check_state(self, *args, **kargs):
+            state = self.validator.validate(self.ledit.text(), 0)[0]
+            if state == QValidator.Acceptable:
+                self.buttons.button(QDialogButtonBox.Ok).setEnabled(True)
+            else:
+                self.buttons.button(QDialogButtonBox.Ok).setDisabled(True)
+
+        @staticmethod
+        def get_text(parent=None):
+            dialog = Dialog(parent)
+            result = dialog.exec_()
+            if result == QDialog.Accepted:
+                return (dialog.ledit.text(), True)
+            else:
+                return (None, False)
+
+    def fun(parent):
+        text, ok = Dialog.get_text(parent)
+        if ok:
+            return latex_command + r'{' + text + '}'
+        else:
+            return None
+
     return fun
 
 COLORS = [
@@ -549,68 +593,82 @@ COLORS = [
 
 ADDITIONAL_LS += COLORS
 
-def color():
-    class LatexCode(object):
-        def set(self, root, color_code):
-            self.color_code = color_code
-            root.destroy()
-        def get(self):
-            return self.color_code
-    code = LatexCode()
-    root = tkinter.Tk()
-    root.title("Color")
-    tkinter.Label(root, text='Choose color').pack(side=tkinter.TOP)
-    im_dict = {}
-    for color in COLORS:
-        im_dict[color.tag] = tkinter.PhotoImage(
-            file=os.path.join(dirs.SYMBOLS_DIR, color.tag + '.png'))
-        # Create the button with that image
-        tkinter.Button(
-            # Trick to avoid the closure: var=var
-            root,
-            command=lambda root=root, color_code=color.code: code.set(
-                root, color_code),
-            image=im_dict[color.tag], width='140', height='30'
-        ).pack(side=tkinter.TOP)
+def color(parent):
+    class Dialog(QDialog):
+        def __init__(self, parent=None):
+            super().__init__(parent)
 
-    def disable_event():
-        pass
-    root.protocol("WM_DELETE_WINDOW", disable_event)
-    root.mainloop()
+            self.setWindowTitle('Color')
+            label = QLabel('Color:')
+            self.combo = QComboBox()
+            self.combo.setIconSize(QSize(200, 20))
+            for color in COLORS:
+                self.combo.addItem(QIcon(os.path.join(dirs.SYMBOLS_DIR,
+                                                      color.tag + '.png')), '')
+            self.buttons = QDialogButtonBox(
+                QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+                Qt.Horizontal, self)
+            vbox = QVBoxLayout(self)
+            vbox.addWidget(label)
+            vbox.addWidget(self.combo)
+            vbox.addWidget(self.buttons)
 
-    return Op(1, r'\begingroup\color{{' + code.get() + r'}}{0}\endgroup')
+            self.buttons.accepted.connect(self.accept)
+            self.buttons.rejected.connect(self.reject)
 
-def colorbox():
-    class LatexCode(object):
-        def set(self, root, color_code):
-            self.color_code = color_code
-            root.destroy()
-        def get(self):
-            return self.color_code
-    code = LatexCode()
-    root = tkinter.Tk()
-    root.title("Color box")
-    tkinter.Label(root, text='Choose color').pack(side=tkinter.TOP)
-    im_dict = {}
-    for color in COLORS:
-        im_dict[color.tag] = tkinter.PhotoImage(
-            file=os.path.join(dirs.SYMBOLS_DIR, color.tag + '.png'))
-        # Create the button with that image
-        tkinter.Button(
-            # Trick to avoid the closure: var=var
-            root,
-            command=lambda root=root, color_code=color.code: code.set(
-                root, color_code),
-            image=im_dict[color.tag], width='140', height='30'
-        ).pack(side=tkinter.TOP)
+        @staticmethod
+        def get_color(parent=None):
+            dialog = Dialog(parent)
+            result = dialog.exec_()
+            if result == QDialog.Accepted:
+                return (COLORS[dialog.combo.currentIndex()].code, True)
+            else:
+                return (None, False)
+            
+    color, ok = Dialog.get_color(parent)
+    if ok:
+        return Op(1, r'\begingroup\color{{' + color + r'}}{0}\endgroup')
+    else:
+        return None
 
-    def disable_event():
-        pass
-    root.protocol("WM_DELETE_WINDOW", disable_event)
-    root.mainloop()
+def colorbox(parent):
+    class Dialog(QDialog):
+        def __init__(self, parent=None):
+            super().__init__(parent)
 
-    return Op(1, r'\colorbox{{' + code.get() + r'}}{{$\displaystyle {0}$}}')
+            self.setWindowTitle('Color Box')
+            label = QLabel('Color:')
+            self.combo = QComboBox()
+            self.combo.setIconSize(QSize(200, 20))
+            for color in COLORS:
+                self.combo.addItem(QIcon(os.path.join(dirs.SYMBOLS_DIR,
+                                                      color.tag + '.png')), '')
+            self.buttons = QDialogButtonBox(
+                QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+                Qt.Horizontal, self)
+            vbox = QVBoxLayout(self)
+            vbox.addWidget(label)
+            vbox.addWidget(self.combo)
+            vbox.addWidget(self.buttons)
 
+            self.buttons.accepted.connect(self.accept)
+            self.buttons.rejected.connect(self.reject)
+
+        @staticmethod
+        def get_color(parent=None):
+            dialog = Dialog(parent)
+            result = dialog.exec_()
+            if result == QDialog.Accepted:
+                return (COLORS[dialog.combo.currentIndex()].code, True)
+            else:
+                return (None, False)
+            
+    color, ok = Dialog.get_color(parent)
+    if ok:
+        return Op(1, r'\colorbox{{' + color
+                  + r'}}{{$\displaystyle {0}$}}')
+    else:
+        return None
 
 TEXT = [
     LatexSymb('text', text, r"\text{Text}"),
@@ -636,124 +694,297 @@ MENUITEMSDATA.append(MenuItemData(
     clickable_size=(80, 50), dpi=200,
     expr=r'\mathbb{R}\,\text{if}'))
 
-def matrix(matrix_type):
-    def fun():
-        root = tkinter.Tk()
-        root.title(matrix_type.capitalize())
-        n_rows_tk = tkinter.StringVar()
-        tkinter.Label(root, text='Number of rows').grid(row=0)
-        n_columns_tk = tkinter.StringVar()
-        tkinter.Label(root, text='Number of columns').grid(row=1)
-        entry1 = tkinter.Entry(root, textvariable=n_rows_tk)
-        entry2 = tkinter.Entry(root, textvariable=n_columns_tk)
-        entry1.grid(row=0, column=1)
-        entry2.grid(row=1, column=1)
-        entry1.focus_set()
-        tkinter.Button(root, text="Accept", command=root.quit).grid(row=2,
-                                                                    column=1)
-        def return_quit(event):
-            root.quit()
-        root.bind('<Return>', return_quit)
-        # Avoid that the user does not introduce something
-        def disable_event():
-            pass
-        root.protocol("WM_DELETE_WINDOW", disable_event)
-        exit_cond = False
-        while not exit_cond:
-            root.mainloop()
-            try:
-                n_rows = int(n_rows_tk.get())
-                n_columns = int(n_columns_tk.get())
-                assert n_rows > 0
-                assert n_columns > 0
-                exit_cond = True
-            except ValueError:
-                pass
-            except AssertionError:
-                pass
-        root.destroy()
-        row_code = r'{}' + r'&{}'*(n_columns-1) + r'\\'
-        latex_code = r'\begin{{' + matrix_type + r'}}' + row_code*n_rows \
-                         + r'\end{{' + matrix_type + r'}}'
-        return Op(n_rows*n_columns, latex_code)
-    return fun
+MATRIXTYPES = [
+    LatexSymb('pmatrix', 'pmatrix', r'\begin{pmatrix}\square\end{pmatrix}'),
+    LatexSymb('vmatrix', 'vmatrix', r'\begin{vmatrix}\square\end{vmatrix}'),
+    LatexSymb('Vmatrix', 'Vmatrix', r'\begin{Vmatrix}\square\end{Vmatrix}'),
+    LatexSymb('bmatrix', 'bmatrix', r'\begin{bmatrix}\square\end{bmatrix}'),
+    LatexSymb('Bmatrix', 'Bmatrix', r'\begin{Bmatrix}\square\end{Bmatrix}'),
+    LatexSymb('matrix', 'matrix', r'\begin{matrix}\square\end{matrix}'),
+]
 
-def cases():
-    root = tkinter.Tk()
-    root.title("Cases")
-    n_cases_tk = tkinter.StringVar()
-    tkinter.Label(root, text='Number of cases').grid(row=0)
-    entry = tkinter.Entry(root, textvariable=n_cases_tk)
-    entry.grid(row=0, column=1)
-    entry.focus_set()
-    tkinter.Button(root, text="Accept", command=root.quit).grid(row=1,
-                                                                column=1)
-    def return_quit(event):
-        root.quit()
-    root.bind('<Return>', return_quit)
-    # Avoid that the user does not introduce something
-    def disable_event():
-        pass
-    root.protocol("WM_DELETE_WINDOW", disable_event)
-    exit_cond = False
-    while not exit_cond:
-        root.mainloop()
-        try:
-            n_cases = int(n_cases_tk.get())
-            assert n_cases > 0
-            exit_cond = True
-        except ValueError:
-            pass
-        except AssertionError:
-            pass
-    root.destroy()
-    case_code = r'{}&{}\\'
-    latex_code = r'\begin{{cases}}' + case_code*n_cases + r'\end{{cases}}'
-    return Op(n_cases*2, latex_code)
+ADDITIONAL_LS += MATRIXTYPES
 
-def equations_system():
-    root = tkinter.Tk()
-    root.title("Equations system")
-    n_cases_tk = tkinter.StringVar()
-    tkinter.Label(root, text='Number of equations').grid(row=0)
-    entry = tkinter.Entry(root, textvariable=n_cases_tk)
-    entry.grid(row=0, column=1)
-    entry.focus_set()
-    tkinter.Button(root, text="Accept", command=root.quit).grid(row=1,
-                                                                column=1)
-    def return_quit(event):
-        root.quit()
-    root.bind('<Return>', return_quit)
-    # Avoid that the user does not introduce something
-    def disable_event():
-        pass
-    root.protocol("WM_DELETE_WINDOW", disable_event)
-    exit_cond = False
-    while not exit_cond:
-        root.mainloop()
-        try:
-            n_cases = int(n_cases_tk.get())
-            assert n_cases > 0
-            exit_cond = True
-        except ValueError:
-            pass
-        except AssertionError:
-            pass
-    root.destroy()
-    case_code = r'{}\\'
-    latex_code = r'\begin{{cases}}' + case_code*n_cases + r'\end{{cases}}'
-    return Op(n_cases, latex_code)
+def matrix_type(parent):
+    class Dialog(QDialog):
+        def __init__(self, parent=None):
+            super().__init__(parent)
+
+            self.setWindowTitle('Matrix')
+            label_rows = QLabel('Number of rows:')
+            self.ledit_rows = QLineEdit()
+            label_cols = QLabel('Number of columns:')
+            self.ledit_cols = QLineEdit()
+            regexp = QRegExp('^[1-9]$')
+            self.validator = QRegExpValidator(regexp)
+            self.ledit_rows.setValidator(self.validator)
+            self.ledit_cols.setValidator(self.validator)
+            label_combo = QLabel('Matrix type:')
+            self.combo = QComboBox()
+            self.combo.setIconSize(QSize(200, 50))
+            #self.combo.setSizeAdjustPolicy(QComboBox.AdjustToContents) 
+            #self.combo.setMinimumHeight(50)
+            for mtype in MATRIXTYPES:
+                self.combo.addItem(QIcon(os.path.join(dirs.SYMBOLS_DIR,
+                                                      mtype.tag + '.png')), '')
+
+            self.buttons = QDialogButtonBox(
+                QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+                Qt.Horizontal, self)
+            vbox = QVBoxLayout(self)
+            vbox.addWidget(label_rows)
+            vbox.addWidget(self.ledit_rows)
+            vbox.addWidget(label_cols)
+            vbox.addWidget(self.ledit_cols)
+            vbox.addWidget(label_combo)
+            vbox.addWidget(self.combo)
+            vbox.addWidget(self.buttons)
+            self.buttons.button(QDialogButtonBox.Ok).setDisabled(True)
+            self.ledit_rows.setFocus()
+
+            self.ledit_rows.textChanged.connect(self.check_state)
+            self.ledit_cols.textChanged.connect(self.check_state)
+            self.buttons.accepted.connect(self.accept)
+            self.buttons.rejected.connect(self.reject)
+
+        def check_state(self, *args, **kargs):
+            state1 = self.validator.validate(self.ledit_rows.text(), 0)[0]
+            state2 = self.validator.validate(self.ledit_cols.text(), 0)[0]
+            if state1 == state2 == QValidator.Acceptable:
+                self.buttons.button(QDialogButtonBox.Ok).setEnabled(True)
+            else:
+                self.buttons.button(QDialogButtonBox.Ok).setDisabled(True)
+
+        @staticmethod
+        def get_matrix_def(parent=None):
+            dialog = Dialog(parent)
+            result = dialog.exec_()
+            if result == QDialog.Accepted:
+                return ((int(dialog.ledit_rows.text()),
+                         int(dialog.ledit_cols.text()),
+                         MATRIXTYPES[dialog.combo.currentIndex()].code),
+                        True)
+            else:
+                return ((None, None, None), False)
+
+    (n_rows, n_cols, mtype), ok = Dialog.get_matrix_def(parent)
+    if ok:
+        row_code = r'{}' + r'&{}'*(n_cols-1) + r'\\'
+        latex_code = r'\begin{{' + mtype + r'}}' + row_code*n_rows \
+                     + r'\end{{' + mtype + r'}}'
+        return Op(n_rows*n_cols, latex_code)
+    else:
+        return None
+
+def cases(parent):
+    class Dialog(QDialog):
+        def __init__(self, parent=None):
+            super().__init__(parent)
+
+            self.setWindowTitle('Cases')
+            label = QLabel('Number of cases:')
+            self.ledit = QLineEdit()
+            regexp = QRegExp('^[1-9]$')
+            self.validator = QRegExpValidator(regexp)
+            self.ledit.setValidator(self.validator)
+            self.buttons = QDialogButtonBox(
+                QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+                Qt.Horizontal, self)
+            vbox = QVBoxLayout(self)
+            vbox.addWidget(label)
+            vbox.addWidget(self.ledit)
+            vbox.addWidget(self.buttons)
+            self.buttons.button(QDialogButtonBox.Ok).setDisabled(True)
+            self.ledit.setFocus()
+
+            self.ledit.textChanged.connect(self.check_state)
+            self.buttons.accepted.connect(self.accept)
+            self.buttons.rejected.connect(self.reject)
+
+        def check_state(self, *args, **kargs):
+            state = self.validator.validate(self.ledit.text(), 0)[0]
+            if state == QValidator.Acceptable:
+                self.buttons.button(QDialogButtonBox.Ok).setEnabled(True)
+            else:
+                self.buttons.button(QDialogButtonBox.Ok).setDisabled(True)
+
+        @staticmethod
+        def get_n_cases(parent=None):
+            dialog = Dialog(parent)
+            result = dialog.exec_()
+            if result == QDialog.Accepted:
+                return (int(dialog.ledit.text()), True)
+            else:
+                return (None, False)
+            
+    n_cases, ok = Dialog.get_n_cases(parent)
+    if ok:
+        case_code = r'{}&{}\\'
+        latex_code = r'\begin{{cases}}' + case_code*n_cases + r'\end{{cases}}'
+        return Op(n_cases*2, latex_code)
+    else:
+        return None
+
+def equation_system(parent):
+    class Dialog(QDialog):
+        def __init__(self, parent=None):
+            super().__init__(parent)
+
+            self.setWindowTitle('Equation system')
+            label = QLabel('Number of equations:')
+            self.ledit = QLineEdit()
+            regexp = QRegExp('^[1-9]$')
+            self.validator = QRegExpValidator(regexp)
+            self.ledit.setValidator(self.validator)
+            self.buttons = QDialogButtonBox(
+                QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+                Qt.Horizontal, self)
+            vbox = QVBoxLayout(self)
+            vbox.addWidget(label)
+            vbox.addWidget(self.ledit)
+            vbox.addWidget(self.buttons)
+            self.buttons.button(QDialogButtonBox.Ok).setDisabled(True)
+            self.ledit.setFocus()
+
+            self.ledit.textChanged.connect(self.check_state)
+            self.buttons.accepted.connect(self.accept)
+            self.buttons.rejected.connect(self.reject)
+
+        def check_state(self, *args, **kargs):
+            state = self.validator.validate(self.ledit.text(), 0)[0]
+            if state == QValidator.Acceptable:
+                self.buttons.button(QDialogButtonBox.Ok).setEnabled(True)
+            else:
+                self.buttons.button(QDialogButtonBox.Ok).setDisabled(True)
+
+        @staticmethod
+        def get_n_equations(parent=None):
+            dialog = Dialog(parent)
+            result = dialog.exec_()
+            if result == QDialog.Accepted:
+                return (int(dialog.ledit.text()), True)
+            else:
+                return (None, False)
+            
+    n_equations, ok = Dialog.get_n_equations(parent)
+    if ok:
+        case_code = r'{}\\'
+        latex_code = r'\begin{{cases}}' + case_code*n_equations \
+                     + r'\end{{cases}}'
+        return Op(n_equations, latex_code)
+    else:
+        return None
+
+def array(parent):
+    class Dialog(QDialog):
+        def __init__(self, parent=None):
+            super().__init__(parent)
+
+            self.setWindowTitle('Matrix')
+            label_rows = QLabel('Number of rows:')
+            self.ledit_rows = QLineEdit()
+            label_cols = QLabel('Number of columns:')
+            self.ledit_cols = QLineEdit()
+            regexp = QRegExp('^[1-9]$')
+            self.validator = QRegExpValidator(regexp)
+            self.ledit_rows.setValidator(self.validator)
+            self.ledit_cols.setValidator(self.validator)
+            label_align = QLabel('Alignment of columns (eg. lc|r)')
+            self.ledit_align = QLineEdit()
+            label_l = QLabel('Left delimiter:')
+            self.combo_l = QComboBox()
+            self.combo_l.setIconSize(QSize(200, 50))
+            for delim in SINGLEDELIMITERS:
+                self.combo_l.addItem(QIcon(os.path.join(dirs.SYMBOLS_DIR,
+                                                        delim.tag + '.png')),
+                                     '')
+            label_r = QLabel('Right delimiter:')
+            self.combo_r = QComboBox()
+            self.combo_r.setIconSize(QSize(200, 50))
+            for delim in SINGLEDELIMITERS:
+                self.combo_r.addItem(QIcon(os.path.join(dirs.SYMBOLS_DIR,
+                                                        delim.tag + '.png')),
+                                     '')
+            self.buttons = QDialogButtonBox(
+                QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+                Qt.Horizontal, self)
+            vbox = QVBoxLayout(self)
+            vbox.addWidget(label_rows)
+            vbox.addWidget(self.ledit_rows)
+            vbox.addWidget(label_cols)
+            vbox.addWidget(self.ledit_cols)
+            vbox.addWidget(label_align)
+            vbox.addWidget(self.ledit_align)
+            vbox.addWidget(label_l)
+            vbox.addWidget(self.combo_l)
+            vbox.addWidget(label_r)
+            vbox.addWidget(self.combo_r)
+            vbox.addWidget(self.buttons)
+            self.buttons.button(QDialogButtonBox.Ok).setDisabled(True)
+            self.ledit_align.setDisabled(True)
+            self.ledit_rows.setFocus()
+
+            self.ledit_rows.textChanged.connect(self.check_state)
+            self.ledit_cols.textChanged.connect(self.check_state)
+            self.ledit_align.textChanged.connect(self.check_state)
+            self.buttons.accepted.connect(self.accept)
+            self.buttons.rejected.connect(self.reject)
+
+        def check_state(self, *args, **kargs):
+            state1 = self.validator.validate(self.ledit_rows.text(), 0)[0]
+            state2 = self.validator.validate(self.ledit_cols.text(), 0)[0]
+            if state2 == QValidator.Acceptable:
+                self.ledit_align.setEnabled(True)
+                n_cols = self.ledit_cols.text()
+                regexp = QRegExp("^" + "(\\|*[lcr]\\|*){" + n_cols + '}' + "$")
+                val_align = QRegExpValidator(regexp)
+                self.ledit_align.setValidator(val_align)
+                state3 = val_align.validate(self.ledit_align.text(), 0)[0]
+            else:
+                self.ledit_align.setDisabled(True)
+                state3 = QValidator.Invalid
+            if state1 == state2 == state3 == QValidator.Acceptable:
+                self.buttons.button(QDialogButtonBox.Ok).setEnabled(True)
+            else:
+                self.buttons.button(QDialogButtonBox.Ok).setDisabled(True)
+
+        @staticmethod
+        def get_array(parent=None):
+            dialog = Dialog(parent)
+            result = dialog.exec_()
+            if result == QDialog.Accepted:
+                return ((int(dialog.ledit_rows.text()),
+                         int(dialog.ledit_cols.text()),
+                         SINGLEDELIMITERS[dialog.combo_l.currentIndex()].code,
+                         SINGLEDELIMITERS[dialog.combo_r.currentIndex()].code,
+                         dialog.ledit_align.text()),
+                        True)
+            else:
+                return ((None, None, None, None, None), False)
+
+    (n_rows, n_cols, delim_l, delim_r, align), ok = Dialog.get_array(parent)
+    if ok:
+        row_code = r'{}' + r'&{}'*(n_cols-1) + r'\\'
+        latex_code = r'\left' + delim_l \
+                     + r'\begin{{array}}' \
+                     + '{{' + align + '}}' \
+                     + row_code*n_rows \
+                     + r'\end{{array}}' \
+                     + r'\right' + delim_r
+        return Op(n_rows*n_cols, latex_code)
+    else:
+        return None
+   
 
 MANYLINES = [
-    LatexSymb('matrix', matrix('matrix'),
-                r"\begin{matrix}\cdots&\square&\square\\" \
-                 + r"\square&\square&\square\end{matrix}"),
-    LatexSymb('pmatrix', matrix('pmatrix'),
-                r"\begin{pmatrix}\cdots\\\square\end{pmatrix}"),
+    LatexSymb('matrix_type', matrix_type,
+                r"\begin{pmatrix}\cdots& ???\\?& ?\end{pmatrix}"),
     LatexSymb('cases', cases,
-            r'\begin{cases}a &\text{if }x>0\\b&\text{if }x<0\end{cases}'),
-    LatexSymb('equations_system', equations_system,
-                          r'\begin{cases}x+y=1\\x-y=8\end{cases}'),
+              r'\begin{cases}\cdots &\text{if }x>0\\b&\text{ow.}\end{cases}'),
+    LatexSymb('equations_system', equation_system,
+                          r'\begin{cases}\cdots\\x-y=8\end{cases}'),
+    LatexSymb('array', array,
+              r'\left(\begin{array}{l|r}\cdots&?\\?&???\end{array}\right]')
 ]
 
 MENUITEMSDATA.append(MenuItemData(

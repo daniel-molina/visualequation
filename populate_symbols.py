@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # visualequation is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -56,7 +56,7 @@ if __name__ == '__main__':
                            filename)
         generate_symb_images(menuitemdata, temp_dirpath)
 
-    print("Generating Tk symbols...")
+    print("Generating dialog symbols...")
     for symb in symbols.ADDITIONAL_LS:
         filename = os.path.join(dirs.SYMBOLS_DIR, symb.tag + ".png")
         conversions.eq2png(symb.expr, 200, None, temp_dirpath, filename)

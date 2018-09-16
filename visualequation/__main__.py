@@ -37,7 +37,7 @@ class MainWindow(QMainWindow):
         self.init_menu()
 
         self.setWindowTitle('Visual Equation')
-        self.setGeometry(0, 0, 600, 600)
+        self.setGeometry(0, 0, 900, 600)
 
     def init_menu(self):
         exit_act = QAction('&Exit', self)
@@ -67,7 +67,7 @@ class MainWindow(QMainWindow):
         def cut():
             self.maineq.sel2eqbuffer()
             self.maineq.remove_sel()
-        cut_act = QAction('&Cut', self)
+        cut_act = QAction('C&ut', self)
         cut_act.setShortcut('Ctrl+X')
         cut_act.setStatusTip('Cut selection')
         cut_act.triggered.connect(cut)
