@@ -12,10 +12,9 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """ The module that manages the editing equation. """
+import os
 import types
 
-#import pygame
-import tkinter
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
@@ -286,7 +285,7 @@ class Eq(QLabel):
         self.add_eq2hist()
 
     def open_eq(self):
-        neweq = conversions.open_eq()
+        neweq = conversions.open_eq(self.parent)
         if neweq != None:
             self.eq = list(neweq)
             self.sel_index = 0
@@ -294,55 +293,37 @@ class Eq(QLabel):
             self.add_eq2hist()
 
     def save_eq(self):
-        """ Open Dialog to save the equation to PNG, EPS, PDF or SVG. """
-        class FileFormat(object):
-            """Choose a file format."""
-            def __init__(self):
-                self.fileformat = ''
-            def set(self, root, fileformat):
-                self.fileformat = fileformat
-                root.quit()
-            def get_ext(self):
-                return '.' + self.fileformat
-        fileformat = FileFormat()
-        root = tkinter.Tk()
-        root.title("Save equation")
-        tkinter.Label(root, text='Choose format').pack(side=tkinter.TOP)
-        tkinter.Button(root, text='PNG',
-                       command=lambda *args: fileformat.set(root, 'png')
-        ).pack(side=tkinter.TOP)
-        tkinter.Button(root, text='PDF',
-                       command=lambda *args: fileformat.set(root, 'pdf')
-        ).pack(side=tkinter.TOP)
-        tkinter.Button(root, text='SVG*',
-                       command=lambda *args: fileformat.set(root, 'svg')
-        ).pack(side=tkinter.TOP)
-        tkinter.Button(root, text='EPS*',
-                       command=lambda *args: fileformat.set(root, 'ps')
-        ).pack(side=tkinter.TOP)
-        tkinter.Label(root,
-                      text="* It will NOT be possible\nto open equations\n" +
-                      "for further edition\nfrom files in this format."
-                      ).pack(side=tkinter.TOP)
-        root.mainloop()
-        # Hide the root window
-        if fileformat.get_ext() != '.':
-            root.withdraw()
-            file_path = tkinter.filedialog.asksaveasfilename(
-                defaultextension=fileformat.get_ext(),
-                filetypes=[(fileformat.get_ext()[1:], fileformat.get_ext())])
-            # It returns () or '' if file is not chosen (Exit or Cancel)
-            if file_path:
-                if fileformat.get_ext() == '.png':
-                    conversions.eq2png(self.eq, 600, None, self.temp_dir,
-                                       file_path, True)
-                elif fileformat.get_ext() == '.pdf':
-                    conversions.eq2pdf(self.eq, self.temp_dir, file_path)
-                elif fileformat.get_ext() == '.svg':
-                    conversions.eq2svg(self.eq, self.temp_dir, file_path)
-                elif fileformat.get_ext() == '.ps':
-                    conversions.eq2eps(self.eq, self.temp_dir, file_path)
-            root.destroy()
+        items = ["PNG", "PDF", "EPS", "SVG"]
+        msg = "Select format:\n\nNote: Eqs. can only be recovered\n" \
+              + "from PNG and PDF."
+        item, ok = QInputDialog.getItem(self.parent, "Save equation",
+                                        msg, items, 0, False)
+        if not ok:
+            return None
+        itemfilter = item + " (*." + item.lower() + ")"
+        dialog = QFileDialog(self.parent, 'Save equation', '', itemfilter)
+        dialog.setFileMode(QFileDialog.AnyFile)
+        dialog.setAcceptMode(QFileDialog.AcceptSave)
+        dialog.setDefaultSuffix(item.lower())
+        dialog.setOption(QFileDialog.DontConfirmOverwrite, True)
+        if not dialog.exec_():
+            return
+        filename = dialog.selectedFiles()[0]
+        if os.path.exists(filename):
+            msg = 'A file named "' + os.path.basename(filename) \
+                  + '" already exists. Do you want to replace it?'
+            ret_val = QMessageBox.question(self.parent, 'Overwrite', msg)
+            if ret_val != QMessageBox.Yes:
+                return
+        if item == 'PNG':
+            conversions.eq2png(self.eq, 600, None, self.temp_dir,
+                               filename, True)
+        elif item == 'PDF':
+            conversions.eq2pdf(self.eq, self.temp_dir, filename)
+        elif item == 'SVG':
+            conversions.eq2svg(self.eq, self.temp_dir, filename)
+        elif item == 'EPS':
+            conversions.eq2eps(self.eq, self.temp_dir, filename)
 
     def recover_prev_eq(self):
         """ Recover previous equation from the historial, if any """

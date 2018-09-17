@@ -226,14 +226,14 @@ def free_delimiters(parent):
             self.setWindowTitle('Free delimiters')
             label_l = QLabel('Left delimiter:')
             self.combo_l = QComboBox()
-            self.combo_l.setIconSize(QSize(200, 50))
+            self.combo_l.setIconSize(QSize(200, 25))
             for delim in SINGLEDELIMITERS:
                 self.combo_l.addItem(QIcon(os.path.join(dirs.SYMBOLS_DIR,
                                                         delim.tag + '.png')),
                                      '')
             label_r = QLabel('Right delimiter:')
             self.combo_r = QComboBox()
-            self.combo_r.setIconSize(QSize(200, 50))
+            self.combo_r.setIconSize(QSize(200, 25))
             for delim in SINGLEDELIMITERS:
                 self.combo_r.addItem(QIcon(os.path.join(dirs.SYMBOLS_DIR,
                                                         delim.tag + '.png')),
@@ -721,13 +721,20 @@ def matrix_type(parent):
             self.ledit_cols.setValidator(self.validator)
             label_combo = QLabel('Matrix type:')
             self.combo = QComboBox()
-            self.combo.setIconSize(QSize(200, 50))
-            #self.combo.setSizeAdjustPolicy(QComboBox.AdjustToContents) 
-            #self.combo.setMinimumHeight(50)
             for mtype in MATRIXTYPES:
                 self.combo.addItem(QIcon(os.path.join(dirs.SYMBOLS_DIR,
                                                       mtype.tag + '.png')), '')
-
+            self.combo.setIconSize(QSize(200, 25))
+            #self.combo.setSizePolicy(QSizePolicy.Expanding,
+            #                         QSizePolicy.Maximum)
+            #self.combo.setSizeAdjustPolicy(0) 
+            #self.combo.setMinimumHeight(50)
+            #self.combo.SizeAdjustPolicy(QComboBox.AdjustToContentsOnFirstShow)
+            #self.combo.setView(QListView())
+            #self.combo.setStyleSheet('''
+            #QComboBox QAbstractItemView::item { min-height: 50px;}
+            #''')
+            
             self.buttons = QDialogButtonBox(
                 QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
                 Qt.Horizontal, self)
@@ -893,14 +900,14 @@ def array(parent):
             self.ledit_align = QLineEdit()
             label_l = QLabel('Left delimiter:')
             self.combo_l = QComboBox()
-            self.combo_l.setIconSize(QSize(200, 50))
+            self.combo_l.setIconSize(QSize(200, 25))
             for delim in SINGLEDELIMITERS:
                 self.combo_l.addItem(QIcon(os.path.join(dirs.SYMBOLS_DIR,
                                                         delim.tag + '.png')),
                                      '')
             label_r = QLabel('Right delimiter:')
             self.combo_r = QComboBox()
-            self.combo_r.setIconSize(QSize(200, 50))
+            self.combo_r.setIconSize(QSize(200, 25))
             for delim in SINGLEDELIMITERS:
                 self.combo_r.addItem(QIcon(os.path.join(dirs.SYMBOLS_DIR,
                                                         delim.tag + '.png')),

@@ -18,8 +18,9 @@ conversions to other formats
 import os
 import subprocess
 import json
-import tkinter
-from tkinter.filedialog import askopenfilename
+
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
 
 from . import dirs
 from . import eqtools
@@ -236,35 +237,31 @@ def eq2svg(eq, directory, svg_fpath):
     latex_file2dvi(latex_fpath, directory)
     dvi2svg(dvi_fpath, svg_fpath, dvi2svglog_path)
 
-def open_eq():
+def open_eq(parent):
     "Return equation inside a file chosen interactively. Else, None."
-    root = tkinter.Tk()
-    root.withdraw()
-    # We allow only two types of format to save equation
-    filename = askopenfilename(filetypes=[('Available files',
-                                           ('.png', '.pdf'))])
-    root.destroy()
-    def show_message(message):
-        root = tkinter.Tk()
-        tkinter.Label(root, text=message).pack(side=tkinter.TOP)
-        def return_destroy(event):
-            root.destroy()
-        root.bind('<Return>', return_destroy)
-        tkinter.Button(root, text="Accept", command=root.destroy
-        ).pack(side=tkinter.TOP)
-        root.mainloop()
+    filename, _ = QFileDialog.getOpenFileName(parent, 'Open equation', '',
+                                              'Available files (*.png *.pdf)')
     if not filename:
         return None
     try:
         eq_str = subprocess.check_output(
             ["exiftool", "-b", "-s3", "-description", filename]).decode('utf8')
         if not eq_str:
-            show_message("No equation inside this file.")
+            msg = QMessageBox(parent)
+            msg.setText("No equation inside this file.")
+            msg.setWindowTitle("Warning")
+            msg.setIcon(QMessageBox.Warning)
+            msg.exec_()
             return None
         return json.JSONDecoder(object_hook=from_json).decode(eq_str)
     except subprocess.CalledProcessError:
-        show_message("Error by exiftool when trying to extract equation "
-                     + "from file.")
+        msg = QMessageBox(parent)
+        msg.setText("Error by exiftool when trying to extract equation "
+                    + "from file.")
+        msg.setWindowTitle("Error")
+        msg.setIcon(QMessageBox.Critical)
+        msg.exec_()
+        return None
     except OSError:
         raise SystemExit("Command exiftool was not found.")
     except ValueError as error:

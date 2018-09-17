@@ -22,10 +22,8 @@ import os
 import tempfile
 import shutil
 
-#sys.path.append(os.path.join(os.path.dirname(__file__), 'visualequation'))
-#os.chdir('visualequation')
-from visualequation import symbols
-from visualequation import conversions
+from visualequation.symbols import MENUITEMSDATA, ADDITIONAL_LS
+from visualequation.conversions import eq2png
 from visualequation import dirs
 
 def generate_symb_images(menuitemdata, temp_dir):
@@ -36,8 +34,7 @@ def generate_symb_images(menuitemdata, temp_dir):
     """
     for symb in menuitemdata.symb_l:
         filename = os.path.join(dirs.SYMBOLS_DIR, symb.tag + ".png")
-        conversions.eq2png(symb.expr, menuitemdata.dpi, None, temp_dir,
-                           filename)
+        eq2png(symb.expr, menuitemdata.dpi, None, temp_dir, filename)
 
 if __name__ == '__main__':
 
@@ -48,17 +45,16 @@ if __name__ == '__main__':
     if not os.path.exists(dirs.SYMBOLS_DIR):
         os.makedirs(dirs.SYMBOLS_DIR)
 
-    for index, menuitemdata in enumerate(symbols.MENUITEMSDATA):
+    for index, menuitemdata in enumerate(MENUITEMSDATA):
         print("Generating menu symbols...", index+1, "/", \
-            len(symbols.MENUITEMSDATA))
+            len(MENUITEMSDATA))
         filename = os.path.join(dirs.SYMBOLS_DIR, menuitemdata.tag + '.png')
-        conversions.eq2png(menuitemdata.expr, None, None, temp_dirpath,
-                           filename)
+        eq2png(menuitemdata.expr, None, None, temp_dirpath, filename)
         generate_symb_images(menuitemdata, temp_dirpath)
 
     print("Generating dialog symbols...")
-    for symb in symbols.ADDITIONAL_LS:
+    for symb in ADDITIONAL_LS:
         filename = os.path.join(dirs.SYMBOLS_DIR, symb.tag + ".png")
-        conversions.eq2png(symb.expr, 200, None, temp_dirpath, filename)
+        eq2png(symb.expr, 200, None, temp_dirpath, filename)
 
     shutil.rmtree(temp_dirpath)
