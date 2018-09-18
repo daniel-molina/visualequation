@@ -137,3 +137,123 @@ def is_arg_of_JUXT(eq, check_index):
                 start_index = Juxt_index + 1
     except ValueError:
         return False, None, None
+
+def indexop2arglist(eq, sel_index):
+    """
+    Convert the operator index pointed by sel_index to a list of arguments.
+    The list has the format [base, lsub_arg, sub_arg, sup_arg, lsup_arg].
+    The arguments not available for that operator, are replaced by None.
+    If it is not an operator index at all, except base all is None.
+    """
+    op = eq[sel_index] # it can be index operator but not necessarily (!)
+    if op not in symbols.INDEX_OPS:
+        end_block = nextblockindex(eq, sel_index)    
+        return [eq[sel_index:end_block], None, None, None, None]
+    start_arg1 = sel_index + 1
+    start_arg2 = nextblockindex(eq, start_arg1)
+    if op == symbols.LSUB:
+        end_arg2 = nextblockindex(eq, start_arg2)
+        return [eq[start_arg1:start_arg2],
+                eq[start_arg2:end_arg2], None, None, None]
+    elif op == symbols.SUB:
+        end_arg2 = nextblockindex(eq, start_arg2)
+        return [eq[start_arg1:start_arg2],
+                None, eq[start_arg2:end_arg2], None, None]
+    elif op == symbols.SUP:
+        end_arg2 = nextblockindex(eq, start_arg2)
+        return [eq[start_arg1:start_arg2],
+                None, None, eq[start_arg2:end_arg2], None]
+    elif op == symbols.LSUP:
+        end_arg2 = nextblockindex(eq, start_arg2)
+        return [eq[start_arg1:start_arg2],
+                None, None, None, eq[start_arg2:end_arg2]]
+    elif op == symbols.LSUBSUB:
+        end_arg2 = nextblockindex(eq, start_arg2)
+        end_arg3 = nextblockindex(eq, end_arg2)
+        return [eq[start_arg1:start_arg2],
+                eq[start_arg2:end_arg2], eq[end_arg2:end_arg3], None, None]
+    elif op == symbols.SUBSUP:
+        end_arg2 = nextblockindex(eq, start_arg2)
+        end_arg3 = nextblockindex(eq, end_arg2)
+        return [eq[start_arg1:start_arg2],
+                None, eq[start_arg2:end_arg2], eq[end_arg2:end_arg3], None]
+    elif op == symbols.SUPLSUP:
+        end_arg2 = nextblockindex(eq, start_arg2)
+        end_arg3 = nextblockindex(eq, end_arg2)
+        return [eq[start_arg1:start_arg2],
+                None, None, eq[start_arg2:end_arg2], eq[end_arg2:end_arg3]]
+    elif op == symbols.LSUBLSUP:
+        end_arg2 = nextblockindex(eq, start_arg2)
+        end_arg3 = nextblockindex(eq, end_arg2)
+        return [eq[start_arg1:start_arg2],
+                eq[start_arg2:end_arg2], None, None, eq[end_arg2:end_arg3]]
+    elif op == symbols.LSUBSUP:
+        end_arg2 = nextblockindex(eq, start_arg2)
+        end_arg3 = nextblockindex(eq, end_arg2)
+        return [eq[start_arg1:start_arg2],
+                eq[start_arg2:end_arg2], None, eq[end_arg2:end_arg3], None]
+    elif op == symbols.SUBLSUP:
+        end_arg2 = nextblockindex(eq, start_arg2)
+        end_arg3 = nextblockindex(eq, end_arg2)
+        return [eq[start_arg1:start_arg2],
+                None, eq[start_arg2:end_arg2], None, eq[end_arg2:end_arg3]]
+    elif op == symbols.LSUBSUBSUP:
+        end_arg2 = nextblockindex(eq, start_arg2)
+        end_arg3 = nextblockindex(eq, end_arg2)
+        end_arg4 = nextblockindex(eq, end_arg3)
+        return [eq[start_arg1:start_arg2],
+                eq[start_arg2:end_arg2], eq[end_arg2:end_arg3],
+                eq[end_arg3:end_arg4], None]
+    elif op == symbols.LSUBSUBLSUP:
+        end_arg2 = nextblockindex(eq, start_arg2)
+        end_arg3 = nextblockindex(eq, end_arg2)
+        end_arg4 = nextblockindex(eq, end_arg3)
+        return [eq[start_arg1:start_arg2],
+                eq[start_arg2:end_arg2], eq[end_arg2:end_arg3],
+                None, eq[end_arg3:end_arg4]]
+    elif op == symbols.LSUBSUPLSUP:
+        end_arg2 = nextblockindex(eq, start_arg2)
+        end_arg3 = nextblockindex(eq, end_arg2)
+        end_arg4 = nextblockindex(eq, end_arg3)
+        return [eq[start_arg1:start_arg2],
+                eq[start_arg2:end_arg2], None,
+                eq[end_arg2:end_arg3], eq[end_arg3:end_arg4]]
+    elif op == symbols.SUBSUPLSUP:
+        end_arg2 = nextblockindex(eq, start_arg2)
+        end_arg3 = nextblockindex(eq, end_arg2)
+        end_arg4 = nextblockindex(eq, end_arg3)
+        return [eq[start_arg1:start_arg2],
+                None, eq[start_arg2:end_arg2],
+                eq[end_arg2:end_arg3], eq[end_arg3:end_arg4]]
+    elif op == symbols.LSUBSUBSUPLSUP:
+        end_arg2 = nextblockindex(eq, start_arg2)
+        end_arg3 = nextblockindex(eq, end_arg2)
+        end_arg4 = nextblockindex(eq, end_arg3)
+        end_arg5 = nextblockindex(eq, end_arg4)
+        return [eq[start_arg1:start_arg2],
+                eq[start_arg2:end_arg2], eq[end_arg2:end_arg3],
+                eq[end_arg3:end_arg4], eq[end_arg4:end_arg5]]
+
+def arglist2indexop(args):
+    indexops_dict = {
+        (True, True, False, False, False): symbols.LSUB,
+        (True, False, True, False, False): symbols.SUB,
+        (True, False, False, True, False): symbols.SUP,
+        (True, False, False, False, True): symbols.LSUP,
+        (True, True, True, False, False): symbols.LSUBSUB,
+        (True, False, True, True, False): symbols.SUBSUP,
+        (True, False, False, True, True): symbols.SUPLSUP,
+        (True, True, False, False, True): symbols.LSUBLSUP,
+        (True, True, False, True, False): symbols.LSUBSUP,
+        (True, False, True, False, True): symbols.SUBLSUP,
+        (True, True, True, True, False): symbols.LSUBSUBSUP,
+        (True, True, True, False, True): symbols.LSUBSUBLSUP,
+        (True, True, False, True, True): symbols.LSUBSUPLSUP,
+        (True, False, True, True, True): symbols.SUBSUPLSUP,
+        (True, True, True, True, True): symbols.LSUBSUBSUPLSUP,
+    }
+    try:
+        return indexops_dict[tuple(bool(arg) for arg in args)]
+    except KeyError:
+        raise SystemExit('Internal error:'
+                         + ' Bad argument list of index operator.')

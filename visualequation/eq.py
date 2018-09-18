@@ -79,9 +79,9 @@ class Eq(QLabel):
             pass
         key = event.key()
         if key == Qt.Key_Up:
-            self.insert_substituting(symbols.SUPERINDEX)
+            self.insert_sup_substituting()
         elif key == Qt.Key_Down:
-            self.insert_substituting(symbols.SUBINDEX)
+            self.insert_sub_substituting()
         elif key == Qt.Key_Right:
             self.next_sel()
         elif key == Qt.Key_Left:
@@ -270,6 +270,95 @@ class Eq(QLabel):
         self.sel_right = True
         self._set_sel()
         self.add_eq2hist()
+
+    def insert_sup_substituting(self):
+        # Consider that the user specifies the first argument of index operator
+        if self.eq[self.sel_index] not in symbols.INDEX_OPS \
+           and self.sel_index > 0 \
+           and self.eq[self.sel_index-1] in symbols.INDEX_OPS:
+            # In that case, we change sel_index as if the index operator was
+            # selected (it is a non-standard use of sel_index just to avoid
+            # complicated code with more if-clauses)
+            self.sel_index -= 1
+        # Create a list with a index arg list
+        args = eqtools.indexop2arglist(self.eq, self.sel_index)
+        # Change it to add the new index
+        if self.sel_right:
+            if not args[3]:
+                args[3] = [symbols.NEWARG]
+            elems = 0
+            for i in range(3):
+                if args[i] != None:
+                    elems += len(args[i])
+        else: # if not self.sel_right
+            if not args[4]:
+                args[4] = [symbols.NEWARG]
+            elems = 0
+            for i in range(4):
+                if args[i] != None:
+                    elems += len(args[i])
+
+        new_op = eqtools.arglist2indexop(args)
+        # Flat the list of args
+        new_args = []
+        for arg in args:
+            if arg != None:
+                for symb in arg:
+                    new_args.append(symb)
+        new_block = [new_op] + new_args
+        end_old_block = eqtools.nextblockindex(self.eq, self.sel_index) 
+        self.eq[self.sel_index:end_old_block] = new_block
+
+        # There is always an operator after adding an index
+        self.sel_index += 1 + elems
+        self.sel_right = True
+        self._set_sel()
+        self.add_eq2hist()
+
+    def insert_sub_substituting(self):
+        # Consider that the user specifies the first argument of index operator
+        if self.eq[self.sel_index] not in symbols.INDEX_OPS \
+           and self.sel_index > 0 \
+           and self.eq[self.sel_index-1] in symbols.INDEX_OPS:
+            # In that case, we change sel_index as if the index operator was
+            # selected (it is a non-standard use of sel_index just to avoid
+            # complicated code with more if-clauses)
+            self.sel_index -= 1
+        # Create a list with a index arg list
+        args = eqtools.indexop2arglist(self.eq, self.sel_index)
+        # Change it to add the new index
+        if self.sel_right:
+            if not args[2]:
+                args[2] = [symbols.NEWARG]
+            elems = 0
+            for i in range(2):
+                if args[i] != None:
+                    elems += len(args[i])
+        else: # if not self.sel_right
+            if not args[1]:
+                args[1] = [symbols.NEWARG]
+            elems = 0
+            for i in range(1):
+                if args[i] != None:
+                    elems += len(args[i])
+
+        new_op = eqtools.arglist2indexop(args)
+        # Flat the list of args
+        new_args = []
+        for arg in args:
+            if arg != None:
+                for symb in arg:
+                    new_args.append(symb)
+        new_block = [new_op] + new_args
+        end_old_block = eqtools.nextblockindex(self.eq, self.sel_index) 
+        self.eq[self.sel_index:end_old_block] = new_block
+
+        # There is always an operator after adding an index
+        self.sel_index += 1 + elems
+        self.sel_right = True
+        self._set_sel()
+        self.add_eq2hist()
+
 
     def add_eq2hist(self):
         """

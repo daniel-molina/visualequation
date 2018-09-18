@@ -12,7 +12,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """
-A module that contains the list of operators used in the menu.
+A module that contains lists of operators and symbols used in the symbolstab.
 """
 import os
 from collections import namedtuple
@@ -58,8 +58,6 @@ LEDIT = Op(1, r'\left\lgroup{{{0}}}\right\rmoustache')
 #REDIT = Op(1, r'\left\rgroup{{{0}}}\right\rgroup')
 #LEDIT = Op(1, r'\left\lgroup{{{0}}}\right\lgroup')
 JUXT = Op(2, r'{0} {1}')
-SUPERINDEX = Op(2, r'{0}^{{{1}}}')
-SUBINDEX = Op(2, r'{0}_{{{1}}}')
 
 MENUITEMSDATA = []
 ADDITIONAL_LS = []
@@ -1076,29 +1074,49 @@ MENUITEMSDATA.append(MenuItemData(
     symb_l=ACCENTS, clickable_size=(40, 30), dpi=200,
     expr=r'\acute{{a}}\;\tilde{{B}}'))
 
+LSUB = Op(2, r'{{}}_{{{1}}}{0}')
+SUB = Op(2, r'{0}_{{{1}}}')
+SUP = Op(2, r'{0}^{{{1}}}')
+LSUP = Op(2, r'{{}}^{{{1}}}{0}')
+LSUBSUB = Op(3, r'{{}}_{{{1}}}{0}_{{{2}}}')
+SUBSUP = Op(3, r'{0}_{{{1}}}^{{{2}}}')
+SUPLSUP = Op(3, r'{{}}^{{{2}}}{0}^{{{1}}}')
+LSUBLSUP = Op(3, r'{{}}_{{{1}}}^{{{2}}}{0}')
+LSUBSUP = Op(3, r'{{}}_{{{1}}}{0}^{{{2}}}')
+SUBLSUP = Op(3, r'{{}}^{{{2}}}{0}_{{{1}}}')
+LSUBSUBSUP = Op(4, r'{{}}_{{{1}}}{0}^{{{3}}}_{{{2}}}')
+LSUBSUBLSUP = Op(4, r'{{}}_{{{1}}}^{{{3}}}{0}_{{{2}}}')
+LSUBSUPLSUP = Op(4, r'{{}}^{{{3}}}_{{{1}}}{0}^{{{2}}}')
+SUBSUPLSUP = Op(4, r'{{}}^{{{3}}}{0}^{{{2}}}_{{{1}}}')
+LSUBSUBSUPLSUP = Op(5, r'{{}}_{{{1}}}^{{{4}}}{0}_{{{2}}}^{{{3}}}')
+
+INDEX_OPS = [
+    LSUB, SUB, SUP, LSUP,
+    LSUBSUB, SUBSUP, SUPLSUP, LSUBLSUP, LSUBSUP, SUBLSUP,
+    LSUBSUBSUP, LSUBSUBLSUP, LSUBSUPLSUP, SUBSUPLSUP,
+    LSUBSUBSUPLSUP,
+]
+
 INDICES = [
-    LatexSymb('super', SUPERINDEX, r'\cdot^{{\square}}'),
-    LatexSymb('sub', SUBINDEX, r'\cdot_{{\square}}'),
-    LatexSymb('lsuper', Op(2, r'{{}}^{{{1}}}{0}'), r'{{}}^{{\square}}\cdot'),
-    LatexSymb('lsub', Op(2, r'{{}}_{{{1}}}{0}'), r'{{}}_{{\square}}\cdot'),
-    LatexSymb('supersub', Op(3, r'{0}^{{{2}}}_{{{1}}}'),
-                  r'\cdot^{{\square}}_{{\square}}'),
-    LatexSymb('lsuperlsub', Op(3, r'{{}}^{{{2}}}_{{{1}}}{0}'),
-                    r'{{}}^{{\square}}_{{\square}}\cdot'),
-    LatexSymb('superlsuper', Op(3, r'{{}}^{{{1}}}{0}^{{{2}}}'),
-                     r'{{}}^{{\square}}\cdot^{{\square}}'),
-    LatexSymb('sublsub', Op(3, r'{{}}_{{{1}}}{0}_{{{2}}}'),
-                     r'{{}}_{{\square}}\cdot_{{\square}}'),
-    LatexSymb('supersublsuper', Op(4, r'{{}}^{{{1}}}{0}^{{{3}}}_{{{2}}}'),
-                  r'{{}}^{{\square}}\cdot^{{\square}}_{{\square}}'),
-    LatexSymb('supersublsub', Op(4, r'{{}}_{{{1}}}{0}^{{{3}}}_{{{2}}}'),
-                  r'{{}}_{{\square}}\cdot^{{\square}}_{{\square}}'),
-    LatexSymb('sublsublsuper', Op(4, r'{{}}_{{{1}}}^{{{3}}}{0}_{{{2}}}'),
-                  r'{{}}_{{\square}}^{{\square}}\cdot_{{\square}}'),
-    LatexSymb('superlsuperlsub', Op(4, r'{{}}^{{{1}}}_{{{2}}}{0}^{{{3}}}'),
-                  r'{{}}^{{\square}}_{{\square}}\cdot^{{\square}}'),
-    LatexSymb('supersublsuperlsub',
-              Op(5, r'{{}}^{{{2}}}_{{{1}}}{0}^{{{4}}}_{{{3}}}'),
+    LatexSymb('lsub', LSUB, r'{{}}_{{\square}}\cdot'),
+    LatexSymb('sub', SUB, r'\cdot_{{\square}}'),
+    LatexSymb('super', SUP, r'\cdot^{{\square}}'),
+    LatexSymb('lsup', LSUP, r'{{}}^{{\square}}\cdot'),
+    LatexSymb('lsubsub', LSUBSUB, r'{{}}_{{\square}}\cdot_{{\square}}'),
+    LatexSymb('subsup', SUBSUP, r'\cdot^{{\square}}_{{\square}}'),
+    LatexSymb('suplsup', SUPLSUP, r'{{}}^{{\square}}\cdot^{{\square}}'),
+    LatexSymb('lsublsup', LSUBLSUP, r'{{}}^{{\square}}_{{\square}}\cdot'),
+    LatexSymb('lsubsup', LSUBSUP, r'{{}}_{{\square}}\cdot^{{\square}}'),
+    LatexSymb('sublsup', SUBLSUP, r'{{}}^{{\square}}\cdot_{{\square}}'),
+    LatexSymb('lsubsubsup', LSUBSUBSUP,
+              r'{{}}_{{\square}}\cdot^{{\square}}_{{\square}}'),
+    LatexSymb('lsubsublsup', LSUBSUBLSUP,
+              r'{{}}_{{\square}}^{{\square}}\cdot_{{\square}}'),
+    LatexSymb('lsubsuplsup', LSUBSUPLSUP,
+              r'{{}}^{{\square}}_{{\square}}\cdot^{{\square}}'),
+    LatexSymb('subsuplsup', SUBSUPLSUP,
+              r'{{}}^{{\square}}\cdot^{{\square}}_{{\square}}'),
+    LatexSymb('lsubsubsuplsup', LSUBSUBSUPLSUP,
               r'{{}}^{{\square}}_{{\square}}\cdot^{{\square}}_{{\square}}'),
 ]
 
