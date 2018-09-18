@@ -77,23 +77,36 @@ def eq2latex_code(eq):
 
     return latex
 
-def sel_eq(eq, index):
+def sel_eq(eq, index, right_sel):
     """ Given an equation and a selection index, it returns a new equation
     with the selection being boxed.
     """
     sel = list(eq)
-    sel.insert(index, symbols.EDIT)
+    if right_sel:
+        sel.insert(index, symbols.REDIT)
+    else:
+        sel.insert(index, symbols.LEDIT)
     return sel
 
-def appendbyJUXT(eq, start_index, eqblock):
+def insertrbyJUXT(eq, start_index, eqblock):
     """
-    Append eqblock after the block which starts at start_index by using Juxt.
+    Insert eqblock after the block which starts at start_index by using Juxt.
     Returns the begining index of inserted eqbox.
     """
     end_index = nextblockindex(eq, start_index)
     eq[start_index:end_index] = [symbols.JUXT] + eq[start_index:end_index] \
                                 + eqblock
     return end_index+1
+
+def insertlbyJUXT(eq, start_index, eqblock):
+    """
+    Insert eqblock before the block which starts at start_index by using Juxt.
+    Returns the index of the insert block.
+    """
+    end_index = nextblockindex(eq, start_index)
+    eq[start_index:end_index] = [symbols.JUXT] + eqblock \
+                                + eq[start_index:end_index]
+    return start_index+1
 
 def replaceby(eq, start_index, eqblock):
     """

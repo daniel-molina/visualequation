@@ -39,6 +39,7 @@ class Eq(QLabel):
         self.eq = list(eq) # It will be mutated by the replace functions
         self.temp_dir = temp_dir
         self.sel_index = 0
+        self.sel_right = True
         self._set_sel()
 
     def event(self, event):
@@ -115,8 +116,8 @@ class Eq(QLabel):
                 cond = self.is_intermediate_JUXT(self.sel_index)
 
         # Calculate the latex code of eq boxed in block given by the selection
-        sel_latex_code = eqtools.sel_eq(self.eq, self.sel_index)
-        sel_png = conversions.eq2png(sel_latex_code, None, None,
+        sel_eq = eqtools.sel_eq(self.eq, self.sel_index, self.sel_right)
+        sel_png = conversions.eq2png(sel_eq, None, None,
                                      self.temp_dir)
         self.setPixmap(QPixmap(sel_png))
         # This helps catching all the keys
@@ -135,7 +136,9 @@ class Eq(QLabel):
 
     def next_sel(self):
         """ Set image to the next selection according to self.sel_index. """
-        if self.sel_index == len(self.eq) - 1:
+        if not self.sel_right:
+            self.sel_right = True
+        elif self.sel_index == len(self.eq) - 1:
             self.sel_index = 0
         else:
             self.sel_index += 1
@@ -149,7 +152,9 @@ class Eq(QLabel):
 
     def previous_sel(self):
         """ Set image to the next selection according to self.sel_index. """
-        if self.sel_index == 0:
+        if self.sel_right:
+            self.sel_right = False
+        elif self.sel_index == 0:
             self.sel_index = len(self.eq) - 1
         else:
             self.sel_index -= 1
@@ -163,8 +168,8 @@ class Eq(QLabel):
 
     def insert(self, oper):
         """
-        Insert the operator next to selection by Juxt.
-        If operator has one or more args, all of them are set to NewArg.
+        Insert a symbol next to selection by Juxt and, if it is an operator,
+        set all the arguments to NewArg.
         """
         def replace_op_in_eq(op):
             """
@@ -176,18 +181,30 @@ class Eq(QLabel):
                 if self.eq[self.sel_index] == symbols.NEWARG:
                     self.eq[self.sel_index] = op
                 else:
-                    self.sel_index = eqtools.appendbyJUXT(self.eq,
-                                                          self.sel_index,
-                                                          [op])
+                    if self.sel_right:
+                        self.sel_index = eqtools.insertrbyJUXT(self.eq,
+                                                               self.sel_index,
+                                                               [op])
+                    else:
+                        self.sel_index = eqtools.insertlbyJUXT(self.eq,
+                                                               self.sel_index,
+                                                               [op])
             elif isinstance(op, symbols.Op):
                 opeq = [op] + [symbols.NEWARG]*op.n_args
                 if self.eq[self.sel_index] == symbols.NEWARG:
                     self.eq[self.sel_index:self.sel_index+1] = opeq
                     self.sel_index += 1
                 else:
-                    self.sel_index = 1 + eqtools.appendbyJUXT(self.eq,
-                                                              self.sel_index,
-                                                              opeq)
+                    if self.sel_right:
+                        self.sel_index \
+                            = 1 + eqtools.insertrbyJUXT(self.eq,
+                                                        self.sel_index,
+                                                        opeq)
+                    else:
+                        self.sel_index \
+                            = 1 + eqtools.insertlbyJUXT(self.eq,
+                                                        self.sel_index,
+                                                        opeq)
             else:
                 raise ValueError('Unknown type of operator %s' % op)
 
@@ -200,6 +217,7 @@ class Eq(QLabel):
         else:
             replace_op_in_eq(oper)
 
+        self.sel_right = True
         self._set_sel()
         self.add_eq2hist()
 
@@ -249,6 +267,7 @@ class Eq(QLabel):
         else:
             replace_op_in_eq(oper)
 
+        self.sel_right = True
         self._set_sel()
         self.add_eq2hist()
 
@@ -281,6 +300,7 @@ class Eq(QLabel):
         else:
             eqtools.replaceby(self.eq, self.sel_index, [symbols.NEWARG])
 
+        self.sel_right = True
         self._set_sel()
         self.add_eq2hist()
 
@@ -361,8 +381,15 @@ class Eq(QLabel):
             if self.eq[self.sel_index] == symbols.NEWARG:
                 self.eq[self.sel_index:self.sel_index+1] = self.eq_buffer
             else:
-                self.sel_index = eqtools.appendbyJUXT(self.eq, self.sel_index,
-                                                      self.eq_buffer)
+                if self.sel_right:
+                    self.sel_index = eqtools.insertrbyJUXT(self.eq,
+                                                           self.sel_index,
+                                                           self.eq_buffer)
+                else:
+                    self.sel_index = eqtools.insertlbyJUXT(self.eq,
+                                                           self.sel_index,
+                                                           self.eq_buffer)
+            self.sel_right = True
             self._set_sel()
             self.add_eq2hist()
 

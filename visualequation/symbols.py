@@ -51,8 +51,12 @@ MenuItemData = namedtuple('MenuItem', 'tag symb_l clickable_size dpi expr')
 # in next releases
 SELARG = r'\cdots'
 NEWARG = r'\square'
-EDIT = Op(1, r'\boxed{{{0}}}')
+#EDIT = Op(1, r'\boxed{{{0}}}')
 #EDIT = Op(1, r'\left.\textcolor{{blue}}{{{0}}}\right|')
+REDIT = Op(1, r'\left\lmoustache{{{0}}}\right\rgroup')
+LEDIT = Op(1, r'\left\lgroup{{{0}}}\right\rmoustache')
+#REDIT = Op(1, r'\left\rgroup{{{0}}}\right\rgroup')
+#LEDIT = Op(1, r'\left\lgroup{{{0}}}\right\lgroup')
 JUXT = Op(2, r'{0} {1}')
 SUPERINDEX = Op(2, r'{0}^{{{1}}}')
 SUBINDEX = Op(2, r'{0}_{{{1}}}')
@@ -152,11 +156,8 @@ HEBREW = [
 
 SYMBOLS1 = [
     LatexSymb('infty', r'\infty', r'\infty'),
-    LatexSymb('nabla', r'\nabla', r'\nabla'),
-    LatexSymb('partial', r'\partial', r'\partial'),
-    LatexSymb('times', r'\times', r'\times'),
-    LatexSymb('cdot', r'\cdot', r'\cdot'),
-    LatexSymb('div', r'\div', r'\div'),
+    LatexSymb('emptyset', r'\emptyset', r'\emptyset'),
+    LatexSymb('varnothing', r'\varnothing', r'\varnothing'),
 ]
 
 MENUITEMSDATA.append(MenuItemData(
@@ -368,6 +369,11 @@ MENUITEMSDATA.append(MenuItemData(
     expr=r'\sum'))
 
 SOMEOPERATORS = [
+    LatexSymb('nabla', r'\nabla', r'\nabla'),
+    LatexSymb('partial', r'\partial', r'\partial'),
+    LatexSymb('times', r'\times', r'\times'),
+    LatexSymb('cdot', r'\cdot', r'\cdot'),
+    LatexSymb('div', r'\div', r'\div'),
     LatexSymb('circ', r'\circ', r'\circ'),
     LatexSymb('bullet', r'\bullet', r'\bullet'),
     LatexSymb('pm', r'\pm', r'\pm'),
@@ -387,6 +393,15 @@ SOMEOPERATORS = [
     LatexSymb('forall', r'\forall', r'\forall'),
     LatexSymb('exists', r'\exists', r'\exists'),
     LatexSymb('nexists', r'\nexists', r'\nexists'),
+]
+
+MENUITEMSDATA.append(MenuItemData(
+    tag="tab_someoperators",
+    symb_l=SOMEOPERATORS,
+    clickable_size=(30, 30), dpi=200,
+    expr=r'\otimes'))
+
+RELATIONS = [
     LatexSymb('perp', r'\perp', r'\perp'),
     LatexSymb('parallel', r'\parallel', r'\parallel'),
     LatexSymb('equiv', r'\equiv', r'\equiv'),
@@ -447,15 +462,13 @@ SOMEOPERATORS = [
     LatexSymb('nsucc', r'\nsucc', r'\nsucc'),
     LatexSymb('npreceq', r'\npreceq', r'\npreceq'),
     LatexSymb('nsucceq', r'\nsucceq', r'\nsucceq'),
-    LatexSymb('emptyset', r'\emptyset', r'\emptyset'),
-    LatexSymb('varnothing', r'\varnothing', r'\varnothing'),
 ]
 
 MENUITEMSDATA.append(MenuItemData(
-    tag="tab_someoperators",
-    symb_l=SOMEOPERATORS,
+    tag="tab_relations",
+    symb_l=RELATIONS,
     clickable_size=(30, 30), dpi=200,
-    expr=r'\otimes \in'))
+    expr=r'< \in'))
 
 ARROWS = [
     LatexSymb('leftarrow', r'\leftarrow', r'\leftarrow'),
