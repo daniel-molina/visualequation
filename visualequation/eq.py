@@ -77,20 +77,20 @@ class Eq(QLabel):
         except KeyError:
             pass
         key = event.key()
-        if key == Qt.Key_AsciiCircum: # It does not work for kbmap es
+        if key == Qt.Key_Up:
             self.insert_substituting(symbols.SUPERINDEX)
-        elif key == Qt.Key_Underscore:
+        elif key == Qt.Key_Down:
             self.insert_substituting(symbols.SUBINDEX)
+        elif key == Qt.Key_Right:
+            self.next_sel()
+        elif key == Qt.Key_Left:
+            self.previous_sel()
         elif key == Qt.Key_Backslash:
             self.insert(r'\backslash')
         elif key == Qt.Key_AsciiTilde:
             self.insert(r'\sim')
         elif key == Qt.Key_Backspace or key == Qt.Key_Delete:
             self.remove_sel()
-        elif key == Qt.Key_Right:
-            self.next_sel()
-        elif key == Qt.Key_Left:
-            self.previous_sel()
         elif key == Qt.Key_Space:
             self.insert(r'\,')
 
@@ -300,6 +300,8 @@ class Eq(QLabel):
                                         msg, items, 0, False)
         if not ok:
             return None
+        # Implement a Save File dialog
+        # The staticmethod does not accept default suffix
         itemfilter = item + " (*." + item.lower() + ")"
         dialog = QFileDialog(self.parent, 'Save equation', '', itemfilter)
         dialog.setFileMode(QFileDialog.AnyFile)
@@ -309,6 +311,8 @@ class Eq(QLabel):
         if not dialog.exec_():
             return
         filename = dialog.selectedFiles()[0]
+        # Implement an Overwrite? dialog since the default one does not
+        # check filename when default suffix extension has to be added
         if os.path.exists(filename):
             msg = 'A file named "' + os.path.basename(filename) \
                   + '" already exists. Do you want to replace it?'

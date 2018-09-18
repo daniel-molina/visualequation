@@ -60,7 +60,7 @@ SUBINDEX = Op(2, r'{0}_{{{1}}}')
 MENUITEMSDATA = []
 ADDITIONAL_LS = []
 
-# It does NOT include ' ', '^', '_', '\\' and '~'
+# It does NOT include ' ', '^', '\\' and '~'
 # so it is valid for both text and math environments
 ASCII_LATEX_TRANSLATION = {
     '|': r'|',
@@ -89,6 +89,7 @@ ASCII_LATEX_TRANSLATION = {
     '.': r'.',
     ';': r';',
     ':': r':',
+    '_': r'\_',
 }
 
 LOWER_GREEK = [
@@ -378,6 +379,9 @@ SOMEOPERATORS = [
     LatexSymb('otimes', r'\otimes', r'\otimes'),
     LatexSymb('cap', r'\cap', r'\cap'),
     LatexSymb('cup', r'\cup', r'\cup'),
+    LatexSymb('uplus', r'\uplus', r'\uplus'),
+    LatexSymb('sqcap', r'\sqcap', r'\sqcap'),
+    LatexSymb('sqcup', r'\sqcup', r'\sqcup'),    
     LatexSymb('wedge', r'\wedge', r'\wedge'),
     LatexSymb('vee', r'\vee', r'\vee'),
     LatexSymb('forall', r'\forall', r'\forall'),
@@ -392,31 +396,57 @@ SOMEOPERATORS = [
     LatexSymb('geq', r'\geq', r'\geq'),
     LatexSymb('ll', r'\ll', r'\ll'),
     LatexSymb('gg', r'\gg', r'\gg'),
+    LatexSymb('prec', r'\prec', r'\prec'),
+    LatexSymb('succ', r'\succ', r'\succ'),
+    LatexSymb('preceq', r'\preceq', r'\preceq'),
+    LatexSymb('succeq', r'\succeq', r'\succeq'),
     LatexSymb('sim', r'\sim', r'\sim'),
     LatexSymb('cong', r'\cong', r'\cong'),
     LatexSymb('simeq', r'\simeq', r'\simeq'),
     LatexSymb('approx', r'\approx', r'\approx'),
     LatexSymb('asymp', r'\asymp', r'\asymp'),
+    LatexSymb('lll', r'\lll', r'\lll'),
+    LatexSymb('ggg', r'\ggg', r'\ggg'),
     LatexSymb('doteq', r'\doteq', r'\doteq'),
+    LatexSymb('triangleq', r'\triangleq', r'\triangleq'),
+    LatexSymb('circeq', r'\circeq', r'\circeq'),
     LatexSymb('propto', r'\propto', r'\propto'),
     LatexSymb('subset', r'\subset', r'\subset'),
     LatexSymb('supset', r'\supset', r'\supset'),
     LatexSymb('subseteq', r'\subseteq', r'\subseteq'),
     LatexSymb('supseteq', r'\supseteq', r'\supseteq'),
+    LatexSymb('sqsubset', r'\sqsubset', r'\sqsubset'),
+    LatexSymb('sqsupset', r'\sqsupset', r'\sqsupset'),
+    LatexSymb('sqsubseteq', r'\sqsubseteq', r'\sqsubseteq'),
+    LatexSymb('sqsupseteq', r'\sqsupseteq', r'\sqsupseteq'),
+    LatexSymb('dashv', r'\dashv', r'\dashv'),
+    LatexSymb('vdash', r'\vdash', r'\vdash'),
+    LatexSymb('models', r'\models', r'\models'),
+    LatexSymb('smile', r'\smile', r'\smile'),
+    LatexSymb('frown', r'\frown', r'\frown'),
     LatexSymb('in', r'\in', r'\in'),
     LatexSymb('ni', r'\ni', r'\ni'),
     LatexSymb('notin', r'\notin', r'\notin'),
     LatexSymb('neq', r'\neq', r'\neq'),
     LatexSymb('neg', r'\neg', r'\neg'),
     LatexSymb('ncong', r'\ncong', r'\ncong'),
+    LatexSymb('nsim', r'\nsim', r'\nsim'),
     LatexSymb('nparallel', r'\nparallel', r'\nparallel'),
     LatexSymb('notperp', r'\not\perp', r'\not\perp'),
     LatexSymb('nless', r'\nless', r'\nless'),
     LatexSymb('ngtr', r'\ngtr', r'\ngtr'),
     LatexSymb('nleq', r'\nleq', r'\nleq'),
     LatexSymb('ngeq', r'\ngeq', r'\ngeq'),
+    LatexSymb('lneq', r'\lneq', r'\lneq'),
+    LatexSymb('gneq', r'\gneq', r'\gneq'),
     LatexSymb('nsubseteq', r'\nsubseteq', r'\nsubseteq'),
     LatexSymb('nsupseteq', r'\nsupseteq', r'\nsupseteq'),
+    LatexSymb('subsetneq', r'\subsetneq', r'\subsetneq'),
+    LatexSymb('supsetneq', r'\supsetneq', r'\supsetneq'),
+    LatexSymb('nprec', r'\nprec', r'\nprec'),
+    LatexSymb('nsucc', r'\nsucc', r'\nsucc'),
+    LatexSymb('npreceq', r'\npreceq', r'\npreceq'),
+    LatexSymb('nsucceq', r'\nsucceq', r'\nsucceq'),
     LatexSymb('emptyset', r'\emptyset', r'\emptyset'),
     LatexSymb('varnothing', r'\varnothing', r'\varnothing'),
 ]
@@ -446,11 +476,21 @@ ARROWS = [
     LatexSymb('upperuparrow', r'\Uparrow', r'\Uparrow'),
     LatexSymb('downarrow', r'\downarrow', r'\downarrow'),
     LatexSymb('upperdownarrow', r'\Downarrow', r'\Downarrow'),
+    LatexSymb('updownarrow', r'\updownarrow', r'\updownarrow'),
+    LatexSymb('upperupdownarrow', r'\Updownarrow', r'\Updownarrow'),
     LatexSymb('mapsto', r'\mapsto', r'\mapsto'),
+    LatexSymb('longmapsto', r'\longmapsto', '\longmapsto'),
     LatexSymb('nupperrightarrow', r'\nRightarrow', r'\nRightarrow'),
     LatexSymb('nupperleftarrow', r'\nLeftarrow', r'\nLeftarrow'),
     LatexSymb('nupperleftrightarrow', r'\nLeftrightarrow',
               r'\nLeftrightarrow'),
+    LatexSymb('nleftarrow', r'\nleftarrow', r'\nleftarrow'),
+    LatexSymb('nrightarrow', r'\nrightarrow', r'\nrightarrow'),
+    LatexSymb('nleftrightarrow', r'\nleftrightarrow', r'\nleftrightarrow'),
+    LatexSymb('nearrow', r'\nearrow', r'\nearrow'),
+    LatexSymb('searrow', r'\searrow', r'\searrow'),
+    LatexSymb('swarrow', r'\swarrow', r'\swarrow'),
+    LatexSymb('nwarrow', r'\nwarrow', r'\nwarrow'),
     LatexSymb('cdots', r'\cdots', r'\cdots'),
     LatexSymb('vdots', r'\vdots', r'\vdots'),
     LatexSymb('ldots', r'\ldots',
@@ -472,7 +512,7 @@ def text(parent):
             self.setWindowTitle('Text')
             label = QLabel('Text:')
             self.ledit = QLineEdit()
-            regexp = QRegExp("^[a-zA-Z\d\s|!\\$%&/()=?'@#\\[\\]{}*+-<>,.;:]+$")
+            regexp = QRegExp("^[a-zA-Z\d\s|!\\$%&/()=?'@#\\[\\]{}*+-<>,.;:_]+$")
             self.validator = QRegExpValidator(regexp)
             self.ledit.setValidator(self.validator)
             self.buttons = QDialogButtonBox(

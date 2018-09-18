@@ -37,7 +37,7 @@ class MainWindow(QMainWindow):
         self.init_menu()
 
         self.setWindowTitle('Visual Equation')
-        self.setGeometry(0, 0, 900, 600)
+        self.setGeometry(0, 0, 900, 800)
 
     def init_menu(self):
         exit_act = QAction('&Exit', self)

@@ -4,24 +4,6 @@ Visualequation creates equations visually, in a WYSIWYG (What You See Is What Yo
 
 ## Requirements
 
-To run the program successfully, you need:
-
-* python3
-* PyQt5
-* Tkinter (it will be removed soon)
-* LaTeX
-* Some specific LaTeX packages (you can find them in the preamble of the equation template _visualequation/data/eq_template.tex_).
-* Some command-line programs to manipulate LaTeX output:
-  * dvipng
-  * dvips
-  * dvisvgm
-  * epstopdf
-* exiftool
-
-### Microsoft Windows and MacOS
-
-By the moment it has only been tested on GNU/Linux. But it would be interesting to have installation instructions for the dependencies on other operative systems. Volunteers needed!
-  
 ### Debian 9.0 and Ubuntu 18.04 or derivatives
 
 $ sudo apt-get install python3-pyqt5 texlive-latex-recommended dvipng texlive-font-utils texlive-science libimage-exiftool-perl
@@ -30,6 +12,23 @@ $ sudo apt-get install python3-pyqt5 texlive-latex-recommended dvipng texlive-fo
 
 $ sudo apt-get install python3-pyqt5 texlive-latex-recommended dvipng texlive-font-utils texlive-math-extra libimage-exiftool-perl
 
+### Microsoft Windows and MacOS
+
+By the moment it has only been tested on GNU/Linux. But it would be interesting to have installation instructions for the dependencies on other operative systems. Volunteers needed!
+
+To run the program successfully, you need:
+
+* python3
+* PyQt5
+* LaTeX
+* Some specific LaTeX packages (you can find them in the preamble of the equation template _visualequation/data/eq_template.tex_).
+* Some command-line programs to manipulate LaTeX output:
+  * dvipng
+  * dvips
+  * dvisvgm
+  * epstopdf
+* exiftool
+  
 ## Checking that dependencies are fulfilled
 
 If you have the sources you can see if everything is installed properly running the test:
@@ -136,8 +135,8 @@ Change the selection box forwards.
 * DELETE or BACKSPACE:
 Remove current selection. If it was the entire argument of an operator, a square will remain so you can select it and add something in the future. There is no way to remove those squares without deleting the entire operator.
 
-* ^ and _:
-Put a superindex or subindex. The former does not work in some keyboard maps.
+* UP and DOWN:
+Put a superindex or subindex.
 
 * CTRL+z:
 Recover the equation as it was before last change. You can use it all the times that you need.
