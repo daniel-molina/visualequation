@@ -229,7 +229,7 @@ SINGLEDELIMITERS = [
     LatexSymb('lrcorner', r'\lrcorner', r'\lrcorner'),
     LatexSymb('ulcorner', r'\ulcorner', r'\ulcorner'),
     LatexSymb('urcorner', r'\urcorner', r'\urcorner'),
-    LatexSymb('blankdelimiter', r'.', '\ '),
+    LatexSymb('blankdelimiter', r'.', r'\text{No delimiter}'),
 ]
 
 ADDITIONAL_LS += SINGLEDELIMITERS
@@ -522,8 +522,7 @@ ARROWS = [
     LatexSymb('diagdown', r'\diagdown', r'\diagdown'),
     LatexSymb('cdots', r'\cdots', r'\cdots'),
     LatexSymb('vdots', r'\vdots', r'\vdots'),
-    LatexSymb('ldots', r'\ldots',
-              r'\colorbox{white}{$\phantom{|}\ldots\phantom{|}$}'),
+    LatexSymb('ldots', r'\ldots', r'\ldots'),
     LatexSymb('ddots', r'\ddots', r'\ddots'),
 ]
 
