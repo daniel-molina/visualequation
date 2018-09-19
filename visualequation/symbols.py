@@ -1090,9 +1090,10 @@ LSUBSUPLSUP = Op(4, r'{{}}^{{{3}}}_{{{1}}}{0}^{{{2}}}')
 SUBSUPLSUP = Op(4, r'{{}}^{{{3}}}{0}^{{{2}}}_{{{1}}}')
 LSUBSUBSUPLSUP = Op(5, r'{{}}_{{{1}}}^{{{4}}}{0}_{{{2}}}^{{{3}}}')
 
+# First elements are the most common
 INDEX_OPS = [
-    LSUB, SUB, SUP, LSUP,
-    LSUBSUB, SUBSUP, SUPLSUP, LSUBLSUP, LSUBSUP, SUBLSUP,
+    SUP, SUB, SUBSUP, LSUP, LSUB,
+    LSUBSUB, SUPLSUP, LSUBLSUP, LSUBSUP, SUBLSUP,
     LSUBSUBSUP, LSUBSUBLSUP, LSUBSUPLSUP, SUBSUPLSUP,
     LSUBSUBSUPLSUP,
 ]

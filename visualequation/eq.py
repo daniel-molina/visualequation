@@ -109,11 +109,11 @@ class Eq(QLabel):
             raise ValueError('Provided index outside the equation.')
         # Avoid pointing to a intermediate Juxt
         # That avoids selecting partial products inside a product
-        elif self.is_intermediate_JUXT(self.sel_index):
+        elif eqtools.is_intermediate_JUXT(self.eq, self.sel_index):
             cond = True
             while cond:
                 self.sel_index += 1
-                cond = self.is_intermediate_JUXT(self.sel_index)
+                cond = eqtools.is_intermediate_JUXT(self.eq, self.sel_index)
 
         # Calculate the latex code of eq boxed in block given by the selection
         sel_eq = eqtools.sel_eq(self.eq, self.sel_index, self.sel_right)
@@ -123,17 +123,6 @@ class Eq(QLabel):
         # This helps catching all the keys
         self.setFocus()
 
-    def is_intermediate_JUXT(self, index):
-        """
-        Check whether if index points to a JUXT that is the argument of
-        other JUXT.
-        """
-        if self.eq[index] == symbols.JUXT:
-            cond, _, _ = eqtools.is_arg_of_JUXT(self.eq, index)
-            if cond:
-                return True
-        return False
-
     def next_sel(self):
         """ Set image to the next selection according to self.sel_index. """
         if not self.sel_right:
@@ -142,11 +131,11 @@ class Eq(QLabel):
             self.sel_index = 0
         else:
             self.sel_index += 1
-        if self.is_intermediate_JUXT(self.sel_index):
+        if eqtools.is_intermediate_JUXT(self.eq, self.sel_index):
             cond = True
             while cond:
                 self.sel_index += 1
-                cond = self.is_intermediate_JUXT(self.sel_index)
+                cond = eqtools.is_intermediate_JUXT(self.eq, self.sel_index)
 
         self._set_sel()
 
@@ -158,11 +147,11 @@ class Eq(QLabel):
             self.sel_index = len(self.eq) - 1
         else:
             self.sel_index -= 1
-        if self.is_intermediate_JUXT(self.sel_index):
+        if eqtools.is_intermediate_JUXT(self.eq, self.sel_index):
             cond = True
             while cond:
                 self.sel_index -= 1
-                cond = self.is_intermediate_JUXT(self.sel_index)
+                cond = eqtools.is_intermediate_JUXT(self.eq, self.sel_index)
 
         self._set_sel()
 
@@ -284,27 +273,25 @@ class Eq(QLabel):
         args = eqtools.indexop2arglist(self.eq, self.sel_index)
         # Change it to add the new index
         if self.sel_right:
-            if not args[3]:
-                args[3] = [symbols.NEWARG]
+            up_index = 3
+            if not args[up_index]:
+                args[up_index] = [symbols.NEWARG]
             elems = 0
-            for i in range(3):
+            for i in range(up_index):
                 if args[i] != None:
                     elems += len(args[i])
         else: # if not self.sel_right
-            if not args[4]:
-                args[4] = [symbols.NEWARG]
+            up_index = 4
+            if not args[up_index]:
+                args[up_index] = [symbols.NEWARG]
             elems = 0
-            for i in range(4):
+            for i in range(up_index):
                 if args[i] != None:
                     elems += len(args[i])
 
         new_op = eqtools.arglist2indexop(args)
         # Flat the list of args
-        new_args = []
-        for arg in args:
-            if arg != None:
-                for symb in arg:
-                    new_args.append(symb)
+        new_args = eqtools.flat_arglist(args)
         new_block = [new_op] + new_args
         end_old_block = eqtools.nextblockindex(self.eq, self.sel_index) 
         self.eq[self.sel_index:end_old_block] = new_block
@@ -328,27 +315,25 @@ class Eq(QLabel):
         args = eqtools.indexop2arglist(self.eq, self.sel_index)
         # Change it to add the new index
         if self.sel_right:
-            if not args[2]:
-                args[2] = [symbols.NEWARG]
+            down_index = 2
+            if not args[down_index]:
+                args[down_index] = [symbols.NEWARG]
             elems = 0
-            for i in range(2):
+            for i in range(down_index):
                 if args[i] != None:
                     elems += len(args[i])
         else: # if not self.sel_right
-            if not args[1]:
-                args[1] = [symbols.NEWARG]
+            down_index = 1
+            if not args[down_index]:
+                args[down_index] = [symbols.NEWARG]
             elems = 0
-            for i in range(1):
+            for i in range(down_index):
                 if args[i] != None:
                     elems += len(args[i])
 
         new_op = eqtools.arglist2indexop(args)
         # Flat the list of args
-        new_args = []
-        for arg in args:
-            if arg != None:
-                for symb in arg:
-                    new_args.append(symb)
+        new_args = eqtools.flat_arglist(args)
         new_block = [new_op] + new_args
         end_old_block = eqtools.nextblockindex(self.eq, self.sel_index) 
         self.eq[self.sel_index:end_old_block] = new_block
@@ -358,7 +343,6 @@ class Eq(QLabel):
         self.sel_right = True
         self._set_sel()
         self.add_eq2hist()
-
 
     def add_eq2hist(self):
         """
@@ -372,11 +356,12 @@ class Eq(QLabel):
         """
         If self.sel_index points to the first or second arg of a Juxt,
         it removes the Juxt and leaves the other argument in its place.
+        If it is a script, it removes it if it is equal to square.
         Else, it removes the block pointed and put a NEWARG.
         """
-        cond, JUXT_index, other_arg_index = eqtools.is_arg_of_JUXT(
+        cond_arg_JUXT, JUXT_index, other_arg_index = eqtools.is_arg_of_JUXT(
             self.eq, self.sel_index)
-        if cond:
+        if cond_arg_JUXT:
             JUXT_end = eqtools.nextblockindex(self.eq, JUXT_index)
             # If sel_index is the first argument (instead of the second)
             if JUXT_index + 1 == self.sel_index:
@@ -387,7 +372,31 @@ class Eq(QLabel):
                     other_arg_index:self.sel_index]
             self.sel_index = JUXT_index
         else:
-            eqtools.replaceby(self.eq, self.sel_index, [symbols.NEWARG])
+            # If it is the index of a script, downgrade the index operator
+            cond_script, script_op_index, arg_pos = eqtools.is_script(
+                self.eq, self.sel_index)
+            if cond_script:
+                args = eqtools.indexop2arglist(self.eq, script_op_index)
+                # Find which element of the list has to be removed
+                arg_index = 0
+                for index, arg in enumerate(args):
+                    if arg is not None:
+                        if arg_index == arg_pos:
+                            args[index] = None
+                            break
+                        else:
+                            arg_index += 1
+                new_op = eqtools.arglist2indexop(args)
+                end_block = eqtools.nextblockindex(self.eq, script_op_index)
+                if new_op is None:
+                    self.eq[script_op_index:end_block] = args[0]
+                else:
+                    new_args = eqtools.flat_arglist(args)
+                    self.eq[script_op_index:end_block] = [new_op] + new_args
+                self.sel_index = script_op_index
+            else:
+                eqtools.replaceby(self.eq, self.sel_index, [symbols.NEWARG])
+
 
         self.sel_right = True
         self._set_sel()

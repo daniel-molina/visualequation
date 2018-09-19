@@ -138,12 +138,25 @@ def is_arg_of_JUXT(eq, check_index):
     except ValueError:
         return False, None, None
 
+def is_intermediate_JUXT(eq, index):
+    """
+    Check whether if index points to a JUXT that is the argument of
+    other JUXT.
+    """
+    if eq[index] == symbols.JUXT:
+        cond, _, _ = is_arg_of_JUXT(eq, index)
+        if cond:
+            return True
+    return False
+
+
 def indexop2arglist(eq, sel_index):
     """
-    Convert the operator index pointed by sel_index to a list of arguments.
+    Convert the block of indices pointed by sel_index to a list of arguments.
     The list has the format [base, lsub_arg, sub_arg, sup_arg, lsup_arg].
-    The arguments not available for that operator, are replaced by None.
-    If it is not an operator index at all, except base all is None.
+    The arguments not available will be replaced by None.
+    If sel_index does not point to an operator index at all, base will be the
+    pointed block and the rest will be set to None.
     """
     op = eq[sel_index] # it can be index operator but not necessarily (!)
     if op not in symbols.INDEX_OPS:
@@ -234,8 +247,18 @@ def indexop2arglist(eq, sel_index):
                 eq[start_arg2:end_arg2], eq[end_arg2:end_arg3],
                 eq[end_arg3:end_arg4], eq[end_arg4:end_arg5]]
 
+def flat_arglist(args):
+    # Flat the list of args
+    new_args = []
+    for arg in args:
+        if arg != None:
+            for symb in arg:
+                new_args.append(symb)
+    return new_args
+
 def arglist2indexop(args):
     indexops_dict = {
+        (True, False, False, False, False): None,
         (True, True, False, False, False): symbols.LSUB,
         (True, False, True, False, False): symbols.SUB,
         (True, False, False, True, False): symbols.SUP,
@@ -257,3 +280,29 @@ def arglist2indexop(args):
     except KeyError:
         raise SystemExit('Internal error:'
                          + ' Bad argument list of index operator.')
+
+def is_script(eq, sel_index):
+    """
+    Returns a tuple of three elements:
+    The first element says whether element pointed by sel_index is a script.
+    If it is or if it is the base, the 2nd element indicates the pos of the
+    associated index operator.
+    The 3rd element indicates which argument of the index operator is being
+    pointed by sel_index, or 0 if it is the base.
+    """
+    for op in symbols.INDEX_OPS:
+        try:
+            start_index = 0
+            while True:
+                op_index = eq.index(op, start_index)
+                arg_i_index = op_index + 1
+                if arg_i_index == sel_index:
+                    return False, op_index, 0
+                for arg_i in range(1, op.n_args):
+                    arg_i_index = nextblockindex(eq, arg_i_index)
+                    if arg_i_index == sel_index:
+                        return True, op_index, arg_i
+                start_index = nextblockindex(eq, arg_i_index)
+        except ValueError:
+            continue
+    return False, None, None
