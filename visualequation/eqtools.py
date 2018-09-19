@@ -295,6 +295,7 @@ def is_script(eq, sel_index):
             start_index = 0
             while True:
                 op_index = eq.index(op, start_index)
+                # Check if some of the args is pointed by sel_index
                 arg_i_index = op_index + 1
                 if arg_i_index == sel_index:
                     return False, op_index, 0
@@ -302,7 +303,8 @@ def is_script(eq, sel_index):
                     arg_i_index = nextblockindex(eq, arg_i_index)
                     if arg_i_index == sel_index:
                         return True, op_index, arg_i
-                start_index = nextblockindex(eq, arg_i_index)
+                # Next operator can be inside the args, do not skip them
+                start_index = op_index + 1
         except ValueError:
             continue
     return False, None, None

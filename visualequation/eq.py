@@ -394,9 +394,11 @@ class Eq(QLabel):
                     new_args = eqtools.flat_arglist(args)
                     self.eq[script_op_index:end_block] = [new_op] + new_args
                 self.sel_index = script_op_index
-            else:
+            elif self.eq[self.sel_index] != symbols.NEWARG:
                 eqtools.replaceby(self.eq, self.sel_index, [symbols.NEWARG])
-
+            else:
+                # Avoid saving in history if nothing to do
+                return
 
         self.sel_right = True
         self._set_sel()
