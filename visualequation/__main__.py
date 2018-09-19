@@ -75,12 +75,9 @@ class MainWindow(QMainWindow):
         paste_act.setShortcut('Ctrl+V')
         paste_act.setStatusTip('Paste previous cut or copied selection')
         paste_act.triggered.connect(self.maineq.eqbuffer2sel)
-        left_insert_act = QAction('&Left insertion', self)
-        left_insert_act.setShortcut('Ctrl+P')
-        left_insert_act.setStatusTip('Insert blank to the left of the selection')
-        left_insert_act.triggered.connect(self.maineq.left_NEWARG)
 
         menubar = self.menuBar()
+        menubar.setNativeMenuBar(False)
         file_menu = menubar.addMenu('&File')
         file_menu.addAction(open_act)
         file_menu.addAction(save_act)      
@@ -91,7 +88,6 @@ class MainWindow(QMainWindow):
         edit_menu.addAction(copy_act)
         edit_menu.addAction(cut_act)
         edit_menu.addAction(paste_act)
-        edit_menu.addAction(left_insert_act)
 
     def init_center_widget(self):
         # Create central widget

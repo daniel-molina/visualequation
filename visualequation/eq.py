@@ -490,13 +490,3 @@ class Eq(QLabel):
             self.sel_right = True
             self._set_sel()
             self.add_eq2hist()
-
-    def left_NEWARG(self):
-        """
-        Append by JUXT a NEWARG at the left of the block pointed by
-        self.sel_index.
-        """
-        self.eq[self.sel_index:self.sel_index] = [symbols.JUXT, symbols.NEWARG]
-        self.sel_index += 1
-        self._set_sel()
-        self.add_eq2hist()
