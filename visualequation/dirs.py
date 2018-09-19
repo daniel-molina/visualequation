@@ -18,3 +18,4 @@ import os
 SYMBOLS_DIR = os.path.join(os.path.dirname(__file__), 'data', 'symbols')
 LATEX_TEMPLATE = os.path.join(os.path.dirname(__file__), 'data',
                               'eq_template.tex')
+ICON = os.path.join(os.path.dirname(__file__), 'data', 'icon.png')

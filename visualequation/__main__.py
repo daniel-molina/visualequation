@@ -27,6 +27,7 @@ from . import symbolstab
 from . import eq
 from . import symbols
 from . import conversions
+from . import dirs
 
 class MainWindow(QMainWindow):
     def __init__(self, temp_dir):
@@ -37,6 +38,7 @@ class MainWindow(QMainWindow):
         self.init_menu()
 
         self.setWindowTitle('Visual Equation')
+        self.setWindowIcon(QIcon(dirs.ICON))
         self.setGeometry(0, 0, 1000, 700)
 
     def init_menu(self):
