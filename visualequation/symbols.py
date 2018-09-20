@@ -955,7 +955,7 @@ def array(parent):
         def __init__(self, parent=None):
             super().__init__(parent)
 
-            self.setWindowTitle('Matrix')
+            self.setWindowTitle('General Array')
             label_rows = QLabel('Number of rows:')
             self.ledit_rows = QLineEdit()
             label_cols = QLabel('Number of columns:')
@@ -964,7 +964,8 @@ def array(parent):
             self.validator = QRegExpValidator(regexp)
             self.ledit_rows.setValidator(self.validator)
             self.ledit_cols.setValidator(self.validator)
-            label_align = QLabel('Alignment of columns (eg. lc|r)')
+            label_align = QLabel('Alignment of columns (eg. lc|r):\n'+
+                                 '(l: left, c: center, r: right, |: v. line)')
             self.ledit_align = QLineEdit()
             label_l = QLabel('Left delimiter:')
             self.combo_l = QComboBox()
@@ -980,6 +981,7 @@ def array(parent):
                 self.combo_r.addItem(QIcon(os.path.join(dirs.SYMBOLS_DIR,
                                                         delim.tag + '.png')),
                                      '')
+            self.combo_r.setCurrentIndex(1)
             self.buttons = QDialogButtonBox(
                 QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
                 Qt.Horizontal, self)
