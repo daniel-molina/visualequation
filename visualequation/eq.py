@@ -58,6 +58,18 @@ class Eq(QLabel):
         else:
             QLabel.mousePressEvent(self, event)
 
+    def mouseMoveEvent(self, event):
+        if event.buttons() != Qt.LeftButton:
+            return
+        eq_png = conversions.eq2png(self.eq, None, None, self.temp_dir)
+        mimedata = QMimeData()
+        #mimedata.setImageData(QImage(eq_png)) # does not work for web browser
+        mimedata.setUrls([QUrl.fromLocalFile(eq_png)])
+        drag = QDrag(self)
+        drag.setPixmap(QPixmap(eq_png))
+        drag.setMimeData(mimedata)
+        drag.exec_()
+
     def keyPressEvent(self, event):
         if QApplication.keyboardModifiers() != Qt.ControlModifier:
             self.on_key_pressed_no_ctrl(event)
