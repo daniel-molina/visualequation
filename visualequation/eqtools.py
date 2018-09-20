@@ -91,8 +91,12 @@ def sel_eq(eq, index, right_sel):
 def insertrbyJUXT(eq, start_index, eqblock):
     """
     Insert eqblock after the block which starts at start_index by using Juxt.
-    Returns the begining index of inserted eqbox.
+    Returns the index of the begining of inserted eqblock.
     """
+    # If eqblock is the base of an index operator, consider the index operator
+    # instead. It avoids a bit of caos in the equation structure.
+    if eq[start_index-1] in symbols.INDEX_OPS:
+        start_index -= 1
     end_index = nextblockindex(eq, start_index)
     eq[start_index:end_index] = [symbols.JUXT] + eq[start_index:end_index] \
                                 + eqblock
@@ -103,6 +107,10 @@ def insertlbyJUXT(eq, start_index, eqblock):
     Insert eqblock before the block which starts at start_index by using Juxt.
     Returns the index of the insert block.
     """
+    # If eqblock is the base of an index operator, consider the index operator
+    # instead. It avoids a bit of caos in the equation structure.
+    if eq[start_index-1] in symbols.INDEX_OPS:
+        start_index -= 1
     end_index = nextblockindex(eq, start_index)
     eq[start_index:end_index] = [symbols.JUXT] + eqblock \
                                 + eq[start_index:end_index]
