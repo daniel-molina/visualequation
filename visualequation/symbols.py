@@ -156,6 +156,16 @@ SYMBOLS1 = [
     LatexSymb('infty', r'\infty', r'\infty'),
     LatexSymb('emptyset', r'\emptyset', r'\emptyset'),
     LatexSymb('varnothing', r'\varnothing', r'\varnothing'),
+    LatexSymb('dagger', r'\dagger', r'\dagger'),
+    LatexSymb('ddagger', r'\ddagger', r'\ddagger'),
+    LatexSymb('wr', r'\wr', r'\wr'),
+    LatexSymb('clubsuit', r'\clubsuit', r'\clubsuit'),
+    LatexSymb('diamondsuit', r'\diamondsuit', r'\diamondsuit'),
+    LatexSymb('heartsuit', r'\heartsuit', r'\heartsuit'),
+    LatexSymb('spadesuit', r'\spadesuit', r'\spadesuit'),
+    LatexSymb('pounds', r'\pounds', r'\pounds'),
+    LatexSymb('upperp', r'\P', r'\P'),
+    LatexSymb('uppers', r'\S', r'\S'),
 ]
 
 MENUITEMSDATA.append(MenuItemData(
@@ -242,14 +252,14 @@ def free_delimiters(parent):
             self.setWindowTitle('Free delimiters')
             label_l = QLabel('Left delimiter:')
             self.combo_l = QComboBox()
-            self.combo_l.setIconSize(QSize(200, 25))
+            self.combo_l.setIconSize(self.combo_l.minimumSizeHint())
             for delim in SINGLEDELIMITERS:
                 self.combo_l.addItem(QIcon(os.path.join(dirs.SYMBOLS_DIR,
                                                         delim.tag + '.png')),
                                      '')
             label_r = QLabel('Right delimiter:')
             self.combo_r = QComboBox()
-            self.combo_r.setIconSize(QSize(200, 25))
+            self.combo_r.setIconSize(self.combo_r.minimumSizeHint())
             for delim in SINGLEDELIMITERS:
                 self.combo_r.addItem(QIcon(os.path.join(dirs.SYMBOLS_DIR,
                                                         delim.tag + '.png')),
@@ -629,7 +639,7 @@ def special_format(latex_command, label_text, only_capital=False):
     def fun(parent):
         text, ok = Dialog.get_text(parent)
         if ok:
-            return latex_command + r'{' + text + '}'
+            return latex_command + text + '}'
         else:
             return None
 
@@ -669,7 +679,7 @@ def color(parent):
             self.setWindowTitle('Color')
             label = QLabel('Color:')
             self.combo = QComboBox()
-            self.combo.setIconSize(QSize(200, 20))
+            self.combo.setIconSize(self.combo.minimumSizeHint())
             for color in COLORS:
                 self.combo.addItem(QIcon(os.path.join(dirs.SYMBOLS_DIR,
                                                       color.tag + '.png')), '')
@@ -707,7 +717,7 @@ def colorbox(parent):
             self.setWindowTitle('Color Box')
             label = QLabel('Color:')
             self.combo = QComboBox()
-            self.combo.setIconSize(QSize(200, 20))
+            self.combo.setIconSize(self.combo.minimumSizeHint())
             for color in COLORS:
                 self.combo.addItem(QIcon(os.path.join(dirs.SYMBOLS_DIR,
                                                       color.tag + '.png')), '')
@@ -740,16 +750,18 @@ def colorbox(parent):
 
 TEXT = [
     LatexSymb('text', text, r"\text{Text}"),
-    LatexSymb('mathcal', special_format(r'\mathcal', 'Caligraphic', True),
+    LatexSymb('mathcal', special_format(r'\mathcal{', 'Caligraphic', True),
               r"\mathcal{ABC}"),
-    LatexSymb('mathbb', special_format(r'\mathbb', 'Mathbb', True),
+    LatexSymb('mathbb', special_format(r'\mathbb{', 'Mathbb', True),
               r"\mathbb{ABC}"),
-    LatexSymb('mathfrak', special_format(r'\mathfrak', 'Fraktur'),
+    LatexSymb('mathfrak', special_format(r'\mathfrak{', 'Fraktur'),
               r"\mathfrak{Ab1}"),
-    LatexSymb('mathsf', special_format(r'\mathsf', 'Sans serif'),
+    LatexSymb('mathsf', special_format(r'\mathsf{', 'Sans serif'),
               r"\mathsf{Ab1}"),
-    LatexSymb('mathbf', special_format(r'\mathbf', 'Mathbf'),
+    LatexSymb('mathbf', special_format(r'\mathbf{', 'Bold'),
               r"\mathbf{Ab1}"),
+    LatexSymb('textbfem', special_format(r'\textbf{\em ', 'Bold Italic'),
+              r"\textbf{\em Ab1}"),
     LatexSymb('color', color, r'\textcolor{red}{C}\textcolor{blue}'
               + r'{o}\textcolor{olive}{|}\textcolor{pink}{0}'
               + r'\textcolor{purple}{r}'),
@@ -792,7 +804,7 @@ def matrix_type(parent):
             for mtype in MATRIXTYPES:
                 self.combo.addItem(QIcon(os.path.join(dirs.SYMBOLS_DIR,
                                                       mtype.tag + '.png')), '')
-            self.combo.setIconSize(QSize(200, 25))
+            self.combo.setIconSize(self.combo.minimumSizeHint())
             #self.combo.setSizePolicy(QSizePolicy.Expanding,
             #                         QSizePolicy.Maximum)
             #self.combo.setSizeAdjustPolicy(0) 
@@ -968,14 +980,14 @@ def array(parent):
             self.ledit_align = QLineEdit()
             label_l = QLabel('Left delimiter:')
             self.combo_l = QComboBox()
-            self.combo_l.setIconSize(QSize(200, 25))
+            self.combo_l.setIconSize(self.combo_l.minimumSizeHint())
             for delim in SINGLEDELIMITERS:
                 self.combo_l.addItem(QIcon(os.path.join(dirs.SYMBOLS_DIR,
                                                         delim.tag + '.png')),
                                      '')
             label_r = QLabel('Right delimiter:')
             self.combo_r = QComboBox()
-            self.combo_r.setIconSize(QSize(200, 25))
+            self.combo_r.setIconSize(self.combo_l.minimumSizeHint())
             for delim in SINGLEDELIMITERS:
                 self.combo_r.addItem(QIcon(os.path.join(dirs.SYMBOLS_DIR,
                                                         delim.tag + '.png')),
@@ -1053,13 +1065,13 @@ def array(parent):
 
 MANYLINES = [
     LatexSymb('matrix_type', matrix_type,
-                r"\begin{pmatrix}\cdots& ???\\?& ?\end{pmatrix}"),
+                r"\begin{pmatrix}\cdots&\square\\\square&\square\end{pmatrix}"),
     LatexSymb('cases', cases,
               r'\begin{cases}\cdots &\text{if }x>0\\b&\text{ow.}\end{cases}'),
     LatexSymb('equations_system', equation_system,
                           r'\begin{cases}\cdots\\x-y=8\end{cases}'),
     LatexSymb('array', array,
-              r'\left(\begin{array}{l|r}\cdots&?\\?&???\end{array}\right]')
+              r'\left(\begin{array}{l|r}\cdots&\square\\\square&\square\end{array}\right]')
 ]
 
 MENUITEMSDATA.append(MenuItemData(

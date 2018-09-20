@@ -122,21 +122,21 @@ in whatever current directory. It should work if you included ~/.local/bin in yo
 
 This program is expected to be user-friendly and intuitive, so it should not be difficult to use.
 
-Instead of a cursor, you navigate with a box that surrounds blocks of the equation, from a single symbol to the entire equation. Insert characters at the right of the box by pressing keys on the keyboard or clicking symbols in the above panel. If the box surrounds a square, as when you open the program, you overwrite the square.
+Instead of a cursor, you navigate with a "ghost" that surrounds blocks of the equation, from a single symbol to the entire equation. Insert characters at the direction in which the ghost is facing by pressing keys on the keyboard or clicking symbols in the bottom panel. If the ghost surrounds a square, as when you open the program, you overwrite the square.
 
 The following key combinations work: (They can be changed or extended in the future)
 
 * LEFT or right-clicking the equation:
-Change the selection box backwards.
+Change the direction of the ghost to left or navigate backwards.
 
 * RIGHT or TAB or left-clicking the equation:
-Change the selection box forwards.
+Change the direction of the ghost to right or navigate forwards.
 
 * DELETE or BACKSPACE:
 Remove current selection. If it was the entire argument of an operator, a square will remain so you can select it and add something in the future. There is no way to remove those squares without deleting the entire operator.
 
 * UP and DOWN:
-Put a superindex or subindex.
+Put a superindex or subindex in the direction pointed by the ghost.
 
 * CTRL+z:
 Recover the equation as it was before last change. You can use it all the times that you need.
@@ -158,9 +158,6 @@ Save the equation to PNG, PDF, EPS or SVG format. If format is either PNG or PDF
 
 * CTR+o:
 Open an equation from a PNG or PDF previously created with this program (see CTR+s). The current equation being edited will be lost.
-
-* CTR+p:
-Create a square at the left of the selection box, ready to be overwritten. It is useful if you forgot to write something at the left of a block and you do not want to delete the first symbol/operator until you write the missing part.
 
 * SHIFT+click on an element of the panel above:
 If the element is a symbol, the selection is replaced by the symbol. If it is an operator, the selection is replaced by the operator and the first argument of it is set to the selection. (The first argument is the one represented by dots instead of a square)
