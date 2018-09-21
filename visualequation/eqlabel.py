@@ -11,6 +11,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+"""It manages the Qt interaction of the main equation with the user actions."""
+import os
 import random
 
 from PyQt5.QtWidgets import *
@@ -36,29 +38,32 @@ class EqLabel(QLabel):
         else:
             return QLabel.event(self, event)
 
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self.eq.next_sel()
-        elif event.button() == Qt.RightButton:
-            self.eq.previous_sel()
-        else:
-            QLabel.mousePressEvent(self, event)
+    #def mousePressEvent(self, event):
+    #    if event.button() == Qt.LeftButton:
+    #        self.eq.next_sel()
+    #    elif event.button() == Qt.RightButton:
+    #        self.eq.previous_sel()
+    #    else:
+    #        QLabel.mousePressEvent(self, event)
 
     def mouseMoveEvent(self, event):
         if event.buttons() != Qt.LeftButton:
             return
+        self.setAcceptDrops(False)
         base = "eq" + str(random.randint(0, 999999))
         eq_png = conversions.eq2png(self.eq.eq, None, None, self.eq.temp_dir,
                                     os.path.join(self.eq.temp_dir,
                                                  base +'.png'),
                                     True)
         mimedata = QMimeData()
-        #mimedata.setImageData(QImage(eq_png)) # does not work for web browser
-        mimedata.setUrls([QUrl.fromLocalFile(eq_png)])
+        mimedata.setImageData(QImage(eq_png)) # does not work for web browser
+        #mimedata.setText(eq_png) # text-editor and console
+        #mimedata.setUrls([QUrl.fromLocalFile(eq_png)]) # nautilus
         drag = QDrag(self)
         drag.setPixmap(QPixmap(eq_png))
         drag.setMimeData(mimedata)
         drag.exec_()
+        self.setAcceptDrops(True)
 
     def keyPressEvent(self, event):
         if QApplication.keyboardModifiers() != Qt.ControlModifier:

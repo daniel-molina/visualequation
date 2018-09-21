@@ -29,6 +29,8 @@ from . import symbols
 from . import conversions
 from . import dirs
 
+VERSION = "0.3"
+
 class MainWindow(QMainWindow):
     def __init__(self, temp_dir):
         super().__init__()
@@ -77,6 +79,14 @@ class MainWindow(QMainWindow):
         paste_act.setShortcut('Ctrl+V')
         paste_act.setStatusTip('Paste previous cut or copied selection')
         paste_act.triggered.connect(self.maineq.eq.eqbuffer2sel)
+        usage_act = QAction('Basic &usage', self)
+        usage_act.setShortcut('Ctrl+H')
+        usage_act.setStatusTip('Basic usage of the program')
+        usage_act.triggered.connect(self.usage)
+        aboutQt_act = QAction('About &Qt', self)
+        aboutQt_act.triggered.connect(QApplication.aboutQt)
+        about_act = QAction('About &Visual Equation', self)
+        about_act.triggered.connect(self.about)
 
         menubar = self.menuBar()
         menubar.setNativeMenuBar(False)
@@ -90,6 +100,10 @@ class MainWindow(QMainWindow):
         edit_menu.addAction(copy_act)
         edit_menu.addAction(cut_act)
         edit_menu.addAction(paste_act)
+        help_menu = menubar.addMenu('&Help')
+        help_menu.addAction(usage_act)
+        help_menu.addAction(aboutQt_act)
+        help_menu.addAction(about_act)
 
     def init_center_widget(self):
         # Create central widget
@@ -110,6 +124,34 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.tabs)
         central_widget.setLayout(layout)
         self.maineq.setFocus()
+
+    def usage(self):
+        class Dialog(QDialog):
+            def __init__(self, parent=None):
+                super().__init__(parent)
+                self.setWindowTitle('Basic usage')
+                text = QTextEdit(self)
+                text.setReadOnly(True)
+                with open(dirs.USAGE_FILE, "r") as fusage:
+                    text.insertHtml(fusage.read())
+                text.moveCursor(QTextCursor.Start)
+                buttons = QDialogButtonBox(QDialogButtonBox.Ok, self)
+                vbox = QVBoxLayout(self)
+                vbox.addWidget(text)
+                vbox.addWidget(buttons)
+                buttons.accepted.connect(self.accept)
+        dialog = Dialog(self)
+        dialog.exec_()
+
+    def about(self):
+        msg = "<p>Visual Equation</p>" \
+            + "<p><em>Version:</em> " + VERSION + "</p>" \
+            + "<p><em>Author:</em> Daniel Molina</p>" \
+            + '<p><a href="https://github.com/daniel-molina/visualequation">' \
+            + "Sources</a></p>" \
+            + "<p><em>License:</em> GPLv3 or above</p>"
+        QMessageBox.about(self, "About", msg)
+
 
 def main():
     """ This the main function of the program."""    

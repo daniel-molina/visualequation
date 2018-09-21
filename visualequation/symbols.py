@@ -1130,32 +1130,32 @@ INDEX_OPS = [
     LSUBSUBSUPLSUP,
 ]
 
-INDICES = [
-    LatexSymb('lsub', LSUB, r'{{}}_{{\square}}\cdot'),
-    LatexSymb('sub', SUB, r'\cdot_{{\square}}'),
-    LatexSymb('super', SUP, r'\cdot^{{\square}}'),
-    LatexSymb('lsup', LSUP, r'{{}}^{{\square}}\cdot'),
-    LatexSymb('lsubsub', LSUBSUB, r'{{}}_{{\square}}\cdot_{{\square}}'),
-    LatexSymb('subsup', SUBSUP, r'\cdot^{{\square}}_{{\square}}'),
-    LatexSymb('suplsup', SUPLSUP, r'{{}}^{{\square}}\cdot^{{\square}}'),
-    LatexSymb('lsublsup', LSUBLSUP, r'{{}}^{{\square}}_{{\square}}\cdot'),
-    LatexSymb('lsubsup', LSUBSUP, r'{{}}_{{\square}}\cdot^{{\square}}'),
-    LatexSymb('sublsup', SUBLSUP, r'{{}}^{{\square}}\cdot_{{\square}}'),
-    LatexSymb('lsubsubsup', LSUBSUBSUP,
-              r'{{}}_{{\square}}\cdot^{{\square}}_{{\square}}'),
-    LatexSymb('lsubsublsup', LSUBSUBLSUP,
-              r'{{}}_{{\square}}^{{\square}}\cdot_{{\square}}'),
-    LatexSymb('lsubsuplsup', LSUBSUPLSUP,
-              r'{{}}^{{\square}}_{{\square}}\cdot^{{\square}}'),
-    LatexSymb('subsuplsup', SUBSUPLSUP,
-              r'{{}}^{{\square}}\cdot^{{\square}}_{{\square}}'),
-    LatexSymb('lsubsubsuplsup', LSUBSUBSUPLSUP,
-              r'{{}}^{{\square}}_{{\square}}\cdot^{{\square}}_{{\square}}'),
-]
+#INDICES = [
+#    LatexSymb('lsub', LSUB, r'{{}}_{{\square}}\cdot'),
+#    LatexSymb('sub', SUB, r'\cdot_{{\square}}'),
+#    LatexSymb('super', SUP, r'\cdot^{{\square}}'),
+#    LatexSymb('lsup', LSUP, r'{{}}^{{\square}}\cdot'),
+#    LatexSymb('lsubsub', LSUBSUB, r'{{}}_{{\square}}\cdot_{{\square}}'),
+#    LatexSymb('subsup', SUBSUP, r'\cdot^{{\square}}_{{\square}}'),
+#    LatexSymb('suplsup', SUPLSUP, r'{{}}^{{\square}}\cdot^{{\square}}'),
+#    LatexSymb('lsublsup', LSUBLSUP, r'{{}}^{{\square}}_{{\square}}\cdot'),
+#    LatexSymb('lsubsup', LSUBSUP, r'{{}}_{{\square}}\cdot^{{\square}}'),
+#    LatexSymb('sublsup', SUBLSUP, r'{{}}^{{\square}}\cdot_{{\square}}'),
+#    LatexSymb('lsubsubsup', LSUBSUBSUP,
+#              r'{{}}_{{\square}}\cdot^{{\square}}_{{\square}}'),
+#    LatexSymb('lsubsublsup', LSUBSUBLSUP,
+#              r'{{}}_{{\square}}^{{\square}}\cdot_{{\square}}'),
+#    LatexSymb('lsubsuplsup', LSUBSUPLSUP,
+#              r'{{}}^{{\square}}_{{\square}}\cdot^{{\square}}'),
+#    LatexSymb('subsuplsup', SUBSUPLSUP,
+#              r'{{}}^{{\square}}\cdot^{{\square}}_{{\square}}'),
+#    LatexSymb('lsubsubsuplsup', LSUBSUBSUPLSUP,
+#              r'{{}}^{{\square}}_{{\square}}\cdot^{{\square}}_{{\square}}'),
+#]
 
 #    ('binomial', (Op(2, r'\binom{{{0}}}{{{1}}}'),
 #     [r'\binom{{\cdot}}{{\square}}'])),
 
-MENUITEMSDATA.append(MenuItemData(
-    tag="tab_indices",
-    symb_l=INDICES, clickable_size=(60, 60), dpi=200, expr=r'a^b'))
+#MENUITEMSDATA.append(MenuItemData(
+#    tag="tab_indices",
+#    symb_l=INDICES, clickable_size=(60, 60), dpi=200, expr=r'a^b'))
