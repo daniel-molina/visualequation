@@ -73,6 +73,6 @@ class TabWidget(QTabWidget):
     def handle_click(self, state, code):
         modifiers = QApplication.keyboardModifiers()
         if modifiers == Qt.ShiftModifier:
-            self.maineq.insert_substituting(code)
+            self.maineq.eq.insert_substituting(code)
         else:
-            self.maineq.insert(code)
+            self.maineq.eq.insert(code)

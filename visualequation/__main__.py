@@ -24,7 +24,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
 from . import symbolstab
-from . import eq
+from . import eqlabel
 from . import symbols
 from . import conversions
 from . import dirs
@@ -49,26 +49,26 @@ class MainWindow(QMainWindow):
         open_act = QAction('&Open', self)
         open_act.setShortcut('Ctrl+O')
         open_act.setStatusTip('Open equation from image')
-        open_act.triggered.connect(self.maineq.open_eq)
+        open_act.triggered.connect(self.maineq.eq.open_eq)
         save_act = QAction('&Save', self)
         save_act.setShortcut('Ctrl+S')
         save_act.setStatusTip('Save image')
-        save_act.triggered.connect(self.maineq.save_eq)
+        save_act.triggered.connect(self.maineq.eq.save_eq)
         undo_act = QAction('&Undo', self)
         undo_act.setShortcut('Ctrl+Z')
         undo_act.setStatusTip('Return equation to previous state')
-        undo_act.triggered.connect(self.maineq.recover_prev_eq)
+        undo_act.triggered.connect(self.maineq.eq.recover_prev_eq)
         redo_act = QAction('&Redo', self)
         redo_act.setShortcut('Ctrl+Y')
         redo_act.setStatusTip('Recover next equation state')
-        redo_act.triggered.connect(self.maineq.recover_next_eq)
+        redo_act.triggered.connect(self.maineq.eq.recover_next_eq)
         copy_act = QAction('&Copy', self)
         copy_act.setShortcut('Ctrl+C')
         copy_act.setStatusTip('Copy selection')
-        copy_act.triggered.connect(self.maineq.sel2eqbuffer)
+        copy_act.triggered.connect(self.maineq.eq.sel2eqbuffer)
         def cut():
-            self.maineq.sel2eqbuffer()
-            self.maineq.remove_sel()
+            self.maineq.eq.sel2eqbuffer()
+            self.maineq.eq.remove_sel()
         cut_act = QAction('C&ut', self)
         cut_act.setShortcut('Ctrl+X')
         cut_act.setStatusTip('Cut selection')
@@ -76,7 +76,7 @@ class MainWindow(QMainWindow):
         paste_act = QAction('&Paste', self)
         paste_act.setShortcut('Ctrl+V')
         paste_act.setStatusTip('Paste previous cut or copied selection')
-        paste_act.triggered.connect(self.maineq.eqbuffer2sel)
+        paste_act.triggered.connect(self.maineq.eq.eqbuffer2sel)
 
         menubar = self.menuBar()
         menubar.setNativeMenuBar(False)
@@ -97,7 +97,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
         layout = QVBoxLayout()
         # Create the equation
-        self.maineq = eq.Eq([symbols.NEWARG], self.temp_dir, self)
+        self.maineq = eqlabel.EqLabel(self.temp_dir, self)
         #label_pixmap = QPixmap('tests/im.png')
         #label = QLabel(self)
         #label.setPixmap(label_pixmap)

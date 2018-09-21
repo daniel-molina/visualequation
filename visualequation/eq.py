@@ -14,105 +14,29 @@
 """ The module that manages the editing equation. """
 import os
 import types
-import random
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
 from . import eqtools
+from . import eqhist
 from . import conversions
 from . import symbols
 
-# TODO (maybe in a different module)
-class EqHisto:
-    def __init__(self, eq):
-        pass
+class Eq:
+    def __init__(self, temp_dir, setPixmap, parent):
 
-class Eq(QLabel):
-    def __init__(self, eq, temp_dir, parent):
-        super().__init__(parent)
-
-        self.parent = parent
-        self.eq_hist = [(list(eq), 0)]
-        self.eq_hist_index = 0
+        init_eq = [symbols.NEWARG]
         self.eq_buffer = []
-        self.eq = list(eq) # It will be mutated by the replace functions
+        self.eq = list(init_eq) # It will be mutated by the replace functions
         self.temp_dir = temp_dir
+        self.setPixmap = setPixmap
+        self.parent = parent
+        self.eqhist = eqhist.EqHist(init_eq)
         self.sel_index = 0
         self.sel_right = True
         self._set_sel()
-
-    def event(self, event):
-        if event.type() == QEvent.KeyPress and event.key() == Qt.Key_Tab:
-            self.next_sel()
-            # The True value prevents the event to be sent to other objects
-            return True
-        else:
-            return QLabel.event(self, event)
-
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self.next_sel()
-        elif event.button() == Qt.RightButton:
-            self.previous_sel()
-        else:
-            QLabel.mousePressEvent(self, event)
-
-    def mouseMoveEvent(self, event):
-        if event.buttons() != Qt.LeftButton:
-            return
-        base = "eq" + str(random.randint(0, 999999))
-        eq_png = conversions.eq2png(self.eq, None, None, self.temp_dir,
-                                    os.path.join(self.temp_dir, base +'.png'),
-                                    True)
-        mimedata = QMimeData()
-        #mimedata.setImageData(QImage(eq_png)) # does not work for web browser
-        mimedata.setUrls([QUrl.fromLocalFile(eq_png)])
-        drag = QDrag(self)
-        drag.setPixmap(QPixmap(eq_png))
-        drag.setMimeData(mimedata)
-        drag.exec_()
-
-    def keyPressEvent(self, event):
-        if QApplication.keyboardModifiers() != Qt.ControlModifier:
-            self.on_key_pressed_no_ctrl(event)
-        else:
-            self.on_key_pressed_ctrl(event)
-
-    def on_key_pressed_no_ctrl(self, event):
-        # 0-9 or A-Z or a-z exluding Ctr modifier
-        try:
-            code = ord(event.text())
-            if (48 <= code <= 57 or 65 <= code <= 90 or 97 <= code <= 122) \
-               and QApplication.keyboardModifiers() != Qt.ControlModifier:
-                self.insert(event.text())
-        except TypeError:
-            pass
-        try:
-            self.insert(symbols.ASCII_LATEX_TRANSLATION[event.text()])
-        except KeyError:
-            pass
-        key = event.key()
-        if key == Qt.Key_Up:
-            self.insert_sup_substituting()
-        elif key == Qt.Key_Down:
-            self.insert_sub_substituting()
-        elif key == Qt.Key_Right:
-            self.next_sel()
-        elif key == Qt.Key_Left:
-            self.previous_sel()
-        elif key == Qt.Key_Backslash:
-            self.insert(r'\backslash')
-        elif key == Qt.Key_AsciiTilde:
-            self.insert(r'\sim')
-        elif key == Qt.Key_Backspace or key == Qt.Key_Delete:
-            self.remove_sel()
-        elif key == Qt.Key_Space:
-            self.insert(r'\,')
-
-    def on_key_pressed_ctrl(self, event):
-        pass
 
     def _set_sel(self):
         """ Set pixmap to the equation boxed in the
@@ -136,8 +60,8 @@ class Eq(QLabel):
         sel_png = conversions.eq2png(sel_eq, None, None,
                                      self.temp_dir)
         self.setPixmap(QPixmap(sel_png))
-        # This helps catching all the keys
-        self.setFocus()
+        # This may help catching all the keys
+        #self.setFocus()
 
     def next_sel(self):
         """ Set image to the next selection according to self.sel_index. """
@@ -224,7 +148,7 @@ class Eq(QLabel):
 
         self.sel_right = True
         self._set_sel()
-        self.add_eq2hist()
+        self.eqhist.append(self.eq, self.sel_index)
 
     def insert_substituting(self, oper):
         """
@@ -274,7 +198,7 @@ class Eq(QLabel):
 
         self.sel_right = True
         self._set_sel()
-        self.add_eq2hist()
+        self.eqhist.append(self.eq, self.sel_index)
 
     def insert_sup_substituting(self):
         # Consider that the user specifies the first argument of index operator
@@ -316,7 +240,7 @@ class Eq(QLabel):
         self.sel_index += 1 + elems
         self.sel_right = True
         self._set_sel()
-        self.add_eq2hist()
+        self.eqhist.append(self.eq, self.sel_index)
 
     def insert_sub_substituting(self):
         # Consider that the user specifies the first argument of index operator
@@ -358,15 +282,7 @@ class Eq(QLabel):
         self.sel_index += 1 + elems
         self.sel_right = True
         self._set_sel()
-        self.add_eq2hist()
-
-    def add_eq2hist(self):
-        """
-        Save current equation to the historial and delete any future elements
-        from this point
-        """
-        self.eq_hist[self.eq_hist_index+1:] = [(list(self.eq), self.sel_index)]
-        self.eq_hist_index += 1
+        self.eqhist.append(self.eq, self.sel_index)
 
     def remove_sel(self):
         """
@@ -418,7 +334,7 @@ class Eq(QLabel):
 
         self.sel_right = True
         self._set_sel()
-        self.add_eq2hist()
+        self.eqhist.append(self.eq, self.sel_index)
 
     def open_eq(self):
         neweq = conversions.open_eq(self.parent)
@@ -426,7 +342,7 @@ class Eq(QLabel):
             self.eq = list(neweq)
             self.sel_index = 0
             self._set_sel()
-            self.add_eq2hist()
+            self.eqhist.append(neweq, 0)
 
     def save_eq(self):
         items = ["PNG", "PDF", "EPS", "SVG"]
@@ -467,21 +383,15 @@ class Eq(QLabel):
 
     def recover_prev_eq(self):
         """ Recover previous equation from the historial, if any """
-        if self.eq_hist_index != 0:
-            self.eq_hist_index -= 1
-            eq, sel_index = self.eq_hist[self.eq_hist_index]
-            self.eq = list(eq)
-            self.sel_index = sel_index
-            self._set_sel()
+        preveq, self.sel_index = self.eqhist.get_prev()
+        self.eq = list(preveq)
+        self._set_sel()
 
     def recover_next_eq(self):
         """ Recover next equation from the historial, if any """
-        if self.eq_hist_index != len(self.eq_hist)-1:
-            self.eq_hist_index += 1
-            eq, sel_index = self.eq_hist[self.eq_hist_index]
-            self.eq = list(eq)
-            self.sel_index = sel_index
-            self._set_sel()
+        nexteq, self.sel_index = self.eqhist.get_next()
+        self.eq = list(nexteq)
+        self._set_sel()
 
     def sel2eqbuffer(self):
         """ Copy block pointed by self.sel_index to self.eq_buffer """
@@ -507,4 +417,4 @@ class Eq(QLabel):
                                                            self.eq_buffer)
             self.sel_right = True
             self._set_sel()
-            self.add_eq2hist()
+            self.eqhist.append(self.eq, self.sel_index)
