@@ -14,6 +14,7 @@
 """ The module that manages the editing equation. """
 import os
 import types
+import random
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
@@ -61,7 +62,10 @@ class Eq(QLabel):
     def mouseMoveEvent(self, event):
         if event.buttons() != Qt.LeftButton:
             return
-        eq_png = conversions.eq2png(self.eq, None, None, self.temp_dir)
+        base = "eq" + str(random.randint(0, 999999))
+        eq_png = conversions.eq2png(self.eq, None, None, self.temp_dir,
+                                    os.path.join(self.temp_dir, base +'.png'),
+                                    True)
         mimedata = QMimeData()
         #mimedata.setImageData(QImage(eq_png)) # does not work for web browser
         mimedata.setUrls([QUrl.fromLocalFile(eq_png)])

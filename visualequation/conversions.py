@@ -166,7 +166,8 @@ def eq2png(eq, dpi, bg, directory, png_fpath=None, add_metadata=False):
                                  "-description=" + eq_str,
                                  png_fpath], stdout=flog)
             except subprocess.CalledProcessError:
-                raise SystemExit("Exiftool error. Please, report it.")
+                raise SystemExit("Exiftool related error. "
+                                 + "Please, report this bug.")
             except OSError:
                 raise SystemExit("Command exiftool was not found.")
 
