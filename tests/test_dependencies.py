@@ -21,7 +21,6 @@ import shutil
 import subprocess
 import json
 
-#sys.path.append('../visualequation')
 from visualequation import dirs
 from visualequation import conversions
 

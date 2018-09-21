@@ -147,8 +147,9 @@ class MainWindow(QMainWindow):
         msg = "<p>Visual Equation</p>" \
             + "<p><em>Version:</em> " + VERSION + "</p>" \
             + "<p><em>Author:</em> Daniel Molina</p>" \
-            + '<p><a href="https://github.com/daniel-molina/visualequation">' \
-            + "Sources</a></p>" \
+            + '<p><em>Sources:</em> ' \
+            + '<a href="https://github.com/daniel-molina/visualequation">' \
+            + "Webpage</a></p>" \
             + "<p><em>License:</em> GPLv3 or above</p>"
         QMessageBox.about(self, "About", msg)
 

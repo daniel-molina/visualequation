@@ -37,7 +37,11 @@ $ python3 -m tests.test_dependencies
 
 ## Installation
 
-I did not package visualequation for any distribution yet. In the case of python, installing software with pip and related tools is almost a standard so I decided to use it first. If you know how to manage pip in your system, perfect, follow your way to install visualequation from source (development version) or PyPI (released versions). If you have no clue and want me to explain all the details about how to install it, I feel that I have certain responsability of telling you something that works. If you use Debian 9.0 or Ubuntu 18.04/16.04 it worked for me to install the provided packages (if you are going to install from PyPI you only need python-pip)
+I did not package visualequation for any distribution yet. In the case of python, installing software with pip and related tools is almost a standard so I decided to use it first. If you know how to manage pip in your system, perfect, follow your way to install visualequation from source (development version) or PyPI (released versions). If you have no clue and want me to explain all the details about how to install it, I feel that I have certain responsability of telling you something that works. If you use a modern distribution like Debian 9.0 or Ubuntu 18.04/16.04 it worked for me the following instructions, else, read the next section.
+
+### Installing the pip version of your distribution in Debian/Ubuntu
+
+If you want to install from sources and you want to use the provided packages do the following (if you are just going to install from PyPI you only need python-pip)
 
 $ sudo apt-get install python-pip python-setuptools python-wheel
 
