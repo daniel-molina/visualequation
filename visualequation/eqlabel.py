@@ -24,9 +24,9 @@ from . import eq
 class EqLabel(QLabel):
     def __init__(self, temp_dir, parent):
         super().__init__(parent)
-
         self.parent = parent
         self.eq = eq.Eq(temp_dir, self.setPixmap, parent)
+        self.setAcceptDrops(True)
 
     def event(self, event):
         if event.type() == QEvent.KeyPress and event.key() == Qt.Key_Tab:
@@ -99,3 +99,17 @@ class EqLabel(QLabel):
 
     def on_key_pressed_ctrl(self, event):
         pass
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+        else:
+            super().dragEnterEvent(event)
+
+    def dropEvent(self, event):
+        if event.mimeData().hasUrls():
+            url = event.mimeData().urls()[0]
+            self.eq.open_eq(str(url.toLocalFile()))
+            event.acceptProposedAction()
+        else:
+            super().dropEvent(event)

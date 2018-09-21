@@ -336,8 +336,8 @@ class Eq:
         self._set_sel()
         self.eqhist.append(self.eq, self.sel_index)
 
-    def open_eq(self):
-        neweq = conversions.open_eq(self.parent)
+    def open_eq(self, filename=None):
+        neweq = conversions.open_eq(self.parent, filename)
         if neweq != None:
             self.eq = list(neweq)
             self.sel_index = 0

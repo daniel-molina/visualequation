@@ -238,10 +238,11 @@ def eq2svg(eq, directory, svg_fpath):
     latex_file2dvi(latex_fpath, directory)
     dvi2svg(dvi_fpath, svg_fpath, dvi2svglog_path)
 
-def open_eq(parent):
+def open_eq(parent, filename = None):
     "Return equation inside a file chosen interactively. Else, None."
-    filename, _ = QFileDialog.getOpenFileName(parent, 'Open equation', '',
-                                              'Available files (*.png *.pdf)')
+    if not filename:
+        filename, _ = QFileDialog.getOpenFileName(
+            parent, 'Open equation', '', 'Valid formats (*.png *.pdf)')
     if not filename:
         return None
     try:
