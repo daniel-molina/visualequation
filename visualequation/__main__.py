@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # visualequation is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,194 +19,157 @@ import tempfile
 import shutil
 import os
 
-import pygame
-from pygame.locals import *
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
 
-import dirs as dirs
-import symbols as symbols
-import maineq as maineq
-import conversions as conversions
-import menu as menu
+from . import symbolstab
+from . import eqlabel
+from . import symbols
+from . import conversions
+from . import dirs
 
-def draw_splash_screen(screen, temp_dir):
-    """ Blit a nice splash screen while images are being loaded. """
-    message = r"\textcolor{white}{(\text{Visual Equation})_{0.2}}"
-    message_png = conversions.eq2png(message, None, None, temp_dir)
-    try:
-        message_im = pygame.image.load(message_png)
-    except pygame.error as message:
-        raise SystemExit(message)
-    message_rect = message_im.get_rect(center=(screen.get_width()*2//3,
-                                               screen.get_height()*5//8))
-    screen.blit(message_im, message_rect)
-    pygame.display.flip()
+VERSION = "0.3"
 
-def draw_screen(screen, editingeq, mainmenu):
-    """ Draw equation, menuitems and symbols."""
-    screen.fill((255, 255, 255))
-    screen.blit(editingeq.image, editingeq.rect)
-    for menuitem in mainmenu.menuitems:
-        screen.blit(menuitem.image, menuitem.rect)
-    mainmenu.active_symbs.draw(screen)
-    pygame.display.flip()
+class MainWindow(QMainWindow):
+    def __init__(self, temp_dir):
+        super().__init__()
+        self.temp_dir = temp_dir
+        self.init_center_widget()
+        self.statusBar()
+        self.init_menu()
+
+        self.setWindowTitle('Visual Equation')
+        self.setWindowIcon(QIcon(dirs.ICON))
+        self.setGeometry(0, 0, 1000, 700)
+
+    def init_menu(self):
+        exit_act = QAction('&Exit', self)
+        exit_act.setShortcut('Ctrl+Q')
+        exit_act.setStatusTip('Exit application')
+        exit_act.triggered.connect(qApp.quit)
+        open_act = QAction('&Open', self)
+        open_act.setShortcut('Ctrl+O')
+        open_act.setStatusTip('Open equation from image')
+        open_act.triggered.connect(self.maineq.eq.open_eq)
+        save_act = QAction('&Save', self)
+        save_act.setShortcut('Ctrl+S')
+        save_act.setStatusTip('Save image')
+        save_act.triggered.connect(self.maineq.eq.save_eq)
+        undo_act = QAction('&Undo', self)
+        undo_act.setShortcut('Ctrl+Z')
+        undo_act.setStatusTip('Return equation to previous state')
+        undo_act.triggered.connect(self.maineq.eq.recover_prev_eq)
+        redo_act = QAction('&Redo', self)
+        redo_act.setShortcut('Ctrl+Y')
+        redo_act.setStatusTip('Recover next equation state')
+        redo_act.triggered.connect(self.maineq.eq.recover_next_eq)
+        copy_act = QAction('&Copy', self)
+        copy_act.setShortcut('Ctrl+C')
+        copy_act.setStatusTip('Copy selection')
+        copy_act.triggered.connect(self.maineq.eq.sel2eqbuffer)
+        def cut():
+            self.maineq.eq.sel2eqbuffer()
+            self.maineq.eq.remove_sel()
+        cut_act = QAction('C&ut', self)
+        cut_act.setShortcut('Ctrl+X')
+        cut_act.setStatusTip('Cut selection')
+        cut_act.triggered.connect(cut)
+        paste_act = QAction('&Paste', self)
+        paste_act.setShortcut('Ctrl+V')
+        paste_act.setStatusTip('Paste previous cut or copied selection')
+        paste_act.triggered.connect(self.maineq.eq.eqbuffer2sel)
+        usage_act = QAction('Basic &usage', self)
+        usage_act.setShortcut('Ctrl+H')
+        usage_act.setStatusTip('Basic usage of the program')
+        usage_act.triggered.connect(self.usage)
+        aboutQt_act = QAction('About &Qt', self)
+        aboutQt_act.triggered.connect(QApplication.aboutQt)
+        about_act = QAction('About &Visual Equation', self)
+        about_act.triggered.connect(self.about)
+
+        menubar = self.menuBar()
+        menubar.setNativeMenuBar(False)
+        file_menu = menubar.addMenu('&File')
+        file_menu.addAction(open_act)
+        file_menu.addAction(save_act)      
+        file_menu.addAction(exit_act)
+        edit_menu = menubar.addMenu('&Edit')
+        edit_menu.addAction(undo_act)
+        edit_menu.addAction(redo_act)
+        edit_menu.addAction(copy_act)
+        edit_menu.addAction(cut_act)
+        edit_menu.addAction(paste_act)
+        help_menu = menubar.addMenu('&Help')
+        help_menu.addAction(usage_act)
+        help_menu.addAction(aboutQt_act)
+        help_menu.addAction(about_act)
+
+    def init_center_widget(self):
+        # Create central widget
+        central_widget = QWidget(self)
+        self.setCentralWidget(central_widget)
+        layout = QVBoxLayout()
+        # Create the equation
+        self.maineq = eqlabel.EqLabel(self.temp_dir, self)
+        #label_pixmap = QPixmap('tests/im.png')
+        #label = QLabel(self)
+        #label.setPixmap(label_pixmap)
+        self.maineq.setAlignment(Qt.AlignCenter)
+        # Create the symbols TabWidget
+        self.tabs = symbolstab.TabWidget(self, self.maineq)
+        self.tabs.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        # Add everything to the central widget
+        layout.addWidget(self.maineq)
+        layout.addWidget(self.tabs)
+        central_widget.setLayout(layout)
+        self.maineq.setFocus()
+
+    def usage(self):
+        class Dialog(QDialog):
+            def __init__(self, parent=None):
+                super().__init__(parent)
+                self.setWindowTitle('Basic usage')
+                text = QTextEdit(self)
+                text.setReadOnly(True)
+                with open(dirs.USAGE_FILE, "r") as fusage:
+                    text.insertHtml(fusage.read())
+                text.moveCursor(QTextCursor.Start)
+                buttons = QDialogButtonBox(QDialogButtonBox.Ok, self)
+                vbox = QVBoxLayout(self)
+                vbox.addWidget(text)
+                vbox.addWidget(buttons)
+                buttons.accepted.connect(self.accept)
+        dialog = Dialog(self)
+        dialog.exec_()
+
+    def about(self):
+        msg = "<p>Visual Equation</p>" \
+            + "<p><em>Version:</em> " + VERSION + "</p>" \
+            + "<p><em>Author:</em> Daniel Molina</p>" \
+            + '<p><a href="https://github.com/daniel-molina/visualequation">' \
+            + "Sources</a></p>" \
+            + "<p><em>License:</em> GPLv3 or above</p>"
+        QMessageBox.about(self, "About", msg)
+
 
 def main():
-    """ This the main function of the program."""
+    """ This the main function of the program."""    
+    # Use global for app to be destructed at the end
+    # http://pyqt.sourceforge.net/Docs/PyQt5/gotchas.html#crashes-on-exit
+    global app 
+    app = QApplication(sys.argv)
+
     # Prepare a temporal directory to manage all intermediate files
     temp_dirpath = tempfile.mkdtemp()
-    # Prepare pygame
-    screen_w = 800
-    screen_h = 600
-    pygame.init()
-    clock = pygame.time.Clock()
-    screen = pygame.display.set_mode((screen_w, screen_h), RESIZABLE)
-    pygame.display.set_caption("Visual Equation")
-    # Display splash screen
-    draw_splash_screen(screen, temp_dirpath)
-    # Prepare the equation to edit which will be showed by default
-    init_eq = [symbols.NEWARG]
-    screen_center = (screen_w//2, screen_h//2)
-    editingeq = maineq.EditableEqSprite(init_eq, screen_center,
-                                        temp_dirpath)
-    # Create the menu
-    mainmenu = menu.Menu(screen_w, screen_h, temp_dirpath)
-    # Pygame loop
-    ongoing = True
-    while ongoing:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                ongoing = False
-            elif event.type == VIDEORESIZE:
-                screen = pygame.display.set_mode(event.size, RESIZABLE)
-                screen_center = (event.w//2, event.h//2)
-                editingeq.set_center(event.w//2, event.h//2)
-                mainmenu.set_screen_size(event.w, event.h)
-            elif event.type == MOUSEBUTTONDOWN:
-                for index, menuitem in enumerate(mainmenu.menuitems):
-                    if menuitem.mousepointed():
-                        mainmenu.select_item(index)
-                for symb in mainmenu.active_symbs:
-                    if symb.mousepointed():
-                        if pygame.key.get_mods() & KMOD_SHIFT:
-                            editingeq.insert_substituting(symb.code)
-                        else:
-                            editingeq.insert(symb.code)
-                if editingeq.mousepointed():
-                    editingeq.next_sel()
-            elif event.type == KEYDOWN:
-                try:
-                    code = ord(event.unicode)
-                    # If it belongs to 0-9 or A-Z or a-z
-                    if 48 <= code <= 57 or 65 <= code <= 90 \
-                       or 97 <= code <= 122:
-                        editingeq.insert(event.unicode)
-                except TypeError:
-                    pass
-                if event.unicode == '\\':
-                    editingeq.insert(r'\backslash')
-                elif event.unicode == '~':
-                    editingeq.insert(r'\sim')
-                elif event.unicode == '|':
-                    editingeq.insert(r'|')
-                elif event.unicode == '!':
-                    editingeq.insert('!')
-                elif event.unicode == '$':
-                    editingeq.insert(r'\$')
-                elif event.unicode == '%':
-                    editingeq.insert(r'\%')
-                elif event.unicode == '&':
-                    editingeq.insert(r'\&')
-                elif event.unicode == '/':
-                    editingeq.insert('/')
-                elif event.unicode == ')':
-                    editingeq.insert(')')
-                elif event.unicode == '(':
-                    editingeq.insert('(')
-                elif event.unicode == '=':
-                    editingeq.insert('=')
-                elif event.unicode == '?':
-                    editingeq.insert('?')
-                elif event.unicode == "'":
-                    editingeq.insert("'")
-                elif event.unicode == '@':
-                    editingeq.insert('@')
-                elif event.unicode == '#':
-                    editingeq.insert(r'\# ')
-                elif event.unicode == '[':
-                    editingeq.insert('[')
-                elif event.unicode == ']':
-                    editingeq.insert(']')
-                elif event.unicode == '{':
-                    editingeq.insert(r'\{')
-                elif event.unicode == '}':
-                    editingeq.insert(r'\}')
-                elif event.unicode == '*':
-                    editingeq.insert('*')
-                elif event.unicode == '+':
-                    editingeq.insert('+')
-                elif event.unicode == '-':
-                    editingeq.insert('-')
-                elif event.unicode == '_':
-                    editingeq.insert_substituting(symbols.SUBINDEX)
-                elif event.unicode == '^':
-                    editingeq.insert_substituting(symbols.SUPERINDEX)
-                elif event.unicode == '<':
-                    editingeq.insert('<')
-                elif event.unicode == '>':
-                    editingeq.insert('>')
-                elif event.unicode == ',':
-                    editingeq.insert(',')
-                elif event.unicode == '.':
-                    editingeq.insert('.')
-                elif event.unicode == ';':
-                    editingeq.insert(';')
-                elif event.unicode == ':':
-                    editingeq.insert(':')
-                    # First cases with mods, this avoids false positives
-                    # CONTROL + letter
-                elif event.key == K_z and pygame.key.get_mods() & KMOD_CTRL:
-                    editingeq.recover_prev_eq()
-                elif event.key == K_y and pygame.key.get_mods() & KMOD_CTRL:
-                    editingeq.recover_next_eq()
-                elif event.key == K_s and pygame.key.get_mods() & KMOD_CTRL:
-                    editingeq.save_eq()
-                elif event.key == K_c and pygame.key.get_mods() & KMOD_CTRL:
-                    editingeq.sel2eqbuffer()
-                elif event.key == K_x and pygame.key.get_mods() & KMOD_CTRL:
-                    editingeq.sel2eqbuffer()
-                    editingeq.remove_sel()
-                elif event.key == K_v and pygame.key.get_mods() & KMOD_CTRL:
-                    editingeq.eqbuffer2sel()
-                elif event.key == K_p and pygame.key.get_mods() & KMOD_CTRL:
-                    editingeq.left_NEWARG()
-                elif event.key == K_o and pygame.key.get_mods() & KMOD_CTRL:
-                    neweq = conversions.open_eq()
-                    if neweq is not None:
-                        editingeq = maineq.EditableEqSprite(neweq,
-                                                            screen_center,
-                                                            temp_dirpath)
-                    # Cases without mods
-                elif event.key == K_RIGHT:
-                    editingeq.next_sel()
-                elif event.key == K_LEFT:
-                    editingeq.previous_sel()
-                elif event.key == K_UP:
-                    mainmenu.next_item()
-                elif event.key == K_DOWN:
-                    mainmenu.prev_item()
-                elif event.key == K_SPACE:
-                    editingeq.insert(r'\,')
-                elif event.key == K_TAB:
-                    editingeq.next_sel()
-                elif event.key == K_BACKSPACE or event.key == K_DELETE:
-                    editingeq.remove_sel()
 
-        draw_screen(screen, editingeq, mainmenu)
-        clock.tick(30)
+    win = MainWindow(temp_dirpath)
 
-    # Delete the temporary directory and files before exit
+    win.show()
+
+    exit_code = app.exec_()
     shutil.rmtree(temp_dirpath)
-    sys.exit(0)
-
+    sys.exit(exit_code)
+   
 if __name__ == '__main__':
     main()

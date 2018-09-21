@@ -14,12 +14,14 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
+import sys
 import unittest
 import tempfile
 import shutil
 import subprocess
 import json
 
+#sys.path.append('../visualequation')
 from visualequation import dirs
 from visualequation import conversions
 
@@ -104,8 +106,9 @@ class DependenciesTest(unittest.TestCase):
 
         def fun(fpath):
             try:
-                eq_str = subprocess.check_output(["exiftool", "-b", "-s3",
-                                                  "-description", fpath])
+                eq_str_b = subprocess.check_output(["exiftool", "-b", "-s3",
+                                                    "-description", fpath])
+                eq_str = eq_str_b.decode('utf8')
                 if not eq_str:
                     raise SystemExit("No equation inside file %s!" % fpath)
                 json.JSONDecoder(object_hook=conversions.from_json
@@ -137,17 +140,11 @@ class DependenciesTest(unittest.TestCase):
         fun(pdf_fpath)
         shutil.rmtree(temp_dirpath)
 
-    def test_tkinter(self):
+    def test_pyqt5(self):
         try:
-            import Tkinter, tkFileDialog
+            import PyQt5
         except ImportError:
-            raise SystemExit("You must have Tk installed for python.")
-
-    def test_pygame(self):
-        try:
-            import pygame
-        except ImportError:
-            raise SystemExit("You must have pygame installed.")
+            raise SystemExit("You must have PyQt5 installed.")
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # visualequation is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,13 +17,29 @@
 Run this script before installing.
 It requires the LaTeX system to be installed.
 """
+import sys
 import os
 import tempfile
 import shutil
+import subprocess
 
-import visualequation.symbols as symbols
-import visualequation.conversions as conversions
-import visualequation.dirs as dirs
+from visualequation.symbols import MENUITEMSDATA, ADDITIONAL_LS
+from visualequation.conversions import eq2png
+from visualequation import dirs
+
+def edit_expr(latex_code):
+    """
+    Add a slim and tall character so all the symbols are cut with more or less
+    the same height.
+    """
+    return r"\textcolor{white}{|}" + latex_code
+
+def postprocess(filename):
+    """
+    Remove the extra added character from the image.
+    """
+    subprocess.call(["mogrify", "-chop", "5x0", filename])
+
 
 def generate_symb_images(menuitemdata, temp_dir):
     """
@@ -33,8 +49,9 @@ def generate_symb_images(menuitemdata, temp_dir):
     """
     for symb in menuitemdata.symb_l:
         filename = os.path.join(dirs.SYMBOLS_DIR, symb.tag + ".png")
-        conversions.eq2png(symb.expr, menuitemdata.dpi, None, temp_dir,
-                           filename)
+        eq2png(edit_expr(symb.expr), menuitemdata.dpi, None, temp_dir,
+               filename)
+        postprocess(filename)
 
 if __name__ == '__main__':
 
@@ -45,14 +62,19 @@ if __name__ == '__main__':
     if not os.path.exists(dirs.SYMBOLS_DIR):
         os.makedirs(dirs.SYMBOLS_DIR)
 
-    for index, menuitemdata in enumerate(symbols.MENUITEMSDATA):
-        print "Generating menu symbols...", index+1, "/", \
-            len(symbols.MENUITEMSDATA)
+    for index, menuitemdata in enumerate(MENUITEMSDATA):
+        print("Generating menu symbols...", index+1, "/", \
+            len(MENUITEMSDATA))
+        filename = os.path.join(dirs.SYMBOLS_DIR, menuitemdata.tag + '.png')
+        eq2png(edit_expr(menuitemdata.expr), None, None, temp_dirpath,
+               filename)
+        postprocess(filename)
         generate_symb_images(menuitemdata, temp_dirpath)
 
-    print "Generating Tk symbols..."
-    for symb in symbols.ADDITIONAL_LS:
+    print("Generating dialog symbols...")
+    for symb in ADDITIONAL_LS:
         filename = os.path.join(dirs.SYMBOLS_DIR, symb.tag + ".png")
-        conversions.eq2png(symb.expr, 200, None, temp_dirpath, filename)
+        eq2png(edit_expr(symb.expr), 200, None, temp_dirpath, filename)
+        postprocess(filename)
 
     shutil.rmtree(temp_dirpath)

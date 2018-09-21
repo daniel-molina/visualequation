@@ -18,18 +18,19 @@ conversions to other formats
 import os
 import subprocess
 import json
-import Tkinter
-from tkFileDialog import askopenfilename
 
-import dirs
-import eqtools
-import symbols
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
+
+from . import dirs
+from . import eqtools
+from . import symbols
 
 def eq2latex_file(eq, latex_file, template_file):
     """ Write equation in a LaTeX file according to the template_file.
     It looks for string '%EQ%' in the file and replace it by eq.
     """
-    if isinstance(eq, basestring):
+    if isinstance(eq, str):
         latex_code = eq
     elif isinstance(eq, list):
         latex_code = eqtools.eq2latex_code(eq)
@@ -165,7 +166,8 @@ def eq2png(eq, dpi, bg, directory, png_fpath=None, add_metadata=False):
                                  "-description=" + eq_str,
                                  png_fpath], stdout=flog)
             except subprocess.CalledProcessError:
-                raise SystemExit("Exiftool error. Please, report it.")
+                raise SystemExit("Exiftool related error. "
+                                 + "Please, report this bug.")
             except OSError:
                 raise SystemExit("Command exiftool was not found.")
 
@@ -236,35 +238,32 @@ def eq2svg(eq, directory, svg_fpath):
     latex_file2dvi(latex_fpath, directory)
     dvi2svg(dvi_fpath, svg_fpath, dvi2svglog_path)
 
-def open_eq():
+def open_eq(parent, filename = None):
     "Return equation inside a file chosen interactively. Else, None."
-    root = Tkinter.Tk()
-    root.withdraw()
-    # We allow only two types of format to save equation
-    filename = askopenfilename(filetypes=[('Available files',
-                                           ('.png', '.pdf'))])
-    root.destroy()
-    def show_message(message):
-        root = Tkinter.Tk()
-        Tkinter.Label(root, text=message).pack(side=Tkinter.TOP)
-        def return_destroy(event):
-            root.destroy()
-        root.bind('<Return>', return_destroy)
-        Tkinter.Button(root, text="Accept", command=root.destroy
-        ).pack(side=Tkinter.TOP)
-        root.mainloop()
+    if not filename:
+        filename, _ = QFileDialog.getOpenFileName(
+            parent, 'Open equation', '', 'Valid formats (*.png *.pdf)')
     if not filename:
         return None
     try:
-        eq_str = subprocess.check_output(["exiftool", "-b", "-s3",
-                                          "-description", filename])
+        eq_str = subprocess.check_output(
+            ["exiftool", "-b", "-s3", "-description", filename]).decode('utf8')
         if not eq_str:
-            show_message("No equation inside this file.")
+            msg = QMessageBox(parent)
+            msg.setText("No equation inside this file.")
+            msg.setWindowTitle("Warning")
+            msg.setIcon(QMessageBox.Warning)
+            msg.exec_()
             return None
         return json.JSONDecoder(object_hook=from_json).decode(eq_str)
     except subprocess.CalledProcessError:
-        show_message("Error by exiftool when trying to extract equation "
-                     + "from file.")
+        msg = QMessageBox(parent)
+        msg.setText("Error by exiftool when trying to extract equation "
+                    + "from file.")
+        msg.setWindowTitle("Error")
+        msg.setIcon(QMessageBox.Critical)
+        msg.exec_()
+        return None
     except OSError:
         raise SystemExit("Command exiftool was not found.")
     except ValueError as error:
