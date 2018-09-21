@@ -43,7 +43,7 @@ I did not package visualequation for any distribution yet. In the case of python
 
 If you want to install from sources and you want to use the provided packages do the following (if you are just going to install from PyPI you only need python-pip)
 
-$ sudo apt-get install python-pip python-setuptools python-wheel
+$ sudo apt-get install python3-pip python3-setuptools python3-wheel
 
 add the pip path to your ~/.bashrc
 
@@ -66,7 +66,7 @@ $ curl -LO https://bootstrap.pypa.io/get-pip.py
 
 Install it locally
 
-$ python get-pip.py --user
+$ python3 get-pip.py --user
 
 Add to your path the directory where pip is installed and where it will install the other programs. You can do it by writting at the end of your .bashrc the following line
 
@@ -78,25 +78,23 @@ $ source ~/.bashrc
 
 Both
 
-$ pip --version
+$ pip3 --version
 
 and
 
-$ python -m pip --version
+$ python3 -m pip --version
 
 should give the same valid output (the current last version of pip).
 
-If you are going to install from the sources, I recommend now to remove the package setuptools (if it is installed) of your distribution and install it with pip
+If you are going to install from the sources, I recommend now to remove the package setuptools (if it is installed) of your distribution
 
 $ sudo apt-get remove python-setuptools
-
-$ python -m pip install --user setuptools
 
 ### Installing visualequation using pip
 
 The fastest way is to download it and install from PyPI, just
 
-$ python -m pip install --user --upgrade visualequation
+$ python3 -m pip install --user --upgrade visualequation
 
 On the other hand, if you have the sources, the first step is to generate the LaTeX symbols used by the program:
 
@@ -106,11 +104,11 @@ It will late a bit.
 
 After that, you can generate a package
 
-$ python setup.py bdist_wheel
+$ python3 setup.py bdist_wheel
 
 and install it
 
-$ python -m pip install --user dist/visualequation-\<version\>-py2-none-any.whl
+$ python3 -m pip install --user dist/visualequation-\<version\>-py3-none-any.whl
 
 where you substitute \<version\> by the version number of the file generated in dist/.
 
