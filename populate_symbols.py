@@ -23,9 +23,11 @@ import tempfile
 import shutil
 import subprocess
 
-from visualequation.symbols.utils import MENUITEMSDATA, ADDITIONAL_LS
+from visualequation.symbols.lists import MENUITEMSDATA, ADDITIONAL_LS
 from visualequation.conversions import eq2png
 from visualequation import commons
+
+DPI = 200
 
 def edit_expr(latex_code):
     """
@@ -49,7 +51,7 @@ def generate_symb_images(menuitemdata, temp_dir):
     """
     for symb in menuitemdata.symb_l:
         filename = os.path.join(commons.SYMBOLS_DIR, symb.tag + ".png")
-        eq2png(edit_expr(symb.expr), menuitemdata.dpi, None, temp_dir,
+        eq2png(edit_expr(symb.expr), DPI, None, temp_dir,
                filename)
         postprocess(filename)
 
@@ -66,7 +68,7 @@ if __name__ == '__main__':
         print("Generating menu symbols...", index+1, "/", \
             len(MENUITEMSDATA))
         filename = os.path.join(commons.SYMBOLS_DIR, menuitemdata.tag + '.png')
-        eq2png(edit_expr(menuitemdata.expr), None, None, temp_dirpath,
+        eq2png(edit_expr(menuitemdata.expr), DPI, None, temp_dirpath,
                filename)
         postprocess(filename)
         generate_symb_images(menuitemdata, temp_dirpath)
@@ -74,7 +76,7 @@ if __name__ == '__main__':
     print("Generating dialog symbols...")
     for symb in ADDITIONAL_LS:
         filename = os.path.join(commons.SYMBOLS_DIR, symb.tag + ".png")
-        eq2png(edit_expr(symb.expr), 200, None, temp_dirpath, filename)
+        eq2png(edit_expr(symb.expr), DPI, None, temp_dirpath, filename)
         postprocess(filename)
 
     shutil.rmtree(temp_dirpath)

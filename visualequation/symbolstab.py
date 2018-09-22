@@ -21,7 +21,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
-from .symbols import utils
+from .symbols import lists
 from . import commons
 
 class TabWidget(QTabWidget):
@@ -30,7 +30,7 @@ class TabWidget(QTabWidget):
 
         self.maineq = maineq
         self.tabs = []
-        for index, menuitemdata in enumerate(utils.MENUITEMSDATA):
+        for index, menuitemdata in enumerate(lists.MENUITEMSDATA):
             self.tabs.append(QWidget())
             icon = QIcon(os.path.join(commons.SYMBOLS_DIR,
                                       menuitemdata.tag + ".png"))
