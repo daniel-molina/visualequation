@@ -19,7 +19,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
-from . import symbols
+from .symbols import utils
 from . import conversions
 from . import eq
 
@@ -81,7 +81,7 @@ class EqLabel(QLabel):
         except TypeError:
             pass
         try:
-            self.eq.insert(symbols.ASCII_LATEX_TRANSLATION[event.text()])
+            self.eq.insert(utils.ASCII_LATEX_TRANSLATION[event.text()])
         except KeyError:
             pass
         key = event.key()

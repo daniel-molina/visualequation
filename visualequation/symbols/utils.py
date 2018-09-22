@@ -21,7 +21,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
-from . import commons
+from .. import commons
 
 class Op(object):
     """ Class for LaTeX operator (that has arguments)"""
@@ -55,8 +55,6 @@ NEWARG = r'\square'
 #EDIT = Op(1, r'\left.\textcolor{{blue}}{{{0}}}\right|')
 REDIT = Op(1, r'\left\lmoustache{{{0}}}\right\rgroup')
 LEDIT = Op(1, r'\left\lgroup{{{0}}}\right\rmoustache')
-#REDIT = Op(1, r'\left\rgroup{{{0}}}\right\rgroup')
-#LEDIT = Op(1, r'\left\lgroup{{{0}}}\right\lgroup')
 JUXT = Op(2, r'{0} {1}')
 
 MENUITEMSDATA = []
@@ -93,6 +91,37 @@ ASCII_LATEX_TRANSLATION = {
     ':': r':',
     '_': r'\_',
 }
+
+class Symb(QLabel):
+    def __init__(self, parent, symb):
+        super().__init__('')
+        self.parent = parent
+        self.symb = symb
+        self.setPixmap(QPixmap(os.path.join(commons.SYMBOLS_DIR,
+                                           symb.tag + ".png")))
+        self.setAlignment(Qt.AlignCenter)
+
+    def mousePressEvent(self, event):
+        self.parent.symb_chosen = self.symb
+        self.parent.accept()
+
+class ChooseSymbDialog(QDialog):
+    def __init__(self, parent, caption, default_symb, symb_list):
+        super().__init__(parent)
+        self.symb_chosen = default_symb
+        self.setWindowTitle(caption)
+        self.setMinimumSize(QSize(300, 300))
+        layout = QGridLayout(self)
+        row = 1
+        column = 1
+        for symb in symb_list:
+            symb = Symb(self, symb)
+            layout.addWidget(symb, row, column)
+            column += 1
+            if column > 5:
+                column = 1
+                row += 1
+        self.setLayout(layout)
 
 LOWER_GREEK = [
     LatexSymb('alpha', r'\alpha', r'\alpha'),
@@ -239,7 +268,11 @@ SINGLEDELIMITERS = [
     LatexSymb('lrcorner', r'\lrcorner', r'\lrcorner'),
     LatexSymb('ulcorner', r'\ulcorner', r'\ulcorner'),
     LatexSymb('urcorner', r'\urcorner', r'\urcorner'),
-    LatexSymb('blankdelimiter', r'.', r'\text{No delimiter}'),
+    LatexSymb('uparrow', r'\uparrow', r'\uparrow'),
+    LatexSymb('upperuparrow', r'\Uparrow', r'\Uparrow'),
+    LatexSymb('downarrow', r'\downarrow', r'\downarrow'),
+    LatexSymb('upperdownarrow', r'\Downarrow', r'\Downarrow'),
+    LatexSymb('blankdelimiter', r'.', r'\text{None}'),
 ]
 
 ADDITIONAL_LS += SINGLEDELIMITERS
@@ -248,43 +281,67 @@ def free_delimiters(parent):
     class Dialog(QDialog):
         def __init__(self, parent=None):
             super().__init__(parent)
-
             self.setWindowTitle('Free delimiters')
+
+            self.symb_l = SINGLEDELIMITERS[0]
             label_l = QLabel('Left delimiter:')
-            self.combo_l = QComboBox()
-            self.combo_l.setIconSize(self.combo_l.minimumSizeHint())
-            for delim in SINGLEDELIMITERS:
-                self.combo_l.addItem(QIcon(os.path.join(commons.SYMBOLS_DIR,
-                                                        delim.tag + '.png')),
-                                     '')
+            hbox_l = QHBoxLayout()
+            button_l = QPushButton('Choose')
+            button_l.clicked.connect(self.handle_click_l)
+            self.repr_l = QLabel('')
+            self.repr_l.setPixmap(QPixmap(os.path.join(
+                commons.SYMBOLS_DIR, self.symb_l.tag + ".png")))
+            self.repr_l.setAlignment(Qt.AlignCenter)
+            hbox_l.addWidget(button_l)
+            hbox_l.addWidget(self.repr_l)
+
+            self.symb_r = SINGLEDELIMITERS[1]
             label_r = QLabel('Right delimiter:')
-            self.combo_r = QComboBox()
-            self.combo_r.setIconSize(self.combo_r.minimumSizeHint())
-            for delim in SINGLEDELIMITERS:
-                self.combo_r.addItem(QIcon(os.path.join(commons.SYMBOLS_DIR,
-                                                        delim.tag + '.png')),
-                                     '')
+            hbox_r = QHBoxLayout()
+            button_r = QPushButton('Choose')
+            button_r.clicked.connect(self.handle_click_r)
+            self.repr_r = QLabel('')
+            self.repr_r.setPixmap(QPixmap(os.path.join(
+                commons.SYMBOLS_DIR, self.symb_r.tag + ".png")))
+            self.repr_r.setAlignment(Qt.AlignCenter)
+            hbox_r.addWidget(button_r)
+            hbox_r.addWidget(self.repr_r)
+
             self.buttons = QDialogButtonBox(
                 QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
                 Qt.Horizontal, self)
             vbox = QVBoxLayout(self)
             vbox.addWidget(label_l)
-            vbox.addWidget(self.combo_l)
+            vbox.addLayout(hbox_l)
             vbox.addWidget(label_r)
-            vbox.addWidget(self.combo_r)
+            vbox.addLayout(hbox_r)
             vbox.addWidget(self.buttons)
 
             self.buttons.accepted.connect(self.accept)
             self.buttons.rejected.connect(self.reject)
+
+        def handle_click_l(self):
+            dialog = ChooseSymbDialog(self, "Choose left delimiter",
+                                      self.symb_l, SINGLEDELIMITERS)
+            dialog.exec_()
+            self.symb_l = dialog.symb_chosen
+            self.repr_l.setPixmap(QPixmap(os.path.join(
+                commons.SYMBOLS_DIR, self.symb_l.tag + ".png")))
+
+        def handle_click_r(self):
+            dialog = ChooseSymbDialog(self, "Choose right delimiter",
+                                      self.symb_r, SINGLEDELIMITERS)
+            dialog.exec_()
+            self.symb_r = dialog.symb_chosen
+            self.repr_r.setPixmap(QPixmap(os.path.join(
+                commons.SYMBOLS_DIR, self.symb_r.tag + ".png")))
 
         @staticmethod
         def get_delimiter(parent=None):
             dialog = Dialog(parent)
             result = dialog.exec_()
             if result == QDialog.Accepted:
-                return ((SINGLEDELIMITERS[dialog.combo_l.currentIndex()].code,
-                         SINGLEDELIMITERS[dialog.combo_r.currentIndex()].code),
-                        True)
+                return ((dialog.symb_l.code, dialog.symb_r.code), True)
             else:
                 return ((None, None), False)
             

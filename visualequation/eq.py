@@ -22,12 +22,12 @@ from PyQt5.QtCore import *
 from . import eqtools
 from . import eqhist
 from . import conversions
-from . import symbols
+from .symbols import utils
 
 class Eq:
     def __init__(self, temp_dir, setPixmap, parent):
 
-        init_eq = [symbols.NEWARG]
+        init_eq = [utils.NEWARG]
         self.eq_buffer = []
         self.eq = list(init_eq) # It will be mutated by the replace functions
         self.temp_dir = temp_dir
@@ -107,7 +107,7 @@ class Eq:
             the smartest block.
             """            
             if isinstance(op, str):
-                if self.eq[self.sel_index] == symbols.NEWARG:
+                if self.eq[self.sel_index] == utils.NEWARG:
                     self.eq[self.sel_index] = op
                 else:
                     if self.sel_right:
@@ -118,9 +118,9 @@ class Eq:
                         self.sel_index = eqtools.insertlbyJUXT(self.eq,
                                                                self.sel_index,
                                                                [op])
-            elif isinstance(op, symbols.Op):
-                opeq = [op] + [symbols.NEWARG]*op.n_args
-                if self.eq[self.sel_index] == symbols.NEWARG:
+            elif isinstance(op, utils.Op):
+                opeq = [op] + [utils.NEWARG]*op.n_args
+                if self.eq[self.sel_index] == utils.NEWARG:
                     self.eq[self.sel_index:self.sel_index+1] = opeq
                     self.sel_index += 1
                 else:
@@ -176,13 +176,13 @@ class Eq:
             """
             if isinstance(op, str):
                 eqtools.replaceby(self.eq, self.sel_index, [op])
-            elif isinstance(op, symbols.Op) and op.n_args == 1:
+            elif isinstance(op, utils.Op) and op.n_args == 1:
                 self.eq.insert(self.sel_index, op)
-            elif isinstance(op, symbols.Op) and op.n_args > 1:
+            elif isinstance(op, utils.Op) and op.n_args > 1:
                 index_end_arg1 = eqtools.nextblockindex(self.eq, self.sel_index)
                 self.eq[self.sel_index:index_end_arg1] = [op] \
                                     + self.eq[self.sel_index:index_end_arg1] \
-                                    + [symbols.NEWARG] * (op.n_args-1)
+                                    + [utils.NEWARG] * (op.n_args-1)
                 self.sel_index = index_end_arg1+1
             else:
                 raise ValueError('Unknown operator passed.')
@@ -202,9 +202,9 @@ class Eq:
 
     def insert_sup_substituting(self):
         # Consider that the user specifies the first argument of index operator
-        if self.eq[self.sel_index] not in symbols.INDEX_OPS \
+        if self.eq[self.sel_index] not in utils.INDEX_OPS \
            and self.sel_index > 0 \
-           and self.eq[self.sel_index-1] in symbols.INDEX_OPS:
+           and self.eq[self.sel_index-1] in utils.INDEX_OPS:
             # In that case, we change sel_index as if the index operator was
             # selected (it is a non-standard use of sel_index just to avoid
             # complicated code with more if-clauses)
@@ -215,7 +215,7 @@ class Eq:
         if self.sel_right:
             up_index = 3
             if not args[up_index]:
-                args[up_index] = [symbols.NEWARG]
+                args[up_index] = [utils.NEWARG]
             elems = 0
             for i in range(up_index):
                 if args[i] != None:
@@ -223,7 +223,7 @@ class Eq:
         else: # if not self.sel_right
             up_index = 4
             if not args[up_index]:
-                args[up_index] = [symbols.NEWARG]
+                args[up_index] = [utils.NEWARG]
             elems = 0
             for i in range(up_index):
                 if args[i] != None:
@@ -244,9 +244,9 @@ class Eq:
 
     def insert_sub_substituting(self):
         # Consider that the user specifies the first argument of index operator
-        if self.eq[self.sel_index] not in symbols.INDEX_OPS \
+        if self.eq[self.sel_index] not in utils.INDEX_OPS \
            and self.sel_index > 0 \
-           and self.eq[self.sel_index-1] in symbols.INDEX_OPS:
+           and self.eq[self.sel_index-1] in utils.INDEX_OPS:
             # In that case, we change sel_index as if the index operator was
             # selected (it is a non-standard use of sel_index just to avoid
             # complicated code with more if-clauses)
@@ -257,7 +257,7 @@ class Eq:
         if self.sel_right:
             down_index = 2
             if not args[down_index]:
-                args[down_index] = [symbols.NEWARG]
+                args[down_index] = [utils.NEWARG]
             elems = 0
             for i in range(down_index):
                 if args[i] != None:
@@ -265,7 +265,7 @@ class Eq:
         else: # if not self.sel_right
             down_index = 1
             if not args[down_index]:
-                args[down_index] = [symbols.NEWARG]
+                args[down_index] = [utils.NEWARG]
             elems = 0
             for i in range(down_index):
                 if args[i] != None:
@@ -326,8 +326,8 @@ class Eq:
                     new_args = eqtools.flat_arglist(args)
                     self.eq[script_op_index:end_block] = [new_op] + new_args
                 self.sel_index = script_op_index
-            elif self.eq[self.sel_index] != symbols.NEWARG:
-                eqtools.replaceby(self.eq, self.sel_index, [symbols.NEWARG])
+            elif self.eq[self.sel_index] != utils.NEWARG:
+                eqtools.replaceby(self.eq, self.sel_index, [utils.NEWARG])
             else:
                 # Avoid saving in history if nothing to do
                 return
@@ -404,7 +404,7 @@ class Eq:
         self.sel_index. If the block is a NEWARG, just replace it.
         """
         if self.eq_buffer != []:
-            if self.eq[self.sel_index] == symbols.NEWARG:
+            if self.eq[self.sel_index] == utils.NEWARG:
                 self.eq[self.sel_index:self.sel_index+1] = self.eq_buffer
             else:
                 if self.sel_right:

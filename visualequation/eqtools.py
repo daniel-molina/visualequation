@@ -15,7 +15,7 @@
 Module to transform equations to latex code and getting information from or
 replacing equation blocks.
 """
-from . import symbols
+from .symbols import utils
 
 def eqblock2latex(eq, index):
     """ Return latex code of the equation block starting at the given index
@@ -27,7 +27,7 @@ def eqblock2latex(eq, index):
     """
     def block2latex(index):
         """ Incredible recursive function that DOES the real job"""
-        if isinstance(eq[index], symbols.Op):
+        if isinstance(eq[index], utils.Op):
             # I have to find n_arg independent blocks for this operator
             index_of_arg = index+1
             latex_args = ()
@@ -52,7 +52,7 @@ def nextblockindex(eq, index):
     """
     def block2nextindex(index):
         """ Simplification of the recursive nested function block2latex."""
-        if isinstance(eq[index], symbols.Op):
+        if isinstance(eq[index], utils.Op):
             # I have to find n_arg independent blocks for this operator
             index_of_arg = index+1
             for _ in range(eq[index].n_args):
@@ -83,9 +83,9 @@ def sel_eq(eq, index, right_sel):
     """
     sel = list(eq)
     if right_sel:
-        sel.insert(index, symbols.REDIT)
+        sel.insert(index, utils.REDIT)
     else:
-        sel.insert(index, symbols.LEDIT)
+        sel.insert(index, utils.LEDIT)
     return sel
 
 def insertrbyJUXT(eq, start_index, eqblock):
@@ -95,10 +95,10 @@ def insertrbyJUXT(eq, start_index, eqblock):
     """
     # If eqblock is the base of an index operator, consider the index operator
     # instead. It avoids a bit of caos in the equation structure.
-    if eq[start_index-1] in symbols.INDEX_OPS:
+    if eq[start_index-1] in utils.INDEX_OPS:
         start_index -= 1
     end_index = nextblockindex(eq, start_index)
-    eq[start_index:end_index] = [symbols.JUXT] + eq[start_index:end_index] \
+    eq[start_index:end_index] = [utils.JUXT] + eq[start_index:end_index] \
                                 + eqblock
     return end_index+1
 
@@ -109,10 +109,10 @@ def insertlbyJUXT(eq, start_index, eqblock):
     """
     # If eqblock is the base of an index operator, consider the index operator
     # instead. It avoids a bit of caos in the equation structure.
-    if eq[start_index-1] in symbols.INDEX_OPS:
+    if eq[start_index-1] in utils.INDEX_OPS:
         start_index -= 1
     end_index = nextblockindex(eq, start_index)
-    eq[start_index:end_index] = [symbols.JUXT] + eqblock \
+    eq[start_index:end_index] = [utils.JUXT] + eqblock \
                                 + eq[start_index:end_index]
     return start_index+1
 
@@ -135,7 +135,7 @@ def is_arg_of_JUXT(eq, check_index):
     start_index = 0
     try:
         while True:
-            Juxt_index = eq.index(symbols.JUXT, start_index)
+            Juxt_index = eq.index(utils.JUXT, start_index)
             arg2index = nextblockindex(eq, Juxt_index+1)
             if Juxt_index + 1 == check_index:
                 return True, Juxt_index, arg2index
@@ -151,7 +151,7 @@ def is_intermediate_JUXT(eq, index):
     Check whether if index points to a JUXT that is the argument of
     other JUXT.
     """
-    if eq[index] == symbols.JUXT:
+    if eq[index] == utils.JUXT:
         cond, _, _ = is_arg_of_JUXT(eq, index)
         if cond:
             return True
@@ -167,86 +167,86 @@ def indexop2arglist(eq, sel_index):
     pointed block and the rest will be set to None.
     """
     op = eq[sel_index] # it can be index operator but not necessarily (!)
-    if op not in symbols.INDEX_OPS:
+    if op not in utils.INDEX_OPS:
         end_block = nextblockindex(eq, sel_index)    
         return [eq[sel_index:end_block], None, None, None, None]
     start_arg1 = sel_index + 1
     start_arg2 = nextblockindex(eq, start_arg1)
-    if op == symbols.LSUB:
+    if op == utils.LSUB:
         end_arg2 = nextblockindex(eq, start_arg2)
         return [eq[start_arg1:start_arg2],
                 eq[start_arg2:end_arg2], None, None, None]
-    elif op == symbols.SUB:
+    elif op == utils.SUB:
         end_arg2 = nextblockindex(eq, start_arg2)
         return [eq[start_arg1:start_arg2],
                 None, eq[start_arg2:end_arg2], None, None]
-    elif op == symbols.SUP:
+    elif op == utils.SUP:
         end_arg2 = nextblockindex(eq, start_arg2)
         return [eq[start_arg1:start_arg2],
                 None, None, eq[start_arg2:end_arg2], None]
-    elif op == symbols.LSUP:
+    elif op == utils.LSUP:
         end_arg2 = nextblockindex(eq, start_arg2)
         return [eq[start_arg1:start_arg2],
                 None, None, None, eq[start_arg2:end_arg2]]
-    elif op == symbols.LSUBSUB:
+    elif op == utils.LSUBSUB:
         end_arg2 = nextblockindex(eq, start_arg2)
         end_arg3 = nextblockindex(eq, end_arg2)
         return [eq[start_arg1:start_arg2],
                 eq[start_arg2:end_arg2], eq[end_arg2:end_arg3], None, None]
-    elif op == symbols.SUBSUP:
+    elif op == utils.SUBSUP:
         end_arg2 = nextblockindex(eq, start_arg2)
         end_arg3 = nextblockindex(eq, end_arg2)
         return [eq[start_arg1:start_arg2],
                 None, eq[start_arg2:end_arg2], eq[end_arg2:end_arg3], None]
-    elif op == symbols.SUPLSUP:
+    elif op == utils.SUPLSUP:
         end_arg2 = nextblockindex(eq, start_arg2)
         end_arg3 = nextblockindex(eq, end_arg2)
         return [eq[start_arg1:start_arg2],
                 None, None, eq[start_arg2:end_arg2], eq[end_arg2:end_arg3]]
-    elif op == symbols.LSUBLSUP:
+    elif op == utils.LSUBLSUP:
         end_arg2 = nextblockindex(eq, start_arg2)
         end_arg3 = nextblockindex(eq, end_arg2)
         return [eq[start_arg1:start_arg2],
                 eq[start_arg2:end_arg2], None, None, eq[end_arg2:end_arg3]]
-    elif op == symbols.LSUBSUP:
+    elif op == utils.LSUBSUP:
         end_arg2 = nextblockindex(eq, start_arg2)
         end_arg3 = nextblockindex(eq, end_arg2)
         return [eq[start_arg1:start_arg2],
                 eq[start_arg2:end_arg2], None, eq[end_arg2:end_arg3], None]
-    elif op == symbols.SUBLSUP:
+    elif op == utils.SUBLSUP:
         end_arg2 = nextblockindex(eq, start_arg2)
         end_arg3 = nextblockindex(eq, end_arg2)
         return [eq[start_arg1:start_arg2],
                 None, eq[start_arg2:end_arg2], None, eq[end_arg2:end_arg3]]
-    elif op == symbols.LSUBSUBSUP:
+    elif op == utils.LSUBSUBSUP:
         end_arg2 = nextblockindex(eq, start_arg2)
         end_arg3 = nextblockindex(eq, end_arg2)
         end_arg4 = nextblockindex(eq, end_arg3)
         return [eq[start_arg1:start_arg2],
                 eq[start_arg2:end_arg2], eq[end_arg2:end_arg3],
                 eq[end_arg3:end_arg4], None]
-    elif op == symbols.LSUBSUBLSUP:
+    elif op == utils.LSUBSUBLSUP:
         end_arg2 = nextblockindex(eq, start_arg2)
         end_arg3 = nextblockindex(eq, end_arg2)
         end_arg4 = nextblockindex(eq, end_arg3)
         return [eq[start_arg1:start_arg2],
                 eq[start_arg2:end_arg2], eq[end_arg2:end_arg3],
                 None, eq[end_arg3:end_arg4]]
-    elif op == symbols.LSUBSUPLSUP:
+    elif op == utils.LSUBSUPLSUP:
         end_arg2 = nextblockindex(eq, start_arg2)
         end_arg3 = nextblockindex(eq, end_arg2)
         end_arg4 = nextblockindex(eq, end_arg3)
         return [eq[start_arg1:start_arg2],
                 eq[start_arg2:end_arg2], None,
                 eq[end_arg2:end_arg3], eq[end_arg3:end_arg4]]
-    elif op == symbols.SUBSUPLSUP:
+    elif op == utils.SUBSUPLSUP:
         end_arg2 = nextblockindex(eq, start_arg2)
         end_arg3 = nextblockindex(eq, end_arg2)
         end_arg4 = nextblockindex(eq, end_arg3)
         return [eq[start_arg1:start_arg2],
                 None, eq[start_arg2:end_arg2],
                 eq[end_arg2:end_arg3], eq[end_arg3:end_arg4]]
-    elif op == symbols.LSUBSUBSUPLSUP:
+    elif op == utils.LSUBSUBSUPLSUP:
         end_arg2 = nextblockindex(eq, start_arg2)
         end_arg3 = nextblockindex(eq, end_arg2)
         end_arg4 = nextblockindex(eq, end_arg3)
@@ -267,21 +267,21 @@ def flat_arglist(args):
 def arglist2indexop(args):
     indexops_dict = {
         (True, False, False, False, False): None,
-        (True, True, False, False, False): symbols.LSUB,
-        (True, False, True, False, False): symbols.SUB,
-        (True, False, False, True, False): symbols.SUP,
-        (True, False, False, False, True): symbols.LSUP,
-        (True, True, True, False, False): symbols.LSUBSUB,
-        (True, False, True, True, False): symbols.SUBSUP,
-        (True, False, False, True, True): symbols.SUPLSUP,
-        (True, True, False, False, True): symbols.LSUBLSUP,
-        (True, True, False, True, False): symbols.LSUBSUP,
-        (True, False, True, False, True): symbols.SUBLSUP,
-        (True, True, True, True, False): symbols.LSUBSUBSUP,
-        (True, True, True, False, True): symbols.LSUBSUBLSUP,
-        (True, True, False, True, True): symbols.LSUBSUPLSUP,
-        (True, False, True, True, True): symbols.SUBSUPLSUP,
-        (True, True, True, True, True): symbols.LSUBSUBSUPLSUP,
+        (True, True, False, False, False): utils.LSUB,
+        (True, False, True, False, False): utils.SUB,
+        (True, False, False, True, False): utils.SUP,
+        (True, False, False, False, True): utils.LSUP,
+        (True, True, True, False, False): utils.LSUBSUB,
+        (True, False, True, True, False): utils.SUBSUP,
+        (True, False, False, True, True): utils.SUPLSUP,
+        (True, True, False, False, True): utils.LSUBLSUP,
+        (True, True, False, True, False): utils.LSUBSUP,
+        (True, False, True, False, True): utils.SUBLSUP,
+        (True, True, True, True, False): utils.LSUBSUBSUP,
+        (True, True, True, False, True): utils.LSUBSUBLSUP,
+        (True, True, False, True, True): utils.LSUBSUPLSUP,
+        (True, False, True, True, True): utils.SUBSUPLSUP,
+        (True, True, True, True, True): utils.LSUBSUBSUPLSUP,
     }
     try:
         return indexops_dict[tuple(bool(arg) for arg in args)]
@@ -298,7 +298,7 @@ def is_script(eq, sel_index):
     The 3rd element indicates which argument of the index operator is being
     pointed by sel_index, or 0 if it is the base.
     """
-    for op in symbols.INDEX_OPS:
+    for op in utils.INDEX_OPS:
         try:
             start_index = 0
             while True:

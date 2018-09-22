@@ -23,7 +23,7 @@ import tempfile
 import shutil
 import subprocess
 
-from visualequation.symbols import MENUITEMSDATA, ADDITIONAL_LS
+from visualequation.symbols.utils import MENUITEMSDATA, ADDITIONAL_LS
 from visualequation.conversions import eq2png
 from visualequation import commons
 

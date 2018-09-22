@@ -21,7 +21,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
-from . import symbols
+from .symbols import utils
 from . import commons
 
 class TabWidget(QTabWidget):
@@ -30,7 +30,7 @@ class TabWidget(QTabWidget):
 
         self.maineq = maineq
         self.tabs = []
-        for index, menuitemdata in enumerate(symbols.MENUITEMSDATA):
+        for index, menuitemdata in enumerate(utils.MENUITEMSDATA):
             self.tabs.append(QWidget())
             icon = QIcon(os.path.join(commons.SYMBOLS_DIR,
                                       menuitemdata.tag + ".png"))
@@ -41,28 +41,15 @@ class TabWidget(QTabWidget):
             layout = QGridLayout(self)
             row = 0
             column = 0
-            for symb_index, symb in enumerate(menuitemdata.symb_l):
-                symbols_as_buttons = False
-                if symbols_as_buttons:
-                    button = QPushButton('')
-                    button.setIcon(QIcon(os.path.join(commons.SYMBOLS_DIR,
-                                                      symb.tag + ".png")))
-                    button.setIconSize(QSize(menuitemdata.clickable_size[0],
-                                             menuitemdata.clickable_size[1]))
-                    cmd = lambda state, code=symb.code: \
-                          self.handle_click(state, code)
-                    button.clicked.connect(cmd)
-                    layout.addWidget(button, row, column)
-                else:
-                    label = QLabel('')
-                    label.setPixmap(QPixmap(os.path.join(commons.SYMBOLS_DIR,
-                                                         symb.tag + ".png")))
-                    cmd = lambda state, code=symb.code: \
-                          self.handle_click(state, code)
-                    label.mousePressEvent = cmd
-                    layout.addWidget(label, row, column)
-                    label.setAlignment(Qt.AlignCenter)
-                    
+            for symb in menuitemdata.symb_l:
+                label = QLabel('')
+                label.setPixmap(QPixmap(os.path.join(commons.SYMBOLS_DIR,
+                                                     symb.tag + ".png")))
+                cmd = lambda state, code=symb.code: \
+                      self.handle_click(state, code)
+                label.mousePressEvent = cmd
+                layout.addWidget(label, row, column)
+                label.setAlignment(Qt.AlignCenter)
                 column += 1
                 if column > 9:
                     column = 0
@@ -70,7 +57,7 @@ class TabWidget(QTabWidget):
              
             self.tabs[index].setLayout(layout)
 
-    def handle_click(self, state, code):
+    def handle_click(self, event, code):
         modifiers = QApplication.keyboardModifiers()
         if modifiers == Qt.ShiftModifier:
             self.maineq.eq.insert_substituting(code)

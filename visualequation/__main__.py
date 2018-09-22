@@ -25,7 +25,6 @@ from PyQt5.QtCore import *
 
 from . import symbolstab
 from . import eqlabel
-from . import symbols
 from . import conversions
 from . import commons
 
@@ -110,9 +109,6 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout()
         # Create the equation
         self.maineq = eqlabel.EqLabel(self.temp_dir, self)
-        #label_pixmap = QPixmap('tests/im.png')
-        #label = QLabel(self)
-        #label.setPixmap(label_pixmap)
         self.maineq.setAlignment(Qt.AlignCenter)
         # Create the symbols TabWidget
         self.tabs = symbolstab.TabWidget(self, self.maineq)

@@ -24,7 +24,7 @@ from PyQt5.QtGui import *
 
 from . import commons
 from . import eqtools
-from . import symbols
+from .symbols import utils
 
 def eq2latex_file(eq, latex_file, template_file):
     """ Write equation in a LaTeX file according to the template_file.
@@ -128,7 +128,7 @@ class MyEncoder(json.JSONEncoder):
 
 def from_json(json_o):
     if isinstance(json_o, dict):
-        return symbols.Op(json_o['n_args'], json_o['latex_code'])
+        return utils.Op(json_o['n_args'], json_o['latex_code'])
 
 def eq2png(eq, dpi, bg, directory, png_fpath=None, add_metadata=False):
     """ Create a png from a equation, returns the path of PNG image.
