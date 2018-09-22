@@ -16,7 +16,7 @@ class EqHist:
         self.eq_hist = [(list(init_eq), 0)]
         self.eq_hist_index = 0
 
-    def append(self, eq, sel_index):
+    def save(self, eq, sel_index):
         """
         Save current equation to the historial and delete any future elements
         from this point

@@ -148,7 +148,7 @@ class Eq:
 
         self.sel_right = True
         self._set_sel()
-        self.eqhist.append(self.eq, self.sel_index)
+        self.eqhist.save(self.eq, self.sel_index)
 
     def insert_substituting(self, oper):
         """
@@ -198,7 +198,7 @@ class Eq:
 
         self.sel_right = True
         self._set_sel()
-        self.eqhist.append(self.eq, self.sel_index)
+        self.eqhist.save(self.eq, self.sel_index)
 
     def insert_sup_substituting(self):
         # Consider that the user specifies the first argument of index operator
@@ -240,7 +240,7 @@ class Eq:
         self.sel_index += 1 + elems
         self.sel_right = True
         self._set_sel()
-        self.eqhist.append(self.eq, self.sel_index)
+        self.eqhist.save(self.eq, self.sel_index)
 
     def insert_sub_substituting(self):
         # Consider that the user specifies the first argument of index operator
@@ -282,7 +282,7 @@ class Eq:
         self.sel_index += 1 + elems
         self.sel_right = True
         self._set_sel()
-        self.eqhist.append(self.eq, self.sel_index)
+        self.eqhist.save(self.eq, self.sel_index)
 
     def remove_sel(self):
         """
@@ -334,7 +334,7 @@ class Eq:
 
         self.sel_right = True
         self._set_sel()
-        self.eqhist.append(self.eq, self.sel_index)
+        self.eqhist.save(self.eq, self.sel_index)
 
     def open_eq(self, filename=None):
         neweq = conversions.open_eq(self.parent, filename)
@@ -342,7 +342,7 @@ class Eq:
             self.eq = list(neweq)
             self.sel_index = 0
             self._set_sel()
-            self.eqhist.append(neweq, 0)
+            self.eqhist.save(neweq, 0)
 
     def save_eq(self):
         items = ["PNG", "PDF", "EPS", "SVG"]
@@ -417,4 +417,4 @@ class Eq:
                                                            self.eq_buffer)
             self.sel_right = True
             self._set_sel()
-            self.eqhist.append(self.eq, self.sel_index)
+            self.eqhist.save(self.eq, self.sel_index)
