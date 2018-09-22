@@ -13,12 +13,14 @@
 
 import setuptools
 
+from visualequation import commons
+
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="visualequation",
-    version="0.3.0",
+    version=commons.VERSION,
     author="Daniel Molina",
     author_email="lluvia@autistici.org",
     description="An equation editor powered by LaTeX",
@@ -30,12 +32,16 @@ setuptools.setup(
     entry_points={
         'gui_scripts': ['visualequation = visualequation.__main__:main']
     },
-    package_data={'visualequation': ['data/eq_template.tex', 'data/symbols/*']},
+    package_data={'visualequation': ['data/eq_template.tex',
+                                     'data/icon.png',
+                                     'data/USAGE.html',
+                                     'data/symbols/*']},
     zip_safe=False,
     classifiers=[
-        "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
         "Operating System :: POSIX :: Linux",
+        "Environment :: X11 Applications :: Qt",
         "Topic :: Scientific/Engineering :: Mathematics",
         "Intended Audience :: Science/Research",
         "Intended Audience :: Education",

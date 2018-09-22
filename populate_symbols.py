@@ -25,7 +25,7 @@ import subprocess
 
 from visualequation.symbols import MENUITEMSDATA, ADDITIONAL_LS
 from visualequation.conversions import eq2png
-from visualequation import dirs
+from visualequation import commons
 
 def edit_expr(latex_code):
     """
@@ -48,7 +48,7 @@ def generate_symb_images(menuitemdata, temp_dir):
     generated.
     """
     for symb in menuitemdata.symb_l:
-        filename = os.path.join(dirs.SYMBOLS_DIR, symb.tag + ".png")
+        filename = os.path.join(commons.SYMBOLS_DIR, symb.tag + ".png")
         eq2png(edit_expr(symb.expr), menuitemdata.dpi, None, temp_dir,
                filename)
         postprocess(filename)
@@ -59,13 +59,13 @@ if __name__ == '__main__':
     # Prepare a temporal directory to manage all LaTeX files
     temp_dirpath = tempfile.mkdtemp()
 
-    if not os.path.exists(dirs.SYMBOLS_DIR):
-        os.makedirs(dirs.SYMBOLS_DIR)
+    if not os.path.exists(commons.SYMBOLS_DIR):
+        os.makedirs(commons.SYMBOLS_DIR)
 
     for index, menuitemdata in enumerate(MENUITEMSDATA):
         print("Generating menu symbols...", index+1, "/", \
             len(MENUITEMSDATA))
-        filename = os.path.join(dirs.SYMBOLS_DIR, menuitemdata.tag + '.png')
+        filename = os.path.join(commons.SYMBOLS_DIR, menuitemdata.tag + '.png')
         eq2png(edit_expr(menuitemdata.expr), None, None, temp_dirpath,
                filename)
         postprocess(filename)
@@ -73,7 +73,7 @@ if __name__ == '__main__':
 
     print("Generating dialog symbols...")
     for symb in ADDITIONAL_LS:
-        filename = os.path.join(dirs.SYMBOLS_DIR, symb.tag + ".png")
+        filename = os.path.join(commons.SYMBOLS_DIR, symb.tag + ".png")
         eq2png(edit_expr(symb.expr), 200, None, temp_dirpath, filename)
         postprocess(filename)
 

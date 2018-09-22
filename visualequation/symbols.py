@@ -21,7 +21,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
-from . import dirs
+from . import commons
 
 class Op(object):
     """ Class for LaTeX operator (that has arguments)"""
@@ -254,14 +254,14 @@ def free_delimiters(parent):
             self.combo_l = QComboBox()
             self.combo_l.setIconSize(self.combo_l.minimumSizeHint())
             for delim in SINGLEDELIMITERS:
-                self.combo_l.addItem(QIcon(os.path.join(dirs.SYMBOLS_DIR,
+                self.combo_l.addItem(QIcon(os.path.join(commons.SYMBOLS_DIR,
                                                         delim.tag + '.png')),
                                      '')
             label_r = QLabel('Right delimiter:')
             self.combo_r = QComboBox()
             self.combo_r.setIconSize(self.combo_r.minimumSizeHint())
             for delim in SINGLEDELIMITERS:
-                self.combo_r.addItem(QIcon(os.path.join(dirs.SYMBOLS_DIR,
+                self.combo_r.addItem(QIcon(os.path.join(commons.SYMBOLS_DIR,
                                                         delim.tag + '.png')),
                                      '')
             self.buttons = QDialogButtonBox(
@@ -681,7 +681,7 @@ def color(parent):
             self.combo = QComboBox()
             self.combo.setIconSize(self.combo.minimumSizeHint())
             for color in COLORS:
-                self.combo.addItem(QIcon(os.path.join(dirs.SYMBOLS_DIR,
+                self.combo.addItem(QIcon(os.path.join(commons.SYMBOLS_DIR,
                                                       color.tag + '.png')), '')
             self.buttons = QDialogButtonBox(
                 QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
@@ -719,7 +719,7 @@ def colorbox(parent):
             self.combo = QComboBox()
             self.combo.setIconSize(self.combo.minimumSizeHint())
             for color in COLORS:
-                self.combo.addItem(QIcon(os.path.join(dirs.SYMBOLS_DIR,
+                self.combo.addItem(QIcon(os.path.join(commons.SYMBOLS_DIR,
                                                       color.tag + '.png')), '')
             self.buttons = QDialogButtonBox(
                 QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
@@ -802,7 +802,7 @@ def matrix_type(parent):
             label_combo = QLabel('Matrix type:')
             self.combo = QComboBox()
             for mtype in MATRIXTYPES:
-                self.combo.addItem(QIcon(os.path.join(dirs.SYMBOLS_DIR,
+                self.combo.addItem(QIcon(os.path.join(commons.SYMBOLS_DIR,
                                                       mtype.tag + '.png')), '')
             self.combo.setIconSize(self.combo.minimumSizeHint())
             #self.combo.setSizePolicy(QSizePolicy.Expanding,
@@ -983,14 +983,14 @@ def array(parent):
             self.combo_l = QComboBox()
             self.combo_l.setIconSize(self.combo_l.minimumSizeHint())
             for delim in SINGLEDELIMITERS:
-                self.combo_l.addItem(QIcon(os.path.join(dirs.SYMBOLS_DIR,
+                self.combo_l.addItem(QIcon(os.path.join(commons.SYMBOLS_DIR,
                                                         delim.tag + '.png')),
                                      '')
             label_r = QLabel('Right delimiter:')
             self.combo_r = QComboBox()
             self.combo_r.setIconSize(self.combo_l.minimumSizeHint())
             for delim in SINGLEDELIMITERS:
-                self.combo_r.addItem(QIcon(os.path.join(dirs.SYMBOLS_DIR,
+                self.combo_r.addItem(QIcon(os.path.join(commons.SYMBOLS_DIR,
                                                         delim.tag + '.png')),
                                      '')
             self.combo_r.setCurrentIndex(1)

@@ -27,9 +27,7 @@ from . import symbolstab
 from . import eqlabel
 from . import symbols
 from . import conversions
-from . import dirs
-
-VERSION = "0.3"
+from . import commons
 
 class MainWindow(QMainWindow):
     def __init__(self, temp_dir):
@@ -40,7 +38,7 @@ class MainWindow(QMainWindow):
         self.init_menu()
 
         self.setWindowTitle('Visual Equation')
-        self.setWindowIcon(QIcon(dirs.ICON))
+        self.setWindowIcon(QIcon(commons.ICON))
         self.setGeometry(0, 0, 1000, 700)
 
     def init_menu(self):
@@ -132,7 +130,7 @@ class MainWindow(QMainWindow):
                 self.setWindowTitle('Basic usage')
                 text = QTextEdit(self)
                 text.setReadOnly(True)
-                with open(dirs.USAGE_FILE, "r") as fusage:
+                with open(commons.USAGE_FILE, "r") as fusage:
                     text.insertHtml(fusage.read())
                 text.moveCursor(QTextCursor.Start)
                 buttons = QDialogButtonBox(QDialogButtonBox.Ok, self)
@@ -145,7 +143,7 @@ class MainWindow(QMainWindow):
 
     def about(self):
         msg = "<p>Visual Equation</p>" \
-            + "<p><em>Version:</em> " + VERSION + "</p>" \
+            + "<p><em>Version:</em> " + commons.VERSION + "</p>" \
             + "<p><em>Author:</em> Daniel Molina</p>" \
             + '<p><em>Sources:</em> ' \
             + '<a href="https://github.com/daniel-molina/visualequation">' \

@@ -22,7 +22,7 @@ import json
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 
-from . import dirs
+from . import commons
 from . import eqtools
 from . import symbols
 
@@ -142,16 +142,13 @@ def eq2png(eq, dpi, bg, directory, png_fpath=None, add_metadata=False):
     # If directory does not exist, raise exception
     if not os.path.exists(directory):
         raise ValueError('Directory does not exist.')
-        #os.makedirs(directory)
-    fname = 'foo'
+    fname = 've'
     latex_fpath = os.path.join(directory, fname + '.tex')
-    #latex2dvilog_fpath = os.path.join(directory,
-    #                                  fname + '_latex2dvi.log')
     dvi2pnglog_fpath = os.path.join(directory, fname + '_div2png.log')
     dvi_fpath = os.path.join(directory, fname + '.dvi')
     if png_fpath == None:
         png_fpath = os.path.join(directory, fname + '.png')
-    eq2latex_file(eq, latex_fpath, dirs.LATEX_TEMPLATE)
+    eq2latex_file(eq, latex_fpath, commons.LATEX_TEMPLATE)
     latex_file2dvi(latex_fpath, directory)
     if dpi == None:
         dpi = 300
@@ -184,14 +181,13 @@ def eq2eps(eq, directory, eps_fpath=None):
     # If directory does not exist, raise exception
     if not os.path.exists(directory):
         raise ValueError('Directory does not exist.')
-        #os.makedirs(directory)
-    fname = 'foo'
+    fname = 've'
     latex_fpath = os.path.join(directory, fname + '.tex')
     dvi2epslog_fpath = os.path.join(directory, fname + '_div2eps.log')
     dvi_fpath = os.path.join(directory, fname + '.dvi')
     if eps_fpath == None:
         eps_fpath = os.path.join(directory, fname + '.ps')
-    eq2latex_file(eq, latex_fpath, dirs.LATEX_TEMPLATE)
+    eq2latex_file(eq, latex_fpath, commons.LATEX_TEMPLATE)
     latex_file2dvi(latex_fpath, directory)
     dvi2eps(dvi_fpath, eps_fpath, dvi2epslog_fpath)
     return eps_fpath
@@ -201,7 +197,7 @@ def eq2pdf(eq, directory, pdf_fpath=None):
     Convert equation to pdf file. It always adds the equation to metadata.
     """
     if pdf_fpath == None:
-        pdf_fpath = os.path.join(directory, 'foo.pdf')
+        pdf_fpath = os.path.join(directory, 've.pdf')
         save_eq = False
     else:
         save_eq = True
@@ -210,7 +206,7 @@ def eq2pdf(eq, directory, pdf_fpath=None):
     if save_eq:
         # Save the equation into the file
         eq_str = json.dumps(eq, cls=MyEncoder)
-        exiftoollog_fpath = os.path.join(directory, 'foo_exif.log')
+        exiftoollog_fpath = os.path.join(directory, 've_exif.log')
         with open(exiftoollog_fpath, "w") as flog:
             try:
                 subprocess.call(["exiftool", "-overwrite_original",
@@ -229,12 +225,12 @@ def eq2svg(eq, directory, svg_fpath):
     # If directory does not exist, raise exception
     if not os.path.exists(directory):
         raise ValueError('Directory does not exist.')
-    fname = 'foo'
+    fname = 've'
     latex_fpath = os.path.join(directory, fname + '.tex')
     dvi_fpath = os.path.join(directory, fname + '.dvi')    
     dvi2svglog_path = os.path.join(directory,
                                    fname + '_dvi2svg.log')
-    eq2latex_file(eq, latex_fpath, dirs.LATEX_TEMPLATE)
+    eq2latex_file(eq, latex_fpath, commons.LATEX_TEMPLATE)
     latex_file2dvi(latex_fpath, directory)
     dvi2svg(dvi_fpath, svg_fpath, dvi2svglog_path)
 

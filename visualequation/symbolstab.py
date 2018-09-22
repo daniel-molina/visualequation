@@ -22,7 +22,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
 from . import symbols
-from . import dirs
+from . import commons
 
 class TabWidget(QTabWidget):
     def __init__(self, parent, maineq):
@@ -32,7 +32,7 @@ class TabWidget(QTabWidget):
         self.tabs = []
         for index, menuitemdata in enumerate(symbols.MENUITEMSDATA):
             self.tabs.append(QWidget())
-            icon = QIcon(os.path.join(dirs.SYMBOLS_DIR,
+            icon = QIcon(os.path.join(commons.SYMBOLS_DIR,
                                       menuitemdata.tag + ".png"))
             self.setIconSize(QSize(50, 30))
             self.addTab(self.tabs[index], icon, "")
@@ -45,7 +45,7 @@ class TabWidget(QTabWidget):
                 symbols_as_buttons = False
                 if symbols_as_buttons:
                     button = QPushButton('')
-                    button.setIcon(QIcon(os.path.join(dirs.SYMBOLS_DIR,
+                    button.setIcon(QIcon(os.path.join(commons.SYMBOLS_DIR,
                                                       symb.tag + ".png")))
                     button.setIconSize(QSize(menuitemdata.clickable_size[0],
                                              menuitemdata.clickable_size[1]))
@@ -55,7 +55,7 @@ class TabWidget(QTabWidget):
                     layout.addWidget(button, row, column)
                 else:
                     label = QLabel('')
-                    label.setPixmap(QPixmap(os.path.join(dirs.SYMBOLS_DIR,
+                    label.setPixmap(QPixmap(os.path.join(commons.SYMBOLS_DIR,
                                                          symb.tag + ".png")))
                     cmd = lambda state, code=symb.code: \
                           self.handle_click(state, code)

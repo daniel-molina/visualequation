@@ -21,7 +21,7 @@ import shutil
 import subprocess
 import json
 
-from visualequation import dirs
+from visualequation import commons
 from visualequation import conversions
 
 class DependenciesTest(unittest.TestCase):
@@ -30,7 +30,7 @@ class DependenciesTest(unittest.TestCase):
         temp_dirpath = tempfile.mkdtemp()
         latex_fpath = os.path.join(temp_dirpath, 'latex.tex')
         latex_code = r"\int_0^1 f(x)\, dx = \sum_{n=0}^\infty a_n"
-        with open(dirs.LATEX_TEMPLATE, "r") as ftempl:
+        with open(commons.LATEX_TEMPLATE, "r") as ftempl:
             with open(latex_fpath, "w") as flatex:
                 for line in ftempl:
                     flatex.write(line.replace('%EQ%', latex_code))
