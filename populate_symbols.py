@@ -42,7 +42,6 @@ def postprocess(filename):
     """
     subprocess.call(["mogrify", "-chop", "5x0", filename])
 
-
 def generate_symb_images(menuitemdata, temp_dir):
     """
     Generate the png of the symbols and place them in a given directory.

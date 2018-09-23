@@ -12,6 +12,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from .utils import *
+from .delimiters import *
 
 MATRIXTYPES = [
     LatexSymb('pmatrix', 'pmatrix', r'\begin{pmatrix}\square\end{pmatrix}'),
@@ -36,21 +37,18 @@ def matrix_type(parent):
             self.validator = QRegExpValidator(regexp)
             self.ledit_rows.setValidator(self.validator)
             self.ledit_cols.setValidator(self.validator)
-            label_combo = QLabel('Matrix type:')
-            self.combo = QComboBox()
-            for mtype in MATRIXTYPES:
-                self.combo.addItem(QIcon(os.path.join(commons.SYMBOLS_DIR,
-                                                      mtype.tag + '.png')), '')
-            self.combo.setIconSize(self.combo.minimumSizeHint())
-            #self.combo.setSizePolicy(QSizePolicy.Expanding,
-            #                         QSizePolicy.Maximum)
-            #self.combo.setSizeAdjustPolicy(0) 
-            #self.combo.setMinimumHeight(50)
-            #self.combo.SizeAdjustPolicy(QComboBox.AdjustToContentsOnFirstShow)
-            #self.combo.setView(QListView())
-            #self.combo.setStyleSheet('''
-            #QComboBox QAbstractItemView::item { min-height: 50px;}
-            #''')
+
+            self.symb = MATRIXTYPES[0]
+            label_type = QLabel('Matrix type:')
+            hbox_type = QHBoxLayout()
+            button_type = QPushButton('Choose')
+            button_type.clicked.connect(self.handle_click)
+            self.repr_type = QLabel('')
+            self.repr_type.setPixmap(QPixmap(os.path.join(
+                commons.SYMBOLS_DIR, self.symb.tag + ".png")))
+            self.repr_type.setAlignment(Qt.AlignCenter)
+            hbox_type.addWidget(button_type)
+            hbox_type.addWidget(self.repr_type)
             
             self.buttons = QDialogButtonBox(
                 QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
@@ -60,8 +58,8 @@ def matrix_type(parent):
             vbox.addWidget(self.ledit_rows)
             vbox.addWidget(label_cols)
             vbox.addWidget(self.ledit_cols)
-            vbox.addWidget(label_combo)
-            vbox.addWidget(self.combo)
+            vbox.addWidget(label_type)
+            vbox.addLayout(hbox_type)
             vbox.addWidget(self.buttons)
             self.buttons.button(QDialogButtonBox.Ok).setDisabled(True)
             self.ledit_rows.setFocus()
@@ -70,6 +68,14 @@ def matrix_type(parent):
             self.ledit_cols.textChanged.connect(self.check_state)
             self.buttons.accepted.connect(self.accept)
             self.buttons.rejected.connect(self.reject)
+
+        def handle_click(self):
+            dialog = ChooseSymbDialog(self, "Matrix type", MATRIXTYPES, 3)
+            result = dialog.exec_()
+            if result == QDialog.Accepted:
+                self.symb = dialog.symb_chosen
+                self.repr_type.setPixmap(QPixmap(os.path.join(
+                    commons.SYMBOLS_DIR, self.symb.tag + ".png")))
 
         def check_state(self, *args, **kargs):
             state1 = self.validator.validate(self.ledit_rows.text(), 0)[0]
@@ -86,7 +92,7 @@ def matrix_type(parent):
             if result == QDialog.Accepted:
                 return ((int(dialog.ledit_rows.text()),
                          int(dialog.ledit_cols.text()),
-                         MATRIXTYPES[dialog.combo.currentIndex()].code),
+                         dialog.symb.code),
                         True)
             else:
                 return ((None, None, None), False)
@@ -216,21 +222,31 @@ def array(parent):
             label_align = QLabel('Alignment of columns (eg. lc|r):\n'+
                                  '(l: left, c: center, r: right, |: v. line)')
             self.ledit_align = QLineEdit()
+            # Left delimiter
+            self.symb_l = SINGLEDELIMITERS[0]
             label_l = QLabel('Left delimiter:')
-            self.combo_l = QComboBox()
-            self.combo_l.setIconSize(self.combo_l.minimumSizeHint())
-            for delim in SINGLEDELIMITERS:
-                self.combo_l.addItem(QIcon(os.path.join(commons.SYMBOLS_DIR,
-                                                        delim.tag + '.png')),
-                                     '')
+            hbox_l = QHBoxLayout()
+            button_l = QPushButton('Choose')
+            button_l.clicked.connect(self.handle_click_l)
+            self.repr_l = QLabel('')
+            self.repr_l.setPixmap(QPixmap(os.path.join(
+                commons.SYMBOLS_DIR, self.symb_l.tag + ".png")))
+            self.repr_l.setAlignment(Qt.AlignCenter)
+            hbox_l.addWidget(button_l)
+            hbox_l.addWidget(self.repr_l)
+            # Right delimiter
+            self.symb_r = SINGLEDELIMITERS[1]
             label_r = QLabel('Right delimiter:')
-            self.combo_r = QComboBox()
-            self.combo_r.setIconSize(self.combo_l.minimumSizeHint())
-            for delim in SINGLEDELIMITERS:
-                self.combo_r.addItem(QIcon(os.path.join(commons.SYMBOLS_DIR,
-                                                        delim.tag + '.png')),
-                                     '')
-            self.combo_r.setCurrentIndex(1)
+            hbox_r = QHBoxLayout()
+            button_r = QPushButton('Choose')
+            button_r.clicked.connect(self.handle_click_r)
+            self.repr_r = QLabel('')
+            self.repr_r.setPixmap(QPixmap(os.path.join(
+                commons.SYMBOLS_DIR, self.symb_r.tag + ".png")))
+            self.repr_r.setAlignment(Qt.AlignCenter)
+            hbox_r.addWidget(button_r)
+            hbox_r.addWidget(self.repr_r)
+            # Buttons
             self.buttons = QDialogButtonBox(
                 QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
                 Qt.Horizontal, self)
@@ -242,19 +258,37 @@ def array(parent):
             vbox.addWidget(label_align)
             vbox.addWidget(self.ledit_align)
             vbox.addWidget(label_l)
-            vbox.addWidget(self.combo_l)
+            vbox.addLayout(hbox_l)
             vbox.addWidget(label_r)
-            vbox.addWidget(self.combo_r)
+            vbox.addLayout(hbox_r)
             vbox.addWidget(self.buttons)
             self.buttons.button(QDialogButtonBox.Ok).setDisabled(True)
             self.ledit_align.setDisabled(True)
             self.ledit_rows.setFocus()
-
+            # Connect
             self.ledit_rows.textChanged.connect(self.check_state)
             self.ledit_cols.textChanged.connect(self.check_state)
             self.ledit_align.textChanged.connect(self.check_state)
             self.buttons.accepted.connect(self.accept)
             self.buttons.rejected.connect(self.reject)
+
+        def handle_click_l(self):
+            dialog = ChooseSymbDialog(self, "Left delimiter",
+                                      SINGLEDELIMITERS, 4)
+            result = dialog.exec_()
+            if result == QDialog.Accepted:
+                self.symb_l = dialog.symb_chosen
+                self.repr_l.setPixmap(QPixmap(os.path.join(
+                    commons.SYMBOLS_DIR, self.symb_l.tag + ".png")))
+
+        def handle_click_r(self):
+            dialog = ChooseSymbDialog(self, "Right delimiter",
+                                      SINGLEDELIMITERS, 4)
+            result = dialog.exec_()
+            if result == QDialog.Accepted:
+                self.symb_r = dialog.symb_chosen
+                self.repr_r.setPixmap(QPixmap(os.path.join(
+                    commons.SYMBOLS_DIR, self.symb_r.tag + ".png")))
 
         def check_state(self, *args, **kargs):
             state1 = self.validator.validate(self.ledit_rows.text(), 0)[0]
@@ -281,8 +315,8 @@ def array(parent):
             if result == QDialog.Accepted:
                 return ((int(dialog.ledit_rows.text()),
                          int(dialog.ledit_cols.text()),
-                         SINGLEDELIMITERS[dialog.combo_l.currentIndex()].code,
-                         SINGLEDELIMITERS[dialog.combo_r.currentIndex()].code,
+                         dialog.symb_l.code,
+                         dialog.symb_r.code,
                          dialog.ledit_align.text()),
                         True)
             else:

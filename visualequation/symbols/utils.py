@@ -101,9 +101,8 @@ class Symb(QLabel):
         self.parent.accept()
 
 class ChooseSymbDialog(QDialog):
-    def __init__(self, parent, caption, default_symb, symb_list):
+    def __init__(self, parent, caption, symb_list, n_columns):
         super().__init__(parent)
-        self.symb_chosen = default_symb
         self.setWindowTitle(caption)
         self.setMinimumSize(QSize(300, 300))
         layout = QGridLayout(self)
@@ -113,7 +112,7 @@ class ChooseSymbDialog(QDialog):
             symb = Symb(self, symb)
             layout.addWidget(symb, row, column)
             column += 1
-            if column > 5:
+            if column > n_columns:
                 column = 1
                 row += 1
         self.setLayout(layout)   

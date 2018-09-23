@@ -85,20 +85,22 @@ def free_delimiters(parent):
             self.buttons.rejected.connect(self.reject)
 
         def handle_click_l(self):
-            dialog = ChooseSymbDialog(self, "Choose left delimiter",
-                                      self.symb_l, SINGLEDELIMITERS)
-            dialog.exec_()
-            self.symb_l = dialog.symb_chosen
-            self.repr_l.setPixmap(QPixmap(os.path.join(
-                commons.SYMBOLS_DIR, self.symb_l.tag + ".png")))
+            dialog = ChooseSymbDialog(self, "Left delimiter",
+                                      SINGLEDELIMITERS, 4)
+            result = dialog.exec_()
+            if result == QDialog.Accepted:
+                self.symb_l = dialog.symb_chosen
+                self.repr_l.setPixmap(QPixmap(os.path.join(
+                    commons.SYMBOLS_DIR, self.symb_l.tag + ".png")))
 
         def handle_click_r(self):
-            dialog = ChooseSymbDialog(self, "Choose right delimiter",
-                                      self.symb_r, SINGLEDELIMITERS)
-            dialog.exec_()
-            self.symb_r = dialog.symb_chosen
-            self.repr_r.setPixmap(QPixmap(os.path.join(
-                commons.SYMBOLS_DIR, self.symb_r.tag + ".png")))
+            dialog = ChooseSymbDialog(self, "Right delimiter",
+                                      SINGLEDELIMITERS, 4)
+            result = dialog.exec_()
+            if result == QDialog.Accepted:
+                self.symb_r = dialog.symb_chosen
+                self.repr_r.setPixmap(QPixmap(os.path.join(
+                    commons.SYMBOLS_DIR, self.symb_r.tag + ".png")))
 
         @staticmethod
         def get_delimiter(parent=None):
