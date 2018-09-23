@@ -142,78 +142,19 @@ COLORS = [
 
 
 def color(parent):
-    class Dialog(QDialog):
-        def __init__(self, parent=None):
-            super().__init__(parent)
-
-            self.setWindowTitle('Color')
-            label = QLabel('Color:')
-            self.combo = QComboBox()
-            self.combo.setIconSize(self.combo.minimumSizeHint())
-            for color in COLORS:
-                self.combo.addItem(QIcon(os.path.join(commons.SYMBOLS_DIR,
-                                                      color.tag + '.png')), '')
-            self.buttons = QDialogButtonBox(
-                QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
-                Qt.Horizontal, self)
-            vbox = QVBoxLayout(self)
-            vbox.addWidget(label)
-            vbox.addWidget(self.combo)
-            vbox.addWidget(self.buttons)
-
-            self.buttons.accepted.connect(self.accept)
-            self.buttons.rejected.connect(self.reject)
-
-        @staticmethod
-        def get_color(parent=None):
-            dialog = Dialog(parent)
-            result = dialog.exec_()
-            if result == QDialog.Accepted:
-                return (COLORS[dialog.combo.currentIndex()].code, True)
-            else:
-                return (None, False)
-            
-    color, ok = Dialog.get_color(parent)
-    if ok:
-        return Op(1, r'\begingroup\color{{' + color + r'}}{0}\endgroup')
+    dialog = ChooseSymbDialog(parent, "Choose color", COLORS, 3)
+    result = dialog.exec_()
+    if result == QDialog.Accepted:
+        return Op(1, r'\begingroup\color{{' + dialog.symb_chosen.code
+                  + r'}}{0}\endgroup')
     else:
         return None
 
 def colorbox(parent):
-    class Dialog(QDialog):
-        def __init__(self, parent=None):
-            super().__init__(parent)
-
-            self.setWindowTitle('Color Box')
-            label = QLabel('Color:')
-            self.combo = QComboBox()
-            self.combo.setIconSize(self.combo.minimumSizeHint())
-            for color in COLORS:
-                self.combo.addItem(QIcon(os.path.join(commons.SYMBOLS_DIR,
-                                                      color.tag + '.png')), '')
-            self.buttons = QDialogButtonBox(
-                QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
-                Qt.Horizontal, self)
-            vbox = QVBoxLayout(self)
-            vbox.addWidget(label)
-            vbox.addWidget(self.combo)
-            vbox.addWidget(self.buttons)
-
-            self.buttons.accepted.connect(self.accept)
-            self.buttons.rejected.connect(self.reject)
-
-        @staticmethod
-        def get_color(parent=None):
-            dialog = Dialog(parent)
-            result = dialog.exec_()
-            if result == QDialog.Accepted:
-                return (COLORS[dialog.combo.currentIndex()].code, True)
-            else:
-                return (None, False)
-            
-    color, ok = Dialog.get_color(parent)
-    if ok:
-        return Op(1, r'\colorbox{{' + color
+    dialog = ChooseSymbDialog(parent, "Choose color", COLORS, 3)
+    result = dialog.exec_()
+    if result == QDialog.Accepted:
+        return Op(1, r'\colorbox{{' + dialog.symb_chosen.code
                   + r'}}{{$\displaystyle {0}$}}')
     else:
         return None
