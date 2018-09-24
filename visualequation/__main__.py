@@ -27,6 +27,7 @@ from . import symbolstab
 from . import eqlabel
 from . import conversions
 from . import commons
+from . import game
 
 class MainWindow(QMainWindow):
     def __init__(self, temp_dir):
@@ -85,6 +86,13 @@ class MainWindow(QMainWindow):
         about_act = QAction('About &Visual Equation', self)
         about_act.triggered.connect(self.about)
 
+        activate_game_act = QAction('Invite &Alice', self, checkable=True)
+        cmd = lambda state=activate_game_act.isChecked(): \
+              game.Game.activate(state)
+        activate_game_act.triggered.connect(cmd)
+        activate_game_act.setStatusTip('Let Alice to be with you while'
+                                       +' building the equation')
+
         menubar = self.menuBar()
         menubar.setNativeMenuBar(False)
         file_menu = menubar.addMenu('&File')
@@ -97,6 +105,8 @@ class MainWindow(QMainWindow):
         edit_menu.addAction(copy_act)
         edit_menu.addAction(cut_act)
         edit_menu.addAction(paste_act)
+        game_menu = menubar.addMenu('&Games')
+        game_menu.addAction(activate_game_act)
         help_menu = menubar.addMenu('&Help')
         help_menu.addAction(usage_act)
         help_menu.addAction(aboutQt_act)

@@ -23,6 +23,7 @@ from . import eqtools
 from . import eqhist
 from . import conversions
 from .symbols import utils
+from . import game
 
 class Eq:
     def __init__(self, temp_dir, setPixmap, parent):
@@ -34,11 +35,12 @@ class Eq:
         self.setPixmap = setPixmap
         self.parent = parent
         self.eqhist = eqhist.EqHist(init_eq)
+        self.game = game.Game()
         self.sel_index = 0
         self.sel_right = True
-        self._set_sel()
+        self.update()
 
-    def _set_sel(self):
+    def update(self):
         """ Set pixmap to the equation boxed in the
         selection indicated by self.sel_index, which can be freely set
         by the caller before calling this function.
@@ -49,14 +51,15 @@ class Eq:
             raise ValueError('Provided index outside the equation.')
         # Avoid pointing to a intermediate Juxt
         # That avoids selecting partial products inside a product
-        elif eqtools.is_intermediate_JUXT(self.eq, self.sel_index):
-            cond = True
-            while cond:
-                self.sel_index += 1
-                cond = eqtools.is_intermediate_JUXT(self.eq, self.sel_index)
+        #elif eqtools.is_intermediate_JUXT(self.eq, self.sel_index):
+        #    cond = True
+        #    while cond:
+        #        self.sel_index += 1
+        #        cond = eqtools.is_intermediate_JUXT(self.eq, self.sel_index)
 
         # Calculate the latex code of eq boxed in block given by the selection
         sel_eq = eqtools.sel_eq(self.eq, self.sel_index, self.sel_right)
+        self.game.update(sel_eq)
         sel_png = conversions.eq2png(sel_eq, None, None,
                                      self.temp_dir)
         self.setPixmap(QPixmap(sel_png))
@@ -77,7 +80,7 @@ class Eq:
                 self.sel_index += 1
                 cond = eqtools.is_intermediate_JUXT(self.eq, self.sel_index)
 
-        self._set_sel()
+        self.update()
 
     def previous_sel(self):
         """ Set image to the next selection according to self.sel_index. """
@@ -93,7 +96,7 @@ class Eq:
                 self.sel_index -= 1
                 cond = eqtools.is_intermediate_JUXT(self.eq, self.sel_index)
 
-        self._set_sel()
+        self.update()
 
     def insert(self, oper):
         """
@@ -147,7 +150,7 @@ class Eq:
             replace_op_in_eq(oper)
 
         self.sel_right = True
-        self._set_sel()
+        self.update()
         self.eqhist.save(self.eq, self.sel_index)
 
     def insert_substituting(self, oper):
@@ -197,7 +200,7 @@ class Eq:
             replace_op_in_eq(oper)
 
         self.sel_right = True
-        self._set_sel()
+        self.update()
         self.eqhist.save(self.eq, self.sel_index)
 
     def insert_sup_substituting(self):
@@ -239,7 +242,7 @@ class Eq:
         # There is always an operator after adding an index
         self.sel_index += 1 + elems
         self.sel_right = True
-        self._set_sel()
+        self.update()
         self.eqhist.save(self.eq, self.sel_index)
 
     def insert_sub_substituting(self):
@@ -281,7 +284,7 @@ class Eq:
         # There is always an operator after adding an index
         self.sel_index += 1 + elems
         self.sel_right = True
-        self._set_sel()
+        self.update()
         self.eqhist.save(self.eq, self.sel_index)
 
     def remove_sel(self):
@@ -333,7 +336,7 @@ class Eq:
                 return
 
         self.sel_right = True
-        self._set_sel()
+        self.update()
         self.eqhist.save(self.eq, self.sel_index)
 
     def open_eq(self, filename=None):
@@ -341,7 +344,7 @@ class Eq:
         if neweq != None:
             self.eq = list(neweq)
             self.sel_index = 0
-            self._set_sel()
+            self.update()
             self.eqhist.save(neweq, 0)
 
     def save_eq(self):
@@ -385,13 +388,13 @@ class Eq:
         """ Recover previous equation from the historial, if any """
         preveq, self.sel_index = self.eqhist.get_prev()
         self.eq = list(preveq)
-        self._set_sel()
+        self.update()
 
     def recover_next_eq(self):
         """ Recover next equation from the historial, if any """
         nexteq, self.sel_index = self.eqhist.get_next()
         self.eq = list(nexteq)
-        self._set_sel()
+        self.update()
 
     def sel2eqbuffer(self):
         """ Copy block pointed by self.sel_index to self.eq_buffer """
@@ -416,5 +419,5 @@ class Eq:
                                                            self.sel_index,
                                                            self.eq_buffer)
             self.sel_right = True
-            self._set_sel()
+            self.update()
             self.eqhist.save(self.eq, self.sel_index)
