@@ -60,7 +60,11 @@ and continue the instructions in "Installing visualequation using pip".
 
 I will show a recipe to install locally pip because the version that comes in some distributions (like Ubuntu 14.04) does not work totally for the instructions I will give later. Said that, if you want further lecture, I just leave [this well-written link](http://matthew-brett.github.io/pydagogue/installing_on_debian.html).
 
-Download it
+If you are going to install from sources, I recommend you to remove the package setuptools (if it is installed) of your distribution; else, pip will refuse to install the last version
+
+$ sudo apt-get remove python-setuptools
+
+Download pip, e.g.:
 
 $ curl -LO https://bootstrap.pypa.io/get-pip.py
 
@@ -85,10 +89,6 @@ and
 $ python3 -m pip --version
 
 should give the same valid output (the current last version of pip).
-
-If you are going to install from the sources, I recommend now to remove the package setuptools (if it is installed) of your distribution
-
-$ sudo apt-get remove python-setuptools
 
 ### Installing visualequation using pip
 
