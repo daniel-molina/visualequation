@@ -62,7 +62,7 @@ I will show a recipe to install locally pip because the version that comes in so
 
 If you are going to install from sources, I recommend you to remove the package setuptools (if it is installed) of your distribution; else, pip will refuse to install the last version
 
-$ sudo apt-get remove python-setuptools
+$ sudo apt-get remove python3-setuptools
 
 Download pip, e.g.:
 
