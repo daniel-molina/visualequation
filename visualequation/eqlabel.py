@@ -101,6 +101,8 @@ class EqLabel(QLabel):
             self.eq.remove_sel()
         elif key == Qt.Key_Space:
             self.eq.insert(r'\,')
+        elif key == Qt.Key_Apostrophe:
+            self.eq.insert(r'\prime')
 
     def on_key_pressed_ctrl(self, event):
         pass

@@ -15,6 +15,7 @@ from .utils import *
 
 VARIABLESIZE = [
     LatexSymb('sum', r'\sum', r'\sum'),
+    LatexSymb('sumprime', r"\sideset{}{'}\sum", r"\sideset{}{'}\sum"),
     LatexSymb('prod', r'\prod', r'\prod'),
     LatexSymb('coprod', r'\coprod', r'\coprod'),
     LatexSymb('int', r'\int', r'\int'),

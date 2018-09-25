@@ -212,6 +212,14 @@ class Eq:
             # selected (it is a non-standard use of sel_index just to avoid
             # complicated code with more if-clauses)
             self.sel_index -= 1
+        # Consider that the user specifies a JUXT
+        if self.eq[self.sel_index] == utils.JUXT:
+            if self.sel_right:
+                self.sel_index = eqtools.last_arg_of_JUXT_seq(self.eq,
+                                                              self.sel_index)
+            else:
+                self.sel_index = eqtools.first_arg_of_JUXT_seq(self.eq,
+                                                               self.sel_index)
         # Create a list with a index arg list
         args = eqtools.indexop2arglist(self.eq, self.sel_index)
         # Change it to add the new index
@@ -254,6 +262,14 @@ class Eq:
             # selected (it is a non-standard use of sel_index just to avoid
             # complicated code with more if-clauses)
             self.sel_index -= 1
+        # Consider that the user specifies a JUXT
+        if self.eq[self.sel_index] == utils.JUXT:
+            if self.sel_right:
+                self.sel_index = eqtools.last_arg_of_JUXT_seq(self.eq,
+                                                              self.sel_index)
+            else:
+                self.sel_index = eqtools.first_arg_of_JUXT_seq(self.eq,
+                                                               self.sel_index)
         # Create a list with a index arg list
         args = eqtools.indexop2arglist(self.eq, self.sel_index)
         # Change it to add the new index

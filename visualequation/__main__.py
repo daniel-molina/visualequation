@@ -40,7 +40,7 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle('Visual Equation')
         self.setWindowIcon(QIcon(commons.ICON))
-        self.setMinimumSize(900, 500)
+        self.resize(900, 600)
 
     def init_menu(self):
         exit_act = QAction('&Exit', self)

@@ -55,7 +55,7 @@ REDIT = Op(1, r'\left\lmoustache{{{0}}}\right\rgroup')
 LEDIT = Op(1, r'\left\lgroup{{{0}}}\right\rmoustache')
 JUXT = Op(2, r'{0} {1}')
 
-# It does NOT include ' ', '^', '\\' and '~'
+# It does NOT include ' ', "'", '^', '\\' and '~'
 # so it is valid for both text and math environments
 ASCII_LATEX_TRANSLATION = {
     '|': r'|',
@@ -68,7 +68,6 @@ ASCII_LATEX_TRANSLATION = {
     ')': r')',
     '=': r'=',
     '?': r'?',
-    "'": r"'",
     '@': r'@',
     '#': r'\#',
     '[': r'[',

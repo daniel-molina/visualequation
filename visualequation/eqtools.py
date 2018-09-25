@@ -146,6 +146,33 @@ def is_arg_of_JUXT(eq, check_index):
     except ValueError:
         return False, None, None
 
+def first_arg_of_JUXT_seq(eq, JUXT_index):
+    """
+    It returns the index of the first argument of the first JUXT with first
+    first argument different than JUXT in a group of JUXTs.
+    """
+    assert eq[JUXT_index] == utils.JUXT
+    while True:
+        arg1_start = JUXT_index + 1 
+        if eq[arg1_start] == utils.JUXT:
+            JUXT_index = arg1_start
+        else:
+            return arg1_start
+
+def last_arg_of_JUXT_seq(eq, JUXT_index):
+    """
+    It returns the index of the second argument of the last JUXT in a group of
+    JUXTs.
+    """
+    assert eq[JUXT_index] == utils.JUXT
+    arg2index = nextblockindex(eq, JUXT_index + 1)
+    while True:
+        if eq[arg2index] == utils.JUXT:
+            JUXT_index = arg2index
+            arg2index = nextblockindex(eq, JUXT_index + 1)
+        else:
+            return arg2index
+
 def is_intermediate_JUXT(eq, index):
     """
     Check whether if index points to a JUXT that is the argument of
