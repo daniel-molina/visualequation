@@ -18,6 +18,7 @@ import sys
 import tempfile
 import shutil
 import os
+import argparse
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
@@ -39,7 +40,7 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle('Visual Equation')
         self.setWindowIcon(QIcon(commons.ICON))
-        self.setGeometry(0, 0, 1000, 700)
+        self.setMinimumSize(900, 500)
 
     def init_menu(self):
         exit_act = QAction('&Exit', self)
@@ -159,7 +160,13 @@ class MainWindow(QMainWindow):
 
 
 def main():
-    """ This the main function of the program."""    
+    """ This the main function of the program."""
+    # Command line options
+    parser = argparse.ArgumentParser(description="Create equations visually.",
+                                     prog="visualequation")
+    parser.add_argument('-v', '--version', action='version',
+                        version='%(prog)s ' + commons.VERSION)
+    parser.parse_args()
     # Use global for app to be destructed at the end
     # http://pyqt.sourceforge.net/Docs/PyQt5/gotchas.html#crashes-on-exit
     global app 

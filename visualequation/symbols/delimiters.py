@@ -132,8 +132,6 @@ DELIMITERS = [
               r'\left\lfloor\cdots\right\rfloor'),
     LatexSymb('ceilb', Op(1, r'\left\lceil {0} \right\rceil'),
               r'\left\lceil\cdots\right\rceil'),
-    LatexSymb('slashb', Op(1, r'\left/ {0} \right\backslash'),
-              r'\left/\cdots\right\backslash'),
     LatexSymb('sqbracketsb', Op(1, r'\left[ {0} \right]'),
               r'\left[\cdots\right]'),
     LatexSymb('lcornerb', Op(1, r'\left\llcorner {0} \right\lrcorner'),
