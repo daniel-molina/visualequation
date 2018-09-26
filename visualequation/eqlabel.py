@@ -32,7 +32,7 @@ class EqLabel(QLabel):
 
     def event(self, event):
         if event.type() == QEvent.KeyPress and event.key() == Qt.Key_Tab:
-            self.eq.next_sel()
+            self.eq.eqsel.display_next()
             # The True value prevents the event to be sent to other objects
             return True
         else:
@@ -90,9 +90,9 @@ class EqLabel(QLabel):
         elif key == Qt.Key_Down:
             self.eq.insert_sub_substituting()
         elif key == Qt.Key_Right:
-            self.eq.next_sel()
+            self.eq.eqsel.display_next()
         elif key == Qt.Key_Left:
-            self.eq.previous_sel()
+            self.eq.eqsel.display_prev()
         elif key == Qt.Key_Backslash:
             self.eq.insert(r'\backslash')
         elif key == Qt.Key_AsciiTilde:
