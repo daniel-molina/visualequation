@@ -128,7 +128,8 @@ class MyEncoder(json.JSONEncoder):
 
 def from_json(json_o):
     if isinstance(json_o, dict):
-        return utils.Op(json_o['n_args'], json_o['latex_code'])
+        return utils.Op(json_o['n_args'], json_o['latex_code'],
+                        json_o['type_'])
 
 def eq2png(eq, dpi, bg, directory, png_fpath=None, add_metadata=False):
     """ Create a png from a equation, returns the path of PNG image.

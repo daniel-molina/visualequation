@@ -31,14 +31,15 @@ class Selection:
         if not 0 <= self.index < len(self.eq):
             raise ValueError('Provided index outside the equation.')
 
-        if eq == None:
-            eq = self.eq
-        else:
+        # If equation is provided, substitute the current one
+        if eq is not None:
             self.eq = eq
         eqsel = list(self.eq)
         if right:
+            self.right = True
             eqsel.insert(self.index, utils.REDIT)
         else:
+            self.right = False
             eqsel.insert(self.index, utils.LEDIT)
 
         self.game.update(eqsel)
@@ -61,7 +62,8 @@ class Selection:
                 self.index += 1
                 cond = eqtools.is_intermediate_JUXT(self.eq, self.index)
         # Avoid first argument of index operators
-        if self.eq[self.index - 1] in utils.INDEX_OPS:
+        if hasattr(self.eq[self.index - 1], 'type_') \
+           and self.eq[self.index - 1].type_ in ('index', 'opindex'):
             self.index += 1
             
         self.display(right=True)
@@ -82,6 +84,7 @@ class Selection:
                 self.index -= 1
                 cond = eqtools.is_intermediate_JUXT(self.eq, self.index)
         # Avoid first argument of index operators
-        if self.eq[self.index - 1] in utils.INDEX_OPS:
+        if hasattr(self.eq[self.index - 1], 'type_') \
+           and self.eq[self.index - 1].type_ in ('index', 'opindex'):
             self.index -= 1
         self.display(right=False)

@@ -62,18 +62,21 @@ class Eq:
                 opeq = [op] + [utils.NEWARG]*op.n_args
                 if self.eq[self.eqsel.index] == utils.NEWARG:
                     self.eq[self.eqsel.index:self.eqsel.index+1] = opeq
-                    self.eqsel.index += 1
                 else:
                     if self.eqsel.right:
                         self.eqsel.index \
-                            = 1 + eqtools.insertrbyJUXT(self.eq,
-                                                        self.eqsel.index,
-                                                        opeq)
+                            = eqtools.insertrbyJUXT(self.eq,
+                                                    self.eqsel.index,
+                                                    opeq)
                     else:
                         self.eqsel.index \
-                            = 1 + eqtools.insertlbyJUXT(self.eq,
-                                                        self.eqsel.index,
-                                                        opeq)
+                            = eqtools.insertlbyJUXT(self.eq,
+                                                    self.eqsel.index,
+                                                    opeq)
+                # Point to the first argument, if any
+                if op.n_args > 0:
+                    self.eqsel.index += 1
+                    
             else:
                 raise ValueError('Unknown type of operator %s' % op)
 
@@ -113,7 +116,8 @@ class Eq:
             the rules of above. It also modify self.eqsel.index to point to
             the smartest block.
             """
-            if isinstance(op, str):
+            if isinstance(op, str) or \
+               (isinstance(op, utils.Op) and op.n_args == 0):
                 eqtools.replaceby(self.eq, self.eqsel.index, [op])
             elif isinstance(op, utils.Op) and op.n_args == 1:
                 self.eq.insert(self.eqsel.index, op)
@@ -140,22 +144,18 @@ class Eq:
         self.eqhist.save(self.eq, self.eqsel.index)
 
     def insert_sup_substituting(self):
-        # Consider that the user specifies the first argument of index operator
-        #if self.eq[self.eqsel.index] not in utils.INDEX_OPS \
-        #   and self.eqsel.index > 0 \
-        #   and self.eq[self.eqsel.index-1] in utils.INDEX_OPS:
-        #    # In that case, we change sel_index as if the index operator was
-        #    # selected (it is a non-standard use of sel_index just to avoid
-        #    # complicated code with more if-clauses)
-        #    self.eqsel.index -= 1
+        # Blacklist some operators
+        if hasattr(self.eq[self.eqsel.index], 'type_') \
+           and self.eq[self.eqsel.index].type_ in utils.INDEX_BLACKLIST:
+            return
         # If the user specifies a JUXT, they refer to the first or last element
         if self.eq[self.eqsel.index] == utils.JUXT:
             if self.eqsel.right:
-                self.eqsel.index = eqtools.last_arg_of_JUXT_seq(self.eq,
-                                                              self.eqsel.index)
+                self.eqsel.index = eqtools.last_arg_of_JUXT_seq(
+                    self.eq, self.eqsel.index)
             else:
-                self.eqsel.index = eqtools.first_arg_of_JUXT_seq(self.eq,
-                                                               self.eqsel.index)
+                self.eqsel.index = eqtools.first_arg_of_JUXT_seq(
+                    self.eq, self.eqsel.index)
         # Create a list with a index arg list
         args = eqtools.indexop2arglist(self.eq, self.eqsel.index)
         # Change it to add the new index
@@ -184,14 +184,10 @@ class Eq:
         self.eqhist.save(self.eq, self.eqsel.index)
 
     def insert_sub_substituting(self):
-        # Consider that the user specifies the first argument of index operator
-        #if self.eq[self.eqsel.index] not in utils.INDEX_OPS \
-        #   and self.eqsel.index > 0 \
-        #   and self.eq[self.eqsel.index-1] in utils.INDEX_OPS:
-        #    # In that case, we change sel_index as if the index operator was
-        #    # selected (it is a non-standard use of sel_index just to avoid
-        #    # complicated code with more if-clauses)
-        #    self.eqsel.index -= 1
+        # Blacklist some operators
+        if hasattr(self.eq[self.eqsel.index], 'type_') \
+           and self.eq[self.eqsel.index].type_ in utils.INDEX_BLACKLIST:
+            return
         # If the user specifies a JUXT, they refer to the first or last element
         if self.eq[self.eqsel.index] == utils.JUXT:
             if self.eqsel.right:

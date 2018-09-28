@@ -84,8 +84,9 @@ def insertrbyJUXT(eq, start_index, eqblock):
     """
     # If eqblock is the base of an index operator, consider the index operator
     # instead. It avoids a bit of caos in the equation structure.
-    if eq[start_index-1] in utils.INDEX_OPS:
-        start_index -= 1
+    #if hasattr(eq[start_index - 1], 'type_') \
+    #   and eq[start_index - 1].type_ in ('index', 'opindex'):
+    #    start_index -= 1
     end_index = nextblockindex(eq, start_index)
     eq[start_index:end_index] = [utils.JUXT] + eq[start_index:end_index] \
                                 + eqblock
@@ -98,8 +99,9 @@ def insertlbyJUXT(eq, start_index, eqblock):
     """
     # If eqblock is the base of an index operator, consider the index operator
     # instead. It avoids a bit of caos in the equation structure.
-    if eq[start_index-1] in utils.INDEX_OPS:
-        start_index -= 1
+    #if hasattr(eq[start_index - 1], 'type_') \
+    #   and eq[start_index - 1].type_ in ('index', 'opindex'):
+    #    start_index -= 1
     end_index = nextblockindex(eq, start_index)
     eq[start_index:end_index] = [utils.JUXT] + eqblock \
                                 + eq[start_index:end_index]
@@ -182,87 +184,87 @@ def indexop2arglist(eq, sel_index):
     If sel_index does not point to an operator index at all, base will be the
     pointed block and the rest will be set to None.
     """
-    op = eq[sel_index] # it can be index operator but not necessarily (!)
-    if op not in utils.INDEX_OPS:
+    op = eq[sel_index] # it can be index operator or not, as explained above
+    if not hasattr(op, 'type_') or op.type_ not in ('index', 'opindex'):
         end_block = nextblockindex(eq, sel_index)    
         return [eq[sel_index:end_block], None, None, None, None]
     start_arg1 = sel_index + 1
     start_arg2 = nextblockindex(eq, start_arg1)
-    if op == utils.LSUB:
+    if op in (utils.LSUB, utils.OPLSUB):
         end_arg2 = nextblockindex(eq, start_arg2)
         return [eq[start_arg1:start_arg2],
                 eq[start_arg2:end_arg2], None, None, None]
-    elif op == utils.SUB:
+    elif op in (utils.SUB, utils.OPSUB):
         end_arg2 = nextblockindex(eq, start_arg2)
         return [eq[start_arg1:start_arg2],
                 None, eq[start_arg2:end_arg2], None, None]
-    elif op == utils.SUP:
+    elif op in (utils.SUP, utils.OPSUP):
         end_arg2 = nextblockindex(eq, start_arg2)
         return [eq[start_arg1:start_arg2],
                 None, None, eq[start_arg2:end_arg2], None]
-    elif op == utils.LSUP:
+    elif op in (utils.LSUP, utils.OPLSUP):
         end_arg2 = nextblockindex(eq, start_arg2)
         return [eq[start_arg1:start_arg2],
                 None, None, None, eq[start_arg2:end_arg2]]
-    elif op == utils.LSUBSUB:
+    elif op in (utils.LSUBSUB, utils.OPLSUBSUB):
         end_arg2 = nextblockindex(eq, start_arg2)
         end_arg3 = nextblockindex(eq, end_arg2)
         return [eq[start_arg1:start_arg2],
                 eq[start_arg2:end_arg2], eq[end_arg2:end_arg3], None, None]
-    elif op == utils.SUBSUP:
+    elif op in (utils.SUBSUP, utils.OPSUBSUP):
         end_arg2 = nextblockindex(eq, start_arg2)
         end_arg3 = nextblockindex(eq, end_arg2)
         return [eq[start_arg1:start_arg2],
                 None, eq[start_arg2:end_arg2], eq[end_arg2:end_arg3], None]
-    elif op == utils.SUPLSUP:
+    elif op in (utils.SUPLSUP, utils.OPSUPLSUP):
         end_arg2 = nextblockindex(eq, start_arg2)
         end_arg3 = nextblockindex(eq, end_arg2)
         return [eq[start_arg1:start_arg2],
                 None, None, eq[start_arg2:end_arg2], eq[end_arg2:end_arg3]]
-    elif op == utils.LSUBLSUP:
+    elif op in (utils.LSUBLSUP, utils.OPLSUBLSUP):
         end_arg2 = nextblockindex(eq, start_arg2)
         end_arg3 = nextblockindex(eq, end_arg2)
         return [eq[start_arg1:start_arg2],
                 eq[start_arg2:end_arg2], None, None, eq[end_arg2:end_arg3]]
-    elif op == utils.LSUBSUP:
+    elif op in (utils.LSUBSUP, utils.OPLSUBSUP):
         end_arg2 = nextblockindex(eq, start_arg2)
         end_arg3 = nextblockindex(eq, end_arg2)
         return [eq[start_arg1:start_arg2],
                 eq[start_arg2:end_arg2], None, eq[end_arg2:end_arg3], None]
-    elif op == utils.SUBLSUP:
+    elif op in (utils.SUBLSUP, utils.OPSUBLSUP):
         end_arg2 = nextblockindex(eq, start_arg2)
         end_arg3 = nextblockindex(eq, end_arg2)
         return [eq[start_arg1:start_arg2],
                 None, eq[start_arg2:end_arg2], None, eq[end_arg2:end_arg3]]
-    elif op == utils.LSUBSUBSUP:
+    elif op in (utils.LSUBSUBSUP, utils.OPLSUBSUBSUP):
         end_arg2 = nextblockindex(eq, start_arg2)
         end_arg3 = nextblockindex(eq, end_arg2)
         end_arg4 = nextblockindex(eq, end_arg3)
         return [eq[start_arg1:start_arg2],
                 eq[start_arg2:end_arg2], eq[end_arg2:end_arg3],
                 eq[end_arg3:end_arg4], None]
-    elif op == utils.LSUBSUBLSUP:
+    elif op in (utils.LSUBSUBLSUP, utils.OPLSUBSUBLSUP):
         end_arg2 = nextblockindex(eq, start_arg2)
         end_arg3 = nextblockindex(eq, end_arg2)
         end_arg4 = nextblockindex(eq, end_arg3)
         return [eq[start_arg1:start_arg2],
                 eq[start_arg2:end_arg2], eq[end_arg2:end_arg3],
                 None, eq[end_arg3:end_arg4]]
-    elif op == utils.LSUBSUPLSUP:
+    elif op in (utils.LSUBSUPLSUP, utils.OPLSUBSUPLSUP):
         end_arg2 = nextblockindex(eq, start_arg2)
         end_arg3 = nextblockindex(eq, end_arg2)
         end_arg4 = nextblockindex(eq, end_arg3)
         return [eq[start_arg1:start_arg2],
                 eq[start_arg2:end_arg2], None,
                 eq[end_arg2:end_arg3], eq[end_arg3:end_arg4]]
-    elif op == utils.SUBSUPLSUP:
+    elif op in (utils.SUBSUPLSUP, utils.OPSUBSUPLSUP):
         end_arg2 = nextblockindex(eq, start_arg2)
         end_arg3 = nextblockindex(eq, end_arg2)
         end_arg4 = nextblockindex(eq, end_arg3)
         return [eq[start_arg1:start_arg2],
                 None, eq[start_arg2:end_arg2],
                 eq[end_arg2:end_arg3], eq[end_arg3:end_arg4]]
-    elif op == utils.LSUBSUBSUPLSUP:
+    elif op in (utils.LSUBSUBSUPLSUP, utils.OPLSUBSUBSUPLSUP):
         end_arg2 = nextblockindex(eq, start_arg2)
         end_arg3 = nextblockindex(eq, end_arg2)
         end_arg4 = nextblockindex(eq, end_arg3)
@@ -270,6 +272,8 @@ def indexop2arglist(eq, sel_index):
         return [eq[start_arg1:start_arg2],
                 eq[start_arg2:end_arg2], eq[end_arg2:end_arg3],
                 eq[end_arg3:end_arg4], eq[end_arg4:end_arg5]]
+    else:
+        raise SystemExit("Equation element not recognised.")
 
 def flat_arglist(args):
     # Flat the list of args
@@ -281,7 +285,7 @@ def flat_arglist(args):
     return new_args
 
 def arglist2indexop(args):
-    indexops_dict = {
+    index_dict = {
         (True, False, False, False, False): None,
         (True, True, False, False, False): utils.LSUB,
         (True, False, True, False, False): utils.SUB,
@@ -299,8 +303,30 @@ def arglist2indexop(args):
         (True, False, True, True, True): utils.SUBSUPLSUP,
         (True, True, True, True, True): utils.LSUBSUBSUPLSUP,
     }
+    opindex_dict = {
+        (True, False, False, False, False): None,
+        (True, True, False, False, False): utils.OPLSUB,
+        (True, False, True, False, False): utils.OPSUB,
+        (True, False, False, True, False): utils.OPSUP,
+        (True, False, False, False, True): utils.OPLSUP,
+        (True, True, True, False, False): utils.OPLSUBSUB,
+        (True, False, True, True, False): utils.OPSUBSUP,
+        (True, False, False, True, True): utils.OPSUPLSUP,
+        (True, True, False, False, True): utils.OPLSUBLSUP,
+        (True, True, False, True, False): utils.OPLSUBSUP,
+        (True, False, True, False, True): utils.OPSUBLSUP,
+        (True, True, True, True, False): utils.OPLSUBSUBSUP,
+        (True, True, True, False, True): utils.OPLSUBSUBLSUP,
+        (True, True, False, True, True): utils.OPLSUBSUPLSUP,
+        (True, False, True, True, True): utils.OPSUBSUPLSUP,
+        (True, True, True, True, True): utils.OPLSUBSUBSUPLSUP,
+    }
     try:
-        return indexops_dict[tuple(bool(arg) for arg in args)]
+        if hasattr(args[0][0], 'type_') \
+           and args[0][0].type_ in utils.OPINDEX_ARG_LIST: 
+            return opindex_dict[tuple(bool(arg) for arg in args)]
+        else:
+            return index_dict[tuple(bool(arg) for arg in args)]
     except KeyError:
         raise SystemExit('Internal error:'
                          + ' Bad argument list of index operator.')
@@ -314,7 +340,7 @@ def is_script(eq, sel_index):
     The 3rd element indicates which argument of the index operator is being
     pointed by sel_index, or 0 if it is the base.
     """
-    for op in utils.INDEX_OPS:
+    for op in (utils.INDEX_OPS + utils.OPINDEX_OPS):
         try:
             start_index = 0
             while True:
