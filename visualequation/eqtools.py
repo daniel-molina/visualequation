@@ -334,27 +334,21 @@ def arglist2indexop(args):
 def is_script(eq, sel_index):
     """
     Returns a tuple of three elements:
-    The first element says whether element pointed by sel_index is a script.
+    The first element says if the element pointed by sel_index is a script.
     If it is or if it is the base, the 2nd element indicates the pos of the
     associated index operator.
     The 3rd element indicates which argument of the index operator is being
     pointed by sel_index, or 0 if it is the base.
     """
-    for op in (utils.INDEX_OPS + utils.OPINDEX_OPS):
-        try:
-            start_index = 0
-            while True:
-                op_index = eq.index(op, start_index)
-                # Check if some of the args is pointed by sel_index
-                arg_i_index = op_index + 1
-                if arg_i_index == sel_index:
-                    return False, op_index, 0
-                for arg_i in range(1, op.n_args):
-                    arg_i_index = nextblockindex(eq, arg_i_index)
-                    if arg_i_index == sel_index:
-                        return True, op_index, arg_i
-                # Next operator can be inside the args, do not skip them
-                start_index = op_index + 1
-        except ValueError:
-            continue
-    return False, None, None
+    g = ((index, op) for index, op in enumerate(eq) if hasattr(op, 'type_')
+         and op.type_ in ('opindex', 'index'))
+    for op_index, op in g:
+        arg_i_index = op_index + 1
+        if arg_i_index == sel_index:
+            return False, op_index, 0
+        for arg_i in range(1, op.n_args):
+            arg_i_index = nextblockindex(eq, arg_i_index)
+            if arg_i_index == sel_index:
+                return True, op_index, arg_i
+    else:
+        return False, None, None
