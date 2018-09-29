@@ -14,7 +14,7 @@
 """This modules indicates the directories of the program."""
 import os
 
-VERSION="0.3.1"
+VERSION="0.3.2"
 
 # Set the path to main directories
 SYMBOLS_DIR = os.path.join(os.path.dirname(__file__), 'data', 'symbols')

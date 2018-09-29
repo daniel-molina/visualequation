@@ -227,14 +227,15 @@ class Eq:
         """
         If self.eqsel.index points to the first or second arg of a Juxt,
         it removes the Juxt and leaves the other argument in its place.
-        If it is a script, it removes it if it is equal to square.
+        If it is a script, it removes it.
         Else, it removes the block pointed and put a NEWARG.
         """
+        # Check if it is the arg of a JUXT and leave it clean
         cond_arg_JUXT, JUXT_index, other_arg_index = eqtools.is_arg_of_JUXT(
             self.eq, self.eqsel.index)
         if cond_arg_JUXT:
             JUXT_end = eqtools.nextblockindex(self.eq, JUXT_index)
-            # If sel_index is the first argument (instead of the second)
+            # If eqsel.index is the first argument (instead of the second)
             if JUXT_index + 1 == self.eqsel.index:
                 self.eq[JUXT_index:JUXT_end] = self.eq[
                     other_arg_index:JUXT_end]
@@ -243,7 +244,7 @@ class Eq:
                     other_arg_index:self.eqsel.index]
             self.eqsel.index = JUXT_index
         else:
-            # If it is the index of a script, downgrade the index operator
+            # If it is a script, downgrade the script operator
             cond_script, script_op_index, arg_pos = eqtools.is_script(
                 self.eq, self.eqsel.index)
             if cond_script:
@@ -268,7 +269,7 @@ class Eq:
             elif self.eq[self.eqsel.index] != utils.NEWARG:
                 eqtools.replaceby(self.eq, self.eqsel.index, [utils.NEWARG])
             else:
-                # Avoid saving in history if nothing to do
+                # Avoid displaying and saving in history if nothing to do
                 return
 
         self.eqsel.display(self.eq)
