@@ -14,7 +14,34 @@
 import random
 
 from .symbols import utils
+from .symbols import symbols
 from . import eqtools
+
+def f(expr):
+    return utils.Op(1, r'\textcolor{{magenta}}{{' + expr + '}} {0}')
+
+ALICE_CONSTRUCTS = [
+    f(r'e^{{-i\pi}}'),
+    f(r'G\frac{{Mm}}{{r^2}}'),
+    f(r'\int e^{{x^2}}\,dx'),
+    f(r'\frac{{ab+bc}}{{bd}}'),
+    f(r'\frac{{ac}}{{bd}}'),
+    f(r'ax^2+bx^2+c'),
+    f(r'\frac{{1}}{{N}}\sum_{{i=1}}^N x_i'),
+    f(r'\frac{{-b\pm\sqrt{{b^2-4ac}}}}{{2a}}'),
+    f(r'\sqrt{{(x_2-x_1)^2-(y_2-y_1)^2}}'),
+    f(r'\frac{{y_2-y}}{{x_2-x_1}}'),
+    f(r'(x-h)^2+(y-k)^2'),
+    f(r'\frac{{4}}{{3}}\pi r^3'),
+    f(r'\frac{{1}}{{3}}b^2 h'),
+    f(r'\frac{{1}}{{3}}\pi r^2 h'),
+    f(r'\pi r^2 h'),
+    f(r'(a\cdot c) b - (a\cdot b) c'),
+]
+
+ALICE_CONSTRUCTS += [f(i.expr) for i in symbols.LOWER_GREEK]
+ALICE_CONSTRUCTS += [f(i.expr) for i in symbols.UPPER_GREEK]
+ALICE_CONSTRUCTS += [f(i.expr) for i in symbols.VAR_GREEK]
 
 class Alice:
     def __init__(self):
@@ -23,6 +50,15 @@ class Alice:
                            + r'{{\left\lmoustache{{{0}}}\right\rgroup}}')
         self.pos = 0
         self.right = True
+        #self.try_constructs = 0
+
+    def cycle(self, pos, eq):
+        if pos < 0:
+            return self.cycle(len(eq) + pos, eq)
+        elif pos > len(eq) - 1:
+            return self.cycle(pos - len(eq), eq)
+        else:
+            return pos
 
     def turn_left(self):
         self.right = False
@@ -46,23 +82,22 @@ class Alice:
         # Get a moving value
         val = random.randint(-1, 1)
         # Correct direction if necessary
-        if val < 0 and self.right:
+        if val == 0:
+            self.op = random.choice(ALICE_CONSTRUCTS)
+            #self.op = ALICE_CONSTRUCTS[self.try_constructs]
+            #self.try_constructs += 1
+        elif val < 0 and self.right:
             self.turn_left()
         elif val > 0 and not self.right:
             self.turn_right()
         else:
-            self.pos += val 
-        # Boundary conditions
-        if self.pos < 0:
-            self.pos = len(eq) - 1 + self.pos
-        elif self.pos > len(eq) - 1:
-            self.pos = self.pos - len(eq) + 1
-        # Avoid intermediate JUXTs
-        if eqtools.is_intermediate_JUXT(eq, self.pos):
+            self.pos = self.cycle(self.pos + val, eq) 
+        # Avoid all kind of JUXTs: it is disgusting when Alice is very big
+        if eq[self.pos] == utils.JUXT:
             cond = True
             while cond:
-                self.pos += 1 if self.right else -1
-                cond = eqtools.is_intermediate_JUXT(eq, self.pos)
+                self.pos = self.cycle(self.pos + 1 if self.right else -1, eq)
+                cond = eq[self.pos] == utils.JUXT
 
 class Game:
     """
