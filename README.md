@@ -96,17 +96,11 @@ The fastest way is to download it and install from PyPI, just
 
 $ python3 -m pip install --user --upgrade visualequation
 
-On the other hand, if you have the sources, the first step is to generate the LaTeX symbols used by the program:
-
-$ python3 populate_symbols.py
-
-It will late a bit.
-
-After that, you can generate a package
+On the other hand, if you have the sources, you can first generate a package
 
 $ python3 setup.py bdist_wheel
 
-and install it
+It will late a bit since it will generate some icons from LaTeX. After that, you can install the package by
 
 $ python3 -m pip install --user dist/visualequation-\<version\>-py3-none-any.whl
 
