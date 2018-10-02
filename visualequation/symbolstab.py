@@ -32,7 +32,7 @@ class TabWidget(QTabWidget):
         self.tabs = []
         for index, menuitemdata in enumerate(lists.MENUITEMSDATA):
             self.tabs.append(QWidget())
-            icon = QIcon(os.path.join(commons.SYMBOLS_DIR,
+            icon = QIcon(os.path.join(commons.ICONS_DIR,
                                       menuitemdata.tag + ".png"))
             self.setIconSize(QSize(50, 30))
             self.addTab(self.tabs[index], icon, "")
@@ -43,7 +43,7 @@ class TabWidget(QTabWidget):
             column = 0
             for symb in menuitemdata.symb_l:
                 label = QLabel('')
-                label.setPixmap(QPixmap(os.path.join(commons.SYMBOLS_DIR,
+                label.setPixmap(QPixmap(os.path.join(commons.ICONS_DIR,
                                                      symb.tag + ".png")))
                 cmd = lambda state, code=symb.code: \
                       self.handle_click(state, code)

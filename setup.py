@@ -14,6 +14,7 @@
 import setuptools
 import setuptools.command.build_py
 import subprocess
+import glob
 
 from visualequation import commons
 
@@ -40,11 +41,14 @@ setuptools.setup(
     entry_points={
         'gui_scripts': ['visualequation = visualequation.__main__:main']
     },
-    package_data={'visualequation': ['data/eq_template.tex',
-                                     'data/icon.png',
-                                     'data/USAGE.html',
-                                     'data/symbols/*']},
-    zip_safe=False,
+    data_files=[
+        ('share/applications', ['data/visualequation.desktop']),
+        ('share/visualequation', ['data/eq_template.tex',
+                                  'data/visualequation.png',
+                                  'data/USAGE.html',]),
+        ('share/visualequation/icons', glob.glob('data/icons/*.png')),
+    ],
+    #zip_safe=False,
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",

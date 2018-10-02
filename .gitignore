@@ -1,6 +1,7 @@
 *.pyc
 *~
-visualequation/data/symbols/
+data/icons/
 visualequation.egg-info/
 build/
 dist/
+env/

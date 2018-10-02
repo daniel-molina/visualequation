@@ -131,7 +131,8 @@ def from_json(json_o):
         return utils.Op(json_o['n_args'], json_o['latex_code'],
                         json_o['type_'])
 
-def eq2png(eq, dpi, bg, directory, png_fpath=None, add_metadata=False):
+def eq2png(eq, dpi, bg, directory, png_fpath=None, add_metadata=False,
+           latex_template=None):
     """ Create a png from a equation, returns the path of PNG image.
 
     The size of the image is specified (dpi).
@@ -149,7 +150,9 @@ def eq2png(eq, dpi, bg, directory, png_fpath=None, add_metadata=False):
     dvi_fpath = os.path.join(directory, fname + '.dvi')
     if png_fpath == None:
         png_fpath = os.path.join(directory, fname + '.png')
-    eq2latex_file(eq, latex_fpath, commons.LATEX_TEMPLATE)
+    if latex_template == None:
+        latex_template = commons.LATEX_TEMPLATE
+    eq2latex_file(eq, latex_fpath, latex_template)
     latex_file2dvi(latex_fpath, directory)
     if dpi == None:
         dpi = 300

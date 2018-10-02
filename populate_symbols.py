@@ -25,9 +25,12 @@ import subprocess
 
 from visualequation.symbols.lists import MENUITEMSDATA, ADDITIONAL_LS
 from visualequation.conversions import eq2png
-from visualequation import commons
 
 DPI = 200
+ICONS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data',
+                                         'icons'))
+LATEX_TEMPLATE = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                              'data', 'eq_template.tex'))
 
 def edit_expr(latex_code):
     """
@@ -42,17 +45,18 @@ def postprocess(filename):
     """
     subprocess.call(["mogrify", "-chop", "5x0", filename])
 
-def generate_symb_images(menuitemdata, temp_dir):
+def generate_icons(menuitemdata, temp_dir):
     """
     Generate the png of the symbols and place them in a given directory.
     A temporal directory must be passed, where auxiliary files are
     generated.
     """
     for symb in menuitemdata.symb_l:
-        filename = os.path.join(commons.SYMBOLS_DIR, symb.tag + ".png")
-        eq2png(edit_expr(symb.expr), DPI, None, temp_dir,
-               filename)
-        postprocess(filename)
+        filename = os.path.join(ICONS_DIR, symb.tag + ".png")
+        if not os.path.exists(filename):
+            eq2png(edit_expr(symb.expr), DPI, None, temp_dir,
+                   filename, latex_template=LATEX_TEMPLATE)
+            postprocess(filename)
 
 if __name__ == '__main__':
 
@@ -60,22 +64,25 @@ if __name__ == '__main__':
     # Prepare a temporal directory to manage all LaTeX files
     temp_dirpath = tempfile.mkdtemp()
 
-    if not os.path.exists(commons.SYMBOLS_DIR):
-        os.makedirs(commons.SYMBOLS_DIR)
+    if not os.path.exists(ICONS_DIR):
+        os.makedirs(ICONS_DIR)
 
     for index, menuitemdata in enumerate(MENUITEMSDATA):
-        print("Generating menu symbols...", index+1, "/", \
+        print("Generating tab icons...", index+1, "/", \
             len(MENUITEMSDATA))
-        filename = os.path.join(commons.SYMBOLS_DIR, menuitemdata.tag + '.png')
-        eq2png(edit_expr(menuitemdata.expr), DPI, None, temp_dirpath,
-               filename)
-        postprocess(filename)
-        generate_symb_images(menuitemdata, temp_dirpath)
+        filename = os.path.join(ICONS_DIR, menuitemdata.tag + '.png')
+        if not os.path.exists(filename):
+            eq2png(edit_expr(menuitemdata.expr), DPI, None, temp_dirpath,
+                   filename, latex_template=LATEX_TEMPLATE)
+            postprocess(filename)
+        generate_icons(menuitemdata, temp_dirpath)
 
-    print("Generating dialog symbols...")
+    print("Generating dialog icons...")
     for symb in ADDITIONAL_LS:
-        filename = os.path.join(commons.SYMBOLS_DIR, symb.tag + ".png")
-        eq2png(edit_expr(symb.expr), DPI, None, temp_dirpath, filename)
-        postprocess(filename)
+        filename = os.path.join(ICONS_DIR, symb.tag + ".png")
+        if not os.path.exists(filename):
+            eq2png(edit_expr(symb.expr), DPI, None, temp_dirpath, filename,
+                   latex_template=LATEX_TEMPLATE)
+            postprocess(filename)
 
     shutil.rmtree(temp_dirpath)
