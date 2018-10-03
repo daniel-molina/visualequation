@@ -45,7 +45,7 @@ def matrix_type(parent):
             button_type.clicked.connect(self.handle_click)
             self.repr_type = QLabel('')
             self.repr_type.setPixmap(QPixmap(os.path.join(
-                commons.SYMBOLS_DIR, self.symb.tag + ".png")))
+                commons.ICONS_DIR, self.symb.tag + ".png")))
             self.repr_type.setAlignment(Qt.AlignCenter)
             hbox_type.addWidget(button_type)
             hbox_type.addWidget(self.repr_type)
@@ -75,7 +75,7 @@ def matrix_type(parent):
             if result == QDialog.Accepted:
                 self.symb = dialog.symb_chosen
                 self.repr_type.setPixmap(QPixmap(os.path.join(
-                    commons.SYMBOLS_DIR, self.symb.tag + ".png")))
+                    commons.ICONS_DIR, self.symb.tag + ".png")))
 
         def check_state(self, *args, **kargs):
             state1 = self.validator.validate(self.ledit_rows.text(), 0)[0]
@@ -230,7 +230,7 @@ def array(parent):
             button_l.clicked.connect(self.handle_click_l)
             self.repr_l = QLabel('')
             self.repr_l.setPixmap(QPixmap(os.path.join(
-                commons.SYMBOLS_DIR, self.symb_l.tag + ".png")))
+                commons.ICONS_DIR, self.symb_l.tag + ".png")))
             self.repr_l.setAlignment(Qt.AlignCenter)
             hbox_l.addWidget(button_l)
             hbox_l.addWidget(self.repr_l)
@@ -242,7 +242,7 @@ def array(parent):
             button_r.clicked.connect(self.handle_click_r)
             self.repr_r = QLabel('')
             self.repr_r.setPixmap(QPixmap(os.path.join(
-                commons.SYMBOLS_DIR, self.symb_r.tag + ".png")))
+                commons.ICONS_DIR, self.symb_r.tag + ".png")))
             self.repr_r.setAlignment(Qt.AlignCenter)
             hbox_r.addWidget(button_r)
             hbox_r.addWidget(self.repr_r)
@@ -279,7 +279,7 @@ def array(parent):
             if result == QDialog.Accepted:
                 self.symb_l = dialog.symb_chosen
                 self.repr_l.setPixmap(QPixmap(os.path.join(
-                    commons.SYMBOLS_DIR, self.symb_l.tag + ".png")))
+                    commons.ICONS_DIR, self.symb_l.tag + ".png")))
 
         def handle_click_r(self):
             dialog = ChooseSymbDialog(self, "Right delimiter",
@@ -288,7 +288,7 @@ def array(parent):
             if result == QDialog.Accepted:
                 self.symb_r = dialog.symb_chosen
                 self.repr_r.setPixmap(QPixmap(os.path.join(
-                    commons.SYMBOLS_DIR, self.symb_r.tag + ".png")))
+                    commons.ICONS_DIR, self.symb_r.tag + ".png")))
 
         def check_state(self, *args, **kargs):
             state1 = self.validator.validate(self.ledit_rows.text(), 0)[0]

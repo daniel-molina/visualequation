@@ -7,3 +7,4 @@ Exec=visualequation
 Name=Visual Equation
 Comment[en]=Equation editor powered by LaTeX
 Icon=/usr/share/visualequation/visualequation.png
+Categories=Science;

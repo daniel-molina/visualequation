@@ -93,7 +93,7 @@ class Symb(QLabel):
         super().__init__('')
         self.parent = parent
         self.symb = symb
-        self.setPixmap(QPixmap(os.path.join(commons.SYMBOLS_DIR,
+        self.setPixmap(QPixmap(os.path.join(commons.ICONS_DIR,
                                            symb.tag + ".png")))
         self.setAlignment(Qt.AlignCenter)
 
