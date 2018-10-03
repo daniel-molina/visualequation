@@ -12,17 +12,25 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 class EqHist:
-    def __init__(self, init_eq):
-        self.eq_hist = [(list(init_eq), 0)]
+    def __init__(self, eqsel):
         self.eq_hist_index = 0
+        self.eq_hist = [(list(eqsel.eq), eqsel.index, eqsel.right)]
 
-    def save(self, eq, sel_index):
+    def save(self, eqsel):
         """
         Save current equation to the historial and delete any future elements
         from this point
         """
         self.eq_hist_index += 1
-        self.eq_hist[self.eq_hist_index:] = [(list(eq), sel_index)]
+        self.eq_hist[self.eq_hist_index:] \
+            = [(list(eqsel.eq), eqsel.index, eqsel.right)]
+
+    def update(self, eqsel):
+        """
+        Substitute current state.
+        """
+        self.eq_hist[self.eq_hist_index:] \
+            = [(list(eqsel.eq), eqsel.index, eqsel.right)]
 
     def get_prev(self):
         """ Recover previous equation from the historial """

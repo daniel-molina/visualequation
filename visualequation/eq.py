@@ -33,9 +33,9 @@ class Eq:
         self.eq = list(init_eq) # It will be mutated by the replace functions
         self.temp_dir = temp_dir
         self.parent = parent
-        self.eqhist = eqhist.EqHist(init_eq)
         self.eqsel = eqsel.Selection(init_eq, 0, temp_dir, setPixmap)
         self.eqsel.display(self.eq)
+        self.eqhist = eqhist.EqHist(self.eqsel)
 
     def insert(self, oper):
         """
@@ -80,6 +80,7 @@ class Eq:
             else:
                 raise ValueError('Unknown type of operator %s' % op)
 
+        self.eqhist.update(self.eqsel)
         if isinstance(oper, types.FunctionType):
             op = oper(self.parent)
             if op:
@@ -90,7 +91,7 @@ class Eq:
             replace_op_in_eq(oper)
 
         self.eqsel.display(self.eq)
-        self.eqhist.save(self.eq, self.eqsel.index)
+        self.eqhist.save(self.eqsel)
 
     def insert_substituting(self, oper):
         """
@@ -131,6 +132,7 @@ class Eq:
             else:
                 raise ValueError('Unknown operator passed.')
 
+        self.eqhist.update(self.eqsel)
         if isinstance(oper, types.FunctionType):
             op = oper(self.parent)
             if op:
@@ -141,13 +143,15 @@ class Eq:
             replace_op_in_eq(oper)
 
         self.eqsel.display(self.eq)
-        self.eqhist.save(self.eq, self.eqsel.index)
+        self.eqhist.save(self.eqsel)
 
     def insert_sup_substituting(self):
         # Blacklist some operators
         if hasattr(self.eq[self.eqsel.index], 'type_') \
            and self.eq[self.eqsel.index].type_ in utils.INDEX_BLACKLIST:
             return
+
+        self.eqhist.update(self.eqsel)
         # If the user specifies a JUXT, they refer to the first or last element
         if self.eq[self.eqsel.index] == utils.JUXT:
             if self.eqsel.right:
@@ -181,13 +185,15 @@ class Eq:
 
         self.eqsel.index += 1 + elems
         self.eqsel.display(self.eq)
-        self.eqhist.save(self.eq, self.eqsel.index)
+        self.eqhist.save(self.eqsel)
 
     def insert_sub_substituting(self):
         # Blacklist some operators
         if hasattr(self.eq[self.eqsel.index], 'type_') \
            and self.eq[self.eqsel.index].type_ in utils.INDEX_BLACKLIST:
             return
+
+        self.eqhist.update(self.eqsel)
         # If the user specifies a JUXT, they refer to the first or last element
         if self.eq[self.eqsel.index] == utils.JUXT:
             if self.eqsel.right:
@@ -221,7 +227,7 @@ class Eq:
 
         self.eqsel.index += 1 + elems
         self.eqsel.display(self.eq)
-        self.eqhist.save(self.eq, self.eqsel.index)
+        self.eqhist.save(self.eqsel)
 
     def remove_sel(self):
         """
@@ -234,6 +240,7 @@ class Eq:
         cond_arg_JUXT, JUXT_index, other_arg_index = eqtools.is_arg_of_JUXT(
             self.eq, self.eqsel.index)
         if cond_arg_JUXT:
+            self.eqhist.update(self.eqsel)
             JUXT_end = eqtools.nextblockindex(self.eq, JUXT_index)
             # If eqsel.index is the first argument (instead of the second)
             if JUXT_index + 1 == self.eqsel.index:
@@ -248,6 +255,7 @@ class Eq:
             cond_script, script_op_index, arg_pos = eqtools.is_script(
                 self.eq, self.eqsel.index)
             if cond_script:
+                self.eqhist.update(self.eqsel)
                 args = eqtools.indexop2arglist(self.eq, script_op_index)
                 # Find which element of the list has to be removed
                 arg_index = 0
@@ -267,13 +275,14 @@ class Eq:
                     self.eq[script_op_index:end_block] = [new_op] + new_args
                 self.eqsel.index = script_op_index
             elif self.eq[self.eqsel.index] != utils.NEWARG:
+                self.eqhist.update(self.eqsel)
                 eqtools.replaceby(self.eq, self.eqsel.index, [utils.NEWARG])
             else:
                 # Avoid displaying and saving in history if nothing to do
                 return
 
         self.eqsel.display(self.eq)
-        self.eqhist.save(self.eq, self.eqsel.index)
+        self.eqhist.save(self.eqsel)
 
     def open_eq(self, filename=None):
         neweq = conversions.open_eq(self.parent, filename)
@@ -322,15 +331,16 @@ class Eq:
 
     def recover_prev_eq(self):
         """ Recover previous equation from the historial, if any """
-        preveq, self.eqsel.index = self.eqhist.get_prev()
+        self.eqhist.update(self.eqsel)
+        preveq, self.eqsel.index, self.eqsel.right = self.eqhist.get_prev()
         self.eq = list(preveq)
-        self.eqsel.display(self.eq)
+        self.eqsel.display(self.eq, self.eqsel.right)
 
     def recover_next_eq(self):
         """ Recover next equation from the historial, if any """
-        nexteq, self.eqsel.index = self.eqhist.get_next()
+        nexteq, self.eqsel.index, self.eqsel.right = self.eqhist.get_next()
         self.eq = list(nexteq)
-        self.eqsel.display(self.eq)
+        self.eqsel.display(self.eq, self.eqsel.right)
 
     def sel2eqbuffer(self):
         """ Copy block pointed by self.eqsel.index to self.eq_buffer """
@@ -355,4 +365,4 @@ class Eq:
                                                            self.eqsel.index,
                                                            self.eq_buffer)
             self.eqsel.display(self.eq)
-            self.eqhist.save(self.eq, self.eqsel.index)
+            self.eqhist.save(self.eqsel)
