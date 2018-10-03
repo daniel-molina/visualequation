@@ -60,8 +60,9 @@ class Selection:
             while cond:
                 self.index += 1
                 cond = eqtools.is_intermediate_JUXT(self.eq, self.index)
-        # Avoid first argument of index operators
-        if hasattr(self.eq[self.index - 1], 'type_') \
+        # Avoid first argument of index operators: \sideset is picky
+        if self.index != 0\
+           and hasattr(self.eq[self.index - 1], 'type_') \
            and self.eq[self.index - 1].type_ in ('index', 'opindex'):
             self.index += 1
             
@@ -82,8 +83,9 @@ class Selection:
             while cond:
                 self.index -= 1
                 cond = eqtools.is_intermediate_JUXT(self.eq, self.index)
-        # Avoid first argument of index operators
-        if hasattr(self.eq[self.index - 1], 'type_') \
+        # Avoid first argument of index operators: \sideset is picky
+        if self.index != 0 \
+           and hasattr(self.eq[self.index - 1], 'type_') \
            and self.eq[self.index - 1].type_ in ('index', 'opindex'):
             self.index -= 1
         self.display(right=False)
