@@ -28,12 +28,11 @@ class Selection:
         self.setPixmap = setPixmap
 
     def display(self, eq=None,  right=True):
-        if not 0 <= self.index < len(self.eq):
-            raise ValueError('Provided index outside the equation.')
-
         # If equation is provided, substitute the current one
         if eq is not None:
             self.eq = eq
+        if not 0 <= self.index < len(self.eq):
+            raise ValueError('Provided index outside the equation.')
         eqsel = list(self.eq)
         if right:
             self.right = True
