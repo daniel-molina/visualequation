@@ -13,10 +13,8 @@
 
 """This modules indicates the directories of the program."""
 import os, sys, site
-from pkg_resources import resource_filename
-import pkgutil
 
-VERSION="0.3.4"
+VERSION="0.3.5"
 
 # Set the path to common files
 # Valid for execution in the sources tree

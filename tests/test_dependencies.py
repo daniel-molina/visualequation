@@ -61,7 +61,7 @@ class DependenciesTest(unittest.TestCase):
     def test_dvips(self):
         temp_dirpath = tempfile.mkdtemp()
         dvi_fpath = os.path.join(os.path.dirname(__file__), 'im.dvi')
-        eps_fpath = os.path.join(temp_dirpath, 'im.ps')
+        eps_fpath = os.path.join(temp_dirpath, 'im.eps')
         try:
             subprocess.check_output(["dvips", "-E", "-D", "600", "-Ppdf", 
                                      "-o", eps_fpath, dvi_fpath])
@@ -74,7 +74,7 @@ class DependenciesTest(unittest.TestCase):
 
     def test_epstopdf(self):
         temp_dirpath = tempfile.mkdtemp()
-        eps_fpath = os.path.join(os.path.dirname(__file__), 'im.ps')
+        eps_fpath = os.path.join(os.path.dirname(__file__), 'im.eps')
         pdf_fpath = os.path.join(temp_dirpath, 'im.pdf')
         try:
             subprocess.check_output(["epstopdf", "--outfile", pdf_fpath,
