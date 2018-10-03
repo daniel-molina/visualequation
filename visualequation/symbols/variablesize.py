@@ -19,9 +19,9 @@ def variablesize(parent, code):
             super().__init__(parent)
 
             self.setWindowTitle('Variable-size operator')
-            self.suplimit = QCheckBox("Superior limit")
+            self.suplimit = QCheckBox("Limit over the sign")
             self.suplimit.setChecked(True)
-            self.inflimit = QCheckBox("Inferior limit")
+            self.inflimit = QCheckBox("Limit under the sign")
             self.inflimit.setChecked(True)
             self.buttons = QDialogButtonBox(
                 QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
