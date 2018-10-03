@@ -290,7 +290,7 @@ class Eq:
             self.eq = list(neweq)
             self.eqsel.index = 0
             self.eqsel.display(self.eq)
-            self.eqhist.save(neweq, 0)
+            self.eqhist.save(self.eqsel)
 
     def save_eq(self):
         items = ["PNG", "PDF", "EPS", "SVG"]
@@ -331,7 +331,6 @@ class Eq:
 
     def recover_prev_eq(self):
         """ Recover previous equation from the historial, if any """
-        self.eqhist.update(self.eqsel)
         preveq, self.eqsel.index, self.eqsel.right = self.eqhist.get_prev()
         self.eq = list(preveq)
         self.eqsel.display(self.eq, self.eqsel.right)
