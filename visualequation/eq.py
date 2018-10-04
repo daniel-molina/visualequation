@@ -24,6 +24,7 @@ from . import eqhist
 from . import conversions
 from .symbols import utils
 from . import eqsel
+from .errors import ShowError
 
 class Eq:
     def __init__(self, temp_dir, setPixmap, parent):
@@ -78,7 +79,8 @@ class Eq:
                     self.eqsel.index += 1
                     
             else:
-                raise ValueError('Unknown type of operator %s' % op)
+                ShowError('Unknown type of operator in insert: ' + repr(op),
+                          True)
 
         self.eqhist.update(self.eqsel)
         if isinstance(oper, types.FunctionType):
@@ -130,7 +132,8 @@ class Eq:
                                     + [utils.NEWARG] * (op.n_args-1)
                 self.eqsel.index = index_end_arg1+1
             else:
-                raise ValueError('Unknown operator passed.')
+                ShowError('Unknown type of operator in insert_subst: '
+                          + repr(op), True)
 
         self.eqhist.update(self.eqsel)
         if isinstance(oper, types.FunctionType):
@@ -320,8 +323,9 @@ class Eq:
             if ret_val != QMessageBox.Yes:
                 return
         if item == 'PNG':
-            conversions.eq2png(self.eq, 600, None, self.temp_dir,
-                               filename, True)
+            conversions.eq2png(self.eq, dpi=600, bg=None,
+                               directory=self.temp_dir, png_fpath=filename,
+                               add_metadata=True)
         elif item == 'PDF':
             conversions.eq2pdf(self.eq, self.temp_dir, filename)
         elif item == 'SVG':

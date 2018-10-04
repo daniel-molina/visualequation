@@ -51,10 +51,11 @@ class EqLabel(QLabel):
             return
         self.setAcceptDrops(False)
         base = "eq" + str(random.randint(0, 999999))
-        eq_png = conversions.eq2png(self.eq.eq, None, None, self.eq.temp_dir,
-                                    os.path.join(self.eq.temp_dir,
-                                                 base +'.png'),
-                                    True)
+        eq_png = conversions.eq2png(self.eq.eq, dpi=None, bg=None,
+                                    directory=self.eq.temp_dir,
+                                    png_fpath=os.path.join(self.eq.temp_dir,
+                                                           base +'.png'),
+                                    add_metadata=True)
         mimedata = QMimeData()
         mimedata.setImageData(QImage(eq_png)) # does not work for web browser
         #mimedata.setText(eq_png) # text-editor and console

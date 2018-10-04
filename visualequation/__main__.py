@@ -19,6 +19,7 @@ import tempfile
 import shutil
 import os
 import argparse
+import traceback
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
@@ -29,11 +30,13 @@ from . import eqlabel
 from . import conversions
 from . import commons
 from . import game
+from .errors import ShowError
 
 class MainWindow(QMainWindow):
     def __init__(self, temp_dir):
         super().__init__()
         self.temp_dir = temp_dir
+        ShowError.default_parent = self
         self.init_center_widget()
         self.statusBar()
         self.init_menu()
@@ -167,6 +170,17 @@ def main():
     parser.add_argument('-v', '--version', action='version',
                         version='%(prog)s ' + commons.VERSION)
     parser.parse_args()
+
+    # Catch all exceptions by installing a global exception hook
+    sys._excepthook = sys.excepthook
+    def exception_hook(exctype, value, traceback_error):
+        sys._excepthook(exctype, value, traceback_error)
+        ShowError('Unhandled exception. Please, report this incident with '
+                  + "the following traceback code:\n" +
+                  ''.join(traceback.format_tb(traceback_error)),
+                  True)
+    sys.excepthook = exception_hook
+
     # Use global for app to be destructed at the end
     # http://pyqt.sourceforge.net/Docs/PyQt5/gotchas.html#crashes-on-exit
     global app 

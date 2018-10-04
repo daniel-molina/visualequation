@@ -25,9 +25,11 @@ from PyQt5.QtGui import *
 from . import commons
 from . import eqtools
 from .symbols import utils
+from .errors import ShowError
 
 def eq2latex_file(eq, latex_file, template_file):
-    """ Write equation in a LaTeX file according to the template_file.
+    """
+    Write equation in a LaTeX file using the template template_file.
     It looks for string '%EQ%' in the file and replace it by eq.
     """
     if isinstance(eq, str):
@@ -35,7 +37,8 @@ def eq2latex_file(eq, latex_file, template_file):
     elif isinstance(eq, list):
         latex_code = eqtools.eq2latex_code(eq)
     else:
-        raise SystemExit('Internal Error: Cannot understand equation type.')
+        ShowError('Cannot understand equation type when writting LaTeX file.',
+                  True)
     with open(template_file, "r") as ftempl:
         with open(latex_file, "w") as flatex:
             for line in ftempl:
@@ -53,14 +56,16 @@ def latex_file2dvi(latex_file, output_dir):
                                  "-output-directory=" + output_dir,
                                  latex_file])
     except subprocess.CalledProcessError as error:
-        raise SystemExit("Error reported by latex. It can be because:\n"
-                         + " * You do not have installed required packages.\n"
-                         + "   (Do you success running test test_latex?)\n"
-                         + " * An internal error. Please, report it with all "
-                         + "the text returned above and the files inside "
-                         + "this directory:\n%s" % output_dir)
+        msg = "Error reported by latex. The equation cannot be generated.\n" \
+        + "If you have installed the required packages, it could be " \
+        + "an internal error. Please, report it including " \
+        + "the content of the following file:\n" + latex_file + "\n" \
+        + "Finishing execution."
+        ShowError(msg, True)
     except OSError:
-        raise SystemExit("Command latex was not found.")
+        msg = "Command latex was not found. This is an essential " \
+              + "program for Visual Equation. Finishing execution."
+        ShowError(msg, True)
 
     
 def dvi2png(dvi_file, png_file, log_file, dpi, bg):
@@ -76,7 +81,9 @@ def dvi2png(dvi_file, png_file, log_file, dpi, bg):
                              "-bg", bg,
                              "-o", png_file, dvi_file], stdout=flog)
         except OSError:
-            raise SystemExit("Command dvipng was not found.")
+            msg = "Command dvipng was not found. This is an essential " \
+                  + "program for Visual Equation. Finishing execution."
+            ShowError(msg, True)
 
 def dvi2eps(dvi_file, eps_file, log_file):
     """ Convert the DVI file to PostScript. """
@@ -85,14 +92,14 @@ def dvi2eps(dvi_file, eps_file, log_file):
             subprocess.call(["dvips", "-E", "-D", "600", "-Ppdf", 
                              "-o", eps_file, dvi_file], stderr=flog)
         except OSError:
-            raise SystemExit("Command dvips was not found.")
+            ShowError("Command dvips was not found. No EPS was created.",
+                      False)
             
 def eps2pdf(eps_file, pdf_file):
     try:
         subprocess.call(["epstopdf", "--outfile", pdf_file, eps_file])
     except OSError:
-        raise SystemExit("Command epstopdf was not found.")
-
+        ShowError("Command epstopdf was not found. No PDF was created.", False)
         
 # eps2svg: Ouput SVG has bounding box problems
 # In Ekee it seems solved by hand but I am not able to reproduce the fix
@@ -101,7 +108,7 @@ def eps2pdf(eps_file, pdf_file):
 #        subprocess.call(["pstoedit", "-dt", "-ssp", "-f", "plot-svg",
 #                         eps_file, svg_file], stderr=flog)
 
-# It does not work so good in some sytems (eps produced),
+# pdf2svg: It does not work so good in some sytems (eps produced),
 # specially the \text fields (very bad pixeled)
 #def pdf2svg(pdf_file, svg_file):
 #    subprocess.call(["pdf2svg", pdf_file, svg_file])
@@ -120,7 +127,8 @@ def dvi2svg(dvi_file, svg_file, log_file):
             subprocess.call(["dvisvgm", "--no-fonts", "--scale=5,5", 
                              "-o", svg_file, dvi_file], stderr=flog)
         except OSError:
-            raise SystemExit("Command dvisvgm was not found.")
+            msg = "Command dvisvgm was not found. No SVG was created."
+            ShowError(msg, False)
 
 class MyEncoder(json.JSONEncoder):
     def default(self, o):
@@ -143,7 +151,7 @@ def eq2png(eq, dpi, bg, directory, png_fpath=None, add_metadata=False,
     """
     # If directory does not exist, raise exception
     if not os.path.exists(directory):
-        raise ValueError('Directory does not exist.')
+        ShowError('Temporal directory used by eq2png does not exist.', True)
     fname = 've'
     latex_fpath = os.path.join(directory, fname + '.tex')
     dvi2pnglog_fpath = os.path.join(directory, fname + '_div2png.log')
@@ -167,11 +175,13 @@ def eq2png(eq, dpi, bg, directory, png_fpath=None, add_metadata=False,
                                  "-description=" + eq_str,
                                  png_fpath], stdout=flog)
             except subprocess.CalledProcessError:
-                raise SystemExit("Exiftool related error. "
-                                 + "Please, report this bug.")
+                msg = "Exiftool related error. Probably equation was not " \
+                      + "saved correctly inside the image."
+                ShowError(msg, False)
             except OSError:
-                raise SystemExit("Command exiftool was not found.")
-
+                msg = "Command exiftool was not found. Equation was not " \
+                      + "saved inside the image."
+                ShowError(msg, False)
     return png_fpath
 
 def eq2eps(eq, directory, eps_fpath=None):
@@ -184,7 +194,7 @@ def eq2eps(eq, directory, eps_fpath=None):
     """
     # If directory does not exist, raise exception
     if not os.path.exists(directory):
-        raise ValueError('Directory does not exist.')
+        ShowError('Temporal directory used by eq2eps does not exist.', True)
     fname = 've'
     latex_fpath = os.path.join(directory, fname + '.tex')
     dvi2epslog_fpath = os.path.join(directory, fname + '_div2eps.log')
@@ -200,6 +210,8 @@ def eq2pdf(eq, directory, pdf_fpath=None):
     """
     Convert equation to pdf file. It always adds the equation to metadata.
     """
+    if not os.path.exists(directory):
+        ShowError('Temporal directory used by eq2pdf does not exist.', True)
     if pdf_fpath == None:
         pdf_fpath = os.path.join(directory, 've.pdf')
         save_eq = False
@@ -217,10 +229,13 @@ def eq2pdf(eq, directory, pdf_fpath=None):
                                  "-description=" + eq_str,
                                  pdf_fpath], stdout=flog)
             except subprocess.CalledProcessError:
-                raise SystemExit("Exiftool error. Please, report it.")
+                msg = "Exiftool related error. Probably equation was not " \
+                      + "saved correctly inside the image."
+                ShowError(msg, True)
             except OSError:
-                raise SystemExit("Command exiftool was not found.")
-
+                msg = "Command exiftool was not found. Equation was not " \
+                      + "saved inside the image."
+                ShowError(msg, False)
     return pdf_fpath
 
 def eq2svg(eq, directory, svg_fpath):
@@ -228,7 +243,7 @@ def eq2svg(eq, directory, svg_fpath):
 
     # If directory does not exist, raise exception
     if not os.path.exists(directory):
-        raise ValueError('Directory does not exist.')
+        ShowError('Temporal directory used by eq2svg does not exist.', True)
     fname = 've'
     latex_fpath = os.path.join(directory, fname + '.tex')
     dvi_fpath = os.path.join(directory, fname + '.dvi')    
@@ -249,23 +264,25 @@ def open_eq(parent, filename = None):
         eq_str = subprocess.check_output(
             ["exiftool", "-b", "-s3", "-description", filename]).decode('utf8')
         if not eq_str:
-            msg = QMessageBox(parent)
-            msg.setText("No equation inside this file.")
-            msg.setWindowTitle("Warning")
-            msg.setIcon(QMessageBox.Warning)
-            msg.exec_()
+            msg = "No equation inside this file."
+            ShowError(msg, False, parent)
             return None
         return json.JSONDecoder(object_hook=from_json).decode(eq_str)
     except subprocess.CalledProcessError:
-        msg = QMessageBox(parent)
-        msg.setText("Error by exiftool when trying to extract equation "
-                    + "from file.")
-        msg.setWindowTitle("Error")
-        msg.setIcon(QMessageBox.Critical)
-        msg.exec_()
+        msg = "Error by exiftool when trying to extract equation from file."
+        ShowError(msg, False, parent)
         return None
     except OSError:
-        raise SystemExit("Command exiftool was not found.")
+        msg = "Command exiftool was not found.\n" \
+              + "You need this tool for saving and recovering equations " \
+              + "from PNG and PDF."
+        ShowError(msg, False, parent)
+        return None
     except ValueError as error:
-        raise SystemExit("Error parsing equation: %s" % error)
+        msg = "Error parsing metadata.\n" \
+              + "ValueError: " + str(error) + "\n" \
+              + "Was the file created with your version of Visual Equation?"
+        ShowError(msg, False, parent)
+        return None
+
         

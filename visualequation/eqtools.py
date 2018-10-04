@@ -16,6 +16,7 @@ Module to transform equations to latex code and getting information from or
 replacing equation blocks.
 """
 from .symbols import utils
+from .errors import ShowError
 
 def eqblock2latex(eq, index):
     """ Return latex code of the equation block starting at the given index
@@ -38,7 +39,8 @@ def eqblock2latex(eq, index):
         elif isinstance(eq[index], str):
             return (eq[index], index+1)
         else:
-            raise ValueError('Unknown equation element %s', eq[index])
+            ShowError('Unknown equation element in block2latex: '
+                      + repr(eq[index]), True)
 
     return block2latex(index)
 
@@ -61,7 +63,8 @@ def nextblockindex(eq, index):
         elif isinstance(eq[index], str):
             return index+1
         else:
-            raise ValueError('Unknown equation element %s', eq[index])
+            ShowError('Unknown equation element in nextblockindex: '
+                      + repr(eq[index]), True)
 
     return block2nextindex(index)
 
@@ -273,7 +276,8 @@ def indexop2arglist(eq, sel_index):
                 eq[start_arg2:end_arg2], eq[end_arg2:end_arg3],
                 eq[end_arg3:end_arg4], eq[end_arg4:end_arg5]]
     else:
-        raise SystemExit("Equation element not recognised.")
+        ShowError("Equation element not recognised in indexop2arglist: "
+                  + repr(op), True)
 
 def flat_arglist(args):
     # Flat the list of args
@@ -328,8 +332,8 @@ def arglist2indexop(args):
         else:
             return index_dict[tuple(bool(arg) for arg in args)]
     except KeyError:
-        raise SystemExit('Internal error:'
-                         + ' Bad argument list of index operator.')
+        ShowError('Bad argument list in arglist2indexop: '
+                  + repr(args), True)
 
 def is_script(eq, sel_index):
     """

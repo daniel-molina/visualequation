@@ -14,6 +14,8 @@
 """This modules indicates the directories of the program."""
 import os, sys, site
 
+from . import errors
+
 VERSION="0.3.5"
 
 # Set the path to common files
@@ -27,7 +29,7 @@ elif os.path.exists(os.path.join(sys.prefix, 'share', 'visualequation')):
 elif os.path.exists(os.path.join(site.USER_BASE, 'share', 'visualequation')):
     DATA_DIR = os.path.join(site.USER_BASE, 'share', 'visualequation')
 else:
-    raise SystemExit("Could not find where data files are located.")
+    ShowError("Could not find where data files are located.", True)
 
 #DATA_DIR = os.path.dirname(resource_filename(__name__, "visualequation.desktop"))
 

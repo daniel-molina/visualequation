@@ -17,6 +17,7 @@ from . import eqtools
 from . import conversions
 from .symbols import utils
 from . import game
+from .errors import ShowError
 
 class Selection:
     def __init__(self, init_eq, init_index, temp_dir, setPixmap):
@@ -32,7 +33,7 @@ class Selection:
         if eq is not None:
             self.eq = eq
         if not 0 <= self.index < len(self.eq):
-            raise ValueError('Provided index outside the equation.')
+            ShowError('Provided index outside the equation in display.', True)
         eqsel = list(self.eq)
         if right:
             self.right = True
