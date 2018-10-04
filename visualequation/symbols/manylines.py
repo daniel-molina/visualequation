@@ -17,9 +17,11 @@ from .delimiters import *
 MATRIXTYPES = [
     LatexSymb('pmatrix', 'pmatrix', r'\begin{pmatrix}\square\end{pmatrix}'),
     LatexSymb('vmatrix', 'vmatrix', r'\begin{vmatrix}\square\end{vmatrix}'),
-    LatexSymb('Vmatrix', 'Vmatrix', r'\begin{Vmatrix}\square\end{Vmatrix}'),
+    LatexSymb('uppervmatrix', 'Vmatrix',
+              r'\begin{Vmatrix}\square\end{Vmatrix}'),
     LatexSymb('bmatrix', 'bmatrix', r'\begin{bmatrix}\square\end{bmatrix}'),
-    LatexSymb('Bmatrix', 'Bmatrix', r'\begin{Bmatrix}\square\end{Bmatrix}'),
+    LatexSymb('upperbmatrix', 'Bmatrix',
+              r'\begin{Bmatrix}\square\end{Bmatrix}'),
     LatexSymb('matrix', 'matrix', r'\begin{matrix}\square\end{matrix}'),
 ]
 
