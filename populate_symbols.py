@@ -23,6 +23,8 @@ import tempfile
 import shutil
 import subprocess
 
+from PyQt5.QtWidgets import *
+
 from visualequation.symbols.lists import MENUITEMSDATA, ADDITIONAL_LS
 from visualequation.conversions import eq2png
 
@@ -59,6 +61,10 @@ def generate_icons(menuitemdata, temp_dir):
             postprocess(filename)
 
 if __name__ == '__main__':
+
+    global app 
+    # It is needed to display errors
+    app = QApplication(sys.argv)
 
     os.chdir('visualequation')
     # Prepare a temporal directory to manage all LaTeX files
