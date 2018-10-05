@@ -78,6 +78,7 @@ $ python3 -m pip install --user --upgrade visualequation
 On the other hand, if you want to install the development version, follow the next instructions. First, get the sources
 
 $ git clone https://github.com/daniel-molina/visualequation.git
+
 $ cd visualequation
 
 You must first generate the icons 
