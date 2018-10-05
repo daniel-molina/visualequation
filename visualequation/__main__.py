@@ -172,9 +172,9 @@ def main():
     parser.parse_args()
 
     # Catch all exceptions by installing a global exception hook
-    sys._excepthook = sys.excepthook
+    #sys._excepthook = sys.excepthook
     def exception_hook(exctype, value, traceback_error):
-        sys._excepthook(exctype, value, traceback_error)
+        #sys._excepthook(exctype, value, traceback_error)
         ShowError('Unhandled exception. Please, report this incident with '
                   + "the following traceback code:\n" +
                   ''.join(traceback.format_tb(traceback_error)),
