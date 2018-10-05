@@ -39,26 +39,17 @@ $ python3 -m tests.test_dependencies
 
 I did not package visualequation for any distribution yet. In the case of python, installing software with pip and related tools is almost a standard so I decided to use it first. If you know how to manage pip in your system, perfect, follow your way to install visualequation from source (development version) or PyPI (released versions). If you have no clue and want me to explain all the details about how to install it, I feel that I have certain responsability of telling you something that works. If you use a modern distribution like Debian 9.0 or Ubuntu 18.04/16.04 it worked for me using the tools of the distribution, else, read the next section on how to install a current version of pip.
 
-### Installing the pip version of your distribution in Debian/Ubuntu
+### Installing the pip from your distribution in Debian/Ubuntu
 
-If you want to install from sources and you want to use the provided packages do the following (if you are just going to install from PyPI you only need python-pip)
+If you want to install from sources and you want to use the provided packages by your distribution, do the following (if you are just going to install from PyPI you only need python-pip)
 
 $ sudo apt-get install python3-pip python3-setuptools python3-wheel
 
-add the pip path to your ~/.bashrc
+Continue the instructions in "Installing visualequation using pip".
 
-PATH=${PATH}:${HOME}/.local/bin
+### Installing current version of pip (recommended for old distributions)
 
-apply the changes to your current terminal
-
-$ source ~/.bashrc
-
-and continue the instructions in "Installing visualequation using pip".
-
-
-### Installing pip locally (recommended for old distributions)
-
-I will show a recipe to install locally pip because the version that comes in some distributions (like Ubuntu 14.04) does not work totally for the instructions I will give later. Said that, if you want further lecture, I just leave [this well-written link](http://matthew-brett.github.io/pydagogue/installing_on_debian.html).
+I will show here a recipe to install pip in your home directory. It may be necessary because the version that comes in some distributions (like Ubuntu 14.04) does not work totally for the instructions I will give later. Said that, if you want further lecture on the topic, I leave [this well-written link](http://matthew-brett.github.io/pydagogue/installing_on_debian.html).
 
 If you are going to install from sources, I recommend you to remove the package setuptools (if it is installed) of your distribution; else, pip will refuse to install the last version
 
@@ -80,15 +71,20 @@ should give the same valid output (the current last version of pip).
 
 ### Installing visualequation using pip
 
-The fastest way is to download it and install from PyPI, just
+The fastest way is to download it and install from PyPI the latest packaged version. Just do the following
 
 $ python3 -m pip install --user --upgrade visualequation
 
-On the other hand, if you have the sources, you can first generate the icons 
+On the other hand, if you want to install the development version, follow the next instructions. First, get the sources
+
+$ git clone https://github.com/daniel-molina/visualequation.git
+$ cd visualequation
+
+You must first generate the icons 
 
 $ python3 setup.py build
 
-That step is important to be run manually before generating the package
+That step is important to be run manually before generating the package:
 
 $ python3 setup.py bdist_wheel
 
