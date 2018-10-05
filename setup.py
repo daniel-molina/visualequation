@@ -21,6 +21,9 @@ from visualequation import commons
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+# Note: If you want to obtain a distribution like sdist or bdist_wheel
+# run first 'python3 setup.py build'
+# (The build_py command occurs later than the copying of the data files)
 class BuildPyCommand(setuptools.command.build_py.build_py):
     def run(self):
         subprocess.call(['./populate_symbols.py'])

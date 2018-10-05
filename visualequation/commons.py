@@ -16,7 +16,7 @@ import os, sys, site
 
 from . import errors
 
-VERSION="0.3.5"
+VERSION="0.3.6"
 
 # Set the path to common files
 # Valid for execution in the sources tree

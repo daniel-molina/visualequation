@@ -37,7 +37,7 @@ $ python3 -m tests.test_dependencies
 
 ## Installation
 
-I did not package visualequation for any distribution yet. In the case of python, installing software with pip and related tools is almost a standard so I decided to use it first. If you know how to manage pip in your system, perfect, follow your way to install visualequation from source (development version) or PyPI (released versions). If you have no clue and want me to explain all the details about how to install it, I feel that I have certain responsability of telling you something that works. If you use a modern distribution like Debian 9.0 or Ubuntu 18.04/16.04 it worked for me the following instructions, else, read the next section.
+I did not package visualequation for any distribution yet. In the case of python, installing software with pip and related tools is almost a standard so I decided to use it first. If you know how to manage pip in your system, perfect, follow your way to install visualequation from source (development version) or PyPI (released versions). If you have no clue and want me to explain all the details about how to install it, I feel that I have certain responsability of telling you something that works. If you use a modern distribution like Debian 9.0 or Ubuntu 18.04/16.04 it worked for me using the tools of the distribution, else, read the next section on how to install a current version of pip.
 
 ### Installing the pip version of your distribution in Debian/Ubuntu
 
@@ -72,19 +72,7 @@ Install it locally
 
 $ python3 get-pip.py --user
 
-Add to your path the directory where pip is installed and where it will install the other programs. You can do it by writting at the end of your .bashrc the following line
-
-PATH=${PATH}:${HOME}/.local/bin
-
-If you want this change to take effect in the current terminal, run
-
-$ source ~/.bashrc
-
-Both
-
-$ pip3 --version
-
-and
+Now you should be able to run
 
 $ python3 -m pip --version
 
@@ -96,11 +84,15 @@ The fastest way is to download it and install from PyPI, just
 
 $ python3 -m pip install --user --upgrade visualequation
 
-On the other hand, if you have the sources, you can first generate a package
+On the other hand, if you have the sources, you can first generate the icons 
+
+$ python3 setup.py build
+
+That step is important to be run manually before generating the package
 
 $ python3 setup.py bdist_wheel
 
-It will late a bit since it will generate some icons from LaTeX. After that, you can install the package by
+After that, you can install the package by
 
 $ python3 -m pip install --user dist/visualequation-\<version\>-py3-none-any.whl
 
@@ -108,11 +100,19 @@ where you substitute \<version\> by the version number of the file generated in 
 
 ## Running visualequation
 
+Add to your path the directory where visualequation is installed. You can do it by writting at the end of your .bashrc the following line
+
+PATH=${PATH}:${HOME}/.local/bin
+
+If you want this change to take effect in the current terminal, run
+
+$ source ~/.bashrc
+
 To execute the program, just run
 
 $ visualequation 
 
-in whatever current directory. It should work if you included ~/.local/bin in your PATH as indicated above.
+in whatever current directory.
 
 ## Usage/Instructions
 
