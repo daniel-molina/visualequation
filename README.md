@@ -91,7 +91,9 @@ $ python3 setup.py bdist_wheel
 
 After that, you can install the package by
 
-$ python3 -m pip install --user dist/visualequation-\<version\>-py3-none-any.whl
+$ cd dist
+
+$ python3 -m pip install --user visualequation-\<version\>-py3-none-any.whl
 
 where you substitute \<version\> by the version number of the file generated in dist/.
 

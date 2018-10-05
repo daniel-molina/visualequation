@@ -26,9 +26,18 @@ elif os.path.exists(os.path.join(sys.prefix, 'share', 'visualequation')):
 # Valid for installation through "pip install --user"
 elif os.path.exists(os.path.join(site.USER_BASE, 'share', 'visualequation')):
     DATA_DIR = os.path.join(site.USER_BASE, 'share', 'visualequation')
+# Valid for installation through "pip install --prefix=" in GNU/Linux
 else:
-    # Do not use ShowError here (you would need a QApplication)
-    raise SystemExit("Could not find where data files are located.")
+    _MATCH = "lib" + os.sep + "python" + str(sys.version_info.major) + "." \
+            + str(sys.version_info.minor) \
+            + os.sep + "site-packages" + os.sep + "visualequation"
+    _NEW_PART = "share" + os.sep + "visualequation"
+    _NEW_PATH = os.path.dirname(__file__).replace(_MATCH, _NEW_PART)
+    if os.path.exists(_NEW_PATH):
+        DATA_DIR = _NEW_PATH
+    else:
+        # Do not use ShowError here (you would need a QApplication)
+        raise SystemExit("Could not find where data files are located.")
 
 #DATA_DIR = os.path.dirname(resource_filename(__name__, "visualequation.desktop"))
 
