@@ -22,7 +22,7 @@ To run the program successfully, you need:
 * PyQt5
 * LaTeX
 * Some specific LaTeX packages (you can find them in the preamble of the equation template _visualequation/data/eq_template.tex_).
-* Some command-line programs to manipulate LaTeX output:
+* Some command-line programs to manipulate LaTeX output (some of them probably come with your LaTeX distribution):
   * dvipng
   * dvips
   * dvisvgm
@@ -39,9 +39,9 @@ $ python3 -m tests.test_dependencies
 
 I did not package visualequation for any distribution yet. In the case of python, installing software with pip and related tools is almost a standard so I decided to use it first. If you know how to manage pip in your system, perfect, follow your way to install visualequation from source (development version) or PyPI (released versions). If you have no clue and want me to explain all the details about how to install it, I feel that I have certain responsability of telling you something that works. If you use a modern distribution like Debian 9.0 or Ubuntu 18.04/16.04 it worked for me using the tools of the distribution, else, read the next section on how to install a current version of pip.
 
-### Installing the pip from your distribution in Debian/Ubuntu
+### Installing pip from your distribution (Debian/Ubuntu case)
 
-If you want to install from sources and you want to use the provided packages by your distribution, do the following (if you are just going to install from PyPI you only need python-pip)
+If you want to install from sources and you want to use the provided packages by your distribution, do the following (if you are just going to install from PyPI you only need python3-pip)
 
 $ sudo apt-get install python3-pip python3-setuptools python3-wheel
 
@@ -69,11 +69,13 @@ $ python3 -m pip --version
 
 should give the same valid output (the current last version of pip).
 
-### Installing visualequation using pip
+### Installing visualequation
 
-The fastest way is to download it and install from PyPI the latest packaged version. Just do the following
+The simplest way is to use the last packaged version of visualequation in PyPI. To download and install, just do the following
 
 $ python3 -m pip install --user --upgrade visualequation
+
+That is all.
 
 On the other hand, if you want to install the development version, follow the next instructions. First, get the sources
 
@@ -81,11 +83,11 @@ $ git clone https://github.com/daniel-molina/visualequation.git
 
 $ cd visualequation
 
-You must first generate the icons 
+You must first generate the icons (you will need imagemagick, but probably it will be currently installed)
 
 $ python3 setup.py build
 
-That step is important to be run manually before generating the package:
+Generating the package:
 
 $ python3 setup.py bdist_wheel
 
@@ -99,7 +101,7 @@ where you substitute \<version\> by the version number of the file generated in 
 
 ## Running visualequation
 
-Add to your path the directory where visualequation is installed. You can do it by writting at the end of your .bashrc the following line
+Add the directory where visualequation is installed to your path. You can do it by writting at the end of your .bashrc the following line
 
 PATH=${PATH}:${HOME}/.local/bin
 
