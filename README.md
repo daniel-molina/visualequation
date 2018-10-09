@@ -85,7 +85,7 @@ $ cd visualequation
 
 You must first generate the icons (you will need imagemagick, but probably it will be currently installed)
 
-$ python3 setup.py build
+$ python3 generate_icons.py
 
 Generating the package:
 

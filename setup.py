@@ -11,23 +11,34 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import sys
+import os
 import setuptools
-import setuptools.command.build_py
-import subprocess
 import glob
+import configparser
 
 from visualequation import commons
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-# Note: If you want to obtain a distribution like sdist or bdist_wheel
-# run first 'python3 setup.py build'
-# (The build_py command occurs later than the copying of the data files)
-class BuildPyCommand(setuptools.command.build_py.build_py):
-    def run(self):
-        exec(open('./populate_symbols.py').read())
-        setuptools.command.build_py.build_py.run(self)
+# Check that icons are created before using setup.py
+ICONS_DEF = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                         'data', 'icons-def.ini'))
+ICONS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                         'data', 'icons'))
+config = configparser.ConfigParser(delimiters=(' ',))
+config.read(ICONS_DEF)
+for section in config:
+    for tag, code in config[section].items():
+        png_filepath = os.path.join(ICONS_DIR, tag + '.png')
+        if not os.path.exists(png_filepath):
+            msg = "***** ERROR *****\n" \
+                  + png_filepath + " does not exist.\n" \
+                  + "setup.py will not work until every icon is generated.\n" \
+                  + '(run "./generate_icons.py" to solve the problem)\n' \
+                  + "*****************"
+            raise SystemExit(msg)
 
 setuptools.setup(
     name="visualequation",
@@ -40,7 +51,6 @@ setuptools.setup(
     url="https://github.com/daniel-molina/visualequation",
     packages=setuptools.find_packages(exclude=['tests']),
     test_suite='tests',
-    cmdclass={'build_py':BuildPyCommand},
     entry_points={
         'gui_scripts': ['visualequation = visualequation.__main__:main']
     },
