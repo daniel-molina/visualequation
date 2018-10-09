@@ -27,14 +27,14 @@ MENUITEMSDATA = []
 ADDITIONAL_LS = []
 
 MENUITEMSDATA.append(MenuItemData(
-    tag="tab_greek_hebrew_symb1",
+    tag="tab_symbols",
     symb_l=LOWER_GREEK + UPPER_GREEK + VAR_GREEK + HEBREW + SYMBOLS1,
     expr=r'\alpha\, \infty'))
 
 MENUITEMSDATA.append(MenuItemData(
-    tag="tab_mathconstructs",
+    tag="tab_constructs",
     symb_l=MATHCONSTRUCTS,
-    expr=r'\underbrace{{abc}}'))
+    expr=r'\underbrace{abc}'))
 
 ADDITIONAL_LS += SINGLEDELIMITERS
 

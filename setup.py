@@ -26,7 +26,7 @@ with open("README.md", "r") as fh:
 # (The build_py command occurs later than the copying of the data files)
 class BuildPyCommand(setuptools.command.build_py.build_py):
     def run(self):
-        subprocess.call(['./populate_symbols.py'])
+        exec(open('./populate_symbols.py').read())
         setuptools.command.build_py.build_py.run(self)
 
 setuptools.setup(

@@ -66,7 +66,6 @@ def latex_file2dvi(latex_file, output_dir):
         msg = "Command latex was not found. This is an essential " \
               + "program for Visual Equation. Finishing execution."
         ShowError(msg, True)
-
     
 def dvi2png(dvi_file, png_file, log_file, dpi, bg):
     """ Convert a DVI file to PNG.
