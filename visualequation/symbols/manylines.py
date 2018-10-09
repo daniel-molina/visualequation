@@ -15,14 +15,12 @@ from .utils import *
 from .delimiters import *
 
 MATRIXTYPES = [
-    LatexSymb('pmatrix', 'pmatrix', r'\begin{pmatrix}\square\end{pmatrix}'),
-    LatexSymb('vmatrix', 'vmatrix', r'\begin{vmatrix}\square\end{vmatrix}'),
-    LatexSymb('uppervmatrix', 'Vmatrix',
-              r'\begin{Vmatrix}\square\end{Vmatrix}'),
-    LatexSymb('bmatrix', 'bmatrix', r'\begin{bmatrix}\square\end{bmatrix}'),
-    LatexSymb('upperbmatrix', 'Bmatrix',
-              r'\begin{Bmatrix}\square\end{Bmatrix}'),
-    LatexSymb('matrix', 'matrix', r'\begin{matrix}\square\end{matrix}'),
+    LatexSymb('pmatrix', 'pmatrix'),
+    LatexSymb('vmatrix', 'vmatrix'),
+    LatexSymb('uppervmatrix', 'Vmatrix'),
+    LatexSymb('bmatrix', 'bmatrix'),
+    LatexSymb('upperbmatrix', 'Bmatrix'),
+    LatexSymb('matrix', 'matrix'),
 ]
 
 def matrix_type(parent):
@@ -338,12 +336,8 @@ def array(parent):
         return None
 
 MANYLINES = [
-    LatexSymb('matrix_type', matrix_type,
-              r"\begin{pmatrix}\cdots&\square\\\square&\square\end{pmatrix}"),
-    LatexSymb('cases', cases,
-              r'\begin{cases}\cdots &\text{if }x>0\\b&\text{ow.}\end{cases}'),
-    LatexSymb('equations_system', equation_system,
-                          r'\begin{cases}\cdots\\x-y=8\end{cases}'),
-    LatexSymb('array', array,
-              r'\left(\begin{array}{l|r}\cdots&\square\\\square&\square\end{array}\right]')
+    LatexSymb('matrix_type', matrix_type),
+    LatexSymb('cases', cases),
+    LatexSymb('equations_system', equation_system),
+    LatexSymb('array', array),
 ]

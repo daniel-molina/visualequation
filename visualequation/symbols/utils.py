@@ -46,8 +46,8 @@ class Op(object):
         return "Op(" + repr(self.n_args) + ", " + repr(self.latex_code) \
             + ", " + repr(self.type_) + ")"
 
-LatexSymb = namedtuple('LatexSymb', 'tag code expr')
-MenuItemData = namedtuple('MenuItem', 'tag symb_l expr')
+LatexSymb = namedtuple('LatexSymb', 'tag code')
+MenuItemData = namedtuple('MenuItemData', 'tag symb_l')
 
 # Use these operators in the code, so it will be easy to change their value
 # in next releases

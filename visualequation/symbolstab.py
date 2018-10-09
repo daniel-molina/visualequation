@@ -23,6 +23,7 @@ from PyQt5.QtCore import *
 
 from .symbols import lists
 from . import commons
+from .errors import ShowError
 
 class TabWidget(QTabWidget):
     def __init__(self, parent, maineq):
@@ -32,8 +33,11 @@ class TabWidget(QTabWidget):
         self.tabs = []
         for index, menuitemdata in enumerate(lists.MENUITEMSDATA):
             self.tabs.append(QWidget())
-            icon = QIcon(os.path.join(commons.ICONS_DIR,
-                                      menuitemdata.tag + ".png"))
+            icon_path = os.path.join(commons.ICONS_DIR,
+                                     menuitemdata.tag + ".png")
+            if not os.path.exists(icon_path):
+                ShowError("Icon " + menuitemdata.tag + " not found.", True)
+            icon = QIcon(icon_path)
             self.setIconSize(QSize(50, 30))
             self.addTab(self.tabs[index], icon, "")
             #self.setTabToolTip(index, "Hello")
@@ -43,8 +47,10 @@ class TabWidget(QTabWidget):
             column = 0
             for symb in menuitemdata.symb_l:
                 label = QLabel('')
-                label.setPixmap(QPixmap(os.path.join(commons.ICONS_DIR,
-                                                     symb.tag + ".png")))
+                icon_path = os.path.join(commons.ICONS_DIR, symb.tag + ".png")
+                if not os.path.exists(icon_path):
+                    ShowError("Icon " + symb.tag + " not found.", True)
+                label.setPixmap(QPixmap(icon_path))
                 cmd = lambda state, code=symb.code: \
                       self.handle_click(state, code)
                 label.mousePressEvent = cmd

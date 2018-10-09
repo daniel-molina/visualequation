@@ -39,9 +39,9 @@ ALICE_CONSTRUCTS = [
     f(r'(a\cdot c) b - (a\cdot b) c'),
 ]
 
-ALICE_CONSTRUCTS += [f(i.expr) for i in symbols.LOWER_GREEK]
-ALICE_CONSTRUCTS += [f(i.expr) for i in symbols.UPPER_GREEK]
-ALICE_CONSTRUCTS += [f(i.expr) for i in symbols.VAR_GREEK]
+ALICE_CONSTRUCTS += [f(i.code) for i in symbols.LOWER_GREEK]
+ALICE_CONSTRUCTS += [f(i.code) for i in symbols.UPPER_GREEK]
+ALICE_CONSTRUCTS += [f(i.code) for i in symbols.VAR_GREEK]
 
 class Alice:
     def __init__(self):

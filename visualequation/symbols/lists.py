@@ -28,61 +28,50 @@ ADDITIONAL_LS = []
 
 MENUITEMSDATA.append(MenuItemData(
     tag="tab_symbols",
-    symb_l=LOWER_GREEK + UPPER_GREEK + VAR_GREEK + HEBREW + SYMBOLS1,
-    expr=r'\alpha\, \infty'))
+    symb_l=LOWER_GREEK + UPPER_GREEK + VAR_GREEK + HEBREW + SYMBOLS1))
 
 MENUITEMSDATA.append(MenuItemData(
     tag="tab_constructs",
-    symb_l=MATHCONSTRUCTS,
-    expr=r'\underbrace{abc}'))
+    symb_l=MATHCONSTRUCTS))
 
 ADDITIONAL_LS += SINGLEDELIMITERS
 
 MENUITEMSDATA.append(MenuItemData(
     tag="tab_delimiters",
-    symb_l=DELIMITERS,
-    expr=r'\left(ab\right)'))
+    symb_l=DELIMITERS))
 
 MENUITEMSDATA.append(MenuItemData(
     tag="tab_functions",
-    symb_l=FUNCTIONS,
-    expr=r'f(x)'))
+    symb_l=FUNCTIONS))
 
 MENUITEMSDATA.append(MenuItemData(
     tag="tab_variablesize",
-    symb_l=VARIABLESIZE,
-    expr=r'\sum'))
+    symb_l=VARIABLESIZE))
 
 MENUITEMSDATA.append(MenuItemData(
     tag="tab_someoperators",
-    symb_l=SOMEOPERATORS,
-    expr=r'\otimes'))
+    symb_l=SOMEOPERATORS))
 
 MENUITEMSDATA.append(MenuItemData(
     tag="tab_relations",
-    symb_l=RELATIONS,
-    expr=r'< \in'))
+    symb_l=RELATIONS))
 
 MENUITEMSDATA.append(MenuItemData(
     tag="tab_arrows",
-    symb_l=ARROWS,
-    expr=r'\rightarrow'))
+    symb_l=ARROWS))
 
 ADDITIONAL_LS += COLORS
 
 MENUITEMSDATA.append(MenuItemData(
     tag="tab_text",
-    symb_l=TEXT,
-    expr=r'\mathbb{R}\,\text{if}'))
+    symb_l=TEXT))
 
 ADDITIONAL_LS += MATRIXTYPES
 
 MENUITEMSDATA.append(MenuItemData(
     tag="tab_manylines",
-    symb_l=MANYLINES,
-    expr=r'\begin{smallmatrix}a&b\\c&d\end{smallmatrix}'))
+    symb_l=MANYLINES))
 
 MENUITEMSDATA.append(MenuItemData(
     tag="tab_accents",
-    symb_l=ACCENTS,
-    expr=r'\acute{{a}}\;\tilde{{B}}'))
+    symb_l=ACCENTS))
