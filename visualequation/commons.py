@@ -14,7 +14,7 @@
 """This modules indicates the directories of the program."""
 import os, sys, site
 
-VERSION="0.3.6"
+VERSION="0.3.7"
 
 # Set the path to common files
 # Valid for execution in the sources tree

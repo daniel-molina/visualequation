@@ -14,7 +14,7 @@
 import random
 
 from .symbols import utils
-from .symbols import symbols
+from .symbols import symbols, arrows, relations, operators
 from . import eqtools
 
 def f(expr):
@@ -42,6 +42,11 @@ ALICE_CONSTRUCTS = [
 ALICE_CONSTRUCTS += [f(i.code) for i in symbols.LOWER_GREEK]
 ALICE_CONSTRUCTS += [f(i.code) for i in symbols.UPPER_GREEK]
 ALICE_CONSTRUCTS += [f(i.code) for i in symbols.VAR_GREEK]
+ALICE_CONSTRUCTS += [f(i.code) for i in symbols.HEBREW]
+ALICE_CONSTRUCTS += [f(i.code) for i in symbols.SYMBOLS1]
+ALICE_CONSTRUCTS += [f(i.code) for i in relations.RELATIONS]
+ALICE_CONSTRUCTS += [f(i.code) for i in arrows.ARROWS]
+ALICE_CONSTRUCTS += [f(i.code) for i in operators.SOMEOPERATORS]
 
 class Alice:
     def __init__(self):
