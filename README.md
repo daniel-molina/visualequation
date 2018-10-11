@@ -4,11 +4,11 @@ Visualequation creates equations visually, in a WYSIWYG (What You See Is What Yo
 
 ## Requirements
 
-### Debian 9.0 and Ubuntu 18.04 or derivatives
+### Debian 9 stretch/Ubuntu 17.10 artful and next releases (or derivatives)
 
 $ sudo apt-get install python3-pyqt5 texlive-latex-recommended dvipng texlive-font-utils texlive-science libimage-exiftool-perl
 
-### Ubuntu 14.04 and 16.04 or derivatives
+### Debian 8 jessie/Ubuntu 16.04 xenial and previous releases (or derivatives)
 
 $ sudo apt-get install python3-pyqt5 texlive-latex-recommended dvipng texlive-font-utils texlive-math-extra libimage-exiftool-perl
 
