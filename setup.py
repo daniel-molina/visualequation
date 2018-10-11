@@ -22,23 +22,25 @@ from visualequation import commons
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-# Check that icons are created before using setup.py
 ICONS_DEF = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                          'data', 'icons-def.ini'))
 ICONS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                          'data', 'icons'))
-config = configparser.ConfigParser(delimiters=(' ',))
-config.read(ICONS_DEF)
-for section in config:
-    for tag, code in config[section].items():
-        png_filepath = os.path.join(ICONS_DIR, tag + '.png')
-        if not os.path.exists(png_filepath):
-            msg = "***** ERROR *****\n" \
-                  + png_filepath + " does not exist.\n" \
-                  + "setup.py will not work until every icon is generated.\n" \
-                  + '(run "./generate_icons.py" to solve the problem)\n' \
-                  + "*****************"
-            raise SystemExit(msg)
+
+def check_icons():
+    """ Check that icons are created. """
+    config = configparser.ConfigParser(delimiters=(' ',))
+    config.read(ICONS_DEF)
+    for section in config:
+        for tag, code in config[section].items():
+            png_filepath = os.path.join(ICONS_DIR, tag + '.png')
+            if not os.path.exists(png_filepath):
+                msg = "***** ERROR *****\n" \
+                      + png_filepath + " does not exist.\n" \
+                      + "setup.py will not work until icons are generated.\n" \
+                      + '(run "./generate_icons.py" to solve the problem)\n' \
+                      + "*****************"
+                raise SystemExit(msg)
 
 setuptools.setup(
     name="visualequation",
@@ -61,7 +63,6 @@ setuptools.setup(
                                   'data/USAGE.html',]),
         ('share/visualequation/icons', glob.glob('data/icons/*.png')),
     ],
-    #zip_safe=False,
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
