@@ -45,7 +45,7 @@ If you want to install from sources and you want to use the provided packages by
 
 $ sudo apt-get install python3-pip python3-setuptools python3-wheel
 
-Continue the instructions in "Installing visualequation using pip".
+Continue the instructions in "Installing visualequation".
 
 ### Installing current version of pip (recommended for old distributions)
 

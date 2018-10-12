@@ -52,7 +52,7 @@ MenuItemData = namedtuple('MenuItemData', 'tag symb_l')
 # Use these operators in the code, so it will be easy to change their value
 # in next releases
 SELARG = r'\cdots'
-NEWARG = r'\square'
+NEWARG = r'\oblong'
 REDIT = Op(1, r'\left\lmoustache{{{0}}}\right\rgroup')
 LEDIT = Op(1, r'\left\lgroup{{{0}}}\right\rmoustache')
 JUXT = Op(2, r'{0} {1}')
