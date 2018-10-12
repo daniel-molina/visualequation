@@ -6,11 +6,11 @@ Visualequation creates equations visually, in a WYSIWYG (What You See Is What Yo
 
 ### Debian 9 stretch/Ubuntu 17.10 artful and next releases (or derivatives)
 
-$ sudo apt-get install python3-pyqt5 texlive-latex-recommended dvipng texlive-font-utils texlive-science libimage-exiftool-perl
+`sudo apt-get install python3-pyqt5 texlive-latex-recommended dvipng texlive-font-utils texlive-science libimage-exiftool-perl`
 
 ### Debian 8 jessie/Ubuntu 16.04 xenial and previous releases (or derivatives)
 
-$ sudo apt-get install python3-pyqt5 texlive-latex-recommended dvipng texlive-font-utils texlive-math-extra libimage-exiftool-perl
+`sudo apt-get install python3-pyqt5 texlive-latex-recommended dvipng texlive-font-utils texlive-math-extra libimage-exiftool-perl`
 
 ### Microsoft Windows and MacOS
 
@@ -33,7 +33,7 @@ To run the program successfully, you need:
 
 If you have the sources you can check that everything is installed properly running the test:
 
-$ python3 -m tests.test_dependencies
+`python3 -m tests.test_dependencies`
 
 ## Installation
 
@@ -43,7 +43,7 @@ In the case of python, installing software with pip and related tools is almost 
 
 If you want to install from sources and you want to use the provided packages by your distribution, do the following (if you are just going to install from PyPI you only need python3-pip)
 
-$ sudo apt-get install python3-pip python3-setuptools python3-wheel
+`sudo apt-get install python3-pip python3-setuptools python3-wheel`
 
 Continue the instructions in "Installing visualequation".
 
@@ -53,19 +53,19 @@ I will show here a recipe to install pip in your home directory. It may be neces
 
 If you are going to install from sources, I recommend you to remove the package setuptools (if it is installed) of your distribution; else, pip will refuse to install the last version
 
-$ sudo apt-get remove python3-setuptools
+`sudo apt-get remove python3-setuptools`
 
 Download pip, e.g.:
 
-$ curl -LO https://bootstrap.pypa.io/get-pip.py
+`curl -LO https://bootstrap.pypa.io/get-pip.py`
 
 Install it locally
 
-$ python3 get-pip.py --user
+`python3 get-pip.py --user`
 
 Now you should be able to run
 
-$ python3 -m pip --version
+`python3 -m pip --version`
 
 should return the current last version of pip.
 
@@ -73,29 +73,29 @@ should return the current last version of pip.
 
 The simplest way is to use the last packaged version of visualequation in PyPI. To download and install, just do the following
 
-$ python3 -m pip install --user --upgrade visualequation
+`python3 -m pip install --user --upgrade visualequation`
 
 That is all.
 
-On the other hand, if you want to install the development version, follow the next instructions. First, get the sources
+On the other hand, if you want to install the development version, follow the next instructions. First, get the sources. If you have git installed, just
 
-$ git clone https://github.com/daniel-molina/visualequation.git
+`git clone https://github.com/daniel-molina/visualequation.git`
 
-$ cd visualequation
+`cd visualequation`
 
 You must first generate the icons (you will need imagemagick, but probably it will be currently installed)
 
-$ python3 generate_icons.py
+`python3 generate_icons.py`
 
 Generating the package:
 
-$ python3 setup.py bdist_wheel
+`python3 setup.py bdist_wheel`
 
 After that, you can install the package by doing
 
-$ cd dist
+`cd dist`
 
-$ python3 -m pip install --user visualequation-\<version\>-py3-none-any.whl
+`python3 -m pip install --user visualequation-<version>-py3-none-any.whl`
 
 where you substitute \<version\> by the version number of the file generated in dist/.
 
@@ -103,15 +103,15 @@ where you substitute \<version\> by the version number of the file generated in 
 
 Add the directory where visualequation is installed to your path. You can do it by writting at the end of your .bashrc the following line
 
-PATH=${PATH}:${HOME}/.local/bin
+`PATH=${PATH}:${HOME}/.local/bin`
 
 If you want this change to take effect in the current terminal, run
 
-$ source ~/.bashrc
+`source ~/.bashrc`
 
 To execute the program, just run
 
-$ visualequation 
+`visualequation`
 
 in whatever current directory.
 
