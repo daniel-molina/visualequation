@@ -6,11 +6,11 @@ Visualequation creates equations visually, in a WYSIWYG (What You See Is What Yo
 
 ### Debian 9 stretch/Ubuntu 17.10 artful and next releases (or derivatives)
 
-`sudo apt-get install python3-pyqt5 texlive-latex-recommended dvipng texlive-font-utils texlive-science libimage-exiftool-perl`
+`sudo apt-get install python3-pyqt5 texlive-latex-recommended texlive-latex-extra dvipng texlive-font-utils texlive-science libimage-exiftool-perl`
 
 ### Debian 8 jessie/Ubuntu 16.04 xenial and previous releases (or derivatives)
 
-`sudo apt-get install python3-pyqt5 texlive-latex-recommended dvipng texlive-font-utils texlive-math-extra libimage-exiftool-perl`
+`sudo apt-get install python3-pyqt5 texlive-latex-recommended texlive-latex-extra dvipng texlive-font-utils texlive-math-extra libimage-exiftool-perl`
 
 ### Microsoft Windows and MacOS
 
@@ -21,7 +21,7 @@ To run the program successfully, you need:
 * python3
 * PyQt5
 * LaTeX
-* Some LaTeX packages (fontenc, inputenc, xcolor, amsmath, amsfonts, amssymb, tensor).
+* Some LaTeX packages (fontenc, inputenc, xcolor, amsmath, amsfonts, amssymb, esint, stmaryrd, tensor).
 * Some command-line programs to manipulate LaTeX output (some of them probably come with your LaTeX distribution):
   * dvipng
   * dvips
