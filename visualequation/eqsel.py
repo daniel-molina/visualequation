@@ -28,7 +28,7 @@ class Selection:
         self.temp_dir = temp_dir
         self.setPixmap = setPixmap
 
-    def display(self, eq=None,  right=True):
+    def display(self, eq=None, right=True):
         # If equation is provided, substitute the current one
         if eq is not None:
             self.eq = eq
@@ -46,6 +46,22 @@ class Selection:
         eqsel_png = conversions.eq2png(eqsel, None, None, self.temp_dir)
         self.setPixmap(QPixmap(eqsel_png))
 
+    def set_valid_index(self, eq=None, forward=True):
+        """ Change index, if needed, where selection is valid. """
+        if eq is not None:
+            self.eq = eq
+        # Avoid intermediate JUXTs
+        if eqtools.is_intermediate_JUXT(self.eq, self.index):
+            cond = True
+            while cond:
+                self.index += 1 if forward else -1
+                cond = eqtools.is_intermediate_JUXT(self.eq, self.index)
+        # Avoid first argument of index operators: \sideset is picky
+        if self.index != 0\
+           and hasattr(self.eq[self.index - 1], 'type_') \
+           and self.eq[self.index - 1].type_ in ('index', 'opindex'):
+            self.index += 1 if forward else -1
+
     def display_next(self):
         """ Set image to the next selection"""
         if not self.right:
@@ -54,19 +70,7 @@ class Selection:
             self.index = 0
         else:
             self.index += 1
-        # Avoid places where selection is not desired
-        # Avoid intermediate JUXTs
-        if eqtools.is_intermediate_JUXT(self.eq, self.index):
-            cond = True
-            while cond:
-                self.index += 1
-                cond = eqtools.is_intermediate_JUXT(self.eq, self.index)
-        # Avoid first argument of index operators: \sideset is picky
-        if self.index != 0\
-           and hasattr(self.eq[self.index - 1], 'type_') \
-           and self.eq[self.index - 1].type_ in ('index', 'opindex'):
-            self.index += 1
-            
+        self.set_valid_index(forward=True)
         self.display(right=True)
 
     def display_prev(self):
@@ -78,15 +82,5 @@ class Selection:
         else:
             self.index -= 1
         # Avoid places where selection is not desired
-        # Avoid intermediate JUXTs
-        if eqtools.is_intermediate_JUXT(self.eq, self.index):
-            cond = True
-            while cond:
-                self.index -= 1
-                cond = eqtools.is_intermediate_JUXT(self.eq, self.index)
-        # Avoid first argument of index operators: \sideset is picky
-        if self.index != 0 \
-           and hasattr(self.eq[self.index - 1], 'type_') \
-           and self.eq[self.index - 1].type_ in ('index', 'opindex'):
-            self.index -= 1
+        self.set_valid_index(forward=False)
         self.display(right=False)

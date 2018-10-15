@@ -253,6 +253,7 @@ class Eq:
                 self.eq[JUXT_index:JUXT_end] = self.eq[
                     other_arg_index:self.eqsel.index]
             self.eqsel.index = JUXT_index
+            self.eqsel.set_valid_index(self.eq)
         else:
             # If it is a script, downgrade the script operator
             cond_script, script_op_index, arg_pos = eqtools.is_script(
