@@ -119,13 +119,13 @@ def free_delimiters(parent):
 
 DELIMITERS = [
     LatexSymb('parenthesisb', Op(1, r'\left( {0} \right)')),
+    LatexSymb('sqbracketsb', Op(1, r'\left[ {0} \right]')),
     LatexSymb('vertb', Op(1, r'\left| {0} \right|')),
     LatexSymb('uppervertb', Op(1, r'\left\| {0} \right\|')),
     LatexSymb('bracketsb', Op(1, r'\left\{{ {0} \right\}}')),
     LatexSymb('angleb', Op(1, r'\left\langle {0} \right\rangle')),
     LatexSymb('floorb', Op(1, r'\left\lfloor {0} \right\rfloor')),
     LatexSymb('ceilb', Op(1, r'\left\lceil {0} \right\rceil')),
-    LatexSymb('sqbracketsb', Op(1, r'\left[ {0} \right]')),
     LatexSymb('lcornerb', Op(1, r'\left\llcorner {0} \right\lrcorner')),
     LatexSymb('ucornerb', Op(1, r'\left\ulcorner {0} \right\urcorner')),
     LatexSymb('freedelimiters', free_delimiters),
