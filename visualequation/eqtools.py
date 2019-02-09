@@ -69,7 +69,8 @@ def nextblockindex(eq, index):
     return block2nextindex(index)
 
 def eq2latex_code(eq):
-    """ Returns latex code of the equation.
+    """
+    Returns latex code of the equation.
     """
 
     index = 0
@@ -98,10 +99,10 @@ def insertrbyJUXT(eq, start_index, eqblock):
 def insertlbyJUXT(eq, start_index, eqblock):
     """
     Insert eqblock before the block which starts at start_index by using Juxt.
-    Returns the index of the insert block.
+    Returns the index of the inserted block.
     """
     # If eqblock is the base of an index operator, consider the index operator
-    # instead. It avoids a bit of caos in the equation structure.
+    # instead. It avoids a bit of chaos in the equation structure.
     #if hasattr(eq[start_index - 1], 'type_') \
     #   and eq[start_index - 1].type_ in ('index', 'opindex'):
     #    start_index -= 1
@@ -142,7 +143,7 @@ def is_arg_of_JUXT(eq, check_index):
 
 def first_arg_of_JUXT_seq(eq, JUXT_index):
     """
-    It returns the index of the first argument of the first JUXT with first
+    It returns the index of the first argument of the first JUXT with
     first argument different than JUXT in a group of JUXTs.
     """
     assert eq[JUXT_index] == utils.JUXT
@@ -158,7 +159,9 @@ def last_arg_of_JUXT_seq(eq, JUXT_index):
     It returns the index of the second argument of the last JUXT in a group of
     JUXTs.
     """
-    assert eq[JUXT_index] == utils.JUXT
+    if eq[JUXT_index] != utils.JUXT:
+        ShowError('No JUXT passed to last_arg_of_JUXT_seq function', True)
+
     arg2index = nextblockindex(eq, JUXT_index + 1)
     while True:
         if eq[arg2index] == utils.JUXT:
@@ -169,7 +172,7 @@ def last_arg_of_JUXT_seq(eq, JUXT_index):
 
 def is_intermediate_JUXT(eq, index):
     """
-    Check whether if index points to a JUXT that is the argument of
+    Check whether index points to a JUXT that is the argument of
     other JUXT.
     """
     if eq[index] == utils.JUXT:
@@ -178,7 +181,38 @@ def is_intermediate_JUXT(eq, index):
             return True
     return False
 
+def is_next_element_after_op(eq, check_index, prev_op_index):
+    """
+    Check whether index points to the element (if any) after the
+    the last argument of an operator.
+    If it is, it returns in addition the index of the closer operator
+    satisfying the condition.
+    If prev_op_index != None, it skips operators that start after that
+    index (included, so previous output of the function is a good input
+    to look for the next closer operator).
+    """
+    if prev_op_index is not None:
+        assert prev_op_index < check_index
+        assert 0 <= prev_op_index < len(eq)
+    assert 0 <= check_index < len(eq)
 
+    candidate = check_index - 1 if prev_op_index is None else prev_op_index - 1
+    while candidate >= 0:
+        while not isinstance(eq[candidate], utils.Op) or \
+              is_intermediate_JUXT(eq, candidate):
+            candidate -= 1
+            if candidate < 0:
+                return False, None
+        index_after_block = nextblockindex(eq, candidate)
+        if index_after_block == check_index + 1:
+            return True, candidate
+        # Skip some iterations
+        elif index_after_block > check_index + 1:
+            return False, None
+        else:
+            candidate -= 1
+    return False, None
+    
 def indexop2arglist(eq, sel_index):
     """
     Convert the block of indices pointed by sel_index to a list of arguments.

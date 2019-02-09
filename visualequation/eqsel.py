@@ -24,6 +24,10 @@ class Selection:
         self.eq = init_eq
         self.index = init_index
         self.right = True
+        self.is_op_rsel = False
+        self.eq_copy_op_rsel = None
+        self.index_copy_op_rsel = None
+        self.end_op_rsel = None
         self.game = game.Game()
         self.temp_dir = temp_dir
         self.setPixmap = setPixmap
@@ -60,17 +64,54 @@ class Selection:
         if self.index != 0\
            and hasattr(self.eq[self.index - 1], 'type_') \
            and self.eq[self.index - 1].type_ in ('index', 'opindex'):
-            self.index += 1 if forward else -1
+            self.index += 1 if forward else -1            
 
     def display_next(self):
-        """ Set image to the next selection"""
+        """ 
+        Set image to the next selection
+        """
+        # We had a previous op_rsel but now eq was modified: restart
+        if self.is_op_rsel and (self.eq_copy_op_rsel != self.eq or
+                                self.index_copy_op_rsel != self.index):
+            self.is_op_rsel = False
+            self.eq_copy_op_rsel = None
+            self.index_copy_op_rsel = None
+            self.end_op_rsel = None
+        if self.is_op_rsel:
+            op_rsel_cond, op_rsel_index = eqtools.is_next_element_after_op(
+                self.eq, self.end_op_rsel, self.index)
+            # We had a previous op_rsel but not anymore:
+            #  Set index, initially, in the original position and let this
+            #  function to do something with it
+            if not op_rsel_cond:
+                # Avoid double stop when covering the whole equation
+                if self.index != 0:
+                    self.index = self.end_op_rsel
+                self.is_op_rsel = False
+                self.eq_copy_op_rsel = None
+                self.index_copy_op_rsel = None
+                self.end_op_rsel = None
+        else:
+            op_rsel_cond, op_rsel_index = eqtools.is_next_element_after_op(
+                self.eq, self.index, None)
+            
         if not self.right:
             self.right = True
-        elif self.index == len(self.eq) - 1:
-            self.index = 0
+        # End of operator detected
+        elif op_rsel_cond:
+            if not self.is_op_rsel:
+                self.end_op_rsel = self.index
+                self.is_op_rsel = True
+                self.eq_copy_op_rsel = list(self.eq)
+            self.index = op_rsel_index
+            self.index_copy_op_rsel = self.index
         else:
-            self.index += 1
-        self.set_valid_index(forward=True)
+            if self.index == len(self.eq) - 1:
+                self.index = 0
+            else:
+                self.index += 1
+            self.set_valid_index(forward=True)
+
         self.display(right=True)
 
     def display_prev(self):
