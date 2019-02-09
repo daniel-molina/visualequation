@@ -101,4 +101,7 @@ FUNCTIONS = [
     LatexSymb('upperre', r'\Re'),
     LatexSymb('upperim', r'\Im'),
     LatexSymb('wp', r'\wp'),
+    LatexSymb('if', r'\text{if }'),
+    LatexSymb('ow', r'\text{o.w.}'),
+    LatexSymb('otherwise', r'\text{otherwise}'),
 ]

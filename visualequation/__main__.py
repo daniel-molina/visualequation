@@ -46,10 +46,11 @@ class MainWindow(QMainWindow):
         self.resize(900, 600)
 
     def init_menu(self):
-        exit_act = QAction('&Exit', self)
-        exit_act.setShortcut('Ctrl+Q')
-        exit_act.setStatusTip('Exit application')
-        exit_act.triggered.connect(qApp.quit)
+        # File
+        new_act = QAction('&New', self)
+        new_act.setShortcut('Ctrl+N')
+        new_act.setStatusTip('Create a new equation')
+        new_act.triggered.connect(self.maineq.eq.new_eq)
         open_act = QAction('&Open', self)
         open_act.setShortcut('Ctrl+O')
         open_act.setStatusTip('Open equation from image')
@@ -58,6 +59,11 @@ class MainWindow(QMainWindow):
         save_act.setShortcut('Ctrl+S')
         save_act.setStatusTip('Save image')
         save_act.triggered.connect(self.maineq.eq.save_eq)
+        exit_act = QAction('&Exit', self)
+        exit_act.setShortcut('Ctrl+Q')
+        exit_act.setStatusTip('Exit application')
+        exit_act.triggered.connect(qApp.quit)
+        # Edit
         undo_act = QAction('&Undo', self)
         undo_act.setShortcut('Ctrl+Z')
         undo_act.setStatusTip('Return equation to previous state')
@@ -81,25 +87,38 @@ class MainWindow(QMainWindow):
         paste_act.setShortcut('Ctrl+V')
         paste_act.setStatusTip('Paste previous cut or copied selection')
         paste_act.triggered.connect(self.maineq.eq.eqbuffer2sel)
+        def selectall():
+            self.maineq.eq.eqsel.index = 0
+            self.maineq.eq.eqsel.display()
+        selectall_act = QAction('&Select all', self)
+        selectall_act.setShortcut('Ctrl+A')
+        selectall_act.setStatusTip('Select the entire equation')
+        selectall_act.triggered.connect(selectall)
+        # Games
+        def alice():
+            state = activate_game_act.isChecked()
+            game.Game.activate(state)
+            self.maineq.eq.eqsel.display(self.maineq.eq.eq,
+                                         self.maineq.eq.eqsel.right)
+        activate_game_act = QAction('Invite &Alice', self, checkable=True)
+        activate_game_act.triggered.connect(alice)
+        activate_game_act.setStatusTip('Let Alice to be with you while'
+                                       +' building the equation')
+        # Help
         usage_act = QAction('Basic &usage', self)
         usage_act.setShortcut('Ctrl+H')
         usage_act.setStatusTip('Basic usage of the program')
         usage_act.triggered.connect(self.usage)
-        aboutQt_act = QAction('About &Qt', self)
-        aboutQt_act.triggered.connect(QApplication.aboutQt)
         about_act = QAction('About &Visual Equation', self)
         about_act.triggered.connect(self.about)
+        aboutQt_act = QAction('About &Qt', self)
+        aboutQt_act.triggered.connect(QApplication.aboutQt)
 
-        activate_game_act = QAction('Invite &Alice', self, checkable=True)
-        cmd = lambda state=activate_game_act.isChecked(): \
-              game.Game.activate(state)
-        activate_game_act.triggered.connect(cmd)
-        activate_game_act.setStatusTip('Let Alice to be with you while'
-                                       +' building the equation')
-
+        # Define menuBar
         menubar = self.menuBar()
         menubar.setNativeMenuBar(False)
         file_menu = menubar.addMenu('&File')
+        file_menu.addAction(new_act)
         file_menu.addAction(open_act)
         file_menu.addAction(save_act)      
         file_menu.addAction(exit_act)
@@ -109,6 +128,7 @@ class MainWindow(QMainWindow):
         edit_menu.addAction(copy_act)
         edit_menu.addAction(cut_act)
         edit_menu.addAction(paste_act)
+        edit_menu.addAction(selectall_act)
         game_menu = menubar.addMenu('&Games')
         game_menu.addAction(activate_game_act)
         help_menu = menubar.addMenu('&Help')

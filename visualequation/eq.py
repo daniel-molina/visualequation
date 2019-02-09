@@ -288,6 +288,12 @@ class Eq:
         self.eqsel.display(self.eq)
         self.eqhist.save(self.eqsel)
 
+    def new_eq(self):
+        self.eq = [utils.NEWARG]
+        self.eqsel.index = 0
+        self.eqsel.display(self.eq)
+        self.eqhist = eqhist.EqHist(self.eqsel)
+        
     def open_eq(self, filename=None):
         neweq = conversions.open_eq(self.parent, filename)
         if neweq != None:
