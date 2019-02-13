@@ -94,6 +94,27 @@ class MainWindow(QMainWindow):
         selectall_act.setShortcut('Ctrl+A')
         selectall_act.setStatusTip('Select the entire equation')
         selectall_act.triggered.connect(selectall)
+        # View
+        def zoomin():
+            if self.maineq.eq.eqsel.dpi < 1000:
+               self.maineq.eq.eqsel.dpi += 50
+               self.maineq.eq.eqsel.display()
+            else:
+                ShowError('Formula will no be increased.', False)
+        zoomin_act = QAction('Zoom &In', self)
+        zoomin_act.setShortcut('Ctrl++')
+        zoomin_act.setStatusTip('Increase size of the formula')
+        zoomin_act.triggered.connect(zoomin)
+        def zoomout():
+            if self.maineq.eq.eqsel.dpi >= 100:
+               self.maineq.eq.eqsel.dpi -= 50
+               self.maineq.eq.eqsel.display()
+            else:
+                ShowError('Formula will no be decreased.', False)
+        zoomout_act = QAction('Zoom &Out', self)
+        zoomout_act.setShortcut('Ctrl+-')
+        zoomout_act.setStatusTip('Decrease size of the formula')
+        zoomout_act.triggered.connect(zoomout)
         # Games
         def alice():
             state = activate_game_act.isChecked()
@@ -129,6 +150,9 @@ class MainWindow(QMainWindow):
         edit_menu.addAction(cut_act)
         edit_menu.addAction(paste_act)
         edit_menu.addAction(selectall_act)
+        view_menu = menubar.addMenu('&View')
+        view_menu.addAction(zoomin_act)
+        view_menu.addAction(zoomout_act)
         game_menu = menubar.addMenu('&Games')
         game_menu.addAction(activate_game_act)
         help_menu = menubar.addMenu('&Help')

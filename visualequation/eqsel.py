@@ -31,6 +31,7 @@ class Selection:
         self.game = game.Game()
         self.temp_dir = temp_dir
         self.setPixmap = setPixmap
+        self.dpi = 300
 
     def display(self, eq=None, right=True):
         # If equation is provided, substitute the current one
@@ -47,7 +48,7 @@ class Selection:
             eqsel.insert(self.index, utils.LEDIT)
 
         self.game.update(eqsel)
-        eqsel_png = conversions.eq2png(eqsel, None, None, self.temp_dir)
+        eqsel_png = conversions.eq2png(eqsel, self.dpi, None, self.temp_dir)
         self.setPixmap(QPixmap(eqsel_png))
 
     def set_valid_index(self, eq=None, forward=True):
