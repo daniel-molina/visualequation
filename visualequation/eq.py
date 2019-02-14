@@ -314,9 +314,11 @@ class Eq:
                 self.combo = QComboBox(self)
                 self.combo.addItems(items)
                 self.label_spin = QLabel('Size (dpi):')
-                self.spin = QSpinBox(self)
+                self.spin = QDoubleSpinBox(self)
                 self.spin.setMaximum(10000)
-                self.spin.setMinimum(0) # Let us force manually a bigger value
+                # Just avoid negative numbers
+                # Minimum conditions are set later
+                self.spin.setMinimum(0.01)
                 self.spin.setValue(600)   
                 self.buttons = QDialogButtonBox(
                     QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
@@ -342,14 +344,14 @@ class Eq:
 
             def changed_spin(self):
                 if "SVG" == self.combo.currentText():
-                    if self.spin.value() < 1:
+                    if self.spin.value() < 0.:
                         self.buttons.button(QDialogButtonBox.Ok).setDisabled(
                             True)
                     else:
                         self.buttons.button(QDialogButtonBox.Ok).setEnabled(
                             True)
                 else:
-                    if self.spin.value() < 10:
+                    if self.spin.value() < 10.:
                         self.buttons.button(QDialogButtonBox.Ok).setDisabled(
                             True)
                     else:
