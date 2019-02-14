@@ -84,11 +84,11 @@ def dvi2png(dvi_file, png_file, log_file, dpi, bg):
                   + "program for Visual Equation. Finishing execution."
             ShowError(msg, True)
 
-def dvi2eps(dvi_file, eps_file, log_file):
+def dvi2eps(dvi_file, eps_file, log_file, dpi=600):
     """ Convert the DVI file to PostScript. """
     with open(log_file, "w") as flog:
         try:
-            subprocess.call(["dvips", "-E", "-D", "600", "-Ppdf", 
+            subprocess.call(["dvips", "-E", "-D", str(dpi), "-Ppdf", 
                              "-o", eps_file, dvi_file], stderr=flog)
         except OSError:
             ShowError("Command dvips was not found. No EPS was created.",
@@ -112,7 +112,7 @@ def eps2pdf(eps_file, pdf_file):
 #def pdf2svg(pdf_file, svg_file):
 #    subprocess.call(["pdf2svg", pdf_file, svg_file])
 
-def dvi2svg(dvi_file, svg_file, log_file):
+def dvi2svg(dvi_file, svg_file, log_file, scale=5):
     """
     Convert the DVI file to SVG with dvisvgm (it comes with texlive).
     It is the best option found until now:
@@ -123,7 +123,8 @@ def dvi2svg(dvi_file, svg_file, log_file):
     """
     with open(log_file, "w") as flog:
         try:
-            subprocess.call(["dvisvgm", "--no-fonts", "--scale=5,5", 
+            subprocess.call(["dvisvgm", "--no-fonts",
+                             "--scale=" + str(scale) + "," + str(scale), 
                              "-o", svg_file, dvi_file], stderr=flog)
         except OSError:
             msg = "Command dvisvgm was not found. No SVG was created."
@@ -183,7 +184,7 @@ def eq2png(eq, dpi, bg, directory, png_fpath=None, add_metadata=False,
                 ShowError(msg, False)
     return png_fpath
 
-def eq2eps(eq, directory, eps_fpath=None):
+def eq2eps(eq, dpi, directory, eps_fpath=None):
     """ Create a eps from a equation, returns the path of eps image.
 
     The user specify the dir where auxiliary files will be created.
@@ -202,10 +203,10 @@ def eq2eps(eq, directory, eps_fpath=None):
         eps_fpath = os.path.join(directory, fname + '.ps')
     eq2latex_file(eq, latex_fpath, commons.LATEX_TEMPLATE)
     latex_file2dvi(latex_fpath, directory)
-    dvi2eps(dvi_fpath, eps_fpath, dvi2epslog_fpath)
+    dvi2eps(dvi_fpath, eps_fpath, dvi2epslog_fpath, dpi)
     return eps_fpath
 
-def eq2pdf(eq, directory, pdf_fpath=None):
+def eq2pdf(eq, dpi, directory, pdf_fpath=None):
     """
     Convert equation to pdf file. It always adds the equation to metadata.
     """
@@ -216,7 +217,7 @@ def eq2pdf(eq, directory, pdf_fpath=None):
         save_eq = False
     else:
         save_eq = True
-    eps_fpath = eq2eps(eq, directory)
+    eps_fpath = eq2eps(eq, dpi, directory)
     eps2pdf(eps_fpath, pdf_fpath)
     if save_eq:
         # Save the equation into the file
@@ -237,7 +238,7 @@ def eq2pdf(eq, directory, pdf_fpath=None):
                 ShowError(msg, False)
     return pdf_fpath
 
-def eq2svg(eq, directory, svg_fpath):
+def eq2svg(eq, scale, directory, svg_fpath):
     """ Converts the equation to SVG"""
 
     # If directory does not exist, raise exception
@@ -250,7 +251,7 @@ def eq2svg(eq, directory, svg_fpath):
                                    fname + '_dvi2svg.log')
     eq2latex_file(eq, latex_fpath, commons.LATEX_TEMPLATE)
     latex_file2dvi(latex_fpath, directory)
-    dvi2svg(dvi_fpath, svg_fpath, dvi2svglog_path)
+    dvi2svg(dvi_fpath, svg_fpath, dvi2svglog_path, scale)
 
 def open_eq(parent, filename = None):
     "Return equation inside a file chosen interactively. Else, None."

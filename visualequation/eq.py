@@ -303,20 +303,80 @@ class Eq:
             self.eqhist.save(self.eqsel)
 
     def save_eq(self):
-        items = ["PNG", "PDF", "EPS", "SVG"]
-        msg = "Select format:\n\nNote: Eqs. can only be recovered\n" \
-              + "from PNG and PDF."
-        item, ok = QInputDialog.getItem(self.parent, "Save equation",
-                                        msg, items, 0, False)
+        class Dialog(QDialog):
+            def __init__(self, parent=None):
+                super().__init__(parent)
+                self.setWindowTitle('Save equation')
+                label = QLabel(
+                    "Select format:\n\nNote: Eqs. can only be recovered\n" 
+                    + "from PNG and PDF.")
+                items = ["PNG", "PDF", "EPS", "SVG"]
+                self.combo = QComboBox(self)
+                self.combo.addItems(items)
+                self.label_spin = QLabel('Size (dpi):')
+                self.spin = QSpinBox(self)
+                self.spin.setMaximum(10000)
+                self.spin.setMinimum(0) # Let us force manually a bigger value
+                self.spin.setValue(600)   
+                self.buttons = QDialogButtonBox(
+                    QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+                    Qt.Horizontal, self)
+                vbox = QVBoxLayout(self)
+                vbox.addWidget(label)
+                vbox.addWidget(self.combo)
+                vbox.addWidget(self.label_spin)
+                vbox.addWidget(self.spin)
+                vbox.addWidget(self.buttons)
+                self.combo.currentIndexChanged.connect(self.changed_combo)
+                self.spin.valueChanged.connect(self.changed_spin)
+                self.buttons.accepted.connect(self.accept)
+                self.buttons.rejected.connect(self.reject)
+
+            def changed_combo(self, index):
+                if "SVG" == self.combo.currentText():
+                    self.label_spin.setText('Size (scale):')
+                    self.spin.setValue(5)
+                else:
+                    self.label_spin.setText('Size (dpi):')
+                    self.spin.setValue(600)
+
+            def changed_spin(self):
+                if "SVG" == self.combo.currentText():
+                    if self.spin.value() < 1:
+                        self.buttons.button(QDialogButtonBox.Ok).setDisabled(
+                            True)
+                    else:
+                        self.buttons.button(QDialogButtonBox.Ok).setEnabled(
+                            True)
+                else:
+                    if self.spin.value() < 10:
+                        self.buttons.button(QDialogButtonBox.Ok).setDisabled(
+                            True)
+                    else:
+                        self.buttons.button(QDialogButtonBox.Ok).setEnabled(
+                            True)
+
+            @staticmethod
+            def get_save_options(parent=None):
+                dialog = Dialog(parent)
+                result = dialog.exec_()
+                if result == QDialog.Accepted:
+                    return ((dialog.combo.currentText(),
+                             dialog.spin.value()),
+                            True)
+                else:
+                    return ((None, None), False)
+
+        (save_format, size), ok = Dialog.get_save_options(self.parent)
         if not ok:
-            return None
+            return
         # Implement a Save File dialog
         # The staticmethod does not accept default suffix
-        itemfilter = item + " (*." + item.lower() + ")"
-        dialog = QFileDialog(self.parent, 'Save equation', '', itemfilter)
+        formatfilter = save_format + " (*." + save_format.lower() + ")"
+        dialog = QFileDialog(self.parent, 'Save equation', '', formatfilter)
         dialog.setFileMode(QFileDialog.AnyFile)
         dialog.setAcceptMode(QFileDialog.AcceptSave)
-        dialog.setDefaultSuffix(item.lower())
+        dialog.setDefaultSuffix(save_format.lower())
         dialog.setOption(QFileDialog.DontConfirmOverwrite, True)
         if not dialog.exec_():
             return
@@ -329,16 +389,16 @@ class Eq:
             ret_val = QMessageBox.question(self.parent, 'Overwrite', msg)
             if ret_val != QMessageBox.Yes:
                 return
-        if item == 'PNG':
-            conversions.eq2png(self.eq, dpi=600, bg=None,
+        if save_format == 'PNG':
+            conversions.eq2png(self.eq, dpi=size, bg=None,
                                directory=self.temp_dir, png_fpath=filename,
                                add_metadata=True)
-        elif item == 'PDF':
-            conversions.eq2pdf(self.eq, self.temp_dir, filename)
-        elif item == 'SVG':
-            conversions.eq2svg(self.eq, self.temp_dir, filename)
-        elif item == 'EPS':
-            conversions.eq2eps(self.eq, self.temp_dir, filename)
+        elif save_format == 'PDF':
+            conversions.eq2pdf(self.eq, size, self.temp_dir, filename)
+        elif save_format == 'SVG':
+            conversions.eq2svg(self.eq, size, self.temp_dir, filename)
+        elif save_format == 'EPS':
+            conversions.eq2eps(self.eq, size, self.temp_dir, filename)
 
     def recover_prev_eq(self):
         """ Recover previous equation from the historial, if any """
