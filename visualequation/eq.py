@@ -26,6 +26,79 @@ from .symbols import utils
 from . import eqsel
 from .errors import ShowError
 
+class SaveDialog(QDialog):
+
+    prev_format_index = 0
+    prev_size = 600.
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle('Save equation')
+        label = QLabel(
+            "Select format:\n\nNote: Eqs. can only be recovered\n"
+            + "from PNG and PDF.")
+        items = ["PNG", "PDF", "EPS", "SVG"]
+        self.combo = QComboBox(self)
+        self.combo.addItems(items)
+        self.combo.setCurrentIndex(self.prev_format_index)
+        self.label_spin = QLabel('Size (dpi):')
+        self.spin = QDoubleSpinBox(self)
+        self.spin.setMaximum(10000)
+        # Just avoid negative numbers
+        # Minimum conditions are set later
+        self.spin.setMinimum(0.01)
+        self.spin.setValue(self.prev_size)
+        self.buttons = QDialogButtonBox(
+            QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+            Qt.Horizontal, self)
+        vbox = QVBoxLayout(self)
+        vbox.addWidget(label)
+        vbox.addWidget(self.combo)
+        vbox.addWidget(self.label_spin)
+        vbox.addWidget(self.spin)
+        vbox.addWidget(self.buttons)
+        self.combo.currentIndexChanged.connect(self.changed_combo)
+        self.spin.valueChanged.connect(self.changed_spin)
+        self.buttons.accepted.connect(self.accept)
+        self.buttons.rejected.connect(self.reject)
+
+    def changed_combo(self, index):
+        if "SVG" == self.combo.currentText():
+            self.label_spin.setText('Size (scale):')
+            self.spin.setValue(5)
+        else:
+            self.label_spin.setText('Size (dpi):')
+            self.spin.setValue(600)
+
+    def changed_spin(self):
+        if "SVG" == self.combo.currentText():
+            if self.spin.value() < 0.:
+                self.buttons.button(QDialogButtonBox.Ok).setDisabled(
+                    True)
+            else:
+                self.buttons.button(QDialogButtonBox.Ok).setEnabled(
+                    True)
+        else:
+            if self.spin.value() < 10.:
+                self.buttons.button(QDialogButtonBox.Ok).setDisabled(
+                    True)
+            else:
+                self.buttons.button(QDialogButtonBox.Ok).setEnabled(
+                    True)
+
+    @staticmethod
+    def get_save_options(parent=None):
+        dialog = SaveDialog(parent)
+        result = dialog.exec_()
+        if result == QDialog.Accepted:
+            SaveDialog.prev_format_index = dialog.combo.currentIndex()
+            SaveDialog.prev_size = dialog.spin.value()
+            return ((dialog.combo.currentText(),
+                     dialog.spin.value()),
+                    True)
+        else:
+            return ((None, None), False)
+
 class Eq:
     def __init__(self, temp_dir, setPixmap, parent):
 
@@ -303,73 +376,7 @@ class Eq:
             self.eqhist.save(self.eqsel)
 
     def save_eq(self):
-        class Dialog(QDialog):
-            def __init__(self, parent=None):
-                super().__init__(parent)
-                self.setWindowTitle('Save equation')
-                label = QLabel(
-                    "Select format:\n\nNote: Eqs. can only be recovered\n" 
-                    + "from PNG and PDF.")
-                items = ["PNG", "PDF", "EPS", "SVG"]
-                self.combo = QComboBox(self)
-                self.combo.addItems(items)
-                self.label_spin = QLabel('Size (dpi):')
-                self.spin = QDoubleSpinBox(self)
-                self.spin.setMaximum(10000)
-                # Just avoid negative numbers
-                # Minimum conditions are set later
-                self.spin.setMinimum(0.01)
-                self.spin.setValue(600)   
-                self.buttons = QDialogButtonBox(
-                    QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
-                    Qt.Horizontal, self)
-                vbox = QVBoxLayout(self)
-                vbox.addWidget(label)
-                vbox.addWidget(self.combo)
-                vbox.addWidget(self.label_spin)
-                vbox.addWidget(self.spin)
-                vbox.addWidget(self.buttons)
-                self.combo.currentIndexChanged.connect(self.changed_combo)
-                self.spin.valueChanged.connect(self.changed_spin)
-                self.buttons.accepted.connect(self.accept)
-                self.buttons.rejected.connect(self.reject)
-
-            def changed_combo(self, index):
-                if "SVG" == self.combo.currentText():
-                    self.label_spin.setText('Size (scale):')
-                    self.spin.setValue(5)
-                else:
-                    self.label_spin.setText('Size (dpi):')
-                    self.spin.setValue(600)
-
-            def changed_spin(self):
-                if "SVG" == self.combo.currentText():
-                    if self.spin.value() < 0.:
-                        self.buttons.button(QDialogButtonBox.Ok).setDisabled(
-                            True)
-                    else:
-                        self.buttons.button(QDialogButtonBox.Ok).setEnabled(
-                            True)
-                else:
-                    if self.spin.value() < 10.:
-                        self.buttons.button(QDialogButtonBox.Ok).setDisabled(
-                            True)
-                    else:
-                        self.buttons.button(QDialogButtonBox.Ok).setEnabled(
-                            True)
-
-            @staticmethod
-            def get_save_options(parent=None):
-                dialog = Dialog(parent)
-                result = dialog.exec_()
-                if result == QDialog.Accepted:
-                    return ((dialog.combo.currentText(),
-                             dialog.spin.value()),
-                            True)
-                else:
-                    return ((None, None), False)
-
-        (save_format, size), ok = Dialog.get_save_options(self.parent)
+        (save_format, size), ok = SaveDialog.get_save_options(self.parent)
         if not ok:
             return
         # Implement a Save File dialog
