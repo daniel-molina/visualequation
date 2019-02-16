@@ -32,6 +32,31 @@ from . import commons
 from . import game
 from .errors import ShowError
 
+# Class to set focus in equation when moving the scroll bars
+class MyScrollBar(QScrollBar):
+    def __init__(self, orientation, parent=None):
+        super().__init__(orientation, parent)
+        
+    def mouseReleaseEvent(self, event):
+        QScrollBar.mouseReleaseEvent(self, event)
+        self.equation.setFocus()
+
+    def setFocusTo(self, widget):
+        self.equation = widget
+ 
+class MyScrollArea(QScrollArea):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.vbar = MyScrollBar(Qt.Vertical, self)
+        self.hbar = MyScrollBar(Qt.Horizontal, self)
+        self.setVerticalScrollBar(self.vbar)
+        self.setHorizontalScrollBar(self.hbar)
+
+    def setWidget(self, widget):
+        QScrollArea.setWidget(self, widget)
+        self.vbar.setFocusTo(widget)
+        self.hbar.setFocusTo(widget)
+        
 class MainWindow(QMainWindow):
     def __init__(self, temp_dir):
         super().__init__()
@@ -168,11 +193,14 @@ class MainWindow(QMainWindow):
         # Create the equation
         self.maineq = eqlabel.EqLabel(self.temp_dir, self)
         self.maineq.setAlignment(Qt.AlignCenter)
+        self.scrollarea = MyScrollArea(self)
+        self.scrollarea.setWidget(self.maineq)
+        self.scrollarea.setWidgetResizable(True)
         # Create the symbols TabWidget
         self.tabs = symbolstab.TabWidget(self, self.maineq)
         self.tabs.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         # Add everything to the central widget
-        layout.addWidget(self.maineq)
+        layout.addWidget(self.scrollarea)
         layout.addWidget(self.tabs)
         central_widget.setLayout(layout)
         self.maineq.setFocus()

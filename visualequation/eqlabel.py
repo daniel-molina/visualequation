@@ -29,7 +29,7 @@ class EqLabel(QLabel):
         self.parent = parent
         self.eq = eq.Eq(temp_dir, self.setPixmap, parent)
         self.setAcceptDrops(True)
-
+        
     def event(self, event):
         if event.type() == QEvent.KeyPress and event.key() == Qt.Key_Tab:
             self.eq.eqsel.display_next()
