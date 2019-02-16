@@ -32,18 +32,30 @@ from . import commons
 from . import game
 from .errors import ShowError
 
-# Class to set focus in equation when moving the scroll bars
 class MyScrollBar(QScrollBar):
+    """
+    Class to set focus in equation when moving the scroll bars.
+    It also moves the equation correctly when inserting new elements.
+    """
+    prev_max = None
+    
     def __init__(self, orientation, parent=None):
         super().__init__(orientation, parent)
         
     def mouseReleaseEvent(self, event):
         QScrollBar.mouseReleaseEvent(self, event)
         self.equation.setFocus()
-
+            
     def setFocusTo(self, widget):
         self.equation = widget
- 
+
+    def sliderChange(self, change):
+        QScrollBar.sliderChange(self, change)
+        if change == QAbstractSlider.SliderRangeChange:
+            if self.prev_max != None:
+                self.setValue(self.value() + self.maximum() - self.prev_max)
+            self.prev_max = self.maximum()
+            
 class MyScrollArea(QScrollArea):
     def __init__(self, parent=None):
         super().__init__(parent)
