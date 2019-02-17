@@ -23,6 +23,11 @@ def variablesize(parent, code):
             self.suplimit.setChecked(True)
             self.inflimit = QCheckBox("Limit under the sign")
             self.inflimit.setChecked(True)
+            self.msg = QLabel(
+                "Note: It is also possible to put arguments\n"
+                + "in the corners of the operator by\n"
+                + "surrounding the operator and using keys\n"
+                + "UP and DOWN.")
             self.buttons = QDialogButtonBox(
                 QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
                 Qt.Horizontal, self)
@@ -30,6 +35,7 @@ def variablesize(parent, code):
             vbox = QVBoxLayout(self)
             vbox.addWidget(self.suplimit)
             vbox.addWidget(self.inflimit)
+            vbox.addWidget(self.msg)
             vbox.addWidget(self.buttons)
 
             self.buttons.accepted.connect(self.accept)
@@ -75,6 +81,11 @@ def integrals(parent, code):
             self.setWindowTitle('Integral operator')
             self.suplimit = QCheckBox("Argument over the integral sign")
             self.inflimit = QCheckBox("Argument under the integral sign")
+            self.msg = QLabel(
+                "Note: Leaving boxes unchecked will allow\n"
+                + "to put the limits in the corners of the\n"
+                + "integral by surrounding the integral and\n"
+                + "using keys UP and DOWN.")
             self.buttons = QDialogButtonBox(
                 QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
                 Qt.Horizontal, self)
@@ -82,6 +93,7 @@ def integrals(parent, code):
             vbox = QVBoxLayout(self)
             vbox.addWidget(self.suplimit)
             vbox.addWidget(self.inflimit)
+            vbox.addWidget(self.msg)
             vbox.addWidget(self.buttons)
 
             self.buttons.accepted.connect(self.accept)

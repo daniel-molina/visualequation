@@ -219,7 +219,7 @@ def array(parent):
             self.validator = QRegExpValidator(regexp)
             self.ledit_rows.setValidator(self.validator)
             self.ledit_cols.setValidator(self.validator)
-            label_align = QLabel('Alignment of columns (eg. lc|r):\n'+
+            label_align = QLabel('Alignment of columns (e.g. lc|r):\n'+
                                  '(l: left, c: center, r: right, |: v. line)')
             self.ledit_align = QLineEdit()
             # Left delimiter
