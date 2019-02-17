@@ -37,11 +37,10 @@ class MyScrollBar(QScrollBar):
     Class to set focus in equation when moving the scroll bars.
     It also moves the equation correctly when inserting new elements.
     """
-    prev_max = None
-    
     def __init__(self, orientation, parent=None):
         super().__init__(orientation, parent)
-        
+        self.prev_max = None
+
     def mouseReleaseEvent(self, event):
         QScrollBar.mouseReleaseEvent(self, event)
         self.equation.setFocus()
@@ -51,7 +50,9 @@ class MyScrollBar(QScrollBar):
 
     def sliderChange(self, change):
         QScrollBar.sliderChange(self, change)
-        if change == QAbstractSlider.SliderRangeChange:
+        # Do not use/set prev_max vertically
+        if change == QAbstractSlider.SliderRangeChange and \
+           self.orientation() == Qt.Horizontal:
             if self.prev_max != None:
                 self.setValue(self.value() + self.maximum() - self.prev_max)
             self.prev_max = self.maximum()
