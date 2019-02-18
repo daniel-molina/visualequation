@@ -53,8 +53,8 @@ MenuItemData = namedtuple('MenuItemData', 'tag symb_l')
 # in next releases
 SELARG = r'\cdots'
 NEWARG = r'\oblong'
-REDIT = Op(1, r'\left\lmoustache{{{0}}}\right\rgroup')
-LEDIT = Op(1, r'\left\lgroup{{{0}}}\right\rmoustache')
+REDIT = Op(1, r'\left\lmoustache {0} \right\rgroup')
+LEDIT = Op(1, r'\left\lgroup {0} \right\rmoustache')
 JUXT = Op(2, r'{0} {1}')
 
 # It does NOT include ' ', "'", '^', '\\' and '~'
