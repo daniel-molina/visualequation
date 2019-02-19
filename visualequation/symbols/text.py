@@ -21,7 +21,8 @@ def text(parent):
             self.setWindowTitle('Text')
             label = QLabel('Text:')
             self.ledit = QLineEdit()
-            regexp = QRegExp("^[a-zA-Z\d\s|!\\$%&/()=?'@#\\[\\]{}*+-<>,.;:_]+$")
+            regexp = QRegExp(
+                "^[a-zA-Z\d\s|!\\$%&/()=?'@#\\[\\]{}*+-<>,.;:_]+$")
             self.validator = QRegExpValidator(regexp)
             self.ledit.setValidator(self.validator)
             self.buttons = QDialogButtonBox(
@@ -59,7 +60,7 @@ def text(parent):
         # Correct string
         for key in ASCII_LATEX_TRANSLATION:
             text = text.replace(key, ASCII_LATEX_TRANSLATION[key])
-        return r'\text{{' + text + '}}'
+        return r'\text{' + text + '}'
     else:
         return None
 

@@ -30,6 +30,7 @@ from . import eqlabel
 from . import conversions
 from . import commons
 from . import game
+from . import latexdialogs
 from .errors import ShowError
 
 class MyScrollBar(QScrollBar):
@@ -153,6 +154,12 @@ class MainWindow(QMainWindow):
         zoomout_act.setShortcut('Ctrl+-')
         zoomout_act.setStatusTip('Decrease size of the formula')
         zoomout_act.triggered.connect(zoomout)
+        def showlatex():
+            latexdialogs.ShowLatexDialog.showlatex(self.maineq.eq, self)
+        showlatex_act = QAction('Show &LaTeX code', self)
+        showlatex_act.setStatusTip(
+            'Show in the LaTeX code generatig the formula')
+        showlatex_act.triggered.connect(showlatex)
         # Games
         def alice():
             state = activate_game_act.isChecked()
@@ -194,6 +201,8 @@ class MainWindow(QMainWindow):
         view_menu = menubar.addMenu('&View')
         view_menu.addAction(zoomin_act)
         view_menu.addAction(zoomout_act)
+        view_menu.addSeparator()
+        view_menu.addAction(showlatex_act)
         game_menu = menubar.addMenu('&Games')
         game_menu.addAction(activate_game_act)
         help_menu = menubar.addMenu('&Help')
