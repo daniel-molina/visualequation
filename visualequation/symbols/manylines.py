@@ -106,105 +106,6 @@ def matrix_type(parent):
     else:
         return None
 
-def cases(parent):
-    class Dialog(QDialog):
-        def __init__(self, parent=None):
-            super().__init__(parent)
-
-            self.setWindowTitle('Cases')
-            label = QLabel('Number of cases:')
-            self.ledit = QLineEdit()
-            regexp = QRegExp('^[1-9]$')
-            self.validator = QRegExpValidator(regexp)
-            self.ledit.setValidator(self.validator)
-            self.buttons = QDialogButtonBox(
-                QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
-                Qt.Horizontal, self)
-            vbox = QVBoxLayout(self)
-            vbox.addWidget(label)
-            vbox.addWidget(self.ledit)
-            vbox.addWidget(self.buttons)
-            self.buttons.button(QDialogButtonBox.Ok).setDisabled(True)
-            self.ledit.setFocus()
-
-            self.ledit.textChanged.connect(self.check_state)
-            self.buttons.accepted.connect(self.accept)
-            self.buttons.rejected.connect(self.reject)
-
-        def check_state(self, *args, **kargs):
-            state = self.validator.validate(self.ledit.text(), 0)[0]
-            if state == QValidator.Acceptable:
-                self.buttons.button(QDialogButtonBox.Ok).setEnabled(True)
-            else:
-                self.buttons.button(QDialogButtonBox.Ok).setDisabled(True)
-
-        @staticmethod
-        def get_n_cases(parent=None):
-            dialog = Dialog(parent)
-            result = dialog.exec_()
-            if result == QDialog.Accepted:
-                return (int(dialog.ledit.text()), True)
-            else:
-                return (None, False)
-            
-    n_cases, ok = Dialog.get_n_cases(parent)
-    if ok:
-        case_code = r'{}&{}\\'
-        latex_code = r'\begin{{cases}}' + case_code*n_cases + r'\end{{cases}}'
-        return Op(n_cases*2, latex_code)
-    else:
-        return None
-
-def equation_system(parent):
-    class Dialog(QDialog):
-        def __init__(self, parent=None):
-            super().__init__(parent)
-
-            self.setWindowTitle('Equation system')
-            label = QLabel('Number of equations:')
-            self.ledit = QLineEdit()
-            regexp = QRegExp('^[1-9]$')
-            self.validator = QRegExpValidator(regexp)
-            self.ledit.setValidator(self.validator)
-            self.buttons = QDialogButtonBox(
-                QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
-                Qt.Horizontal, self)
-            vbox = QVBoxLayout(self)
-            vbox.addWidget(label)
-            vbox.addWidget(self.ledit)
-            vbox.addWidget(self.buttons)
-            self.buttons.button(QDialogButtonBox.Ok).setDisabled(True)
-            self.ledit.setFocus()
-
-            self.ledit.textChanged.connect(self.check_state)
-            self.buttons.accepted.connect(self.accept)
-            self.buttons.rejected.connect(self.reject)
-
-        def check_state(self, *args, **kargs):
-            state = self.validator.validate(self.ledit.text(), 0)[0]
-            if state == QValidator.Acceptable:
-                self.buttons.button(QDialogButtonBox.Ok).setEnabled(True)
-            else:
-                self.buttons.button(QDialogButtonBox.Ok).setDisabled(True)
-
-        @staticmethod
-        def get_n_equations(parent=None):
-            dialog = Dialog(parent)
-            result = dialog.exec_()
-            if result == QDialog.Accepted:
-                return (int(dialog.ledit.text()), True)
-            else:
-                return (None, False)
-            
-    n_equations, ok = Dialog.get_n_equations(parent)
-    if ok:
-        case_code = r'{}\\'
-        latex_code = r'\begin{{cases}}' + case_code*n_equations \
-                     + r'\end{{cases}}'
-        return Op(n_equations, latex_code)
-    else:
-        return None
-
 def array(parent):
     class Dialog(QDialog):
         def __init__(self, parent=None):
@@ -334,10 +235,161 @@ def array(parent):
         return Op(n_rows*n_cols, latex_code)
     else:
         return None
+    
+def cases(parent):
+    class Dialog(QDialog):
+        def __init__(self, parent=None):
+            super().__init__(parent)
 
+            self.setWindowTitle('Cases')
+            label = QLabel('Number of cases:')
+            self.ledit = QLineEdit()
+            regexp = QRegExp('^[1-9]$')
+            self.validator = QRegExpValidator(regexp)
+            self.ledit.setValidator(self.validator)
+            self.buttons = QDialogButtonBox(
+                QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+                Qt.Horizontal, self)
+            vbox = QVBoxLayout(self)
+            vbox.addWidget(label)
+            vbox.addWidget(self.ledit)
+            vbox.addWidget(self.buttons)
+            self.buttons.button(QDialogButtonBox.Ok).setDisabled(True)
+            self.ledit.setFocus()
+
+            self.ledit.textChanged.connect(self.check_state)
+            self.buttons.accepted.connect(self.accept)
+            self.buttons.rejected.connect(self.reject)
+
+        def check_state(self, *args, **kargs):
+            state = self.validator.validate(self.ledit.text(), 0)[0]
+            if state == QValidator.Acceptable:
+                self.buttons.button(QDialogButtonBox.Ok).setEnabled(True)
+            else:
+                self.buttons.button(QDialogButtonBox.Ok).setDisabled(True)
+
+        @staticmethod
+        def get_n_cases(parent=None):
+            dialog = Dialog(parent)
+            result = dialog.exec_()
+            if result == QDialog.Accepted:
+                return (int(dialog.ledit.text()), True)
+            else:
+                return (None, False)
+            
+    n_cases, ok = Dialog.get_n_cases(parent)
+    if ok:
+        case_code = r'{}&{}\\'
+        latex_code = r'\begin{{cases}}' + case_code*n_cases + r'\end{{cases}}'
+        return Op(n_cases*2, latex_code)
+    else:
+        return None
+
+def equation_system(parent):
+    class Dialog(QDialog):
+        def __init__(self, parent=None):
+            super().__init__(parent)
+
+            self.setWindowTitle('Equation system')
+            label = QLabel('Number of equations:')
+            self.ledit = QLineEdit()
+            regexp = QRegExp('^[1-9]$')
+            self.validator = QRegExpValidator(regexp)
+            self.ledit.setValidator(self.validator)
+            self.buttons = QDialogButtonBox(
+                QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+                Qt.Horizontal, self)
+            vbox = QVBoxLayout(self)
+            vbox.addWidget(label)
+            vbox.addWidget(self.ledit)
+            vbox.addWidget(self.buttons)
+            self.buttons.button(QDialogButtonBox.Ok).setDisabled(True)
+            self.ledit.setFocus()
+
+            self.ledit.textChanged.connect(self.check_state)
+            self.buttons.accepted.connect(self.accept)
+            self.buttons.rejected.connect(self.reject)
+
+        def check_state(self, *args, **kargs):
+            state = self.validator.validate(self.ledit.text(), 0)[0]
+            if state == QValidator.Acceptable:
+                self.buttons.button(QDialogButtonBox.Ok).setEnabled(True)
+            else:
+                self.buttons.button(QDialogButtonBox.Ok).setDisabled(True)
+
+        @staticmethod
+        def get_n_equations(parent=None):
+            dialog = Dialog(parent)
+            result = dialog.exec_()
+            if result == QDialog.Accepted:
+                return (int(dialog.ledit.text()), True)
+            else:
+                return (None, False)
+            
+    n_equations, ok = Dialog.get_n_equations(parent)
+    if ok:
+        case_code = r'{}\\'
+        latex_code = r'\begin{{cases}}' + case_code*n_equations \
+                     + r'\end{{cases}}'
+        return Op(n_equations, latex_code)
+    else:
+        return None
+
+def aligned(parent):
+    class Dialog(QDialog):
+        def __init__(self, parent=None):
+            super().__init__(parent)
+
+            self.setWindowTitle('Aligned environment')
+            label = QLabel('Number of lines:')
+            self.ledit = QLineEdit()
+            regexp = QRegExp('^[1-9]$')
+            self.validator = QRegExpValidator(regexp)
+            self.ledit.setValidator(self.validator)
+            self.buttons = QDialogButtonBox(
+                QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+                Qt.Horizontal, self)
+            vbox = QVBoxLayout(self)
+            vbox.addWidget(label)
+            vbox.addWidget(self.ledit)
+            vbox.addWidget(self.buttons)
+            self.buttons.button(QDialogButtonBox.Ok).setDisabled(True)
+            self.ledit.setFocus()
+
+            self.ledit.textChanged.connect(self.check_state)
+            self.buttons.accepted.connect(self.accept)
+            self.buttons.rejected.connect(self.reject)
+
+        def check_state(self, *args, **kargs):
+            state = self.validator.validate(self.ledit.text(), 0)[0]
+            if state == QValidator.Acceptable:
+                self.buttons.button(QDialogButtonBox.Ok).setEnabled(True)
+            else:
+                self.buttons.button(QDialogButtonBox.Ok).setDisabled(True)
+
+        @staticmethod
+        def get_n_lines(parent=None):
+            dialog = Dialog(parent)
+            result = dialog.exec_()
+            if result == QDialog.Accepted:
+                return (int(dialog.ledit.text()), True)
+            else:
+                return (None, False)
+            
+    n_lines, ok = Dialog.get_n_lines(parent)
+    if ok:
+        line_code = r'&{}\\'
+        latex_code = r'\begin{{aligned}}{}' + line_code*n_lines \
+                     + r'\end{{aligned}}'
+        return Op(n_lines+1, latex_code)
+    else:
+        return None
+
+    
 MANYLINES = [
     LatexSymb('matrix_type', matrix_type),
+    LatexSymb('array', array),
     LatexSymb('cases', cases),
     LatexSymb('equations_system', equation_system),
-    LatexSymb('array', array),
+    LatexSymb('aligned', aligned),
 ]
