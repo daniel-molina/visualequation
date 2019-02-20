@@ -18,6 +18,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
 from . import eqtools
+from . import commons
 
 class ShowLatexDialog(QDialog):
     def __init__(self, eq, parent=None):
@@ -31,16 +32,26 @@ class ShowLatexDialog(QDialog):
         self.text.moveCursor(QTextCursor.Start)
         self.text.setReadOnly(True)
         copybutton = QPushButton('Copy to Clipboard')
+        msg = QLabel('Tip: If you pretend to copy it, do\n'
+                     + 'not close the program before\n'
+                     + 'pasting.')
         copybutton.clicked.connect(self.handlecopy)
         self.onlysel = QCheckBox('Only selection')
         self.onlysel.setChecked(True)
         self.onlysel.stateChanged.connect(self.settext)
-        self.buttons = QDialogButtonBox(QDialogButtonBox.Ok, self)
+        self.fullcode = QCheckBox('Full code')
+        self.fullcode.setChecked(False)
+        self.fullcode.stateChanged.connect(self.settext)
+
+        self.buttons = QDialogButtonBox(QDialogButtonBox.Ok, Qt.Horizontal,
+                                        self)
 
         vbox = QVBoxLayout(self)
         vbox.addWidget(self.text)
         vbox.addWidget(self.onlysel)
+        vbox.addWidget(self.fullcode)
         vbox.addWidget(copybutton)
+        vbox.addWidget(msg)
         vbox.addWidget(self.buttons)
         self.buttons.accepted.connect(self.accept)
 
@@ -51,10 +62,16 @@ class ShowLatexDialog(QDialog):
     def settext(self):
         self.text.clear()
         if self.onlysel.isChecked():
-            self.text.insertPlainText(eqtools.eqblock2latex(self.eq,
-                                                            self.index)[0])
+            formulalatex = eqtools.eqblock2latex(self.eq, self.index)[0]
         else:
-            self.text.insertPlainText(eqtools.eqblock2latex(self.eq, 0)[0])
+            formulalatex = eqtools.eqblock2latex(self.eq, 0)[0]
+        if self.fullcode.isChecked():
+            with open(commons.LATEX_TEMPLATE, "r") as ftempl:
+                for line in ftempl:
+                    self.text.insertPlainText(
+                        line.replace('%EQ%', formulalatex))
+        else:
+            self.text.insertPlainText(formulalatex)
             
     @staticmethod
     def showlatex(eq, parent=None):
