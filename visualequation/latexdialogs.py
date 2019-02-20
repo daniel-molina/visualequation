@@ -13,12 +13,16 @@
 
 """ The module that manages the user interaction with LaTeX code."""
 
+import os
+import subprocess
+
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
 from . import eqtools
 from . import commons
+from . import conversions
 
 class ShowLatexDialog(QDialog):
     def __init__(self, eq, parent=None):
@@ -32,10 +36,10 @@ class ShowLatexDialog(QDialog):
         self.text.moveCursor(QTextCursor.Start)
         self.text.setReadOnly(True)
         copybutton = QPushButton('Copy to Clipboard')
+        copybutton.clicked.connect(self.handlecopy)
         msg = QLabel('Tip: If you pretend to copy it, do\n'
                      + 'not close the program before\n'
                      + 'pasting.')
-        copybutton.clicked.connect(self.handlecopy)
         self.onlysel = QCheckBox('Only selection')
         self.onlysel.setChecked(True)
         self.onlysel.stateChanged.connect(self.settext)
@@ -78,3 +82,90 @@ class ShowLatexDialog(QDialog):
         dialog = ShowLatexDialog(eq, parent)
         dialog.exec_()
         return None
+        
+class EditLatexDialog(QDialog):
+    def __init__(self, latexblock, temp_dir, parent=None):
+        super().__init__(parent)
+        self.temp_dir = temp_dir
+        self.setWindowTitle('Edit LaTeX code')
+        self.resize(600, 600)
+        self.eqblock = QLabel(self)
+        self.eqblock.setAlignment(Qt.AlignCenter)
+        eqblock_im = conversions.eq2png(latexblock, 300, None, self.temp_dir)
+        self.eqblock.setPixmap(QPixmap(eqblock_im))
+        self.scrollarea = QScrollArea(self)
+        self.scrollarea.setWidget(self.eqblock)
+        self.scrollarea.setWidgetResizable(True)
+        
+        self.text = QTextEdit(self)
+        self.text.insertPlainText(latexblock)
+        self.text.moveCursor(QTextCursor.Start)
+        self.text.setFocus()
+        self.text.textChanged.connect(self.ontextchanged)
+        regexp = QRegExp(
+            "^[a-zA-Z\d\s|!\\$%&/()=?'@#\\[\\]{}*+-<>,.;:_\n\t\\^\\\\]*$")
+        self.validator = QRegExpValidator(regexp)
+        self.checkbutton = QPushButton('Check LaTeX code')
+        self.checkbutton.clicked.connect(self.handlecheck)
+        self.checkbutton.setDisabled(True)
+        self.compilationmsg = QLabel('Change LaTeX code as desired')
+        self.buttons = QDialogButtonBox(QDialogButtonBox.Cancel |
+                                        QDialogButtonBox.Ok,
+                                        Qt.Horizontal,
+                                        self)
+        self.buttons.accepted.connect(self.accept)
+        self.buttons.rejected.connect(self.reject)
+        self.buttons.button(QDialogButtonBox.Ok).setDisabled(True)
+        
+        vbox = QVBoxLayout(self)
+        vbox.addWidget(self.scrollarea)
+        vbox.addWidget(self.text)
+        vbox.addWidget(self.checkbutton)
+        vbox.addWidget(self.compilationmsg)
+        vbox.addWidget(self.buttons)
+
+    def ontextchanged(self):
+        self.buttons.button(QDialogButtonBox.Ok).setDisabled(True)
+        self.compilationmsg.setText('Press Check button when code is ready')
+        state = self.validator.validate(self.text.toPlainText(), 0)[0]
+        if state != QValidator.Acceptable:
+            self.compilationmsg.setText(
+                'LaTeX code contains invalid characters')
+            self.checkbutton.setDisabled(True)
+        else:
+            self.checkbutton.setEnabled(True)
+
+
+        
+    def handlecheck(self):
+        self.compilationmsg.setText('Checking LateX code...')
+        latex_file = os.path.join(self.temp_dir, "edit.tex")
+        conversions.eq2latex_file(self.text.toPlainText(), latex_file,
+                                  commons.LATEX_TEMPLATE)
+        try:
+            subprocess.check_output(["latex", "-interaction=nonstopmode",
+                                     "-halt-on-error",
+                                     "-output-directory=" + self.temp_dir,
+                                     latex_file])
+        except subprocess.CalledProcessError as error:
+            self.compilationmsg.setText('LaTex code is not valid')
+            self.checkbutton.setDisabled(True)
+            self.text.setFocus()
+            return
+        dvi_file = os.path.join(self.temp_dir, "edit.dvi")
+        dvi_log = os.path.join(self.temp_dir, "edit.log")
+        png_file = os.path.join(self.temp_dir, "edit.png")
+        conversions.dvi2png(dvi_file, png_file, dvi_log, 300, None)
+        self.eqblock.setPixmap(QPixmap(png_file))
+        self.compilationmsg.setText('LaTex code is valid')
+        self.buttons.button(QDialogButtonBox.Ok).setEnabled(True)
+        self.text.setFocus()
+
+    @staticmethod
+    def editlatex(latexblock, temp_dir, parent=None):
+        dialog = EditLatexDialog(latexblock, temp_dir, parent)
+        result = dialog.exec_()
+        if result == QDialog.Accepted:
+            return dialog.text.toPlainText()
+        else:
+            return None

@@ -29,6 +29,7 @@ from . import symbolstab
 from . import eqlabel
 from . import conversions
 from . import commons
+from . import eqtools
 from . import game
 from . import latexdialogs
 from .errors import ShowError
@@ -126,6 +127,16 @@ class MainWindow(QMainWindow):
         paste_act.setShortcut('Ctrl+V')
         paste_act.setStatusTip('Paste previous cut or copied selection')
         paste_act.triggered.connect(self.maineq.eq.eqbuffer2sel)
+        def editlatex():
+            oldlatexcode = eqtools.eqblock2latex(self.maineq.eq.eq,
+                                                 self.maineq.eq.eqsel.index)[0]
+            newlatexcode = latexdialogs.EditLatexDialog.editlatex(
+                oldlatexcode, self.temp_dir, self)
+            if newlatexcode:
+                self.maineq.eq.insert_substituting(newlatexcode)
+        editlatex_act = QAction('Edit LaTeX', self)
+        editlatex_act.setStatusTip('Edit LaTeX code of selected block')
+        editlatex_act.triggered.connect(editlatex)
         def selectall():
             self.maineq.eq.eqsel.index = 0
             self.maineq.eq.eqsel.display()
@@ -196,6 +207,8 @@ class MainWindow(QMainWindow):
         edit_menu.addAction(copy_act)
         edit_menu.addAction(cut_act)
         edit_menu.addAction(paste_act)
+        edit_menu.addSeparator()
+        edit_menu.addAction(editlatex_act)
         edit_menu.addSeparator()
         edit_menu.addAction(selectall_act)
         view_menu = menubar.addMenu('&View')
