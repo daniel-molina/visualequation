@@ -24,10 +24,11 @@ def variablesize(parent, code):
             self.inflimit = QCheckBox("Limit under the sign")
             self.inflimit.setChecked(True)
             self.msg = QLabel(
-                "Note: It is also possible to put arguments\n"
-                + "in the corners of the operator by\n"
-                + "surrounding the operator and using keys\n"
-                + "UP and DOWN.")
+                "Note: It is also possible to put arguments"
+                + " in the corners of the operator by"
+                + " surrounding the operator and using keys"
+                + " UP and DOWN.")
+            self.msg.setWordWrap(True)
             self.buttons = QDialogButtonBox(
                 QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
                 Qt.Horizontal, self)
@@ -82,10 +83,11 @@ def integrals(parent, code):
             self.suplimit = QCheckBox("Argument over the integral sign")
             self.inflimit = QCheckBox("Argument under the integral sign")
             self.msg = QLabel(
-                "Note: Leaving boxes unchecked will allow\n"
-                + "to put the limits in the corners of the\n"
-                + "integral by surrounding the integral and\n"
-                + "using keys UP and DOWN.")
+                "Note: Leaving boxes unchecked will allow"
+                + " to put the limits in the corners of the"
+                + " integral by surrounding the integral and"
+                + " using keys UP and DOWN.")
+            self.msg.setWordWrap(True)
             self.buttons = QDialogButtonBox(
                 QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
                 Qt.Horizontal, self)

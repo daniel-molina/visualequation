@@ -37,9 +37,10 @@ class ShowLatexDialog(QDialog):
         self.text.setReadOnly(True)
         copybutton = QPushButton('Copy to Clipboard')
         copybutton.clicked.connect(self.handlecopy)
-        msg = QLabel('Tip: If you pretend to copy it, do\n'
-                     + 'not close the program before\n'
-                     + 'pasting.')
+        msg = QLabel('Tip: If you pretend to copy it, do'
+                     + ' not close the program before'
+                     + ' pasting.')
+        msg.setWordWrap(True)
         self.onlysel = QCheckBox('Only selection')
         self.onlysel.setChecked(True)
         self.onlysel.stateChanged.connect(self.settext)
@@ -109,6 +110,11 @@ class EditLatexDialog(QDialog):
         self.checkbutton.clicked.connect(self.handlecheck)
         self.checkbutton.setDisabled(True)
         self.compilationmsg = QLabel('Change LaTeX code as desired')
+        self.compilationmsg.setWordWrap(True)
+        warnmsg = QLabel(
+            'Note: It will not be possible to select individual elements'
+            + ' of this block if it is edited.')
+        warnmsg.setWordWrap(True)
         self.buttons = QDialogButtonBox(QDialogButtonBox.Cancel |
                                         QDialogButtonBox.Ok,
                                         Qt.Horizontal,
@@ -122,6 +128,7 @@ class EditLatexDialog(QDialog):
         vbox.addWidget(self.text)
         vbox.addWidget(self.checkbutton)
         vbox.addWidget(self.compilationmsg)
+        vbox.addWidget(warnmsg)
         vbox.addWidget(self.buttons)
 
     def ontextchanged(self):

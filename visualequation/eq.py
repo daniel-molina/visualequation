@@ -35,8 +35,9 @@ class SaveDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle('Save equation')
         label = QLabel(
-            "Select format:\n\nNote: Eqs. can only be recovered\n"
-            + "from PNG and PDF.")
+            "Select format:\n\nNote: Equations can only be recovered"
+            + " from PNG and PDF.")
+        label.setWordWrap(True)
         items = ["PNG", "PDF", "EPS", "SVG"]
         self.combo = QComboBox(self)
         self.combo.addItems(items)

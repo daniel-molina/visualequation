@@ -22,6 +22,11 @@ def opfunctions(parent, code):
             self.argabove = QCheckBox("Argument over operator")
             self.argbelow = QCheckBox("Argument under operator")
             self.argbelow.setChecked(True)
+            self.msg = QLabel(
+                "Note: It is also possible to put arguments"
+                + " in the corners by surrounding the operator and using keys"
+                + " UP and DOWN.")
+            self.msg.setWordWrap(True)
             self.buttons = QDialogButtonBox(
                 QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
                 Qt.Horizontal, self)
@@ -29,6 +34,7 @@ def opfunctions(parent, code):
             vbox = QVBoxLayout(self)
             vbox.addWidget(self.argabove)
             vbox.addWidget(self.argbelow)
+            vbox.addWidget(self.msg)
             vbox.addWidget(self.buttons)
 
             self.buttons.accepted.connect(self.accept)
