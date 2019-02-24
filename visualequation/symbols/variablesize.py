@@ -18,16 +18,16 @@ def variablesize(parent, code):
         def __init__(self, parent=None):
             super().__init__(parent)
 
-            self.setWindowTitle('Variable-size operator')
-            self.suplimit = QCheckBox("Limit over the sign")
+            self.setWindowTitle(_('Variable-size operator'))
+            self.suplimit = QCheckBox(_("Limit over the sign"))
             self.suplimit.setChecked(True)
-            self.inflimit = QCheckBox("Limit under the sign")
+            self.inflimit = QCheckBox(_("Limit under the sign"))
             self.inflimit.setChecked(True)
             self.msg = QLabel(
-                "Note: It is also possible to put arguments"
-                + " in the corners of the operator by"
-                + " surrounding the operator and using keys"
-                + " UP and DOWN.")
+                _("Note: It is also possible to put arguments"
+                  " in the corners of the operator by"
+                  " surrounding the operator and using keys"
+                  " UP and DOWN."))
             self.msg.setWordWrap(True)
             self.buttons = QDialogButtonBox(
                 QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
@@ -79,14 +79,14 @@ def integrals(parent, code):
         def __init__(self, parent=None):
             super().__init__(parent)
 
-            self.setWindowTitle('Integral operator')
-            self.suplimit = QCheckBox("Argument over the integral sign")
-            self.inflimit = QCheckBox("Argument under the integral sign")
+            self.setWindowTitle(_('Integral operator'))
+            self.suplimit = QCheckBox(_("Argument over the integral sign"))
+            self.inflimit = QCheckBox(_("Argument under the integral sign"))
             self.msg = QLabel(
-                "Note: Leaving boxes unchecked will allow"
-                + " to put the limits in the corners of the"
-                + " integral by surrounding the integral and"
-                + " using keys UP and DOWN.")
+                _("Note: Leaving boxes unchecked will allow"
+                  " to put the limits in the corners of the"
+                  " integral by surrounding the integral and"
+                  " using keys UP and DOWN."))
             self.msg.setWordWrap(True)
             self.buttons = QDialogButtonBox(
                 QDialogButtonBox.Ok | QDialogButtonBox.Cancel,

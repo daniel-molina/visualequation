@@ -28,10 +28,10 @@ def matrix_type(parent):
         def __init__(self, parent=None):
             super().__init__(parent)
 
-            self.setWindowTitle('Matrix')
-            label_rows = QLabel('Number of rows:')
+            self.setWindowTitle(_('Matrix'))
+            label_rows = QLabel(_('Number of rows:'))
             self.ledit_rows = QLineEdit()
-            label_cols = QLabel('Number of columns:')
+            label_cols = QLabel(_('Number of columns:'))
             self.ledit_cols = QLineEdit()
             regexp = QRegExp('^[1-9]$')
             self.validator = QRegExpValidator(regexp)
@@ -39,9 +39,9 @@ def matrix_type(parent):
             self.ledit_cols.setValidator(self.validator)
 
             self.symb = MATRIXTYPES[0]
-            label_type = QLabel('Matrix type:')
+            label_type = QLabel(_('Matrix type:'))
             hbox_type = QHBoxLayout()
-            button_type = QPushButton('Choose')
+            button_type = QPushButton(_('Choose'))
             button_type.clicked.connect(self.handle_click)
             self.repr_type = QLabel('')
             self.repr_type.setPixmap(QPixmap(os.path.join(
@@ -70,7 +70,7 @@ def matrix_type(parent):
             self.buttons.rejected.connect(self.reject)
 
         def handle_click(self):
-            dialog = ChooseSymbDialog(self, "Matrix type", MATRIXTYPES, 3)
+            dialog = ChooseSymbDialog(self, _("Matrix type"), MATRIXTYPES, 3)
             result = dialog.exec_()
             if result == QDialog.Accepted:
                 self.symb = dialog.symb_chosen
@@ -111,23 +111,24 @@ def array(parent):
         def __init__(self, parent=None):
             super().__init__(parent)
 
-            self.setWindowTitle('General Array')
-            label_rows = QLabel('Number of rows:')
+            self.setWindowTitle(_('General Array'))
+            label_rows = QLabel(_('Number of rows:'))
             self.ledit_rows = QLineEdit()
-            label_cols = QLabel('Number of columns:')
+            label_cols = QLabel(_('Number of columns:'))
             self.ledit_cols = QLineEdit()
             regexp = QRegExp('^[1-9]$')
             self.validator = QRegExpValidator(regexp)
             self.ledit_rows.setValidator(self.validator)
             self.ledit_cols.setValidator(self.validator)
-            label_align = QLabel('Alignment of columns (e.g. lc|r):\n'+
-                                 '(l: left, c: center, r: right, |: v. line)')
+            label_align = QLabel(
+                _('Alignment of columns (e.g. lc|r):\n'
+                  '(l: left, c: center, r: right, |: v. line)'))
             self.ledit_align = QLineEdit()
             # Left delimiter
             self.symb_l = SINGLEDELIMITERS[0]
-            label_l = QLabel('Left delimiter:')
+            label_l = QLabel(_('Left delimiter:'))
             hbox_l = QHBoxLayout()
-            button_l = QPushButton('Choose')
+            button_l = QPushButton(_('Choose'))
             button_l.clicked.connect(self.handle_click_l)
             self.repr_l = QLabel('')
             self.repr_l.setPixmap(QPixmap(os.path.join(
@@ -137,9 +138,9 @@ def array(parent):
             hbox_l.addWidget(self.repr_l)
             # Right delimiter
             self.symb_r = SINGLEDELIMITERS[1]
-            label_r = QLabel('Right delimiter:')
+            label_r = QLabel(_('Right delimiter:'))
             hbox_r = QHBoxLayout()
-            button_r = QPushButton('Choose')
+            button_r = QPushButton(_('Choose'))
             button_r.clicked.connect(self.handle_click_r)
             self.repr_r = QLabel('')
             self.repr_r.setPixmap(QPixmap(os.path.join(
@@ -174,7 +175,7 @@ def array(parent):
             self.buttons.rejected.connect(self.reject)
 
         def handle_click_l(self):
-            dialog = ChooseSymbDialog(self, "Left delimiter",
+            dialog = ChooseSymbDialog(self, _("Left delimiter"),
                                       SINGLEDELIMITERS, 4)
             result = dialog.exec_()
             if result == QDialog.Accepted:
@@ -183,7 +184,7 @@ def array(parent):
                     commons.ICONS_DIR, self.symb_l.tag + ".png")))
 
         def handle_click_r(self):
-            dialog = ChooseSymbDialog(self, "Right delimiter",
+            dialog = ChooseSymbDialog(self, _("Right delimiter"),
                                       SINGLEDELIMITERS, 4)
             result = dialog.exec_()
             if result == QDialog.Accepted:
@@ -241,8 +242,8 @@ def cases(parent):
         def __init__(self, parent=None):
             super().__init__(parent)
 
-            self.setWindowTitle('Cases')
-            label = QLabel('Number of cases:')
+            self.setWindowTitle(_('Cases'))
+            label = QLabel(_('Number of cases:'))
             self.ledit = QLineEdit()
             regexp = QRegExp('^[1-9]$')
             self.validator = QRegExpValidator(regexp)
@@ -290,8 +291,8 @@ def equation_system(parent):
         def __init__(self, parent=None):
             super().__init__(parent)
 
-            self.setWindowTitle('Equation system')
-            label = QLabel('Number of equations:')
+            self.setWindowTitle(_('Equation system'))
+            label = QLabel(_('Number of equations:'))
             self.ledit = QLineEdit()
             regexp = QRegExp('^[1-9]$')
             self.validator = QRegExpValidator(regexp)
@@ -340,8 +341,8 @@ def aligned(parent):
         def __init__(self, parent=None):
             super().__init__(parent)
 
-            self.setWindowTitle('Aligned environment')
-            label = QLabel('Number of lines:')
+            self.setWindowTitle(_('Aligned environment'))
+            label = QLabel(_('Number of lines:'))
             self.ledit = QLineEdit()
             regexp = QRegExp('^[1-9]$')
             self.validator = QRegExpValidator(regexp)

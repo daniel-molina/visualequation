@@ -35,14 +35,14 @@ class SaveDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle('Save equation')
         label = QLabel(
-            "Select format:\n\nNote: Equations can only be recovered"
-            + " from PNG and PDF.")
+            _("Select format:\n\nNote: Equations can only be recovered"
+              " from PNG and PDF."))
         label.setWordWrap(True)
         items = ["PNG", "PDF", "EPS", "SVG"]
         self.combo = QComboBox(self)
         self.combo.addItems(items)
         self.combo.setCurrentIndex(self.prev_format_index)
-        self.label_spin = QLabel('Size (dpi):')
+        self.label_spin = QLabel(_('Size (dpi):'))
         self.spin = QDoubleSpinBox(self)
         self.spin.setMaximum(10000)
         # Just avoid negative numbers
@@ -65,10 +65,10 @@ class SaveDialog(QDialog):
 
     def changed_combo(self, index):
         if "SVG" == self.combo.currentText():
-            self.label_spin.setText('Size (scale):')
+            self.label_spin.setText(_('Size (scale):'))
             self.spin.setValue(5)
         else:
-            self.label_spin.setText('Size (dpi):')
+            self.label_spin.setText(_('Size (dpi):'))
             self.spin.setValue(600)
 
     def changed_spin(self):
@@ -394,9 +394,9 @@ class Eq:
         # Implement an Overwrite? dialog since the default one does not
         # check filename when default suffix extension has to be added
         if os.path.exists(filename):
-            msg = 'A file named "' + os.path.basename(filename) \
-                  + '" already exists. Do you want to replace it?'
-            ret_val = QMessageBox.question(self.parent, 'Overwrite', msg)
+            msg = _('A file named "%s" already exists. Do you want to'
+            'replace it?') % os.path.basename(filename) 
+            ret_val = QMessageBox.question(self.parent, _('Overwrite'), msg)
             if ret_val != QMessageBox.Yes:
                 return
         if save_format == 'PNG':

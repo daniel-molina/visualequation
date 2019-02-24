@@ -58,7 +58,7 @@ def latex_file2dvi(latex_file, output_dir):
     except subprocess.CalledProcessError as error:
         msg = "Error reported by latex. The equation cannot be generated.\n" \
         + "If you have installed the required packages, it could be " \
-        + "an internal error. Please, report it including " \
+        + "an internal error. Feel free to report it including " \
         + "the content of the following file:\n" + latex_file + "\n" \
         + "Finishing execution."
         ShowError(msg, True)
@@ -257,14 +257,14 @@ def open_eq(parent, filename = None):
     "Return equation inside a file chosen interactively. Else, None."
     if not filename:
         filename, ignored = QFileDialog.getOpenFileName(
-            parent, 'Open equation', '', 'Valid formats (*.png *.pdf)')
+            parent, _('Open equation'), '', _('Valid formats (*.png *.pdf)'))
     if not filename:
         return None
     try:
         eq_str = subprocess.check_output(
             ["exiftool", "-b", "-s3", "-description", filename]).decode('utf8')
         if not eq_str:
-            msg = "No equation inside this file."
+            msg = _("No equation inside this file.")
             ShowError(msg, False, parent)
             return None
         return json.JSONDecoder(object_hook=from_json).decode(eq_str)
@@ -279,9 +279,10 @@ def open_eq(parent, filename = None):
         ShowError(msg, False, parent)
         return None
     except ValueError as error:
-        msg = "Error parsing metadata.\n" \
-              + "ValueError: " + str(error) + "\n" \
-              + "Was the file created with your version of Visual Equation?"
+        msg = _("Error parsing metadata.\n"
+                "ValueError: %s\n"
+                "Was the file created with your version of Visual Equation?"
+                ) % str(error)
         ShowError(msg, False, parent)
         return None
 

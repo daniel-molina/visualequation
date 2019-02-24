@@ -18,8 +18,8 @@ def text(parent):
         def __init__(self, parent=None):
             super().__init__(parent)
 
-            self.setWindowTitle('Text')
-            label = QLabel('Text:')
+            self.setWindowTitle(_('Text'))
+            label = QLabel(_('Text:'))
             self.ledit = QLineEdit()
             regexp = QRegExp(
                 "^[a-zA-Z\d\s|!\\$%&/()=?'@#\\[\\]{}*+-<>,.;:_]+$")
@@ -69,7 +69,7 @@ def special_format(latex_command, label_text, only_capital=False):
         def __init__(self, parent=None):
             super().__init__(parent)
 
-            self.setWindowTitle(label_text + " characters")
+            self.setWindowTitle(_("%s characters") % label_text)
             label = QLabel(label_text + ':')
             self.ledit = QLineEdit()
             if only_capital:
@@ -141,7 +141,7 @@ COLORS = [
 
 
 def color(parent):
-    dialog = ChooseSymbDialog(parent, "Choose color", COLORS, 3)
+    dialog = ChooseSymbDialog(parent, _("Choose color"), COLORS, 3)
     result = dialog.exec_()
     if result == QDialog.Accepted:
         return Op(1, r'\begingroup\color{{' + dialog.symb_chosen.code
@@ -150,7 +150,7 @@ def color(parent):
         return None
 
 def colorbox(parent):
-    dialog = ChooseSymbDialog(parent, "Choose color", COLORS, 3)
+    dialog = ChooseSymbDialog(parent, _("Choose color"), COLORS, 3)
     result = dialog.exec_()
     if result == QDialog.Accepted:
         return Op(1, r'\colorbox{{' + dialog.symb_chosen.code
@@ -160,20 +160,19 @@ def colorbox(parent):
 
 TEXT = [
     LatexSymb('text', text),
-    LatexSymb('mathcal', special_format(r'\mathcal{',
-                                        'Caligraphic (only capital letters)',
-                                        True)),
+    LatexSymb('mathcal', special_format(
+        r'\mathcal{', _('Caligraphic (only capital letters)'), True)),
     LatexSymb('mathbb', special_format(r'\mathbb{',
-                                       'Mathbb (only capital letters)',
+                                       _('Mathbb (only capital letters)'),
                                        True)),
     LatexSymb('mathfrak', special_format(r'\mathfrak{',
-                                         'Fraktur (letters and numbers)')),
+                                         _('Fraktur (letters and numbers)'))),
     LatexSymb('mathsf', special_format(r'\mathsf{',
-                                       'Sans serif (letters and numbers)')),
+                                       _('Sans serif (letters and numbers)'))),
     LatexSymb('mathbf', special_format(r'\mathbf{',
-                                       'Bold (letters and numbers)')),
-    LatexSymb('textbfem', special_format(r'\textbf{\em ',
-                                         'Bold Italic (letters and numbers)')),
+                                       _('Bold (letters and numbers)'))),
+    LatexSymb('textbfem', special_format(
+        r'\textbf{\em ', _('Bold Italic (letters and numbers)'))),
     LatexSymb('color', color),
     LatexSymb('colorbox', colorbox),
 ]

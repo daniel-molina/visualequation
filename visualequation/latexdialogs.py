@@ -35,16 +35,16 @@ class ShowLatexDialog(QDialog):
                                                         self.index)[0])
         self.text.moveCursor(QTextCursor.Start)
         self.text.setReadOnly(True)
-        copybutton = QPushButton('Copy to Clipboard')
+        copybutton = QPushButton(_('Copy to Clipboard'))
         copybutton.clicked.connect(self.handlecopy)
-        msg = QLabel('Tip: If you pretend to copy it, do'
-                     + ' not close the program before'
-                     + ' pasting.')
+        msg = QLabel(_('Tip: If you pretend to copy it, do'
+                       ' not close the program before'
+                       ' pasting.'))
         msg.setWordWrap(True)
-        self.onlysel = QCheckBox('Only selection')
+        self.onlysel = QCheckBox(_('Only selection'))
         self.onlysel.setChecked(True)
         self.onlysel.stateChanged.connect(self.settext)
-        self.fullcode = QCheckBox('Full code')
+        self.fullcode = QCheckBox(_('Full code'))
         self.fullcode.setChecked(False)
         self.fullcode.stateChanged.connect(self.settext)
 
@@ -88,7 +88,7 @@ class EditLatexDialog(QDialog):
     def __init__(self, latexblock, temp_dir, parent=None):
         super().__init__(parent)
         self.temp_dir = temp_dir
-        self.setWindowTitle('Edit LaTeX code')
+        self.setWindowTitle(_('Edit LaTeX code'))
         self.resize(600, 600)
         self.eqblock = QLabel(self)
         self.eqblock.setAlignment(Qt.AlignCenter)
@@ -106,14 +106,14 @@ class EditLatexDialog(QDialog):
         regexp = QRegExp(
             "^[a-zA-Z\d\s|!\\$%&/()=?'@#\\[\\]{}*+-<>,.;:_\n\t\\^\\\\]*$")
         self.validator = QRegExpValidator(regexp)
-        self.checkbutton = QPushButton('Check LaTeX code')
+        self.checkbutton = QPushButton(_('Check LaTeX code'))
         self.checkbutton.clicked.connect(self.handlecheck)
         self.checkbutton.setDisabled(True)
-        self.compilationmsg = QLabel('Change LaTeX code as desired')
+        self.compilationmsg = QLabel(_('Change LaTeX code as desired'))
         self.compilationmsg.setWordWrap(True)
         warnmsg = QLabel(
-            'Note: It will not be possible to select individual elements'
-            + ' of this block if it is edited.')
+            _('Note: It will not be possible to select individual elements'
+              ' of this block if it is edited.'))
         warnmsg.setWordWrap(True)
         self.buttons = QDialogButtonBox(QDialogButtonBox.Cancel |
                                         QDialogButtonBox.Ok,
@@ -133,11 +133,11 @@ class EditLatexDialog(QDialog):
 
     def ontextchanged(self):
         self.buttons.button(QDialogButtonBox.Ok).setDisabled(True)
-        self.compilationmsg.setText('Press Check button when code is ready')
+        self.compilationmsg.setText(_('Press Check button when code is ready'))
         state = self.validator.validate(self.text.toPlainText(), 0)[0]
         if state != QValidator.Acceptable:
             self.compilationmsg.setText(
-                'LaTeX code contains invalid characters')
+                _('LaTeX code contains invalid characters'))
             self.checkbutton.setDisabled(True)
         else:
             self.checkbutton.setEnabled(True)
@@ -145,7 +145,7 @@ class EditLatexDialog(QDialog):
 
         
     def handlecheck(self):
-        self.compilationmsg.setText('Checking LateX code...')
+        self.compilationmsg.setText(_('Checking LateX code...'))
         latex_file = os.path.join(self.temp_dir, "edit.tex")
         conversions.eq2latex_file(self.text.toPlainText(), latex_file,
                                   commons.LATEX_TEMPLATE)
@@ -155,7 +155,7 @@ class EditLatexDialog(QDialog):
                                      "-output-directory=" + self.temp_dir,
                                      latex_file])
         except subprocess.CalledProcessError as error:
-            self.compilationmsg.setText('LaTex code is not valid')
+            self.compilationmsg.setText(_('LaTex code is not valid'))
             self.checkbutton.setDisabled(True)
             self.text.setFocus()
             return
@@ -164,7 +164,7 @@ class EditLatexDialog(QDialog):
         png_file = os.path.join(self.temp_dir, "edit.png")
         conversions.dvi2png(dvi_file, png_file, dvi_log, 300, None)
         self.eqblock.setPixmap(QPixmap(png_file))
-        self.compilationmsg.setText('LaTex code is valid')
+        self.compilationmsg.setText(_('LaTex code is valid'))
         self.buttons.button(QDialogButtonBox.Ok).setEnabled(True)
         self.text.setFocus()
 

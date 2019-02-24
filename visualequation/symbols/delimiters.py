@@ -45,12 +45,12 @@ def free_delimiters(parent):
     class Dialog(QDialog):
         def __init__(self, parent=None):
             super().__init__(parent)
-            self.setWindowTitle('Free delimiters')
+            self.setWindowTitle(_('Free delimiters'))
 
             self.symb_l = SINGLEDELIMITERS[0]
-            label_l = QLabel('Left delimiter:')
+            label_l = QLabel(_('Left delimiter:'))
             hbox_l = QHBoxLayout()
-            button_l = QPushButton('Choose')
+            button_l = QPushButton(_('Choose'))
             button_l.clicked.connect(self.handle_click_l)
             self.repr_l = QLabel('')
             self.repr_l.setPixmap(QPixmap(os.path.join(
@@ -60,9 +60,9 @@ def free_delimiters(parent):
             hbox_l.addWidget(self.repr_l)
 
             self.symb_r = SINGLEDELIMITERS[1]
-            label_r = QLabel('Right delimiter:')
+            label_r = QLabel(_('Right delimiter:'))
             hbox_r = QHBoxLayout()
-            button_r = QPushButton('Choose')
+            button_r = QPushButton(_('Choose'))
             button_r.clicked.connect(self.handle_click_r)
             self.repr_r = QLabel('')
             self.repr_r.setPixmap(QPixmap(os.path.join(
@@ -85,7 +85,7 @@ def free_delimiters(parent):
             self.buttons.rejected.connect(self.reject)
 
         def handle_click_l(self):
-            dialog = ChooseSymbDialog(self, "Left delimiter",
+            dialog = ChooseSymbDialog(self, _("Left delimiter"),
                                       SINGLEDELIMITERS, 4)
             result = dialog.exec_()
             if result == QDialog.Accepted:
@@ -94,7 +94,7 @@ def free_delimiters(parent):
                     commons.ICONS_DIR, self.symb_l.tag + ".png")))
 
         def handle_click_r(self):
-            dialog = ChooseSymbDialog(self, "Right delimiter",
+            dialog = ChooseSymbDialog(self, _("Right delimiter"),
                                       SINGLEDELIMITERS, 4)
             result = dialog.exec_()
             if result == QDialog.Accepted:

@@ -25,7 +25,7 @@ class ShowError(QMessageBox):
         else:
             super().__init__(parent)
         self.setText(msg)
-        self.setWindowTitle("Error")
+        self.setWindowTitle(_("Error"))
         self.setIcon(QMessageBox.Critical)
         self.exec_()
         if exit_on_click:
