@@ -21,7 +21,10 @@ import os
 import argparse
 import traceback
 import gettext
-gettext.install('visualequation')
+gettext.install('visualequation', 'locales')
+es = gettext.translation('visualequation', 'locales', languages=['es'])
+es.install()
+#_ = es.gettext
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
@@ -152,26 +155,26 @@ class MainWindow(QMainWindow):
                self.maineq.eq.eqsel.dpi += 50
                self.maineq.eq.eqsel.display()
             else:
-                ShowError(_('Formula will no be increased.'), False)
+                ShowError(_('Equation will no be increased.'), False)
         zoomin_act = QAction(_('Zoom &In'), self)
         zoomin_act.setShortcut('Ctrl++')
-        zoomin_act.setStatusTip(_('Increase size of the formula'))
+        zoomin_act.setStatusTip(_('Increase size of the equation'))
         zoomin_act.triggered.connect(zoomin)
         def zoomout():
             if self.maineq.eq.eqsel.dpi >= 100:
                self.maineq.eq.eqsel.dpi -= 50
                self.maineq.eq.eqsel.display()
             else:
-                ShowError(_('Formula will no be decreased.'), False)
+                ShowError(_('Equation will no be decreased.'), False)
         zoomout_act = QAction(_('Zoom &Out'), self)
         zoomout_act.setShortcut('Ctrl+-')
-        zoomout_act.setStatusTip(_('Decrease size of the formula'))
+        zoomout_act.setStatusTip(_('Decrease size of the equation'))
         zoomout_act.triggered.connect(zoomout)
         def showlatex():
             latexdialogs.ShowLatexDialog.showlatex(self.maineq.eq, self)
         showlatex_act = QAction(_('Show &LaTeX code'), self)
         showlatex_act.setStatusTip(
-            _('Show the LaTeX code generatig the formula'))
+            _('Show the LaTeX code generating the equation'))
         showlatex_act.triggered.connect(showlatex)
         # Games
         def alice():
@@ -277,7 +280,7 @@ class MainWindow(QMainWindow):
         "<li><b>SHIFT + Left-click</b> on an element of the symbols panel "
         "(<b>VERY handy</b>): "
         "If the element is an operator, the selection is replaced "
-        "by the operator and its first argument is set to the selection. "
+        "by the operator and its first argument is set to previous selection. "
         "(The first argument is the one represented by dots) "
         "If the element is a symbol, the selection is replaced "
         "by the symbol.</li>"

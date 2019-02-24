@@ -1,0 +1,511 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2019-02-24 23:49+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: visualequation/__main__.py:95
+msgid "&New"
+msgstr ""
+
+#: visualequation/__main__.py:97
+msgid "Create a new equation"
+msgstr ""
+
+#: visualequation/__main__.py:99
+msgid "&Open"
+msgstr ""
+
+#: visualequation/__main__.py:101
+msgid "Open equation from image"
+msgstr ""
+
+#: visualequation/__main__.py:103
+msgid "&Save"
+msgstr ""
+
+#: visualequation/__main__.py:105
+msgid "Save image"
+msgstr ""
+
+#: visualequation/__main__.py:107
+msgid "&Exit"
+msgstr ""
+
+#: visualequation/__main__.py:109
+msgid "Exit application"
+msgstr ""
+
+#: visualequation/__main__.py:112
+msgid "&Undo"
+msgstr ""
+
+#: visualequation/__main__.py:114
+msgid "Return equation to previous state"
+msgstr ""
+
+#: visualequation/__main__.py:116
+msgid "&Redo"
+msgstr ""
+
+#: visualequation/__main__.py:118
+msgid "Recover next equation state"
+msgstr ""
+
+#: visualequation/__main__.py:120
+msgid "&Copy"
+msgstr ""
+
+#: visualequation/__main__.py:122
+msgid "Copy selection"
+msgstr ""
+
+#: visualequation/__main__.py:127
+msgid "C&ut"
+msgstr ""
+
+#: visualequation/__main__.py:129
+msgid "Cut selection"
+msgstr ""
+
+#: visualequation/__main__.py:131
+msgid "&Paste"
+msgstr ""
+
+#: visualequation/__main__.py:133
+msgid "Paste previous cut or copied selection"
+msgstr ""
+
+#: visualequation/__main__.py:142
+msgid "Edit LaTeX"
+msgstr ""
+
+#: visualequation/__main__.py:143
+msgid "Edit LaTeX code of selected block"
+msgstr ""
+
+#: visualequation/__main__.py:150
+msgid "Select the entire equation"
+msgstr ""
+
+#: visualequation/__main__.py:158
+msgid "Equation will no be increased."
+msgstr ""
+
+#: visualequation/__main__.py:159
+msgid "Zoom &In"
+msgstr ""
+
+#: visualequation/__main__.py:161
+msgid "Increase size of the equation"
+msgstr ""
+
+#: visualequation/__main__.py:168
+msgid "Equation will no be decreased."
+msgstr ""
+
+#: visualequation/__main__.py:169
+msgid "Zoom &Out"
+msgstr ""
+
+#: visualequation/__main__.py:171
+msgid "Decrease size of the equation"
+msgstr ""
+
+#: visualequation/__main__.py:175
+msgid "Show &LaTeX code"
+msgstr ""
+
+#: visualequation/__main__.py:177
+msgid "Show the LaTeX code generating the equation"
+msgstr ""
+
+#: visualequation/__main__.py:185
+msgid "Invite &Alice"
+msgstr ""
+
+#: visualequation/__main__.py:187
+msgid "Let Alice to be with you while building the equation"
+msgstr ""
+
+#: visualequation/__main__.py:190
+msgid "Basic &usage"
+msgstr ""
+
+#: visualequation/__main__.py:192
+msgid "Basic usage of the program"
+msgstr ""
+
+#: visualequation/__main__.py:194
+msgid "About &Visual Equation"
+msgstr ""
+
+#: visualequation/__main__.py:196
+msgid "About &Qt"
+msgstr ""
+
+#: visualequation/__main__.py:202
+msgid "&File"
+msgstr ""
+
+#: visualequation/__main__.py:208
+msgid "&Edit"
+msgstr ""
+
+#: visualequation/__main__.py:219
+msgid "&View"
+msgstr ""
+
+#: visualequation/__main__.py:224
+msgid "&Games"
+msgstr ""
+
+#: visualequation/__main__.py:226
+msgid "&Help"
+msgstr ""
+
+#: visualequation/__main__.py:253
+msgid ""
+"<p>Visual Equation is expected to be user-friendly and intuitive, so it "
+"should not be difficult to use if you understand its usage. Basically:</"
+"p><p>Instead of a cursor, you navigate with a \"ghost\" that surrounds "
+"blocks of the equation, from single symbols to arguments, operators and the "
+"entire equation. Change the ghost's selection and insert characters at the "
+"direction in which the ghost is facing by pressing keys on the keyboard or "
+"clicking symbols in the bottom panel. If the ghost surrounds a square, as "
+"when you open the program, you overwrite the square.</p><p>These are the "
+"main keys:</p><ul><li><b>LEFT</b>: Change the direction of the ghost to the "
+"left or navigate backwards.</li><li><b>RIGHT</b> or <b>TAB</b>: Change the "
+"direction of the ghost to right or navigate forwards.</li><li><b>UP</b> and "
+"<b>DOWN</b>: Put a superindex or subindex in the direction pointed by the "
+"ghost.</li><li><b>DELETE</b> or <b>BACKSPACE</b>: Remove current selection. "
+"If it was the entire argument of an operator, a square will remain so you "
+"can change it by something else.</li><li><b>Left-click</b> on an element of "
+"the symbols panel: Insert the element where the ghost is facing.</"
+"li><li><b>SHIFT + Left-click</b> on an element of the symbols panel (<b>VERY "
+"handy</b>): If the element is an operator, the selection is replaced by the "
+"operator and its first argument is set to previous selection. (The first "
+"argument is the one represented by dots) If the element is a symbol, the "
+"selection is replaced by the symbol.</li></ul><p>You may learn also the "
+"short-cuts noted in the menu.</p>"
+msgstr ""
+
+#: visualequation/__main__.py:293
+msgid "Basic usage"
+msgstr ""
+
+#: visualequation/__main__.py:307
+#, python-format
+msgid ""
+"<p>Visual Equation</p><p><em>Version:</em> %s </p><p><em>Author:</em> Daniel "
+"Molina Garcia</P><p><em>Sources:</em> <a href=\"https://github.com/daniel-"
+"molina/visualequation\">Webpage</a></p><p><em>License:</em> GPLv3 or above</"
+"p>"
+msgstr ""
+
+#: visualequation/__main__.py:314
+msgid "About"
+msgstr ""
+
+#: visualequation/__main__.py:321
+msgid "Create equations visually."
+msgstr ""
+
+#: visualequation/conversions.py:260
+msgid "Open equation"
+msgstr ""
+
+#: visualequation/conversions.py:260
+msgid "Valid formats (*.png *.pdf)"
+msgstr ""
+
+#: visualequation/conversions.py:267
+msgid "No equation inside this file."
+msgstr ""
+
+#: visualequation/conversions.py:282
+#, python-format
+msgid ""
+"Error parsing metadata.\n"
+"ValueError: %s\n"
+"Was the file created with your version of Visual Equation?"
+msgstr ""
+
+#: visualequation/eq.py:38
+msgid ""
+"Select format:\n"
+"\n"
+"Note: Equations can only be recovered from PNG and PDF."
+msgstr ""
+
+#: visualequation/eq.py:45 visualequation/eq.py:71
+msgid "Size (dpi):"
+msgstr ""
+
+#: visualequation/eq.py:68
+msgid "Size (scale):"
+msgstr ""
+
+#: visualequation/eq.py:397
+#, python-format
+msgid "A file named \"%s\" already exists. Do you want to replace it?"
+msgstr ""
+
+#: visualequation/eq.py:399
+msgid "Overwrite"
+msgstr ""
+
+#: visualequation/errors.py:28
+msgid "Error"
+msgstr ""
+
+#: visualequation/latexdialogs.py:38
+msgid "Copy to Clipboard"
+msgstr ""
+
+#: visualequation/latexdialogs.py:40
+msgid ""
+"Tip: If you pretend to copy it, do not close the program before pasting."
+msgstr ""
+
+#: visualequation/latexdialogs.py:44
+msgid "Only selection"
+msgstr ""
+
+#: visualequation/latexdialogs.py:47
+msgid "Full code"
+msgstr ""
+
+#: visualequation/latexdialogs.py:91
+msgid "Edit LaTeX code"
+msgstr ""
+
+#: visualequation/latexdialogs.py:109
+msgid "Check LaTeX code"
+msgstr ""
+
+#: visualequation/latexdialogs.py:112
+msgid "Change LaTeX code as desired"
+msgstr ""
+
+#: visualequation/latexdialogs.py:115
+msgid ""
+"Note: It will not be possible to select individual elements of this block if "
+"it is edited."
+msgstr ""
+
+#: visualequation/latexdialogs.py:136
+msgid "Press Check button when code is ready"
+msgstr ""
+
+#: visualequation/latexdialogs.py:140
+msgid "LaTeX code contains invalid characters"
+msgstr ""
+
+#: visualequation/latexdialogs.py:148
+msgid "Checking LateX code..."
+msgstr ""
+
+#: visualequation/latexdialogs.py:158
+msgid "LaTex code is not valid"
+msgstr ""
+
+#: visualequation/latexdialogs.py:167
+msgid "LaTex code is valid"
+msgstr ""
+
+#: visualequation/symbols/delimiters.py:48
+msgid "Free delimiters"
+msgstr ""
+
+#: visualequation/symbols/delimiters.py:51
+#: visualequation/symbols/manylines.py:129
+msgid "Left delimiter:"
+msgstr ""
+
+#: visualequation/symbols/delimiters.py:53
+#: visualequation/symbols/delimiters.py:65
+#: visualequation/symbols/manylines.py:44
+#: visualequation/symbols/manylines.py:131
+#: visualequation/symbols/manylines.py:143
+msgid "Choose"
+msgstr ""
+
+#: visualequation/symbols/delimiters.py:63
+#: visualequation/symbols/manylines.py:141
+msgid "Right delimiter:"
+msgstr ""
+
+#: visualequation/symbols/delimiters.py:88
+#: visualequation/symbols/manylines.py:178
+msgid "Left delimiter"
+msgstr ""
+
+#: visualequation/symbols/delimiters.py:97
+#: visualequation/symbols/manylines.py:187
+msgid "Right delimiter"
+msgstr ""
+
+#: visualequation/symbols/functions.py:21
+msgid "Function operator"
+msgstr ""
+
+#: visualequation/symbols/functions.py:22
+msgid "Argument over operator"
+msgstr ""
+
+#: visualequation/symbols/functions.py:23
+msgid "Argument under operator"
+msgstr ""
+
+#: visualequation/symbols/functions.py:26
+msgid ""
+"Note: It is also possible to put arguments in the corners by surrounding the "
+"operator and using keys UP and DOWN."
+msgstr ""
+
+#: visualequation/symbols/manylines.py:31
+msgid "Matrix"
+msgstr ""
+
+#: visualequation/symbols/manylines.py:32
+#: visualequation/symbols/manylines.py:115
+msgid "Number of rows:"
+msgstr ""
+
+#: visualequation/symbols/manylines.py:34
+#: visualequation/symbols/manylines.py:117
+msgid "Number of columns:"
+msgstr ""
+
+#: visualequation/symbols/manylines.py:42
+msgid "Matrix type:"
+msgstr ""
+
+#: visualequation/symbols/manylines.py:73
+msgid "Matrix type"
+msgstr ""
+
+#: visualequation/symbols/manylines.py:114
+msgid "General Array"
+msgstr ""
+
+#: visualequation/symbols/manylines.py:124
+msgid ""
+"Alignment of columns (e.g. lc|r):\n"
+"(l: left, c: center, r: right, |: v. line)"
+msgstr ""
+
+#: visualequation/symbols/manylines.py:245
+msgid "Cases"
+msgstr ""
+
+#: visualequation/symbols/manylines.py:246
+msgid "Number of cases:"
+msgstr ""
+
+#: visualequation/symbols/manylines.py:294
+msgid "Equation system"
+msgstr ""
+
+#: visualequation/symbols/manylines.py:295
+msgid "Number of equations:"
+msgstr ""
+
+#: visualequation/symbols/manylines.py:344
+msgid "Aligned environment"
+msgstr ""
+
+#: visualequation/symbols/manylines.py:345
+msgid "Number of lines:"
+msgstr ""
+
+#: visualequation/symbols/text.py:21
+msgid "Text"
+msgstr ""
+
+#: visualequation/symbols/text.py:22
+msgid "Text:"
+msgstr ""
+
+#: visualequation/symbols/text.py:72
+#, python-format
+msgid "%s characters"
+msgstr ""
+
+#: visualequation/symbols/text.py:144 visualequation/symbols/text.py:153
+msgid "Choose color"
+msgstr ""
+
+#: visualequation/symbols/text.py:164
+msgid "Caligraphic (only capital letters)"
+msgstr ""
+
+#: visualequation/symbols/text.py:166
+msgid "Mathbb (only capital letters)"
+msgstr ""
+
+#: visualequation/symbols/text.py:169
+msgid "Fraktur (letters and numbers)"
+msgstr ""
+
+#: visualequation/symbols/text.py:171
+msgid "Sans serif (letters and numbers)"
+msgstr ""
+
+#: visualequation/symbols/text.py:173
+msgid "Bold (letters and numbers)"
+msgstr ""
+
+#: visualequation/symbols/text.py:175
+msgid "Bold Italic (letters and numbers)"
+msgstr ""
+
+#: visualequation/symbols/variablesize.py:21
+msgid "Variable-size operator"
+msgstr ""
+
+#: visualequation/symbols/variablesize.py:22
+msgid "Limit over the sign"
+msgstr ""
+
+#: visualequation/symbols/variablesize.py:24
+msgid "Limit under the sign"
+msgstr ""
+
+#: visualequation/symbols/variablesize.py:27
+msgid ""
+"Note: It is also possible to put arguments in the corners of the operator by "
+"surrounding the operator and using keys UP and DOWN."
+msgstr ""
+
+#: visualequation/symbols/variablesize.py:82
+msgid "Integral operator"
+msgstr ""
+
+#: visualequation/symbols/variablesize.py:83
+msgid "Argument over the integral sign"
+msgstr ""
+
+#: visualequation/symbols/variablesize.py:84
+msgid "Argument under the integral sign"
+msgstr ""
+
+#: visualequation/symbols/variablesize.py:86
+msgid ""
+"Note: Leaving boxes unchecked will allow to put the limits in the corners of "
+"the integral by surrounding the integral and using keys UP and DOWN."
+msgstr ""

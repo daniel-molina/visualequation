@@ -395,7 +395,7 @@ class Eq:
         # check filename when default suffix extension has to be added
         if os.path.exists(filename):
             msg = _('A file named "%s" already exists. Do you want to'
-            'replace it?') % os.path.basename(filename) 
+            ' replace it?') % os.path.basename(filename) 
             ret_val = QMessageBox.question(self.parent, _('Overwrite'), msg)
             if ret_val != QMessageBox.Yes:
                 return
