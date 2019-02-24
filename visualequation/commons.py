@@ -45,4 +45,3 @@ else:
 ICONS_DIR = os.path.join(DATA_DIR, 'icons')
 LATEX_TEMPLATE = os.path.join(DATA_DIR, 'eq_template.tex')
 ICON = os.path.join(DATA_DIR, 'visualequation.png')
-USAGE_FILE = os.path.join(DATA_DIR, 'USAGE.html')

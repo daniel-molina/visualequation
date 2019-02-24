@@ -32,7 +32,7 @@ def eqblock2latex(eq, index):
             # I have to find n_arg independent blocks for this operator
             index_of_arg = index+1
             latex_args = ()
-            for _ in range(eq[index].n_args):
+            for ignored in range(eq[index].n_args):
                 latex_arg, index_of_arg = block2latex(index_of_arg)
                 latex_args += (latex_arg,)
             return (eq[index](*latex_args), index_of_arg)
@@ -57,7 +57,7 @@ def nextblockindex(eq, index):
         if isinstance(eq[index], utils.Op):
             # I have to find n_arg independent blocks for this operator
             index_of_arg = index+1
-            for _ in range(eq[index].n_args):
+            for ignored in range(eq[index].n_args):
                 index_of_arg = block2nextindex(index_of_arg)
             return index_of_arg
         elif isinstance(eq[index], str):
@@ -176,7 +176,7 @@ def is_intermediate_JUXT(eq, index):
     other JUXT.
     """
     if eq[index] == utils.JUXT:
-        cond, _, _ = is_arg_of_JUXT(eq, index)
+        cond, ignored1, ignored2 = is_arg_of_JUXT(eq, index)
         if cond:
             return True
     return False

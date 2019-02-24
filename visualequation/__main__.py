@@ -244,14 +244,51 @@ class MainWindow(QMainWindow):
         self.maineq.setFocus()
 
     def usage(self):
+
+        usagestr = ("<p>Visual Equation is expected to be user-friendly "
+        "and intuitive, so it should not be difficult to use if you "
+        "understand its usage. Basically:</p>"
+        "<p>Instead of a cursor, you navigate with a \"ghost\" that "
+        "surrounds blocks of the equation, from single symbols to arguments, "
+        "operators and the entire equation. Change the ghost's selection and "
+        "insert characters at the direction in which the ghost is facing "
+        "by pressing keys on the keyboard or clicking symbols "
+        "in the bottom panel. If the ghost surrounds a square, "
+        "as when you open the program, you overwrite the square.</p>"
+        "<p>These are the main keys:</p>"
+        "<ul>"
+        "<li><b>LEFT</b>: "
+        "Change the direction of the ghost to the left or "
+        "navigate backwards.</li>"
+        "<li><b>RIGHT</b> or <b>TAB</b>: "
+        "Change the direction of the ghost to right or "
+        "navigate forwards.</li>"
+        "<li><b>UP</b> and <b>DOWN</b>: "
+        "Put a superindex or subindex in the direction "
+        "pointed by the ghost.</li>"
+        "<li><b>DELETE</b> or <b>BACKSPACE</b>: "
+        "Remove current selection. If it was the entire argument "
+        "of an operator, a square will remain so you can change it "
+        "by something else.</li>"
+        "<li><b>Left-click</b> on an element of the symbols panel: "
+        "Insert the element where the ghost is facing.</li>"
+        "<li><b>SHIFT + Left-click</b> on an element of the symbols panel "
+        "(<b>VERY handy</b>): "
+        "If the element is an operator, the selection is replaced "
+        "by the operator and its first argument is set to the selection. "
+        "(The first argument is the one represented by dots) "
+        "If the element is a symbol, the selection is replaced "
+        "by the symbol.</li>"
+        "</ul>"
+        "<p>You may learn also the short-cuts noted in the menu.</p>")
+
         class Dialog(QDialog):
             def __init__(self, parent=None):
                 super().__init__(parent)
                 self.setWindowTitle('Basic usage')
                 text = QTextEdit(self)
                 text.setReadOnly(True)
-                with open(commons.USAGE_FILE, "r") as fusage:
-                    text.insertHtml(fusage.read())
+                text.insertHtml(usagestr)
                 text.moveCursor(QTextCursor.Start)
                 buttons = QDialogButtonBox(QDialogButtonBox.Ok, self)
                 vbox = QVBoxLayout(self)

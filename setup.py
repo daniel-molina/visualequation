@@ -59,8 +59,7 @@ setuptools.setup(
     data_files=[
         ('share/applications', ['data/visualequation.desktop']),
         ('share/visualequation', ['data/eq_template.tex',
-                                  'data/visualequation.png',
-                                  'data/USAGE.html',]),
+                                  'data/visualequation.png',]),
         ('share/visualequation/icons', glob.glob('data/icons/*.png')),
     ],
     classifiers=[

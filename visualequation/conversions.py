@@ -256,7 +256,7 @@ def eq2svg(eq, scale, directory, svg_fpath):
 def open_eq(parent, filename = None):
     "Return equation inside a file chosen interactively. Else, None."
     if not filename:
-        filename, _ = QFileDialog.getOpenFileName(
+        filename, ignored = QFileDialog.getOpenFileName(
             parent, 'Open equation', '', 'Valid formats (*.png *.pdf)')
     if not filename:
         return None
