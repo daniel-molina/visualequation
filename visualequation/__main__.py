@@ -21,10 +21,15 @@ import os
 import argparse
 import traceback
 import gettext
-gettext.install('visualequation', 'locales')
-es = gettext.translation('visualequation', 'locales', languages=['es'])
-es.install()
-#_ = es.gettext
+import locale
+
+gettext.install('visualequation')
+# Check if user language is available for translation
+locale.setlocale(locale.LC_ALL, "")
+if locale.getlocale()[0] != None:
+    if locale.getlocale()[0][0:2] == "es":
+        es = gettext.translation('visualequation', 'locales', languages=['es'])
+        es.install()
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
