@@ -12,42 +12,64 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """This modules indicates the directories of the program."""
-import os, sys, site
+import os
+import sys
+import site
 
 VERSION="0.3.9"
 
 # Set the path to common files
-# Valid for execution in the sources tree
-if os.path.exists(os.path.join(os.path.dirname(__file__), '..', 'data')):
-    DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data')
-    LOCALE_DIR = os.path.join(os.path.dirname(__file__), '..', 'locale')
-# Valid for installation in the FHS
-elif os.path.exists(os.path.join(sys.prefix, 'share', 'visualequation')):
-    DATA_DIR = os.path.join(sys.prefix, 'share', 'visualequation')
-    LOCALE_DIR = os.path.join(sys.prefix, 'share', 'locale')
-# Valid for installation through "pip install --user"
-elif os.path.exists(os.path.join(site.USER_BASE, 'share', 'visualequation')):
-    DATA_DIR = os.path.join(site.USER_BASE, 'share', 'visualequation')
-    LOCALE_DIR = os.path.join(site.USER_BASE, 'share', 'locale')
-# Valid for installation through "pip install --prefix=" in GNU/Linux
-else:
-    _MATCH = "lib" + os.sep + "python" + str(sys.version_info.major) + "." \
-            + str(sys.version_info.minor) \
-            + os.sep + "site-packages" + os.sep + "visualequation"
-    _NEW_PART_DATA = "share" + os.sep + "visualequation"
-    _NEW_PART_LOCALE = "share" + os.sep + "locale"
-    _NEW_PATH_DATA = os.path.dirname(__file__).replace(_MATCH, _NEW_PART_DATA)
-    _NEW_PATH_LOCALE = os.path.dirname(__file__).replace(_MATCH,
-                                                         _NEW_PART_LOCALE)
-    if os.path.exists(_NEW_PATH_DATA):
-        DATA_DIR = _NEW_PATH_DATA
-        LOCALE_DIR = _NEW_PATH_LOCALE
-    else:
-        # Do not use ShowError here (you would need a QApplication)
-        raise SystemExit("Could not find where data files are located.")
+INSTALL_DIRS = []
+# Priority one: Execution in the sources tree
+if os.path.exists(os.path.join(os.path.dirname(__file__), '..', 'data')) \
+   and os.path.exists(os.path.join(os.path.dirname(__file__),
+                                   '..', 'visualequation')):
+    DATA_DIR = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), '..', 'data'))
+    LOCALE_DIR = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), '..', 'locale'))
+    INSTALL_DIRS.append(os.path.abspath(
+        os.path.join(os.path.dirname(__file__), '..')))
+# Priority 2: Installation through "pip install --user"
+if os.path.exists(os.path.join(site.USER_BASE, 'share', 'visualequation')):
+    if not INSTALL_DIRS:
+        DATA_DIR = os.path.join(site.USER_BASE, 'share', 'visualequation')
+        LOCALE_DIR = os.path.join(site.USER_BASE, 'share', 'locale')
+    INSTALL_DIRS.append(os.path.join(site.USER_BASE, 'share'))
+# Priority 2.5: Installation through "pip install --target="
+if os.path.exists(os.path.join(
+        os.path.dirname(__file__), '..', 'share', 'visualequation')):
+    _BASE = os.path.abspath(os.path.join(
+        os.path.dirname(__file__), '..', 'share'))
+    if not INSTALL_DIRS or _BASE not in INSTALL_DIRS:
+        # Overwrite variables if it is known that __file__ is not
+        # in other installations
+        DATA_DIR = os.path.join(_BASE, 'visualequation')
+        LOCALE_DIR = os.path.join(_BASE, 'locale')
+        INSTALL_DIRS.append(_BASE)
+# Priority 4: Installation in the FHS
+if os.path.exists(os.path.join(sys.prefix, 'share', 'visualequation')):
+    if not INSTALL_DIRS:
+        DATA_DIR = os.path.join(sys.prefix, 'share', 'visualequation')
+        LOCALE_DIR = os.path.join(sys.prefix, 'share', 'locale')
+    INSTALL_DIRS.append(os.path.join(sys.prefix, 'share'))
 
-#DATA_DIR = os.path.dirname(resource_filename(__name__, "visualequation.desktop"))
+if not INSTALL_DIRS:
+    # Do not use ShowError here (you would need a QApplication)
+    raise SystemExit("Could not find any installation of visualequation.")
 
+#DATA_DIR = os.path.dirname(
+#    resource_filename(__name__, "visualequation.desktop"))
+
+if len(INSTALL_DIRS) > 1:
+    print("WARNING: Visualequation seems installed in several locations:")
+    for path in INSTALL_DIRS:
+        print("\t", path)
+    print("Next, we show where visualequation is looking for files:")
+    print("Data:       ", DATA_DIR)
+    print("Locale:     ", LOCALE_DIR)
+    print("Own modules:", os.path.dirname(__file__))
+        
 #print("This is DATA_DIR: ", DATA_DIR, "\n", subprocess.check_output("pwd"),"\n\n")
 ICONS_DIR = os.path.join(DATA_DIR, 'icons')
 LATEX_TEMPLATE = os.path.join(DATA_DIR, 'eq_template.tex')
