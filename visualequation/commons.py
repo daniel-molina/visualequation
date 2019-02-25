@@ -20,21 +20,28 @@ VERSION="0.3.9"
 # Valid for execution in the sources tree
 if os.path.exists(os.path.join(os.path.dirname(__file__), '..', 'data')):
     DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data')
+    LOCALE_DIR = os.path.join(os.path.dirname(__file__), '..', 'locale')
 # Valid for installation in the FHS
 elif os.path.exists(os.path.join(sys.prefix, 'share', 'visualequation')):
     DATA_DIR = os.path.join(sys.prefix, 'share', 'visualequation')
+    LOCALE_DIR = os.path.join(sys.prefix, 'share', 'locale')
 # Valid for installation through "pip install --user"
 elif os.path.exists(os.path.join(site.USER_BASE, 'share', 'visualequation')):
     DATA_DIR = os.path.join(site.USER_BASE, 'share', 'visualequation')
+    LOCALE_DIR = os.path.join(site.USER_BASE, 'share', 'locale')
 # Valid for installation through "pip install --prefix=" in GNU/Linux
 else:
     _MATCH = "lib" + os.sep + "python" + str(sys.version_info.major) + "." \
             + str(sys.version_info.minor) \
             + os.sep + "site-packages" + os.sep + "visualequation"
-    _NEW_PART = "share" + os.sep + "visualequation"
-    _NEW_PATH = os.path.dirname(__file__).replace(_MATCH, _NEW_PART)
-    if os.path.exists(_NEW_PATH):
-        DATA_DIR = _NEW_PATH
+    _NEW_PART_DATA = "share" + os.sep + "visualequation"
+    _NEW_PART_LOCALE = "share" + os.sep + "locale"
+    _NEW_PATH_DATA = os.path.dirname(__file__).replace(_MATCH, _NEW_PART_DATA)
+    _NEW_PATH_LOCALE = os.path.dirname(__file__).replace(_MATCH,
+                                                         _NEW_PART_LOCALE)
+    if os.path.exists(_NEW_PATH_DATA):
+        DATA_DIR = _NEW_PATH_DATA
+        LOCALE_DIR = _NEW_PATH_LOCALE
     else:
         # Do not use ShowError here (you would need a QApplication)
         raise SystemExit("Could not find where data files are located.")

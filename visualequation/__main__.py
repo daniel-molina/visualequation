@@ -23,22 +23,23 @@ import traceback
 import gettext
 import locale
 
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
+
+from . import commons
 gettext.install('visualequation')
 # Check if user language is available for translation
 locale.setlocale(locale.LC_ALL, "")
 if locale.getlocale()[0] != None:
     if locale.getlocale()[0][0:2] == "es":
-        es = gettext.translation('visualequation', 'locales', languages=['es'])
+        es = gettext.translation('visualequation', commons.LOCALE_DIR,
+                                 languages=['es'])
         es.install()
-
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
 
 from . import symbolstab
 from . import eqlabel
 from . import conversions
-from . import commons
 from . import eqtools
 from . import game
 from . import latexdialogs

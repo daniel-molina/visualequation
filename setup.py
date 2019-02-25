@@ -45,7 +45,7 @@ def check_icons():
 setuptools.setup(
     name="visualequation",
     version=commons.VERSION,
-    author="Daniel Molina",
+    author="Daniel Molina Garcia",
     author_email="lluvia@autistici.org",
     description="An equation editor powered by LaTeX",
     long_description=long_description,
@@ -61,6 +61,8 @@ setuptools.setup(
         ('share/visualequation', ['data/eq_template.tex',
                                   'data/visualequation.png',]),
         ('share/visualequation/icons', glob.glob('data/icons/*.png')),
+        ('share/locale/es/LC_MESSAGES',
+         ['locale/es/LC_MESSAGES/visualequation.mo']),
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
