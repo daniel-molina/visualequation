@@ -30,7 +30,6 @@ from PyQt5.QtCore import *
 from . import commons
 gettext.install('visualequation')
 # Check if user language is available for translation
-locale.setlocale(locale.LC_ALL, "")
 if locale.getlocale()[0] != None:
     if locale.getlocale()[0][0:2] == "es":
         es = gettext.translation('visualequation', commons.LOCALE_DIR,
