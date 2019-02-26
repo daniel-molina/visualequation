@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-02-26 23:03+0100\n"
-"PO-Revision-Date: 2019-02-26 23:13+0100\n"
+"POT-Creation-Date: 2019-02-26 23:44+0100\n"
+"PO-Revision-Date: 2019-02-26 23:46+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: es\n"
@@ -399,8 +399,8 @@ msgid "Right delimiter"
 msgstr "Delimitador derecho"
 
 #: visualequation/symbols/functions.py:21
-msgid "Function operator"
-msgstr "Operador funcional"
+msgid "Choose arguments"
+msgstr "Elige argumentos"
 
 #: visualequation/symbols/functions.py:22
 msgid "Argument over operator"
@@ -557,6 +557,9 @@ msgstr ""
 "Nota: Dejar las casillas sin marcar permitirá poner los límites en las "
 "esquinas de la integral al seleccionar dicha integral y usar las teclas "
 "ARRIBA y ABAJO."
+
+#~ msgid "Function operator"
+#~ msgstr "Operador funcional"
 
 #~ msgid ""
 #~ "Tip: If you pretend to copy it, do not close the program before pasting."

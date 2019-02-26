@@ -18,7 +18,7 @@ def opfunctions(parent, code):
         def __init__(self, parent=None):
             super().__init__(parent)
 
-            self.setWindowTitle(_('Function operator'))
+            self.setWindowTitle(_('Choose arguments'))
             self.argabove = QCheckBox(_("Argument over operator"))
             self.argbelow = QCheckBox(_("Argument under operator"))
             self.argbelow.setChecked(True)
