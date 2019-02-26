@@ -22,6 +22,8 @@ import argparse
 import traceback
 import gettext
 import locale
+import faulthandler
+faulthandler.enable()
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
