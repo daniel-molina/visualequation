@@ -37,7 +37,7 @@ class ShowLatexDialog(QDialog):
         self.text.setReadOnly(True)
         copybutton = QPushButton(_('Copy to Clipboard'))
         copybutton.clicked.connect(self.handlecopy)
-        msg = QLabel(_('Tip: If you pretend to copy it, do'
+        msg = QLabel(_('Tip: If you pretend to copy the code, do'
                        ' not close the program before'
                        ' pasting.'))
         msg.setWordWrap(True)

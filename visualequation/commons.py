@@ -62,7 +62,7 @@ if not DATA_DIR or not LOCALE_DIR:
 #    resource_filename(__name__, "visualequation.desktop"))
 
 if len(INSTALL_DIRS) > 1:
-    print("WARNING: Visualequation seems installed in several locations:")
+    print("WARNING: Visualequation data seems installed in several locations:")
     for path in INSTALL_DIRS:
         print("\t", path)
     print("Next, we show where visualequation is looking for files:")

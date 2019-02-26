@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-02-24 23:49+0100\n"
+"POT-Creation-Date: 2019-02-26 23:03+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,213 +16,6 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
-
-#: visualequation/__main__.py:95
-msgid "&New"
-msgstr ""
-
-#: visualequation/__main__.py:97
-msgid "Create a new equation"
-msgstr ""
-
-#: visualequation/__main__.py:99
-msgid "&Open"
-msgstr ""
-
-#: visualequation/__main__.py:101
-msgid "Open equation from image"
-msgstr ""
-
-#: visualequation/__main__.py:103
-msgid "&Save"
-msgstr ""
-
-#: visualequation/__main__.py:105
-msgid "Save image"
-msgstr ""
-
-#: visualequation/__main__.py:107
-msgid "&Exit"
-msgstr ""
-
-#: visualequation/__main__.py:109
-msgid "Exit application"
-msgstr ""
-
-#: visualequation/__main__.py:112
-msgid "&Undo"
-msgstr ""
-
-#: visualequation/__main__.py:114
-msgid "Return equation to previous state"
-msgstr ""
-
-#: visualequation/__main__.py:116
-msgid "&Redo"
-msgstr ""
-
-#: visualequation/__main__.py:118
-msgid "Recover next equation state"
-msgstr ""
-
-#: visualequation/__main__.py:120
-msgid "&Copy"
-msgstr ""
-
-#: visualequation/__main__.py:122
-msgid "Copy selection"
-msgstr ""
-
-#: visualequation/__main__.py:127
-msgid "C&ut"
-msgstr ""
-
-#: visualequation/__main__.py:129
-msgid "Cut selection"
-msgstr ""
-
-#: visualequation/__main__.py:131
-msgid "&Paste"
-msgstr ""
-
-#: visualequation/__main__.py:133
-msgid "Paste previous cut or copied selection"
-msgstr ""
-
-#: visualequation/__main__.py:142
-msgid "Edit LaTeX"
-msgstr ""
-
-#: visualequation/__main__.py:143
-msgid "Edit LaTeX code of selected block"
-msgstr ""
-
-#: visualequation/__main__.py:150
-msgid "Select the entire equation"
-msgstr ""
-
-#: visualequation/__main__.py:158
-msgid "Equation will no be increased."
-msgstr ""
-
-#: visualequation/__main__.py:159
-msgid "Zoom &In"
-msgstr ""
-
-#: visualequation/__main__.py:161
-msgid "Increase size of the equation"
-msgstr ""
-
-#: visualequation/__main__.py:168
-msgid "Equation will no be decreased."
-msgstr ""
-
-#: visualequation/__main__.py:169
-msgid "Zoom &Out"
-msgstr ""
-
-#: visualequation/__main__.py:171
-msgid "Decrease size of the equation"
-msgstr ""
-
-#: visualequation/__main__.py:175
-msgid "Show &LaTeX code"
-msgstr ""
-
-#: visualequation/__main__.py:177
-msgid "Show the LaTeX code generating the equation"
-msgstr ""
-
-#: visualequation/__main__.py:185
-msgid "Invite &Alice"
-msgstr ""
-
-#: visualequation/__main__.py:187
-msgid "Let Alice to be with you while building the equation"
-msgstr ""
-
-#: visualequation/__main__.py:190
-msgid "Basic &usage"
-msgstr ""
-
-#: visualequation/__main__.py:192
-msgid "Basic usage of the program"
-msgstr ""
-
-#: visualequation/__main__.py:194
-msgid "About &Visual Equation"
-msgstr ""
-
-#: visualequation/__main__.py:196
-msgid "About &Qt"
-msgstr ""
-
-#: visualequation/__main__.py:202
-msgid "&File"
-msgstr ""
-
-#: visualequation/__main__.py:208
-msgid "&Edit"
-msgstr ""
-
-#: visualequation/__main__.py:219
-msgid "&View"
-msgstr ""
-
-#: visualequation/__main__.py:224
-msgid "&Games"
-msgstr ""
-
-#: visualequation/__main__.py:226
-msgid "&Help"
-msgstr ""
-
-#: visualequation/__main__.py:253
-msgid ""
-"<p>Visual Equation is expected to be user-friendly and intuitive, so it "
-"should not be difficult to use if you understand its usage. Basically:</"
-"p><p>Instead of a cursor, you navigate with a \"ghost\" that surrounds "
-"blocks of the equation, from single symbols to arguments, operators and the "
-"entire equation. Change the ghost's selection and insert characters at the "
-"direction in which the ghost is facing by pressing keys on the keyboard or "
-"clicking symbols in the bottom panel. If the ghost surrounds a square, as "
-"when you open the program, you overwrite the square.</p><p>These are the "
-"main keys:</p><ul><li><b>LEFT</b>: Change the direction of the ghost to the "
-"left or navigate backwards.</li><li><b>RIGHT</b> or <b>TAB</b>: Change the "
-"direction of the ghost to right or navigate forwards.</li><li><b>UP</b> and "
-"<b>DOWN</b>: Put a superindex or subindex in the direction pointed by the "
-"ghost.</li><li><b>DELETE</b> or <b>BACKSPACE</b>: Remove current selection. "
-"If it was the entire argument of an operator, a square will remain so you "
-"can change it by something else.</li><li><b>Left-click</b> on an element of "
-"the symbols panel: Insert the element where the ghost is facing.</"
-"li><li><b>SHIFT + Left-click</b> on an element of the symbols panel (<b>VERY "
-"handy</b>): If the element is an operator, the selection is replaced by the "
-"operator and its first argument is set to previous selection. (The first "
-"argument is the one represented by dots) If the element is a symbol, the "
-"selection is replaced by the symbol.</li></ul><p>You may learn also the "
-"short-cuts noted in the menu.</p>"
-msgstr ""
-
-#: visualequation/__main__.py:293
-msgid "Basic usage"
-msgstr ""
-
-#: visualequation/__main__.py:307
-#, python-format
-msgid ""
-"<p>Visual Equation</p><p><em>Version:</em> %s </p><p><em>Author:</em> Daniel "
-"Molina Garcia</P><p><em>Sources:</em> <a href=\"https://github.com/daniel-"
-"molina/visualequation\">Webpage</a></p><p><em>License:</em> GPLv3 or above</"
-"p>"
-msgstr ""
-
-#: visualequation/__main__.py:314
-msgid "About"
-msgstr ""
-
-#: visualequation/__main__.py:321
-msgid "Create equations visually."
-msgstr ""
 
 #: visualequation/conversions.py:260
 msgid "Open equation"
@@ -278,7 +71,8 @@ msgstr ""
 
 #: visualequation/latexdialogs.py:40
 msgid ""
-"Tip: If you pretend to copy it, do not close the program before pasting."
+"Tip: If you pretend to copy the code, do not close the program before "
+"pasting."
 msgstr ""
 
 #: visualequation/latexdialogs.py:44
@@ -325,6 +119,213 @@ msgstr ""
 
 #: visualequation/latexdialogs.py:167
 msgid "LaTex code is valid"
+msgstr ""
+
+#: visualequation/__main__.py:102
+msgid "&New"
+msgstr ""
+
+#: visualequation/__main__.py:104
+msgid "Create a new equation"
+msgstr ""
+
+#: visualequation/__main__.py:106
+msgid "&Open"
+msgstr ""
+
+#: visualequation/__main__.py:108
+msgid "Open equation from image"
+msgstr ""
+
+#: visualequation/__main__.py:110
+msgid "&Save"
+msgstr ""
+
+#: visualequation/__main__.py:112
+msgid "Save image"
+msgstr ""
+
+#: visualequation/__main__.py:114
+msgid "&Exit"
+msgstr ""
+
+#: visualequation/__main__.py:116
+msgid "Exit application"
+msgstr ""
+
+#: visualequation/__main__.py:119
+msgid "&Undo"
+msgstr ""
+
+#: visualequation/__main__.py:121
+msgid "Return equation to previous state"
+msgstr ""
+
+#: visualequation/__main__.py:123
+msgid "&Redo"
+msgstr ""
+
+#: visualequation/__main__.py:125
+msgid "Recover next equation state"
+msgstr ""
+
+#: visualequation/__main__.py:127
+msgid "&Copy"
+msgstr ""
+
+#: visualequation/__main__.py:129
+msgid "Copy selection"
+msgstr ""
+
+#: visualequation/__main__.py:134
+msgid "C&ut"
+msgstr ""
+
+#: visualequation/__main__.py:136
+msgid "Cut selection"
+msgstr ""
+
+#: visualequation/__main__.py:138
+msgid "&Paste"
+msgstr ""
+
+#: visualequation/__main__.py:140
+msgid "Paste previous cut or copied selection"
+msgstr ""
+
+#: visualequation/__main__.py:149
+msgid "Edit LaTeX"
+msgstr ""
+
+#: visualequation/__main__.py:150
+msgid "Edit LaTeX code of selected block"
+msgstr ""
+
+#: visualequation/__main__.py:157
+msgid "Select the entire equation"
+msgstr ""
+
+#: visualequation/__main__.py:165
+msgid "Equation will no be increased."
+msgstr ""
+
+#: visualequation/__main__.py:166
+msgid "Zoom &In"
+msgstr ""
+
+#: visualequation/__main__.py:168
+msgid "Increase size of the equation"
+msgstr ""
+
+#: visualequation/__main__.py:175
+msgid "Equation will no be decreased."
+msgstr ""
+
+#: visualequation/__main__.py:176
+msgid "Zoom &Out"
+msgstr ""
+
+#: visualequation/__main__.py:178
+msgid "Decrease size of the equation"
+msgstr ""
+
+#: visualequation/__main__.py:182
+msgid "Show &LaTeX code"
+msgstr ""
+
+#: visualequation/__main__.py:184
+msgid "Show the LaTeX code generating the equation"
+msgstr ""
+
+#: visualequation/__main__.py:192
+msgid "Invite &Alice"
+msgstr ""
+
+#: visualequation/__main__.py:194
+msgid "Let Alice to be with you while building the equation"
+msgstr ""
+
+#: visualequation/__main__.py:197
+msgid "Basic &usage"
+msgstr ""
+
+#: visualequation/__main__.py:199
+msgid "Basic usage of the program"
+msgstr ""
+
+#: visualequation/__main__.py:201
+msgid "About &Visual Equation"
+msgstr ""
+
+#: visualequation/__main__.py:203
+msgid "About &Qt"
+msgstr ""
+
+#: visualequation/__main__.py:209
+msgid "&File"
+msgstr ""
+
+#: visualequation/__main__.py:215
+msgid "&Edit"
+msgstr ""
+
+#: visualequation/__main__.py:226
+msgid "&View"
+msgstr ""
+
+#: visualequation/__main__.py:231
+msgid "&Games"
+msgstr ""
+
+#: visualequation/__main__.py:233
+msgid "&Help"
+msgstr ""
+
+#: visualequation/__main__.py:260
+msgid ""
+"<p>Visual Equation is expected to be user-friendly and intuitive, so it "
+"should not be difficult to use if you understand its usage. Basically:</"
+"p><p>Instead of a cursor, you navigate with a \"ghost\" that surrounds "
+"blocks of the equation, from single symbols to arguments, operators and the "
+"entire equation. Change the ghost's selection and insert characters at the "
+"direction in which the ghost is facing by pressing keys on the keyboard or "
+"clicking symbols in the bottom panel. If the ghost surrounds a square, as "
+"when you open the program, you overwrite the square.</p><p>These are the "
+"main keys:</p><ul><li><b>LEFT</b>: Change the direction of the ghost to the "
+"left or navigate backwards.</li><li><b>RIGHT</b> or <b>TAB</b>: Change the "
+"direction of the ghost to right or navigate forwards.</li><li><b>UP</b> and "
+"<b>DOWN</b>: Put a superindex or subindex in the direction pointed by the "
+"ghost.</li><li><b>DELETE</b> or <b>BACKSPACE</b>: Remove current selection. "
+"If it was the entire argument of an operator, a square will remain so you "
+"can change it by something else.</li><li><b>Left-click</b> on an element of "
+"the symbols panel: Insert the element where the ghost is facing.</"
+"li><li><b>SHIFT + Left-click</b> on an element of the symbols panel (<b>VERY "
+"handy</b>): If the element is an operator, the selection is replaced by the "
+"operator and its first argument is set to previous selection. (The first "
+"argument is the one represented by dots) If the element is a symbol, the "
+"selection is replaced by the symbol.</li></ul><p>You may learn also the "
+"short-cuts noted in the menu.</p>"
+msgstr ""
+
+#: visualequation/__main__.py:300
+msgid "Basic usage"
+msgstr ""
+
+#: visualequation/__main__.py:314
+#, python-format
+msgid ""
+"<p>Visual Equation</p><p><em>Version:</em> %s </p><p><em>Author:</em> Daniel "
+"Molina Garcia</P><p><em>Sources:</em> <a href=\"https://github.com/daniel-"
+"molina/visualequation\">Webpage</a></p><p><em>License:</em> GPLv3 or above</"
+"p>"
+msgstr ""
+
+#: visualequation/__main__.py:321
+msgid "About"
+msgstr ""
+
+#: visualequation/__main__.py:328
+msgid "Create equations visually."
 msgstr ""
 
 #: visualequation/symbols/delimiters.py:48
