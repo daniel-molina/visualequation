@@ -19,8 +19,9 @@ import site
 VERSION="0.3.9"
 
 # Set the path to common files
-INSTALL_DIRS = []
-# Priority one: Execution in the sources tree
+DATA_DIR = ""
+LOCALE_DIR = ""
+# Priority 1: Execution in the sources tree (do not fill INSTALL_DIRS)
 if os.path.exists(os.path.join(os.path.dirname(__file__), '..', 'data')) \
    and os.path.exists(os.path.join(os.path.dirname(__file__),
                                    '..', 'visualequation')):
@@ -28,33 +29,32 @@ if os.path.exists(os.path.join(os.path.dirname(__file__), '..', 'data')) \
         os.path.join(os.path.dirname(__file__), '..', 'data'))
     LOCALE_DIR = os.path.abspath(
         os.path.join(os.path.dirname(__file__), '..', 'locale'))
-    INSTALL_DIRS.append(os.path.abspath(
-        os.path.join(os.path.dirname(__file__), '..')))
 # Priority 2: Installation through "pip install --user"
+INSTALL_DIRS = []
 if os.path.exists(os.path.join(site.USER_BASE, 'share', 'visualequation')):
-    if not INSTALL_DIRS:
+    if not DATA_DIR and not LOCALE_DIR:
         DATA_DIR = os.path.join(site.USER_BASE, 'share', 'visualequation')
         LOCALE_DIR = os.path.join(site.USER_BASE, 'share', 'locale')
     INSTALL_DIRS.append(os.path.join(site.USER_BASE, 'share'))
-# Priority 2.5: Installation through "pip install --target="
+# Priority 1.5: Installation through "pip install --target="
 if os.path.exists(os.path.join(
         os.path.dirname(__file__), '..', 'share', 'visualequation')):
     _BASE = os.path.abspath(os.path.join(
         os.path.dirname(__file__), '..', 'share'))
-    if not INSTALL_DIRS or _BASE not in INSTALL_DIRS:
+    if (not DATA_DIR and not LOCALE_DIR) or _BASE not in INSTALL_DIRS:
         # Overwrite variables if it is known that __file__ is not
-        # in other installations
+        # the same than --user installation
         DATA_DIR = os.path.join(_BASE, 'visualequation')
         LOCALE_DIR = os.path.join(_BASE, 'locale')
         INSTALL_DIRS.append(_BASE)
-# Priority 4: Installation in the FHS
+# Priority 3: Installation in the FHS
 if os.path.exists(os.path.join(sys.prefix, 'share', 'visualequation')):
-    if not INSTALL_DIRS:
+    if not DATA_DIR and not LOCALE_DIR:
         DATA_DIR = os.path.join(sys.prefix, 'share', 'visualequation')
         LOCALE_DIR = os.path.join(sys.prefix, 'share', 'locale')
     INSTALL_DIRS.append(os.path.join(sys.prefix, 'share'))
 
-if not INSTALL_DIRS:
+if not DATA_DIR or not LOCALE_DIR:
     # Do not use ShowError here (you would need a QApplication)
     raise SystemExit("Could not find any installation of visualequation.")
 
