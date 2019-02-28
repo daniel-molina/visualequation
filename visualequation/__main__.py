@@ -146,7 +146,7 @@ class MainWindow(QMainWindow):
                 oldlatexcode, self.temp_dir, self)
             if newlatexcode:
                 self.maineq.eq.insert_substituting(newlatexcode)
-        editlatex_act = QAction(_('Edit LaTeX'), self)
+        editlatex_act = QAction(_('Edit &LaTeX'), self)
         editlatex_act.setStatusTip(_('Edit LaTeX code of selected block'))
         editlatex_act.triggered.connect(editlatex)
         def selectall():
@@ -273,7 +273,7 @@ class MainWindow(QMainWindow):
         "Change the direction of the ghost to the left or "
         "navigate backwards.</li>"
         "<li><b>RIGHT</b> or <b>TAB</b>: "
-        "Change the direction of the ghost to right or "
+        "Change the direction of the ghost to the right or "
         "navigate forwards.</li>"
         "<li><b>UP</b> and <b>DOWN</b>: "
         "Put a superindex or subindex in the direction "

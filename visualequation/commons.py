@@ -16,7 +16,7 @@ import os
 import sys
 import site
 
-VERSION="0.3.9"
+VERSION="0.3.10"
 
 # Set the path to common files
 DATA_DIR = ""

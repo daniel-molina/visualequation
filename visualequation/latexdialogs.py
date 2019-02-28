@@ -141,13 +141,14 @@ class EditLatexDialog(QDialog):
             self.checkbutton.setDisabled(True)
         else:
             self.checkbutton.setEnabled(True)
-
-
         
     def handlecheck(self):
         self.compilationmsg.setText(_('Checking LateX code...'))
         latex_file = os.path.join(self.temp_dir, "edit.tex")
-        conversions.eq2latex_file(self.text.toPlainText(), latex_file,
+        # Remove trailing new lines, a common source of invisible errors
+        self.text.setPlainText(self.text.toPlainText().rstrip())
+        conversions.eq2latex_file(self.text.toPlainText(),
+                                  latex_file,
                                   commons.LATEX_TEMPLATE)
         try:
             subprocess.check_output(["latex", "-interaction=nonstopmode",
