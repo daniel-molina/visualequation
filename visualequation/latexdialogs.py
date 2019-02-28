@@ -106,9 +106,10 @@ class EditLatexDialog(QDialog):
         regexp = QRegExp(
             "^[a-zA-Z\d\s|!\\$%&/()=?'@#\\[\\]{}*+-<>,.;:_\n\t\\^\\\\]*$")
         self.validator = QRegExpValidator(regexp)
-        self.checkbutton = QPushButton(_('Check LaTeX code'))
+        self.checkbutton = QPushButton(_('Check LaTeX code (Ctrl+Return)'))
         self.checkbutton.clicked.connect(self.handlecheck)
-        self.checkbutton.setDisabled(True)
+        self.shcut = QShortcut(QKeySequence('Ctrl+Return'), self.text,
+                               self.checkbutton.click)
         self.compilationmsg = QLabel(_('Change LaTeX code as desired'))
         self.compilationmsg.setWordWrap(True)
         warnmsg = QLabel(
@@ -143,10 +144,18 @@ class EditLatexDialog(QDialog):
             self.checkbutton.setEnabled(True)
         
     def handlecheck(self):
-        self.compilationmsg.setText(_('Checking LateX code...'))
+        self.compilationmsg.setText(_('Checking LaTeX code...'))
         latex_file = os.path.join(self.temp_dir, "edit.tex")
         # Remove trailing new lines, a common source of invisible errors
-        self.text.setPlainText(self.text.toPlainText().rstrip())
+        cursor = self.text.textCursor()
+        pos = cursor.position()
+        newtext =self.text.toPlainText().rstrip()
+        self.text.setPlainText(newtext)
+        if len(newtext) > pos:
+            cursor.setPosition(pos)
+        else:
+            cursor.setPosition(len(newtext))
+        self.text.setTextCursor(cursor)
         conversions.eq2latex_file(self.text.toPlainText(),
                                   latex_file,
                                   commons.LATEX_TEMPLATE)
@@ -157,7 +166,6 @@ class EditLatexDialog(QDialog):
                                      latex_file])
         except subprocess.CalledProcessError as error:
             self.compilationmsg.setText(_('LaTex code is not valid'))
-            self.checkbutton.setDisabled(True)
             self.text.setFocus()
             return
         dvi_file = os.path.join(self.temp_dir, "edit.dvi")
