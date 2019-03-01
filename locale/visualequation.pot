@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-02-28 19:57+0100\n"
+"POT-Creation-Date: 2019-03-01 22:34+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -88,36 +88,36 @@ msgid "Edit LaTeX code"
 msgstr ""
 
 #: visualequation/latexdialogs.py:109
-msgid "Check LaTeX code"
+msgid "Check LaTeX code (Ctrl+Return)"
 msgstr ""
 
-#: visualequation/latexdialogs.py:112
+#: visualequation/latexdialogs.py:113
 msgid "Change LaTeX code as desired"
 msgstr ""
 
-#: visualequation/latexdialogs.py:115
+#: visualequation/latexdialogs.py:116
 msgid ""
 "Note: It will not be possible to select individual elements of this block if "
 "it is edited."
 msgstr ""
 
-#: visualequation/latexdialogs.py:136
+#: visualequation/latexdialogs.py:137
 msgid "Press Check button when code is ready"
 msgstr ""
 
-#: visualequation/latexdialogs.py:140
+#: visualequation/latexdialogs.py:141
 msgid "LaTeX code contains invalid characters"
 msgstr ""
 
-#: visualequation/latexdialogs.py:146
-msgid "Checking LateX code..."
+#: visualequation/latexdialogs.py:147
+msgid "Checking LaTeX code..."
 msgstr ""
 
-#: visualequation/latexdialogs.py:156
+#: visualequation/latexdialogs.py:168
 msgid "LaTex code is not valid"
 msgstr ""
 
-#: visualequation/latexdialogs.py:165
+#: visualequation/latexdialogs.py:176
 msgid "LaTex code is valid"
 msgstr ""
 

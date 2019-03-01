@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-02-28 19:58+0100\n"
-"PO-Revision-Date: 2019-02-28 19:59+0100\n"
+"POT-Creation-Date: 2019-03-01 22:35+0100\n"
+"PO-Revision-Date: 2019-03-01 22:36+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: es\n"
@@ -97,14 +97,14 @@ msgid "Edit LaTeX code"
 msgstr "Editar código LaTeX"
 
 #: visualequation/latexdialogs.py:109
-msgid "Check LaTeX code"
-msgstr "Comprobar código LaTeX"
+msgid "Check LaTeX code (Ctrl+Return)"
+msgstr "Comprobar código LaTeX (Ctrl+Enter)"
 
-#: visualequation/latexdialogs.py:112
+#: visualequation/latexdialogs.py:113
 msgid "Change LaTeX code as desired"
 msgstr "Cambia el código LaTeX a tu gusto"
 
-#: visualequation/latexdialogs.py:115
+#: visualequation/latexdialogs.py:116
 msgid ""
 "Note: It will not be possible to select individual elements of this block if "
 "it is edited."
@@ -112,23 +112,23 @@ msgstr ""
 "Nota: No será posible seleccionar elementos individuales de este bloque si "
 "es editado."
 
-#: visualequation/latexdialogs.py:136
+#: visualequation/latexdialogs.py:137
 msgid "Press Check button when code is ready"
 msgstr "Presiona el botón Comprobar cuando el código esté listo"
 
-#: visualequation/latexdialogs.py:140
+#: visualequation/latexdialogs.py:141
 msgid "LaTeX code contains invalid characters"
 msgstr "El código LaTeX contiene caracteres inválidos"
 
-#: visualequation/latexdialogs.py:146
-msgid "Checking LateX code..."
+#: visualequation/latexdialogs.py:147
+msgid "Checking LaTeX code..."
 msgstr "Comprobando código LaTeX..."
 
-#: visualequation/latexdialogs.py:156
+#: visualequation/latexdialogs.py:168
 msgid "LaTex code is not valid"
 msgstr "El código LaTeX no es válido"
 
-#: visualequation/latexdialogs.py:165
+#: visualequation/latexdialogs.py:176
 msgid "LaTex code is valid"
 msgstr "El código LaTeX es válido"
 
@@ -557,6 +557,12 @@ msgstr ""
 "Nota: Dejar las casillas sin marcar permitirá poner los límites en las "
 "esquinas de la integral al seleccionar dicha integral y usar las teclas "
 "ARRIBA y ABAJO."
+
+#~ msgid "Check LaTeX code"
+#~ msgstr "Comprobar código LaTeX"
+
+#~ msgid "Checking LateX code..."
+#~ msgstr "Comprobando código LaTeX..."
 
 #~ msgid "Edit LaTeX"
 #~ msgstr "Editar LaTeX"
