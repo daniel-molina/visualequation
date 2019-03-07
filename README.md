@@ -41,6 +41,8 @@ If you just want to try the program and do not want to install it, you can execu
 
 `python3 -m visualequation.__main__`
 
+**First time**: You must first run `python3 generate_icons.py` to generate the icons.
+
 ## Installation
 
 In the case of python, installing software with pip and related tools is almost a standard so I decided to use it. If you know how to manage pip in your system, perfect, follow your way to install visualequation from source (development version) or PyPI (released versions). If you have no clue and want me to explain all the details about how to install it, I feel that I have certain responsability of offering you something that works. If you use a modern distribution like Debian 9.0 or Ubuntu 18.04/16.04 it worked for me using the tools of the distribution, else, read the next section on how to install a current version of pip.
