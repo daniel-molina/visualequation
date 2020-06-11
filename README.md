@@ -28,7 +28,7 @@ To run the program successfully, you need:
   * dvisvgm
   * epstopdf
 * exiftool
-  
+
 ## Checking that dependencies are fulfilled
 
 If you have the sources you can check that everything is installed properly running the test:
@@ -125,7 +125,7 @@ in whatever current directory.
 
 ## Usage/Instructions
 
-See Help->'Basic Usage' or read the file visualequation/data/USAGE.html
+Read Help->'Basic Usage'.
 
 ## Known Issues
 

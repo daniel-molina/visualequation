@@ -58,7 +58,7 @@ class MyScrollBar(QScrollBar):
     def mouseReleaseEvent(self, event):
         QScrollBar.mouseReleaseEvent(self, event)
         self.equation.setFocus()
-            
+
     def setFocusTo(self, widget):
         self.equation = widget
 
@@ -70,7 +70,7 @@ class MyScrollBar(QScrollBar):
             if self.prev_max != None:
                 self.setValue(self.value() + self.maximum() - self.prev_max)
             self.prev_max = self.maximum()
-            
+
 class MyScrollArea(QScrollArea):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -83,7 +83,7 @@ class MyScrollArea(QScrollArea):
         QScrollArea.setWidget(self, widget)
         self.vbar.setFocusTo(widget)
         self.hbar.setFocusTo(widget)
-        
+
 class MainWindow(QMainWindow):
     def __init__(self, temp_dir):
         super().__init__()
@@ -209,7 +209,7 @@ class MainWindow(QMainWindow):
         file_menu = menubar.addMenu(_('&File'))
         file_menu.addAction(new_act)
         file_menu.addAction(open_act)
-        file_menu.addAction(save_act)      
+        file_menu.addAction(save_act)
         file_menu.addSeparator()
         file_menu.addAction(exit_act)
         edit_menu = menubar.addMenu(_('&Edit'))
@@ -286,11 +286,12 @@ class MainWindow(QMainWindow):
         "Insert the element where the ghost is facing.</li>"
         "<li><b>SHIFT + Left-click</b> on an element of the symbols panel "
         "(<b>VERY handy</b>): "
-        "If the element is an operator, the selection is replaced "
-        "by the operator and its first argument is set to previous selection. "
-        "(The first argument is the one represented by dots) "
+        "If the element is an operator (they have dots and maybe squares "
+        "representing its arguments), the selection is replaced "
+        "by the operator and its first argument (represented by three dots) "
+        "is set to the selection. "
         "If the element is a symbol, the selection is replaced "
-        "by the symbol.</li>"
+        "by that symbol.</li>"
         "</ul>"
         "<p>You may learn also the short-cuts noted in the menu.</p>")
 
@@ -343,7 +344,7 @@ def main():
 
     # Use global for app to be destructed at the end
     # http://pyqt.sourceforge.net/Docs/PyQt5/gotchas.html#crashes-on-exit
-    global app 
+    global app
     app = QApplication(sys.argv)
 
     # Prepare a temporal directory to manage all intermediate files
@@ -356,6 +357,6 @@ def main():
     exit_code = app.exec_()
     shutil.rmtree(temp_dirpath)
     sys.exit(exit_code)
-   
+
 if __name__ == '__main__':
     main()
