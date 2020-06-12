@@ -14,6 +14,7 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 
+
 class ShowError(QMessageBox):
 
     # It is modified in __main__.MainWindow

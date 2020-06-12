@@ -23,8 +23,10 @@ from PyQt5.QtCore import *
 
 from .. import commons
 
+
 class Op(object):
     """ Class for LaTeX operator (that has arguments)"""
+
     def __init__(self, n_args, latex_code, type_=None):
         self.n_args = n_args
         self.latex_code = latex_code
@@ -40,11 +42,12 @@ class Op(object):
             return NotImplemented
 
     def __ne__(self, other):
-        return not self == other 
+        return not self == other
 
     def __repr__(self):
         return "Op(" + repr(self.n_args) + ", " + repr(self.latex_code) \
-            + ", " + repr(self.type_) + ")"
+               + ", " + repr(self.type_) + ")"
+
 
 LatexSymb = namedtuple('LatexSymb', 'tag code')
 MenuItemData = namedtuple('MenuItemData', 'tag symb_l')
@@ -88,18 +91,20 @@ ASCII_LATEX_TRANSLATION = {
     '_': r'\_',
 }
 
+
 class Symb(QLabel):
     def __init__(self, parent, symb):
         super().__init__('')
         self.parent = parent
         self.symb = symb
         self.setPixmap(QPixmap(os.path.join(commons.ICONS_DIR,
-                                           symb.tag + ".png")))
+                                            symb.tag + ".png")))
         self.setAlignment(Qt.AlignCenter)
 
     def mousePressEvent(self, event):
         self.parent.symb_chosen = self.symb
         self.parent.accept()
+
 
 class ChooseSymbDialog(QDialog):
     def __init__(self, parent, caption, symb_list, n_columns):
@@ -116,9 +121,11 @@ class ChooseSymbDialog(QDialog):
             if column > n_columns:
                 column = 1
                 row += 1
-        self.setLayout(layout)   
+        self.setLayout(layout)
 
-# Valid for non-sum-like operators
+    # Valid for non-sum-like operators
+
+
 LSUB = Op(2, r'\tensor*[_{{{1}}}]{{{0}}}{{}}', 'index')
 SUB = Op(2, r'{0}_{{{1}}}', 'index')
 SUP = Op(2, r'{0}^{{{1}}}', 'index')
@@ -133,42 +140,44 @@ LSUBSUBSUP = Op(4, r'\tensor*[_{{{1}}}]{{{0}}}{{^{{{3}}}_{{{2}}}}}', 'index')
 LSUBSUBLSUP = Op(4, r'\tensor*[_{{{1}}}^{{{3}}}]{{{0}}}{{_{{{2}}}}}', 'index')
 LSUBSUPLSUP = Op(4, r'\tensor*[^{{{3}}}_{{{1}}}]{{{0}}}{{^{{{2}}}}}', 'index')
 SUBSUPLSUP = Op(4, r'\tensor*[^{{{3}}}]{{{0}}}{{^{{{2}}}_{{{1}}}}}', 'index')
-LSUBSUBSUPLSUP = Op(5, r'\tensor*[_{{{1}}}^{{{4}}}]{{{0}}}{{_{{{2}}}^{{{3}}}}}', 'index')
+LSUBSUBSUPLSUP = Op(5,
+                    r'\tensor*[_{{{1}}}^{{{4}}}]{{{0}}}{{_{{{2}}}^{{{3}}}}}',
+                    'index')
 
 # Not valid when using right sub/sup-indices in tall expressions
-#LSUB = Op(2, r'\prescript{{}}{{{1}}}{{{0}}}')
-#SUB = Op(2, r'{0}_{{{1}}}')
-#SUP = Op(2, r'{0}^{{{1}}}')
-#LSUP = Op(2, r'\prescript{{{1}}}{{}}{{{0}}}')
-#LSUBSUB = Op(3, r'\prescript{{}}{{{1}}}{{{0}}}_{{{2}}}')
-#SUBSUP = Op(3, r'{0}_{{{1}}}^{{{2}}}')
-#SUPLSUP = Op(3, r'\prescript{{{2}}}{{}}{{{0}}}^{{{1}}}')
-#LSUBLSUP = Op(3, r'\prescript{{{2}}}{{{1}}}{{{0}}}')
-#LSUBSUP = Op(3, r'\prescript{{}}{{{1}}}{{{0}}}^{{{2}}}')
-#SUBLSUP = Op(3, r'\prescript{{{2}}}{{}}{{{0}}}_{{{1}}}')
-#LSUBSUBSUP = Op(4, r'\prescript{{}}{{{1}}}{{{0}}}^{{{3}}}_{{{2}}}')
-#LSUBSUBLSUP = Op(4, r'\prescript{{{3}}}{{{1}}}{{{0}}}_{{{2}}}')
-#LSUBSUPLSUP = Op(4, r'\prescript{{{3}}}{{{1}}}{{{0}}}^{{{2}}}')
-#SUBSUPLSUP = Op(4, r'\prescript{{{3}}}{{}}{{{0}}}^{{{2}}}_{{{1}}}')
-#LSUBSUBSUPLSUP = Op(5, r'\prescript{{{4}}}{{{1}}}{{{0}}}_{{{2}}}^{{{3}}}')
+# LSUB = Op(2, r'\prescript{{}}{{{1}}}{{{0}}}')
+# SUB = Op(2, r'{0}_{{{1}}}')
+# SUP = Op(2, r'{0}^{{{1}}}')
+# LSUP = Op(2, r'\prescript{{{1}}}{{}}{{{0}}}')
+# LSUBSUB = Op(3, r'\prescript{{}}{{{1}}}{{{0}}}_{{{2}}}')
+# SUBSUP = Op(3, r'{0}_{{{1}}}^{{{2}}}')
+# SUPLSUP = Op(3, r'\prescript{{{2}}}{{}}{{{0}}}^{{{1}}}')
+# LSUBLSUP = Op(3, r'\prescript{{{2}}}{{{1}}}{{{0}}}')
+# LSUBSUP = Op(3, r'\prescript{{}}{{{1}}}{{{0}}}^{{{2}}}')
+# SUBLSUP = Op(3, r'\prescript{{{2}}}{{}}{{{0}}}_{{{1}}}')
+# LSUBSUBSUP = Op(4, r'\prescript{{}}{{{1}}}{{{0}}}^{{{3}}}_{{{2}}}')
+# LSUBSUBLSUP = Op(4, r'\prescript{{{3}}}{{{1}}}{{{0}}}_{{{2}}}')
+# LSUBSUPLSUP = Op(4, r'\prescript{{{3}}}{{{1}}}{{{0}}}^{{{2}}}')
+# SUBSUPLSUP = Op(4, r'\prescript{{{3}}}{{}}{{{0}}}^{{{2}}}_{{{1}}}')
+# LSUBSUBSUPLSUP = Op(5, r'\prescript{{{4}}}{{{1}}}{{{0}}}_{{{2}}}^{{{3}}}')
 
 
 # Valid for sum-like operators, bad right alignment for left indices
-#LSUB = Op(2, r'{{\vphantom{{{0}}}}}_{{{1}}}{0}')
-#SUB = Op(2, r'{0}_{{{1}}}')
-#SUP = Op(2, r'{0}^{{{1}}}')
-#LSUP = Op(2, r'{{\vphantom{{{0}}}}}^{{{1}}}{0}')
-#LSUBSUB = Op(3, r'{{\vphantom{{{0}}}}}_{{{1}}}{0}_{{{2}}}')
-#SUBSUP = Op(3, r'{0}_{{{1}}}^{{{2}}}')
-#SUPLSUP = Op(3, r'{{\vphantom{{{0}}}}}^{{{2}}}{0}^{{{1}}}')
-#LSUBLSUP = Op(3, r'{{\vphantom{{{0}}}}}_{{{1}}}^{{{2}}}{0}')
-#LSUBSUP = Op(3, r'{{\vphantom{{{0}}}}}_{{{1}}}{0}^{{{2}}}')
-#SUBLSUP = Op(3, r'{{\vphantom{{{0}}}}}^{{{2}}}{0}_{{{1}}}')
-#LSUBSUBSUP = Op(4, r'{{\vphantom{{{0}}}}}_{{{1}}}{0}^{{{3}}}_{{{2}}}')
-#LSUBSUBLSUP = Op(4, r'{{\vphantom{{{0}}}}}_{{{1}}}^{{{3}}}{0}_{{{2}}}')
-#LSUBSUPLSUP = Op(4, r'{{\vphantom{{{0}}}}}^{{{3}}}_{{{1}}}{0}^{{{2}}}')
-#SUBSUPLSUP = Op(4, r'{{\vphantom{{{0}}}}}^{{{3}}}{0}^{{{2}}}_{{{1}}}')
-#LSUBSUBSUPLSUP = Op(5, r'{{\vphantom{{{0}}}}}_{{{1}}}^{{{4}}}{0}_{{{2}}}^{{{3}}}')
+# LSUB = Op(2, r'{{\vphantom{{{0}}}}}_{{{1}}}{0}')
+# SUB = Op(2, r'{0}_{{{1}}}')
+# SUP = Op(2, r'{0}^{{{1}}}')
+# LSUP = Op(2, r'{{\vphantom{{{0}}}}}^{{{1}}}{0}')
+# LSUBSUB = Op(3, r'{{\vphantom{{{0}}}}}_{{{1}}}{0}_{{{2}}}')
+# SUBSUP = Op(3, r'{0}_{{{1}}}^{{{2}}}')
+# SUPLSUP = Op(3, r'{{\vphantom{{{0}}}}}^{{{2}}}{0}^{{{1}}}')
+# LSUBLSUP = Op(3, r'{{\vphantom{{{0}}}}}_{{{1}}}^{{{2}}}{0}')
+# LSUBSUP = Op(3, r'{{\vphantom{{{0}}}}}_{{{1}}}{0}^{{{2}}}')
+# SUBLSUP = Op(3, r'{{\vphantom{{{0}}}}}^{{{2}}}{0}_{{{1}}}')
+# LSUBSUBSUP = Op(4, r'{{\vphantom{{{0}}}}}_{{{1}}}{0}^{{{3}}}_{{{2}}}')
+# LSUBSUBLSUP = Op(4, r'{{\vphantom{{{0}}}}}_{{{1}}}^{{{3}}}{0}_{{{2}}}')
+# LSUBSUPLSUP = Op(4, r'{{\vphantom{{{0}}}}}^{{{3}}}_{{{1}}}{0}^{{{2}}}')
+# SUBSUPLSUP = Op(4, r'{{\vphantom{{{0}}}}}^{{{3}}}{0}^{{{2}}}_{{{1}}}')
+# LSUBSUBSUPLSUP = Op(5, r'{{\vphantom{{{0}}}}}_{{{1}}}^{{{4}}}{0}_{{{2}}}^{{{3}}}')
 
 # Valid only for sum-like operators
 OPLSUB = Op(2, r'\sideset{{_{{{1}}}}}{{}}{0}', 'opindex')
@@ -188,7 +197,9 @@ OPLSUBSUPLSUP = Op(4, r'\sideset{{^{{{3}}}_{{{1}}}}}{{^{{{2}}}}}{0}',
                    'opindex')
 OPSUBSUPLSUP = Op(4, r'\sideset{{^{{{3}}}}}{{^{{{2}}}_{{{1}}}}}{0}',
                   'opindex')
-OPLSUBSUBSUPLSUP = Op(5, r'\sideset{{_{{{1}}}^{{{4}}}}}{{_{{{2}}}^{{{3}}}}}{0}', 'opindex')
+OPLSUBSUBSUPLSUP = Op(5,
+                      r'\sideset{{_{{{1}}}^{{{4}}}}}{{_{{{2}}}^{{{3}}}}}{0}',
+                      'opindex')
 
 # First elements are the most common
 INDEX_OPS = (
@@ -217,7 +228,7 @@ INDEX_BLACKLIST = (
     'int_with_args',
 )
 
-#INDICES = [
+# INDICES = [
 #    LatexSymb('lsub', LSUB, r'{{}}_{{\square}}\cdot'),
 #    LatexSymb('sub', SUB, r'\cdot_{{\square}}'),
 #    LatexSymb('super', SUP, r'\cdot^{{\square}}'),
@@ -238,11 +249,11 @@ INDEX_BLACKLIST = (
 #              r'{{}}^{{\square}}\cdot^{{\square}}_{{\square}}'),
 #    LatexSymb('lsubsubsuplsup', LSUBSUBSUPLSUP,
 #              r'{{}}^{{\square}}_{{\square}}\cdot^{{\square}}_{{\square}}'),
-#]
+# ]
 
 #    ('binomial', (Op(2, r'\binom{{{0}}}{{{1}}}'),
 #     [r'\binom{{\cdot}}{{\square}}'])),
 
-#MENUITEMSDATA.append(MenuItemData(
+# MENUITEMSDATA.append(MenuItemData(
 #    tag="tab_indices",
 #    symb_l=INDICES, clickable_size=(60, 60), dpi=200, expr=r'a^b'))

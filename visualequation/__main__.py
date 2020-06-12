@@ -14,15 +14,15 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """This is the file to execute the program."""
-import sys
-import tempfile
-import shutil
-import os
 import argparse
-import traceback
+import faulthandler
 import gettext
 import locale
-import faulthandler
+import shutil
+import sys
+import tempfile
+import traceback
+
 faulthandler.enable()
 
 from PyQt5.QtWidgets import *
@@ -30,29 +30,33 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
 from . import commons
+
 gettext.install('visualequation')
 # Check if user language is available for translation
-if locale.getlocale()[0] != None:
+if locale.getlocale()[0] is not None:
     if locale.getlocale()[0][0:2] == "es":
         es = gettext.translation('visualequation', commons.LOCALE_DIR,
                                  languages=['es'])
         es.install()
+    # New languages here...
 
 from . import symbolstab
 from . import eqlabel
-from . import conversions
 from . import eqtools
 from . import game
 from . import latexdialogs
 from .errors import ShowError
+
 
 class MyScrollBar(QScrollBar):
     """
     Class to set focus in equation when moving the scroll bars.
     It also moves the equation correctly when inserting new elements.
     """
+
     def __init__(self, orientation, parent=None):
         super().__init__(orientation, parent)
+        self.equation = None
         self.prev_max = None
 
     def mouseReleaseEvent(self, event):
@@ -66,10 +70,11 @@ class MyScrollBar(QScrollBar):
         QScrollBar.sliderChange(self, change)
         # Do not use/set prev_max vertically
         if change == QAbstractSlider.SliderRangeChange and \
-           self.orientation() == Qt.Horizontal:
-            if self.prev_max != None:
+                self.orientation() == Qt.Horizontal:
+            if self.prev_max is not None:
                 self.setValue(self.value() + self.maximum() - self.prev_max)
             self.prev_max = self.maximum()
+
 
 class MyScrollArea(QScrollArea):
     def __init__(self, parent=None):
@@ -83,6 +88,7 @@ class MyScrollArea(QScrollArea):
         QScrollArea.setWidget(self, widget)
         self.vbar.setFocusTo(widget)
         self.hbar.setFocusTo(widget)
+
 
 class MainWindow(QMainWindow):
     def __init__(self, temp_dir):
@@ -128,9 +134,11 @@ class MainWindow(QMainWindow):
         copy_act.setShortcut('Ctrl+C')
         copy_act.setStatusTip(_('Copy selection'))
         copy_act.triggered.connect(self.maineq.eq.sel2eqbuffer)
+
         def cut():
             self.maineq.eq.sel2eqbuffer()
             self.maineq.eq.remove_sel()
+
         cut_act = QAction(_('C&ut'), self)
         cut_act.setShortcut('Ctrl+X')
         cut_act.setStatusTip(_('Cut selection'))
@@ -139,6 +147,7 @@ class MainWindow(QMainWindow):
         paste_act.setShortcut('Ctrl+V')
         paste_act.setStatusTip(_('Paste previous cut or copied selection'))
         paste_act.triggered.connect(self.maineq.eq.eqbuffer2sel)
+
         def editlatex():
             oldlatexcode = eqtools.eqblock2latex(self.maineq.eq.eq,
                                                  self.maineq.eq.eqsel.index)[0]
@@ -146,49 +155,60 @@ class MainWindow(QMainWindow):
                 oldlatexcode, self.temp_dir, self)
             if newlatexcode:
                 self.maineq.eq.insert_substituting(newlatexcode)
+
         editlatex_act = QAction(_('Edit &LaTeX'), self)
         editlatex_act.setStatusTip(_('Edit LaTeX code of selected block'))
         editlatex_act.triggered.connect(editlatex)
+
         def selectall():
             self.maineq.eq.eqsel.index = 0
             self.maineq.eq.eqsel.display()
+
         selectall_act = QAction('&Select all', self)
         selectall_act.setShortcut('Ctrl+A')
         selectall_act.setStatusTip(_('Select the entire equation'))
         selectall_act.triggered.connect(selectall)
+
         # View
         def zoomin():
             if self.maineq.eq.eqsel.dpi < 1000:
-               self.maineq.eq.eqsel.dpi += 50
-               self.maineq.eq.eqsel.display()
+                self.maineq.eq.eqsel.dpi += 50
+                self.maineq.eq.eqsel.display()
             else:
                 ShowError(_('Equation will no be increased.'), False)
+
         zoomin_act = QAction(_('Zoom &In'), self)
         zoomin_act.setShortcut('Ctrl++')
         zoomin_act.setStatusTip(_('Increase size of the equation'))
         zoomin_act.triggered.connect(zoomin)
+
         def zoomout():
             if self.maineq.eq.eqsel.dpi >= 100:
-               self.maineq.eq.eqsel.dpi -= 50
-               self.maineq.eq.eqsel.display()
+                self.maineq.eq.eqsel.dpi -= 50
+                self.maineq.eq.eqsel.display()
             else:
                 ShowError(_('Equation will no be decreased.'), False)
+
         zoomout_act = QAction(_('Zoom &Out'), self)
         zoomout_act.setShortcut('Ctrl+-')
         zoomout_act.setStatusTip(_('Decrease size of the equation'))
         zoomout_act.triggered.connect(zoomout)
+
         def showlatex():
             latexdialogs.ShowLatexDialog.showlatex(self.maineq.eq, self)
+
         showlatex_act = QAction(_('Show &LaTeX code'), self)
         showlatex_act.setStatusTip(
             _('Show the LaTeX code generating the equation'))
         showlatex_act.triggered.connect(showlatex)
+
         # Games
         def alice():
             state = activate_game_act.isChecked()
             game.Game.activate(state)
             self.maineq.eq.eqsel.display(self.maineq.eq.eq,
                                          self.maineq.eq.eqsel.right)
+
         activate_game_act = QAction(_('Invite &Alice'), self, checkable=True)
         activate_game_act.triggered.connect(alice)
         activate_game_act.setStatusTip(_('Let Alice to be with you while '
@@ -200,8 +220,8 @@ class MainWindow(QMainWindow):
         usage_act.triggered.connect(self.usage)
         about_act = QAction(_('About &Visual Equation'), self)
         about_act.triggered.connect(self.about)
-        aboutQt_act = QAction(_('About &Qt'), self)
-        aboutQt_act.triggered.connect(QApplication.aboutQt)
+        about_qt_act = QAction(_('About &Qt'), self)
+        about_qt_act.triggered.connect(QApplication.aboutQt)
 
         # Define menuBar
         menubar = self.menuBar()
@@ -232,7 +252,7 @@ class MainWindow(QMainWindow):
         game_menu.addAction(activate_game_act)
         help_menu = menubar.addMenu(_('&Help'))
         help_menu.addAction(usage_act)
-        help_menu.addAction(aboutQt_act)
+        help_menu.addAction(about_qt_act)
         help_menu.addAction(about_act)
 
     def init_center_widget(self):
@@ -258,42 +278,42 @@ class MainWindow(QMainWindow):
     def usage(self):
 
         usagestr = _("<p>Visual Equation is expected to be user-friendly "
-        "and intuitive, so it should not be difficult to use if you "
-        "understand its usage. Basically:</p>"
-        "<p>Instead of a cursor, you navigate with a \"ghost\" that "
-        "surrounds blocks of the equation, from single symbols to arguments, "
-        "operators and the entire equation. Change the ghost's selection and "
-        "insert characters at the direction in which the ghost is facing "
-        "by pressing keys on the keyboard or clicking symbols "
-        "in the bottom panel. If the ghost surrounds a square, "
-        "as when you open the program, you overwrite the square.</p>"
-        "<p>These are the main keys:</p>"
-        "<ul>"
-        "<li><b>LEFT</b>: "
-        "Change the direction of the ghost to the left or "
-        "navigate backwards.</li>"
-        "<li><b>RIGHT</b> or <b>TAB</b>: "
-        "Change the direction of the ghost to the right or "
-        "navigate forwards.</li>"
-        "<li><b>UP</b> and <b>DOWN</b>: "
-        "Put a superindex or subindex in the direction "
-        "pointed by the ghost.</li>"
-        "<li><b>DELETE</b> or <b>BACKSPACE</b>: "
-        "Remove current selection. If it was the entire argument "
-        "of an operator, a square will remain so you can change it "
-        "by something else.</li>"
-        "<li><b>Left-click</b> on an element of the symbols panel: "
-        "Insert the element where the ghost is facing.</li>"
-        "<li><b>SHIFT + Left-click</b> on an element of the symbols panel "
-        "(<b>VERY handy</b>): "
-        "If the element is an operator (they have dots and maybe squares "
-        "representing its arguments), the selection is replaced "
-        "by the operator and its first argument (represented by three dots) "
-        "is set to the selection. "
-        "If the element is a symbol, the selection is replaced "
-        "by that symbol.</li>"
-        "</ul>"
-        "<p>You may learn also the short-cuts noted in the menu.</p>")
+                     "and intuitive, so it should not be difficult to use if you "
+                     "understand its usage. Basically:</p>"
+                     "<p>Instead of a cursor, you navigate with a \"ghost\" that "
+                     "surrounds blocks of the equation, from single symbols to arguments, "
+                     "operators and the entire equation. Change the ghost's selection and "
+                     "insert characters at the direction in which the ghost is facing "
+                     "by pressing keys on the keyboard or clicking symbols "
+                     "in the bottom panel. If the ghost surrounds a square, "
+                     "as when you open the program, you overwrite the square.</p>"
+                     "<p>These are the main keys:</p>"
+                     "<ul>"
+                     "<li><b>LEFT</b>: "
+                     "Change the direction of the ghost to the left or "
+                     "navigate backwards.</li>"
+                     "<li><b>RIGHT</b> or <b>TAB</b>: "
+                     "Change the direction of the ghost to the right or "
+                     "navigate forwards.</li>"
+                     "<li><b>UP</b> and <b>DOWN</b>: "
+                     "Put a superindex or subindex in the direction "
+                     "pointed by the ghost.</li>"
+                     "<li><b>DELETE</b> or <b>BACKSPACE</b>: "
+                     "Remove current selection. If it was the entire argument "
+                     "of an operator, a square will remain so you can change it "
+                     "by something else.</li>"
+                     "<li><b>Left-click</b> on an element of the symbols panel: "
+                     "Insert the element where the ghost is facing.</li>"
+                     "<li><b>SHIFT + Left-click</b> on an element of the symbols panel "
+                     "(<b>VERY handy</b>): "
+                     "If the element is an operator (they have dots and maybe squares "
+                     "representing its arguments), the selection is replaced "
+                     "by the operator and its first argument (represented by three dots) "
+                     "is set to the selection. "
+                     "If the element is a symbol, the selection is replaced "
+                     "by that symbol.</li>"
+                     "</ul>"
+                     "<p>You may learn also the short-cuts noted in the menu.</p>")
 
         class Dialog(QDialog):
             def __init__(self, parent=None):
@@ -308,17 +328,18 @@ class MainWindow(QMainWindow):
                 vbox.addWidget(text)
                 vbox.addWidget(buttons)
                 buttons.accepted.connect(self.accept)
+
         dialog = Dialog(self)
         dialog.exec_()
 
     def about(self):
         msg = _("<p>Visual Equation</p>"
-            "<p><em>Version:</em> %s </p>"
-            "<p><em>Author:</em> Daniel Molina Garcia</P>"
-            '<p><em>Sources:</em> '
-            '<a href="https://github.com/daniel-molina/visualequation">'
-            "Webpage</a></p>"
-            "<p><em>License:</em> GPLv3 or above</p>") % commons.VERSION
+                "<p><em>Version:</em> %s </p>"
+                "<p><em>Author:</em> Daniel Molina Garcia</P>"
+                '<p><em>Sources:</em> '
+                '<a href="https://github.com/daniel-molina/visualequation">'
+                "Webpage</a></p>"
+                "<p><em>License:</em> GPLv3 or above</p>") % commons.VERSION
         QMessageBox.about(self, _("About"), msg)
 
 
@@ -333,13 +354,14 @@ def main():
     parser.parse_args()
 
     # Catch all exceptions by installing a global exception hook
-    #sys._excepthook = sys.excepthook
+    # sys._excepthook = sys.excepthook
     def exception_hook(exctype, value, traceback_error):
-        #sys._excepthook(exctype, value, traceback_error)
+        # sys._excepthook(exctype, value, traceback_error)
         ShowError('Unhandled exception. Feel free to report this incident'
                   " with the following traceback code:\n"
                   + ''.join(traceback.format_tb(traceback_error)),
                   True)
+
     sys.excepthook = exception_hook
 
     # Use global for app to be destructed at the end
@@ -357,6 +379,7 @@ def main():
     exit_code = app.exec_()
     shutil.rmtree(temp_dirpath)
     sys.exit(exit_code)
+
 
 if __name__ == '__main__':
     main()

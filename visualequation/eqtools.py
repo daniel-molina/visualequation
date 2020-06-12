@@ -18,6 +18,7 @@ replacing equation blocks.
 from .symbols import utils
 from .errors import ShowError
 
+
 def eqblock2latex(eq, index):
     """ Return latex code of the equation block starting at the given index
     and 1 + the index of the last element of the block in eq.
@@ -26,23 +27,25 @@ def eqblock2latex(eq, index):
     Our equations should be a single block (with sub-blocks),
     usings as many Prod's at the begining as necessary.
     """
+
     def block2latex(index):
         """ Incredible recursive function that DOES the real job"""
         if isinstance(eq[index], utils.Op):
             # I have to find n_arg independent blocks for this operator
-            index_of_arg = index+1
+            index_of_arg = index + 1
             latex_args = ()
             for ignored in range(eq[index].n_args):
                 latex_arg, index_of_arg = block2latex(index_of_arg)
                 latex_args += (latex_arg,)
             return (eq[index](*latex_args), index_of_arg)
         elif isinstance(eq[index], str):
-            return (eq[index], index+1)
+            return (eq[index], index + 1)
         else:
             ShowError('Unknown equation element in block2latex: '
                       + repr(eq[index]), True)
 
     return block2latex(index)
+
 
 def nextblockindex(eq, index):
     """
@@ -52,21 +55,23 @@ def nextblockindex(eq, index):
     It returns the index after the end of the block,
     being a valid index or not (when it is passed an ending block of eq).
     """
+
     def block2nextindex(index):
         """ Simplification of the recursive nested function block2latex."""
         if isinstance(eq[index], utils.Op):
             # I have to find n_arg independent blocks for this operator
-            index_of_arg = index+1
+            index_of_arg = index + 1
             for ignored in range(eq[index].n_args):
                 index_of_arg = block2nextindex(index_of_arg)
             return index_of_arg
         elif isinstance(eq[index], str):
-            return index+1
+            return index + 1
         else:
             ShowError('Unknown equation element in nextblockindex: '
                       + repr(eq[index]), True)
 
     return block2nextindex(index)
+
 
 def eq2latex_code(eq):
     """
@@ -81,35 +86,38 @@ def eq2latex_code(eq):
 
     return latex
 
-def insertrbyJUXT(eq, start_index, eqblock):
+
+def insertrbyjuxt(eq, start_index, eqblock):
     """
     Insert eqblock after the block which starts at start_index by using Juxt.
     Returns the index of the begining of inserted eqblock.
     """
     # If eqblock is the base of an index operator, consider the index operator
     # instead. It avoids a bit of caos in the equation structure.
-    #if hasattr(eq[start_index - 1], 'type_') \
+    # if hasattr(eq[start_index - 1], 'type_') \
     #   and eq[start_index - 1].type_ in ('index', 'opindex'):
     #    start_index -= 1
     end_index = nextblockindex(eq, start_index)
     eq[start_index:end_index] = [utils.JUXT] + eq[start_index:end_index] \
                                 + eqblock
-    return end_index+1
+    return end_index + 1
 
-def insertlbyJUXT(eq, start_index, eqblock):
+
+def insertlbyjuxt(eq, start_index, eqblock):
     """
     Insert eqblock before the block which starts at start_index by using Juxt.
     Returns the index of the inserted block.
     """
     # If eqblock is the base of an index operator, consider the index operator
     # instead. It avoids a bit of chaos in the equation structure.
-    #if hasattr(eq[start_index - 1], 'type_') \
+    # if hasattr(eq[start_index - 1], 'type_') \
     #   and eq[start_index - 1].type_ in ('index', 'opindex'):
     #    start_index -= 1
     end_index = nextblockindex(eq, start_index)
     eq[start_index:end_index] = [utils.JUXT] + eqblock \
                                 + eq[start_index:end_index]
-    return start_index+1
+    return start_index + 1
+
 
 def replaceby(eq, start_index, eqblock):
     """
@@ -120,7 +128,8 @@ def replaceby(eq, start_index, eqblock):
     eq[start_index:end_index] = eqblock
     return start_index + len(eqblock) + 1
 
-def is_arg_of_JUXT(eq, check_index):
+
+def is_arg_of_juxt(eq, check_index):
     """
     Returns a tuple of three elements:
     The first element says whether check_index is an argument of a Juxt op.
@@ -130,56 +139,60 @@ def is_arg_of_JUXT(eq, check_index):
     start_index = 0
     try:
         while True:
-            Juxt_index = eq.index(utils.JUXT, start_index)
-            arg2index = nextblockindex(eq, Juxt_index+1)
-            if Juxt_index + 1 == check_index:
-                return True, Juxt_index, arg2index
+            juxt_index = eq.index(utils.JUXT, start_index)
+            arg2index = nextblockindex(eq, juxt_index + 1)
+            if juxt_index + 1 == check_index:
+                return True, juxt_index, arg2index
             elif arg2index == check_index:
-                return True, Juxt_index, Juxt_index + 1
+                return True, juxt_index, juxt_index + 1
             else:
-                start_index = Juxt_index + 1
+                start_index = juxt_index + 1
     except ValueError:
         return False, None, None
 
-def first_arg_of_JUXT_seq(eq, JUXT_index):
+
+def first_arg_of_juxt_seq(eq, juxt_index):
     """
     It returns the index of the first argument of the first JUXT with
     first argument different than JUXT in a group of JUXTs.
     """
-    assert eq[JUXT_index] == utils.JUXT
+    assert eq[juxt_index] == utils.JUXT
     while True:
-        arg1_start = JUXT_index + 1 
+        arg1_start = juxt_index + 1
         if eq[arg1_start] == utils.JUXT:
-            JUXT_index = arg1_start
+            juxt_index = arg1_start
         else:
             return arg1_start
 
-def last_arg_of_JUXT_seq(eq, JUXT_index):
+
+def last_arg_of_juxt_seq(eq, juxt_index):
     """
     It returns the index of the second argument of the last JUXT in a group of
     JUXTs.
     """
-    if eq[JUXT_index] != utils.JUXT:
-        ShowError('No JUXT passed to last_arg_of_JUXT_seq function', True)
+    if eq[juxt_index] != utils.JUXT:
+        ShowError('No JUXT passed to last_arg_of_juxt_seq function', True)
 
-    arg2index = nextblockindex(eq, JUXT_index + 1)
+    arg2index = nextblockindex(eq, juxt_index + 1)
     while True:
         if eq[arg2index] == utils.JUXT:
-            JUXT_index = arg2index
-            arg2index = nextblockindex(eq, JUXT_index + 1)
+            juxt_index = arg2index
+            arg2index = nextblockindex(eq, juxt_index + 1)
         else:
             return arg2index
 
-def is_intermediate_JUXT(eq, index):
+
+def is_intermediate_juxt(eq, index):
     """
     Check whether index points to a JUXT that is the argument of
     other JUXT.
     """
     if eq[index] == utils.JUXT:
-        cond, ignored1, ignored2 = is_arg_of_JUXT(eq, index)
+        cond, ignored1, ignored2 = is_arg_of_juxt(eq, index)
         if cond:
             return True
     return False
+
 
 def is_next_element_after_op(eq, check_index, prev_op_index):
     """
@@ -199,7 +212,7 @@ def is_next_element_after_op(eq, check_index, prev_op_index):
     candidate = check_index - 1 if prev_op_index is None else prev_op_index - 1
     while candidate >= 0:
         while not isinstance(eq[candidate], utils.Op) or \
-              is_intermediate_JUXT(eq, candidate):
+                is_intermediate_juxt(eq, candidate):
             candidate -= 1
             if candidate < 0:
                 return False, None
@@ -212,7 +225,8 @@ def is_next_element_after_op(eq, check_index, prev_op_index):
         else:
             candidate -= 1
     return False, None
-    
+
+
 def indexop2arglist(eq, sel_index):
     """
     Convert the block of indices pointed by sel_index to a list of arguments.
@@ -221,9 +235,9 @@ def indexop2arglist(eq, sel_index):
     If sel_index does not point to an operator index at all, base will be the
     pointed block and the rest will be set to None.
     """
-    op = eq[sel_index] # it can be index operator or not, as explained above
+    op = eq[sel_index]  # it can be index operator or not, as explained above
     if not hasattr(op, 'type_') or op.type_ not in ('index', 'opindex'):
-        end_block = nextblockindex(eq, sel_index)    
+        end_block = nextblockindex(eq, sel_index)
         return [eq[sel_index:end_block], None, None, None, None]
     start_arg1 = sel_index + 1
     start_arg2 = nextblockindex(eq, start_arg1)
@@ -313,14 +327,16 @@ def indexop2arglist(eq, sel_index):
         ShowError("Equation element not recognised in indexop2arglist: "
                   + repr(op), True)
 
+
 def flat_arglist(args):
     # Flat the list of args
     new_args = []
     for arg in args:
-        if arg != None:
+        if arg is not None:
             for symb in arg:
                 new_args.append(symb)
     return new_args
+
 
 def arglist2indexop(args):
     index_dict = {
@@ -361,13 +377,14 @@ def arglist2indexop(args):
     }
     try:
         if hasattr(args[0][0], 'type_') \
-           and args[0][0].type_ in utils.OPINDEX_ARG_LIST: 
+                and args[0][0].type_ in utils.OPINDEX_ARG_LIST:
             return opindex_dict[tuple(bool(arg) for arg in args)]
         else:
             return index_dict[tuple(bool(arg) for arg in args)]
     except KeyError:
         ShowError('Bad argument list in arglist2indexop: '
                   + repr(args), True)
+
 
 def is_script(eq, sel_index):
     """

@@ -23,6 +23,7 @@ MATRIXTYPES = [
     LatexSymb('matrix', 'matrix'),
 ]
 
+
 def matrix_type(parent):
     class Dialog(QDialog):
         def __init__(self, parent=None):
@@ -49,7 +50,7 @@ def matrix_type(parent):
             self.repr_type.setAlignment(Qt.AlignCenter)
             hbox_type.addWidget(button_type)
             hbox_type.addWidget(self.repr_type)
-            
+
             self.buttons = QDialogButtonBox(
                 QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
                 Qt.Horizontal, self)
@@ -95,16 +96,17 @@ def matrix_type(parent):
                          dialog.symb.code),
                         True)
             else:
-                return ((None, None, None), False)
+                return (None, None, None), False
 
     (n_rows, n_cols, mtype), ok = Dialog.get_matrix_def(parent)
     if ok:
-        row_code = r'{}' + r'&{}'*(n_cols-1) + r'\\'
-        latex_code = r'\begin{{' + mtype + r'}}' + row_code*n_rows \
+        row_code = r'{}' + r'&{}' * (n_cols - 1) + r'\\'
+        latex_code = r'\begin{{' + mtype + r'}}' + row_code * n_rows \
                      + r'\end{{' + mtype + r'}}'
-        return Op(n_rows*n_cols, latex_code)
+        return Op(n_rows * n_cols, latex_code)
     else:
         return None
+
 
 def array(parent):
     class Dialog(QDialog):
@@ -222,21 +224,22 @@ def array(parent):
                          dialog.ledit_align.text()),
                         True)
             else:
-                return ((None, None, None, None, None), False)
+                return (None, None, None, None, None), False
 
     (n_rows, n_cols, delim_l, delim_r, align), ok = Dialog.get_array(parent)
     if ok:
-        row_code = r'{}' + r'&{}'*(n_cols-1) + r'\\'
+        row_code = r'{}' + r'&{}' * (n_cols - 1) + r'\\'
         latex_code = r'\left' + delim_l \
                      + r'\begin{{array}}' \
                      + '{{' + align + '}}' \
-                     + row_code*n_rows \
+                     + row_code * n_rows \
                      + r'\end{{array}}' \
                      + r'\right' + delim_r
-        return Op(n_rows*n_cols, latex_code)
+        return Op(n_rows * n_cols, latex_code)
     else:
         return None
-    
+
+
 def cases(parent):
     class Dialog(QDialog):
         def __init__(self, parent=None):
@@ -274,17 +277,19 @@ def cases(parent):
             dialog = Dialog(parent)
             result = dialog.exec_()
             if result == QDialog.Accepted:
-                return (int(dialog.ledit.text()), True)
+                return int(dialog.ledit.text()), True
             else:
-                return (None, False)
-            
+                return None, False
+
     n_cases, ok = Dialog.get_n_cases(parent)
     if ok:
         case_code = r'{}&{}\\'
-        latex_code = r'\begin{{cases}}' + case_code*n_cases + r'\end{{cases}}'
-        return Op(n_cases*2, latex_code)
+        latex_code = r'\begin{{cases}}' + case_code * n_cases \
+                     + r'\end{{cases}}'
+        return Op(n_cases * 2, latex_code)
     else:
         return None
+
 
 def equation_system(parent):
     class Dialog(QDialog):
@@ -323,18 +328,19 @@ def equation_system(parent):
             dialog = Dialog(parent)
             result = dialog.exec_()
             if result == QDialog.Accepted:
-                return (int(dialog.ledit.text()), True)
+                return int(dialog.ledit.text()), True
             else:
-                return (None, False)
-            
+                return None, False
+
     n_equations, ok = Dialog.get_n_equations(parent)
     if ok:
         case_code = r'{}\\'
-        latex_code = r'\begin{{cases}}' + case_code*n_equations \
+        latex_code = r'\begin{{cases}}' + case_code * n_equations \
                      + r'\end{{cases}}'
         return Op(n_equations, latex_code)
     else:
         return None
+
 
 def aligned(parent):
     class Dialog(QDialog):
@@ -373,20 +379,20 @@ def aligned(parent):
             dialog = Dialog(parent)
             result = dialog.exec_()
             if result == QDialog.Accepted:
-                return (int(dialog.ledit.text()), True)
+                return int(dialog.ledit.text()), True
             else:
-                return (None, False)
-            
+                return None, False
+
     n_lines, ok = Dialog.get_n_lines(parent)
     if ok:
         line_code = r'&{}\\'
-        latex_code = r'\begin{{aligned}}{}' + line_code*n_lines \
+        latex_code = r'\begin{{aligned}}{}' + line_code * n_lines \
                      + r'\end{{aligned}}'
-        return Op(n_lines+1, latex_code)
+        return Op(n_lines + 1, latex_code)
     else:
         return None
 
-    
+
 MANYLINES = [
     LatexSymb('matrix_type', matrix_type),
     LatexSymb('array', array),

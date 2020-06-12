@@ -17,8 +17,10 @@ from .symbols import utils
 from .symbols import symbols, arrows, relations, operators
 from . import eqtools
 
+
 def f(expr):
     return utils.Op(1, r'\textcolor{{magenta}}{{' + expr + '}} {0}')
+
 
 ALICE_CONSTRUCTS = [
     f(r'e^{{-i\pi}}'),
@@ -48,14 +50,15 @@ ALICE_CONSTRUCTS += [f(i.code) for i in relations.RELATIONS]
 ALICE_CONSTRUCTS += [f(i.code) for i in arrows.ARROWS]
 ALICE_CONSTRUCTS += [f(i.code) for i in operators.SOMEOPERATORS]
 
+
 class Alice:
     def __init__(self):
         self.name = "Alice"
-        self.op = utils.Op(1, r'\textcolor{{magenta}}' 
+        self.op = utils.Op(1, r'\textcolor{{magenta}}'
                            + r'{{\left\lmoustache{{{0}}}\right\rgroup}}')
         self.pos = 0
         self.right = True
-        #self.try_constructs = 0
+        # self.try_constructs = 0
 
     def cycle(self, pos, eq):
         if pos < 0:
@@ -72,7 +75,7 @@ class Alice:
 
     def turn_right(self):
         self.right = True
-        self.op = utils.Op(1, r'\textcolor{{magenta}}' 
+        self.op = utils.Op(1, r'\textcolor{{magenta}}'
                            + r'{{\left\lmoustache{{{0}}}\right\rgroup}}')
 
     def move(self, eq):
@@ -89,15 +92,15 @@ class Alice:
         # Correct direction if necessary
         if val == 0:
             self.op = random.choice(ALICE_CONSTRUCTS)
-            #self.op = ALICE_CONSTRUCTS[self.try_constructs]
-            #self.try_constructs += 1
+            # self.op = ALICE_CONSTRUCTS[self.try_constructs]
+            # self.try_constructs += 1
         elif val < 0 and self.right:
             self.turn_left()
         elif val > 0 and not self.right:
             self.turn_right()
         else:
-            self.pos = self.cycle(self.pos + val, eq) 
-        # Avoid all kind of JUXTs: it is disgusting when Alice is very big
+            self.pos = self.cycle(self.pos + val, eq)
+            # Avoid all kind of JUXTs: it is disgusting when Alice is very big
         if eq[self.pos] == utils.JUXT:
             cond = True
             while cond:
@@ -105,8 +108,8 @@ class Alice:
                 cond = eq[self.pos] == utils.JUXT
         # Avoid first argument of index operators: \sideset is picky
         if self.pos != 0 \
-           and hasattr(eq[self.pos - 1], 'type_') \
-           and eq[self.pos - 1].type_ in ('index', 'opindex'):
+                and hasattr(eq[self.pos - 1], 'type_') \
+                and eq[self.pos - 1].type_ in ('index', 'opindex'):
             self.pos = self.cycle(self.pos + 1 if self.right else -1, eq)
 
 
@@ -132,4 +135,3 @@ class Game:
         self.ghost.move(eq)
         assert 0 <= self.ghost.pos <= (len(eq) - 1)
         eq.insert(self.ghost.pos, self.ghost.op)
-

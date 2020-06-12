@@ -32,12 +32,14 @@ ICONS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__),
 LATEX_TEMPLATE = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                               'data', 'eq_template.tex'))
 
+
 def edit_expr(latex_code):
     """
     Add a slim and tall character so all the symbols are cut with more or less
     the same height.
     """
     return r"\textcolor{white}{|}" + latex_code
+
 
 def postprocess(filename):
     """
@@ -47,7 +49,8 @@ def postprocess(filename):
         subprocess.call(["mogrify", "-chop", "5x0", filename])
     except OSError:
         raise SystemExit("Command mogrify was not found. "
-                         +" You need installed imagemagick.")
+                         + " You need installed imagemagick.")
+
 
 def code2icon(code, file_output, temp_dir):
     # Create LaTeX file
@@ -66,8 +69,8 @@ def code2icon(code, file_output, temp_dir):
                                  latex_file])
     except subprocess.CalledProcessError as error:
         msg = "Error reported by latex. The equation cannot be generated.\n" \
-        + "If you have installed the required packages, it could be " \
-        + "an internal error.\nCode:" + code
+              + "If you have installed the required packages, it could be " \
+              + "an internal error.\nCode:" + code
         raise SystemExit(msg)
     except OSError:
         raise SystemExit("Command latex was not found.")
@@ -81,6 +84,7 @@ def code2icon(code, file_output, temp_dir):
             raise SystemExit("Command dvipng was not found.")
     postprocess(file_output)
 
+
 if __name__ == '__main__':
 
     # Prepare a temporal directory to manage all LaTeX files
@@ -93,7 +97,7 @@ if __name__ == '__main__':
     config.read(ICONS_DEF)
 
     for index, section in enumerate(config):
-        print("Generating icons...", index+1, "/", len(config))
+        print("Generating icons...", index + 1, "/", len(config))
         for tag, code in config[section].items():
             png_filepath = os.path.join(ICONS_DIR, tag + '.png')
             if not os.path.exists(png_filepath):

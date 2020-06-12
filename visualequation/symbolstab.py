@@ -25,6 +25,7 @@ from .symbols import lists
 from . import commons
 from .errors import ShowError
 
+
 class TabWidget(QTabWidget):
     def __init__(self, parent, maineq):
         super().__init__(parent)

@@ -56,11 +56,11 @@ class Selection:
         if eq is not None:
             self.eq = eq
         # Avoid intermediate JUXTs
-        if eqtools.is_intermediate_JUXT(self.eq, self.index):
+        if eqtools.is_intermediate_juxt(self.eq, self.index):
             cond = True
             while cond:
                 self.index += 1 if forward else -1
-                cond = eqtools.is_intermediate_JUXT(self.eq, self.index)
+                cond = eqtools.is_intermediate_juxt(self.eq, self.index)
         # Avoid first argument of index operators: \sideset is picky
         if self.index != 0\
            and hasattr(self.eq[self.index - 1], 'type_') \

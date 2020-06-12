@@ -12,7 +12,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """
-A module to manage creation of LaTeX templatex, generations of DVI and
+A module to manage creation of LaTeX templates, generations of DVI and
 conversions to other formats
 """
 import os
@@ -20,12 +20,12 @@ import subprocess
 import json
 
 from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
 
 from . import commons
 from . import eqtools
 from .symbols import utils
 from .errors import ShowError
+
 
 def eq2latex_file(eq, latex_file, template_file):
     """
@@ -37,13 +37,14 @@ def eq2latex_file(eq, latex_file, template_file):
     elif isinstance(eq, list):
         latex_code = eqtools.eq2latex_code(eq)
     else:
-        ShowError('Cannot understand equation type when writting LaTeX file.',
+        ShowError('Cannot understand equation type when writing LaTeX file.',
                   True)
     with open(template_file, "r") as ftempl:
         with open(latex_file, "w") as flatex:
             for line in ftempl:
                 flatex.write(line.replace('%EQ%',
                                           '%' + repr(eq) + "\n" + latex_code))
+
 
 def latex_file2dvi(latex_file, output_dir):
     """
@@ -57,21 +58,22 @@ def latex_file2dvi(latex_file, output_dir):
                                  latex_file])
     except subprocess.CalledProcessError as error:
         msg = "Error reported by latex. The equation cannot be generated.\n" \
-        + "If you have installed the required packages, it could be " \
-        + "an internal error. Feel free to report it including " \
-        + "the content of the following file:\n" + latex_file + "\n" \
-        + "Finishing execution."
+              + "If you have installed the required packages, it could be " \
+              + "an internal error. Feel free to report it including " \
+              + "the content of the following file:\n" + latex_file + "\n" \
+              + "Finishing execution."
         ShowError(msg, True)
     except OSError:
         msg = "Command latex was not found. This is an essential " \
               + "program for Visual Equation. Finishing execution."
         ShowError(msg, True)
-    
+
+
 def dvi2png(dvi_file, png_file, log_file, dpi, bg):
     """ Convert a DVI file to PNG.
     The log is saved in the specified file.
     """
-    if bg == None:
+    if bg is None:
         bg = "Transparent"
 
     with open(log_file, "w") as flog:
@@ -84,32 +86,35 @@ def dvi2png(dvi_file, png_file, log_file, dpi, bg):
                   + "program for Visual Equation. Finishing execution."
             ShowError(msg, True)
 
+
 def dvi2eps(dvi_file, eps_file, log_file, dpi=600):
     """ Convert the DVI file to PostScript. """
     with open(log_file, "w") as flog:
         try:
-            subprocess.call(["dvips", "-E", "-D", str(dpi), "-Ppdf", 
+            subprocess.call(["dvips", "-E", "-D", str(dpi), "-Ppdf",
                              "-o", eps_file, dvi_file], stderr=flog)
         except OSError:
             ShowError("Command dvips was not found. No EPS was created.",
                       False)
-            
+
+
 def eps2pdf(eps_file, pdf_file):
     try:
         subprocess.call(["epstopdf", "--outfile", pdf_file, eps_file])
     except OSError:
         ShowError("Command epstopdf was not found. No PDF was created.", False)
-        
+
+
 # eps2svg: Ouput SVG has bounding box problems
 # In Ekee it seems solved by hand but I am not able to reproduce the fix
-#def eps2svg(eps_file, svg_file, log_file):
+# def eps2svg(eps_file, svg_file, log_file):
 #    with open(log_file, "w") as flog:
 #        subprocess.call(["pstoedit", "-dt", "-ssp", "-f", "plot-svg",
 #                         eps_file, svg_file], stderr=flog)
 
 # pdf2svg: It does not work so good in some sytems (eps produced),
 # specially the \text fields (very bad pixeled)
-#def pdf2svg(pdf_file, svg_file):
+# def pdf2svg(pdf_file, svg_file):
 #    subprocess.call(["pdf2svg", pdf_file, svg_file])
 
 def dvi2svg(dvi_file, svg_file, log_file, scale=5):
@@ -124,20 +129,23 @@ def dvi2svg(dvi_file, svg_file, log_file, scale=5):
     with open(log_file, "w") as flog:
         try:
             subprocess.call(["dvisvgm", "--no-fonts",
-                             "--scale=" + str(scale) + "," + str(scale), 
+                             "--scale=" + str(scale) + "," + str(scale),
                              "-o", svg_file, dvi_file], stderr=flog)
         except OSError:
             msg = "Command dvisvgm was not found. No SVG was created."
             ShowError(msg, False)
 
+
 class MyEncoder(json.JSONEncoder):
     def default(self, o):
         return o.__dict__
+
 
 def from_json(json_o):
     if isinstance(json_o, dict):
         return utils.Op(json_o['n_args'], json_o['latex_code'],
                         json_o['type_'])
+
 
 def eq2png(eq, dpi, bg, directory, png_fpath=None, add_metadata=False,
            latex_template=None):
@@ -156,13 +164,13 @@ def eq2png(eq, dpi, bg, directory, png_fpath=None, add_metadata=False,
     latex_fpath = os.path.join(directory, fname + '.tex')
     dvi2pnglog_fpath = os.path.join(directory, fname + '_div2png.log')
     dvi_fpath = os.path.join(directory, fname + '.dvi')
-    if png_fpath == None:
+    if png_fpath is None:
         png_fpath = os.path.join(directory, fname + '.png')
-    if latex_template == None:
+    if latex_template is None:
         latex_template = commons.LATEX_TEMPLATE
     eq2latex_file(eq, latex_fpath, latex_template)
     latex_file2dvi(latex_fpath, directory)
-    if dpi == None:
+    if dpi is None:
         dpi = 300
     dvi2png(dvi_fpath, png_fpath, dvi2pnglog_fpath, dpi, bg)
     if add_metadata:
@@ -184,6 +192,7 @@ def eq2png(eq, dpi, bg, directory, png_fpath=None, add_metadata=False,
                 ShowError(msg, False)
     return png_fpath
 
+
 def eq2eps(eq, dpi, directory, eps_fpath=None):
     """ Create a eps from a equation, returns the path of eps image.
 
@@ -199,12 +208,13 @@ def eq2eps(eq, dpi, directory, eps_fpath=None):
     latex_fpath = os.path.join(directory, fname + '.tex')
     dvi2epslog_fpath = os.path.join(directory, fname + '_div2eps.log')
     dvi_fpath = os.path.join(directory, fname + '.dvi')
-    if eps_fpath == None:
+    if eps_fpath is None:
         eps_fpath = os.path.join(directory, fname + '.ps')
     eq2latex_file(eq, latex_fpath, commons.LATEX_TEMPLATE)
     latex_file2dvi(latex_fpath, directory)
     dvi2eps(dvi_fpath, eps_fpath, dvi2epslog_fpath, dpi)
     return eps_fpath
+
 
 def eq2pdf(eq, dpi, directory, pdf_fpath=None):
     """
@@ -212,7 +222,7 @@ def eq2pdf(eq, dpi, directory, pdf_fpath=None):
     """
     if not os.path.exists(directory):
         ShowError('Temporal directory used by eq2pdf does not exist.', True)
-    if pdf_fpath == None:
+    if pdf_fpath is None:
         pdf_fpath = os.path.join(directory, 've.pdf')
         save_eq = False
     else:
@@ -238,6 +248,7 @@ def eq2pdf(eq, dpi, directory, pdf_fpath=None):
                 ShowError(msg, False)
     return pdf_fpath
 
+
 def eq2svg(eq, scale, directory, svg_fpath):
     """ Converts the equation to SVG"""
 
@@ -246,14 +257,15 @@ def eq2svg(eq, scale, directory, svg_fpath):
         ShowError('Temporal directory used by eq2svg does not exist.', True)
     fname = 've'
     latex_fpath = os.path.join(directory, fname + '.tex')
-    dvi_fpath = os.path.join(directory, fname + '.dvi')    
+    dvi_fpath = os.path.join(directory, fname + '.dvi')
     dvi2svglog_path = os.path.join(directory,
                                    fname + '_dvi2svg.log')
     eq2latex_file(eq, latex_fpath, commons.LATEX_TEMPLATE)
     latex_file2dvi(latex_fpath, directory)
     dvi2svg(dvi_fpath, svg_fpath, dvi2svglog_path, scale)
 
-def open_eq(parent, filename = None):
+
+def open_eq(parent, filename=None):
     "Return equation inside a file chosen interactively. Else, None."
     if not filename:
         filename, ignored = QFileDialog.getOpenFileName(
@@ -285,5 +297,3 @@ def open_eq(parent, filename = None):
                 ) % str(error)
         ShowError(msg, False, parent)
         return None
-
-        

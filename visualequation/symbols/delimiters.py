@@ -18,8 +18,8 @@ SINGLEDELIMITERS = [
     LatexSymb('rparenthesis', ')'),
     LatexSymb('vert', '|'),
     LatexSymb('uppervert', r'\|'),
-    LatexSymb('lbracket', r'\{{'), # {{: It will be part of an operator
-    LatexSymb('rbracket', r'\}}'), # }}: Idem
+    LatexSymb('lbracket', r'\{{'),  # {{: It will be part of an operator
+    LatexSymb('rbracket', r'\}}'),  # }}: Idem
     LatexSymb('langle', r'\langle'),
     LatexSymb('rangle', r'\rangle'),
     LatexSymb('lfloor', r'\lfloor'),
@@ -40,6 +40,7 @@ SINGLEDELIMITERS = [
     LatexSymb('upperdownarrow', r'\Downarrow'),
     LatexSymb('blankdelimiter', r'.'),
 ]
+
 
 def free_delimiters(parent):
     class Dialog(QDialog):
@@ -107,15 +108,16 @@ def free_delimiters(parent):
             dialog = Dialog(parent)
             result = dialog.exec_()
             if result == QDialog.Accepted:
-                return ((dialog.symb_l.code, dialog.symb_r.code), True)
+                return (dialog.symb_l.code, dialog.symb_r.code), True
             else:
-                return ((None, None), False)
-            
+                return (None, None), False
+
     (delim_l, delim_r), ok = Dialog.get_delimiter(parent)
     if ok:
-        return Op(1, r'\left' + delim_l + r' {0} ' + r'\right' +  delim_r)
+        return Op(1, r'\left' + delim_l + r' {0} ' + r'\right' + delim_r)
     else:
         return None
+
 
 DELIMITERS = [
     LatexSymb('parenthesisb', Op(1, r'\left( {0} \right)')),

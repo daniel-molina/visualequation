@@ -13,6 +13,7 @@
 
 from .utils import *
 
+
 def opfunctions(parent, code):
     class Dialog(QDialog):
         def __init__(self, parent=None):
@@ -49,8 +50,8 @@ def opfunctions(parent, code):
                          dialog.argbelow.isChecked()),
                         True)
             else:
-                return ((None, None), False)
-            
+                return (None, None), False
+
     (argabove, argbelow), ok = Dialog.get(parent)
     if ok:
         if argabove and argbelow:
@@ -69,8 +70,10 @@ def opfunctions(parent, code):
     else:
         return None
 
+
 def f(code):
     return lambda parent: opfunctions(parent, code)
+
 
 FUNCTIONS = [
     LatexSymb('arccos', r'\arccos'),

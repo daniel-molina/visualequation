@@ -24,6 +24,7 @@ from . import eqtools
 from . import commons
 from . import conversions
 
+
 class ShowLatexDialog(QDialog):
     def __init__(self, eq, parent=None):
         super().__init__(parent)
@@ -77,13 +78,14 @@ class ShowLatexDialog(QDialog):
                         line.replace('%EQ%', formulalatex))
         else:
             self.text.insertPlainText(formulalatex)
-            
+
     @staticmethod
     def showlatex(eq, parent=None):
         dialog = ShowLatexDialog(eq, parent)
         dialog.exec_()
         return None
-        
+
+
 class EditLatexDialog(QDialog):
     def __init__(self, latexblock, temp_dir, parent=None):
         super().__init__(parent)
@@ -97,7 +99,7 @@ class EditLatexDialog(QDialog):
         self.scrollarea = QScrollArea(self)
         self.scrollarea.setWidget(self.eqblock)
         self.scrollarea.setWidgetResizable(True)
-        
+
         self.text = QTextEdit(self)
         self.text.insertPlainText(latexblock)
         self.text.moveCursor(QTextCursor.Start)
@@ -123,7 +125,7 @@ class EditLatexDialog(QDialog):
         self.buttons.accepted.connect(self.accept)
         self.buttons.rejected.connect(self.reject)
         self.buttons.button(QDialogButtonBox.Ok).setDisabled(True)
-        
+
         vbox = QVBoxLayout(self)
         vbox.addWidget(self.scrollarea)
         vbox.addWidget(self.text)
@@ -142,14 +144,14 @@ class EditLatexDialog(QDialog):
             self.checkbutton.setDisabled(True)
         else:
             self.checkbutton.setEnabled(True)
-        
+
     def handlecheck(self):
         self.compilationmsg.setText(_('Checking LaTeX code...'))
         latex_file = os.path.join(self.temp_dir, "edit.tex")
         # Remove trailing new lines, a common source of invisible errors
         cursor = self.text.textCursor()
         pos = cursor.position()
-        newtext =self.text.toPlainText().rstrip()
+        newtext = self.text.toPlainText().rstrip()
         self.text.setPlainText(newtext)
         if len(newtext) > pos:
             cursor.setPosition(pos)

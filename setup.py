@@ -27,6 +27,7 @@ ICONS_DEF = os.path.abspath(os.path.join(os.path.dirname(__file__),
 ICONS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                          'data', 'icons'))
 
+
 def check_icons():
     """ Check that icons are created. """
     config = configparser.ConfigParser(delimiters=(' ',))
@@ -41,6 +42,7 @@ def check_icons():
                       + '(run "./generate_icons.py" to solve the problem)\n' \
                       + "*****************"
                 raise SystemExit(msg)
+
 
 setuptools.setup(
     name="visualequation",
@@ -59,14 +61,15 @@ setuptools.setup(
     data_files=[
         ('share/applications', ['data/visualequation.desktop']),
         ('share/visualequation', ['data/eq_template.tex',
-                                  'data/visualequation.png',]),
+                                  'data/visualequation.png', ]),
         ('share/visualequation/icons', glob.glob('data/icons/*.png')),
         ('share/locale/es/LC_MESSAGES',
          ['locale/es/LC_MESSAGES/visualequation.mo']),
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+        "License :: OSI Approved ::"
+        + " GNU General Public License v3 or later (GPLv3+)",
         "Operating System :: POSIX :: Linux",
         "Environment :: X11 Applications :: Qt",
         "Topic :: Scientific/Engineering :: Mathematics",
