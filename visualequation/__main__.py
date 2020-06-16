@@ -174,8 +174,7 @@ class MainWindow(QMainWindow):
         def zoomin():
             if self.maineq.eq.eqsel.dpi < 1000:
                 self.maineq.eq.eqsel.dpi += 50
-                self.maineq.eq.eqsel.display(self.maineq.eq.eq,
-                                             self.maineq.eq.eqsel.right)
+                self.maineq.eq.eqsel.display(right=self.maineq.eq.eqsel.right)
             else:
                 ShowError(_('Equation will no be increased.'), False)
 
@@ -187,8 +186,7 @@ class MainWindow(QMainWindow):
         def zoomout():
             if self.maineq.eq.eqsel.dpi >= 100:
                 self.maineq.eq.eqsel.dpi -= 50
-                self.maineq.eq.eqsel.display(self.maineq.eq.eq,
-                                             self.maineq.eq.eqsel.right)
+                self.maineq.eq.eqsel.display(right=self.maineq.eq.eqsel.right)
             else:
                 ShowError(_('Equation will no be decreased.'), False)
 
