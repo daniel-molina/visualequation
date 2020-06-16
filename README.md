@@ -2,6 +2,8 @@
 
 Visualequation creates equations visually, in a WYSIWYG (What You See Is What You Get) style. Equations can be exported to PNG, EPS, PDF and SVG. PNG and SVG are transparent. If you want a background you can put a white (or whatever color) colorbox to the whole equation in the editor before exporting. You can recover equations from previously created images in PNG and PDF format and continue editing them! Drag and drop support is available.
 
+To see some screenshots go to the wiki.
+
 ## Requirements
 
 ### Debian 9 stretch/Ubuntu 17.10 artful and next releases (or derivatives)

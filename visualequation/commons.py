@@ -72,5 +72,6 @@ if len(INSTALL_DIRS) > 1:
         
 #print("This is DATA_DIR: ", DATA_DIR, "\n", subprocess.check_output("pwd"),"\n\n")
 ICONS_DIR = os.path.join(DATA_DIR, 'icons')
+EXAMPLES_DIR = os.path.join(DATA_DIR, 'examples')
 LATEX_TEMPLATE = os.path.join(DATA_DIR, 'eq_template.tex')
 ICON = os.path.join(DATA_DIR, 'visualequation.png')

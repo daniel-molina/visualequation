@@ -31,6 +31,7 @@ class ShowLatexDialog(QDialog):
         self.eq = eq.eq
         self.index = eq.eqsel.index
         self.setWindowTitle('LaTeX code')
+        self.setSizeGripEnabled(True)
         self.text = QTextEdit(self)
         self.text.insertPlainText(eqtools.eqblock2latex(self.eq,
                                                         self.index)[0])
@@ -38,14 +39,14 @@ class ShowLatexDialog(QDialog):
         self.text.setReadOnly(True)
         copybutton = QPushButton(_('Copy to Clipboard'))
         copybutton.clicked.connect(self.handlecopy)
-        msg = QLabel(_('Tip: If you pretend to copy the code, do'
-                       ' not close the program before'
-                       ' pasting.'))
+        msg = QLabel(_('Tip: If you pretend to copy the code somewhere, do'
+                       ' not close the program before pasting.'))
         msg.setWordWrap(True)
-        self.onlysel = QCheckBox(_('Only selection'))
+        self.onlysel = QCheckBox(_('Selection only (not full equation)'))
         self.onlysel.setChecked(True)
         self.onlysel.stateChanged.connect(self.settext)
-        self.fullcode = QCheckBox(_('Full code'))
+        self.fullcode = QCheckBox(_('Include necessary LaTeX code to produce '
+                                    'a document'))
         self.fullcode.setChecked(False)
         self.fullcode.stateChanged.connect(self.settext)
 
@@ -90,8 +91,9 @@ class EditLatexDialog(QDialog):
     def __init__(self, latexblock, temp_dir, parent=None):
         super().__init__(parent)
         self.temp_dir = temp_dir
-        self.setWindowTitle(_('Edit LaTeX code'))
+        self.setWindowTitle(_('Edit LaTeX code of selection'))
         self.resize(600, 600)
+        self.setSizeGripEnabled(True)
         self.eqblock = QLabel(self)
         self.eqblock.setAlignment(Qt.AlignCenter)
         eqblock_im = conversions.eq2png(latexblock, 300, None, self.temp_dir)

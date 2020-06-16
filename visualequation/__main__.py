@@ -30,6 +30,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
 from . import commons
+from data.usage import getusage
 
 gettext.install('visualequation')
 # Check if user language is available for translation
@@ -156,7 +157,7 @@ class MainWindow(QMainWindow):
             if newlatexcode:
                 self.maineq.eq.insert_substituting(newlatexcode)
 
-        editlatex_act = QAction(_('Edit &LaTeX'), self)
+        editlatex_act = QAction(_('Edit &LaTeX block'), self)
         editlatex_act.setStatusTip(_('Edit LaTeX code of selected block'))
         editlatex_act.triggered.connect(editlatex)
 
@@ -214,10 +215,10 @@ class MainWindow(QMainWindow):
         activate_game_act.setStatusTip(_('Let Alice to be with you while '
                                          'building the equation'))
         # Help
-        usage_act = QAction(_('Basic &usage'), self)
+        usage_act = QAction(_('&Usage'), self)
         usage_act.setShortcut('Ctrl+H')
-        usage_act.setStatusTip(_('Basic usage of the program'))
-        usage_act.triggered.connect(self.usage)
+        usage_act.setStatusTip(_('Usage of the program'))
+        usage_act.triggered.connect(self.usagedialog)
         about_act = QAction(_('About &Visual Equation'), self)
         about_act.triggered.connect(self.about)
         about_qt_act = QAction(_('About &Qt'), self)
@@ -275,53 +276,17 @@ class MainWindow(QMainWindow):
         central_widget.setLayout(layout)
         self.maineq.setFocus()
 
-    def usage(self):
-
-        usagestr = _("<p>Visual Equation is expected to be user-friendly "
-                     "and intuitive, so it should not be difficult to use if you "
-                     "understand its usage. Basically:</p>"
-                     "<p>Instead of a cursor, you navigate with a \"ghost\" that "
-                     "surrounds blocks of the equation, from single symbols to arguments, "
-                     "operators and the entire equation. Change the ghost's selection and "
-                     "insert characters at the direction in which the ghost is facing "
-                     "by pressing keys on the keyboard or clicking symbols "
-                     "in the bottom panel. If the ghost surrounds a square, "
-                     "as when you open the program, you overwrite the square.</p>"
-                     "<p>These are the main keys:</p>"
-                     "<ul>"
-                     "<li><b>LEFT</b>: "
-                     "Change the direction of the ghost to the left or "
-                     "navigate backwards.</li>"
-                     "<li><b>RIGHT</b> or <b>TAB</b>: "
-                     "Change the direction of the ghost to the right or "
-                     "navigate forwards.</li>"
-                     "<li><b>UP</b> and <b>DOWN</b>: "
-                     "Put a superindex or subindex in the direction "
-                     "pointed by the ghost.</li>"
-                     "<li><b>DELETE</b> or <b>BACKSPACE</b>: "
-                     "Remove current selection. If it was the entire argument "
-                     "of an operator, a square will remain so you can change it "
-                     "by something else.</li>"
-                     "<li><b>Left-click</b> on an element of the symbols panel: "
-                     "Insert the element where the ghost is facing.</li>"
-                     "<li><b>SHIFT + Left-click</b> on an element of the symbols panel "
-                     "(<b>VERY handy</b>): "
-                     "If the element is an operator (they have dots and maybe squares "
-                     "representing its arguments), the selection is replaced "
-                     "by the operator and its first argument (represented by three dots) "
-                     "is set to the selection. "
-                     "If the element is a symbol, the selection is replaced "
-                     "by that symbol.</li>"
-                     "</ul>"
-                     "<p>You may learn also the short-cuts noted in the menu.</p>")
-
+    def usagedialog(self):
         class Dialog(QDialog):
             def __init__(self, parent=None):
                 super().__init__(parent)
-                self.setWindowTitle(_('Basic usage'))
+                self.setModal(False)
+                self.setWindowTitle(_('Usage'))
+                self.resize(1000, 600)
+                self.setSizeGripEnabled(True)
                 text = QTextEdit(self)
                 text.setReadOnly(True)
-                text.insertHtml(usagestr)
+                text.insertHtml(getusage())
                 text.moveCursor(QTextCursor.Start)
                 buttons = QDialogButtonBox(QDialogButtonBox.Ok, self)
                 vbox = QVBoxLayout(self)
@@ -330,7 +295,7 @@ class MainWindow(QMainWindow):
                 buttons.accepted.connect(self.accept)
 
         dialog = Dialog(self)
-        dialog.exec_()
+        dialog.show()
 
     def about(self):
         msg = _("<p>Visual Equation</p>"
