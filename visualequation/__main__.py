@@ -323,7 +323,8 @@ def main():
     def exception_hook(exctype, value, traceback_error):
         # sys._excepthook(exctype, value, traceback_error)
         ShowError('Unhandled exception. Feel free to report this incident'
-                  " with the following traceback code:\n"
+                  ' with the following traceback code:\n\n'
+                  + str(value) + '\n\n'
                   + ''.join(traceback.format_tb(traceback_error)),
                   True)
 
