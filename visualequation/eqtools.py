@@ -20,12 +20,13 @@ from .errors import ShowError
 
 
 def eqblock2latex(eq, index):
-    """ Return latex code of the equation block starting at the given index
+    """
+    Return latex code of the equation block starting at the given index
     and 1 + the index of the last element of the block in eq.
     A block is symbol or str, a unary operator with its first argument or
     a binary operator and their two arguments.
     Our equations should be a single block (with sub-blocks),
-    usings as many Prod's at the begining as necessary.
+    using as many Prod's at the beginning as necessary.
     """
 
     def block2latex(index):
@@ -135,6 +136,9 @@ def is_arg_of_juxt(eq, check_index):
     The first element says whether check_index is an argument of a Juxt op.
     If it is, the 2nd element indicates the pos of that Juxt and the 3rd one
     the position of the other arg of Juxt.
+    Note: If it is not an argument of a Juxt, that means that check_index
+    points to the beginning of a block (argument of any other operator or the
+    whole equation).
     """
     start_index = 0
     try:
@@ -149,6 +153,18 @@ def is_arg_of_juxt(eq, check_index):
                 start_index = juxt_index + 1
     except ValueError:
         return False, None, None
+
+
+def block_start(eq, idx):
+    """
+    Return the index of the closest previous element which is not argument of
+    JUXT.
+    """
+    wrong_idx = True
+    while wrong_idx:
+        retidx = idx
+        wrong_idx, idx, ignored = is_arg_of_juxt(eq, retidx)
+    return retidx
 
 
 def first_arg_of_juxt_seq(eq, juxt_index):
@@ -194,22 +210,26 @@ def is_intermediate_juxt(eq, index):
     return False
 
 
-def is_next_element_after_op(eq, check_index, prev_op_index):
+def is_last_element_of_block(eq, idx_element, start=None):
     """
-    Check whether index points to the element (if any) after the
-    the last argument of an operator.
-    If it is, it returns in addition the index of the closer operator
-    satisfying the condition.
-    If prev_op_index != None, it skips operators that start after that
-    index (included, so previous output of the function is a good input
-    to look for the next closer operator).
+    * 1st output indicates whether idx_element points to last element
+      of a block. Note that intermediate JUXTs are not considered as blocks.
+    * If it does, 2nd output value is the index of the closest operator
+      such that its last element is pointed by idx_element.
+    * If start is not None, do not consider operators which start in that
+      position or after that. If it is negative, False is returned (handy if
+       you are calculating it from previous output and not checking that it
+       out of range). It must be smaller than idx_element and len(eq).
+      -> As a consequence, 2nd output value - 1 of a previous successful call
+       (1st output value == True) is a valid value to look for a next
+       closest operator.
     """
-    if prev_op_index is not None:
-        assert prev_op_index < check_index
-        assert 0 <= prev_op_index < len(eq)
-    assert 0 <= check_index < len(eq)
+    if start is not None:
+        assert start < idx_element
+        assert start < len(eq)
+    assert 0 <= idx_element < len(eq)
 
-    candidate = check_index - 1 if prev_op_index is None else prev_op_index - 1
+    candidate = idx_element - 1 if start is None else start
     while candidate >= 0:
         while not isinstance(eq[candidate], utils.Op) or \
                 is_intermediate_juxt(eq, candidate):
@@ -217,10 +237,10 @@ def is_next_element_after_op(eq, check_index, prev_op_index):
             if candidate < 0:
                 return False, None
         index_after_block = nextblockindex(eq, candidate)
-        if index_after_block == check_index + 1:
+        if index_after_block == idx_element + 1:
             return True, candidate
         # Skip some iterations
-        elif index_after_block > check_index + 1:
+        elif index_after_block > idx_element + 1:
             return False, None
         else:
             candidate -= 1
@@ -329,7 +349,9 @@ def indexop2arglist(eq, sel_index):
 
 
 def flat_arglist(args):
-    # Flat the list of args
+    """
+    Flat the list of list args without including elements equal to None.
+    """
     new_args = []
     for arg in args:
         if arg is not None:
@@ -389,7 +411,7 @@ def arglist2indexop(args):
 def is_script(eq, sel_index):
     """
     Returns a tuple of three elements:
-    The first element says if the element pointed by sel_index is a script.
+    The 1st element indicates if the element pointed by sel_index is a script.
     If it is or if it is the base, the 2nd element indicates the pos of the
     associated index operator.
     The 3rd element indicates which argument of the index operator is being
