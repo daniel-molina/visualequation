@@ -243,10 +243,12 @@ class Selection:
         self.set_valid_index(forward=False)
         self.display(right=False)
 
-    def display_surrounding_block(self):
+    def display_surrounding_block(self, level=1):
         """
         Set index to the beginning of the block containing index and display.
         """
-        self.index = eqtools.block_start(self.eq, self.index)
+        self.index = eqtools.surrounding_block_start(self.eq, self.index)
+        # set_valid_index is known to place outputs of surrounding_block_start
+        # in sites compatible with the next call to that function.
         self.set_valid_index(forward=False)
         self.display(right=True)

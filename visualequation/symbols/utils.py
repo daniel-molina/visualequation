@@ -25,7 +25,7 @@ from .. import commons
 
 
 class Op(object):
-    """ Class for LaTeX operator (that has arguments)"""
+    """ Class for LaTeX operator (meaning 'with arguments')"""
 
     def __init__(self, n_args, latex_code, type_=None):
         self.n_args = n_args

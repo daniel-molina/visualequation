@@ -123,7 +123,7 @@ class Eq:
             """
             Given an operator, it is replaced in self.eq according to
             the rules of above. It also modify self.eqsel.index to point to
-            the smartest block.
+            the most appropriated block.
             """
             if isinstance(op, str):
                 if self.eq[self.eqsel.index] == utils.NEWARG:
@@ -182,7 +182,7 @@ class Eq:
         of the operator.
 
         If the operator has more than one argument, put the selected block
-        as the first argument of the operator. Put NewArg symbols in the
+        as the first argument of the operator. Put NEWARG symbols in the
         rest of the arguments.
 
         If the operator has more than one argument, selection index is
@@ -194,7 +194,7 @@ class Eq:
             """
             Given an operator, it is replaced in self.eq according to
             the rules of above. It also modify self.eqsel.index to point to
-            the smartest block.
+            the most appropriated block.
             """
             if isinstance(op, str) or \
                     (isinstance(op, utils.Op) and op.n_args == 0):
@@ -232,7 +232,8 @@ class Eq:
             return
 
         self.eqhist.update(self.eqsel)
-        # If the user specifies a JUXT, they refer to the first or last element
+        # If the user specifies a JUXT, they refer to the first or last
+        # element, depending on self.eqsel.right.
         if self.eq[self.eqsel.index] == utils.JUXT:
             if self.eqsel.right:
                 self.eqsel.index = eqtools.last_arg_of_juxt_seq(
@@ -313,6 +314,8 @@ class Eq:
         """
         If self.eqsel.index points to the first or second arg of a Juxt,
         it removes the Juxt and leaves the other argument in its place.
+        (Else, that means that it points to a block: an argument of any other
+        operator or the whole equation)
         If it is a script, it removes it.
         Else, it removes the block pointed and put a NEWARG.
         """
@@ -339,6 +342,7 @@ class Eq:
                 self.eqhist.update(self.eqsel)
                 args = eqtools.indexop2arglist(self.eq, script_op_index)
                 # Find which element of the list has to be removed
+                # Note that arg_pos only applies non-None arguments
                 arg_index = 0
                 for index, arg in enumerate(args):
                     if arg is not None:
@@ -362,8 +366,50 @@ class Eq:
                 # Avoid displaying and saving in history if nothing to do
                 return
 
+        self.eqsel.set_valid_index(self.eq, forward=False)
         self.eqsel.display(self.eq)
         self.eqhist.save(self.eqsel)
+
+    def remove_less_internal_op(self):
+        """
+        If element pointed by self.eqsel.index is a symbol, remove it as if
+        DELETE was pressed.
+        If it is an operator, substitute in its position any non-NEWARG
+        arguments that it has, separated by JUXTs. Select the first argument if
+        it was not a JUXT. Else, select first non-JUXT element of first
+        argument.
+        """
+        op = self.eq[self.eqsel.index]
+        if isinstance(op, str):
+            # remove_sel manages all details: hist, eqsel, display and save
+            self.remove_sel()
+        elif op != utils.JUXT:
+            self.eqhist.update(self.eqsel)
+            validargs = 0
+            idx = self.eqsel.index + 1
+            subeq = []
+            # Keep last part of subeq separated, fix after loop
+            tail = []
+            for arg in range(1, op.n_args + 1):
+                nextidx = eqtools.nextblockindex(self.eq, idx)
+                if self.eq[idx] != utils.NEWARG:
+                    validargs += 1
+                    # Remember that first tail is []
+                    subeq += tail + [utils.JUXT]
+                    tail = self.eq[idx:nextidx]
+                idx = nextidx
+            # Corrections
+            if validargs <= 1:
+                # Case validargs == 0: subst []
+                # Case validargs == 1: subst unique valid arg
+                self.eq[self.eqsel.index:nextidx] = tail
+            else:
+                # Case validargs > 1: subst subeq, without last JUXT, + tail
+                self.eq[self.eqsel.index:nextidx] = subeq[:-1] + tail
+            # Select correctly
+            self.eqsel.set_valid_index(self.eq)
+            self.eqsel.display(self.eq)
+            self.eqhist.save(self.eqsel)
 
     def new_eq(self):
         self.eq = [utils.NEWARG]

@@ -54,7 +54,8 @@ def nextblockindex(eq, index):
     This function was written because the previous one was called often
     just to calculate end of blocks.
     It returns the index after the end of the block,
-    being a valid index or not (when it is passed an ending block of eq).
+    being a valid index or not (when it is passed the index of the start of
+    an ending block of eq).
     """
 
     def block2nextindex(index):
@@ -137,8 +138,8 @@ def is_arg_of_juxt(eq, check_index):
     If it is, the 2nd element indicates the pos of that Juxt and the 3rd one
     the position of the other arg of Juxt.
     Note: If it is not an argument of a Juxt, that means that check_index
-    points to the beginning of a block (argument of any other operator or the
-    whole equation).
+    points to the beginning of a block (an argument of any non-JUXT operator or
+    the whole equation).
     """
     start_index = 0
     try:
@@ -155,16 +156,67 @@ def is_arg_of_juxt(eq, check_index):
         return False, None, None
 
 
-def block_start(eq, idx):
+def start_of_smallest_block(eq, idx):
     """
-    Return the index of the closest previous element which is not argument of
-    JUXT.
+    Return the index of the first element of a block.
+    (The index of any previous operator except intermediate JUXTs)
     """
     wrong_idx = True
     while wrong_idx:
         retidx = idx
         wrong_idx, idx, ignored = is_arg_of_juxt(eq, retidx)
     return retidx
+
+
+def is_first_element_of_block(eq, idx):
+    """
+    1st output indicates if element with index idx is the start of a block.
+    2nd argument is the index of the start of the smallest block which contains
+    element pointed by idx.
+    """
+    block_start = start_of_smallest_block(eq, idx)
+    return block_start == idx, block_start
+
+
+def prev_block_start(eq, idx):
+    """
+    Similar to start_of_smallest_block but if idx is already the solution,
+    return the index of the previous block.
+
+    If idx is a negative number, 0 is returned. Useful to avoid checking
+    output value before a call with idx equal to that previous output
+    minus 1.
+
+    Properties of output:
+        * If idx is not the start of a block, block starting at output
+          contains idx.
+        * If idx is the start of a block, the block does not always contains
+          idx.
+    """
+    if idx <= 0:
+        return 0
+    is_first, idx_first = is_first_element_of_block(eq, idx)
+    return idx_first if not is_first else start_of_smallest_block(eq, idx-1)
+
+
+def surrounding_block_start(eq, idx):
+    """
+    Similar to start_of_smallest_block but, if idx is already the solution,
+    return the index of the next smallest block containing index idx.
+
+    If idx is a negative number, 0 is returned. Useful to avoid checking
+    output value before a call with idx equal to that previous output
+    minus 1.
+    """
+    # prev_block_start manages case idx < 0
+    candidate_idx = prev_block_start(eq, idx)
+    if candidate_idx == 0:
+        return 0
+    while idx >= nextblockindex(eq, candidate_idx):
+        candidate_idx = prev_block_start(eq, candidate_idx-1)
+        if candidate_idx <= 0:
+            return 0
+    return candidate_idx
 
 
 def first_arg_of_juxt_seq(eq, juxt_index):

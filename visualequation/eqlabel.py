@@ -23,13 +23,14 @@ from .symbols import utils
 from . import conversions
 from . import eq
 
+
 class EqLabel(QLabel):
     def __init__(self, temp_dir, parent):
         super().__init__(parent)
         self.parent = parent
         self.eq = eq.Eq(temp_dir, self.setPixmap, parent)
         self.setAcceptDrops(True)
-        
+
     def event(self, event):
         if event.type() == QEvent.KeyPress and event.key() == Qt.Key_Tab:
             self.eq.eqsel.display_next()
@@ -67,13 +68,18 @@ class EqLabel(QLabel):
         self.setAcceptDrops(True)
 
     def keyPressEvent(self, event):
-        if QApplication.keyboardModifiers() != Qt.ControlModifier:
-            self.on_key_pressed_no_ctrl(event)
-        else:
+        modifiers = QApplication.keyboardModifiers()
+        if modifiers == Qt.ControlModifier:
             self.on_key_pressed_ctrl(event)
+        elif modifiers == Qt.ShiftModifier:
+            self.on_key_pressed_shift(event)
+        elif modifiers == Qt.AltModifier:
+            self.on_key_pressed_alt(event)
+        else:
+            self.on_standard_key_pressed(event)
 
-    def on_key_pressed_no_ctrl(self, event):
-        # 0-9 or A-Z or a-z exluding Ctr modifier
+    def on_standard_key_pressed(self, event):
+        # 0-9 or A-Z or a-z excluding Ctr modifier
         try:
             code = ord(event.text())
             if (48 <= code <= 57 or 65 <= code <= 90 or 97 <= code <= 122) \
@@ -107,6 +113,16 @@ class EqLabel(QLabel):
 
     def on_key_pressed_ctrl(self, event):
         pass
+
+    def on_key_pressed_shift(self, event):
+        key = event.key()
+        if key == Qt.Key_Backspace or key == Qt.Key_Delete:
+            self.eq.remove_less_internal_op()
+
+    def on_key_pressed_alt(self, event):
+        key = event.key()
+        if key == Qt.Key_Left:
+            self.eq.eqsel.display_surrounding_block()
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
