@@ -43,7 +43,7 @@ if locale.getlocale()[0] is not None:
 
 from . import symbolstab
 from . import eqlabel
-from . import eqtools
+from . import eqqueries
 from . import game
 from . import latexdialogs
 from .errors import ShowError
@@ -94,6 +94,9 @@ class MyScrollArea(QScrollArea):
 class MainWindow(QMainWindow):
     def __init__(self, temp_dir):
         super().__init__()
+        self.eqlabel = None
+        self.scrollarea = None
+        self.tabs = None
         self.temp_dir = temp_dir
         ShowError.default_parent = self
         self.init_center_widget()
@@ -109,15 +112,15 @@ class MainWindow(QMainWindow):
         new_act = QAction(_('&New'), self)
         new_act.setShortcut('Ctrl+N')
         new_act.setStatusTip(_('Create a new equation'))
-        new_act.triggered.connect(self.maineq.eq.new_eq)
+        new_act.triggered.connect(self.eqlabel.maineq.new_eq)
         open_act = QAction(_('&Open'), self)
         open_act.setShortcut('Ctrl+O')
         open_act.setStatusTip(_('Open equation from image'))
-        open_act.triggered.connect(self.maineq.eq.open_eq)
+        open_act.triggered.connect(self.eqlabel.maineq.open_eq)
         save_act = QAction(_('&Save'), self)
         save_act.setShortcut('Ctrl+S')
         save_act.setStatusTip(_('Save image'))
-        save_act.triggered.connect(self.maineq.eq.save_eq)
+        save_act.triggered.connect(self.eqlabel.maineq.save_eq)
         exit_act = QAction(_('&Exit'), self)
         exit_act.setShortcut('Ctrl+Q')
         exit_act.setStatusTip(_('Exit application'))
@@ -126,19 +129,19 @@ class MainWindow(QMainWindow):
         undo_act = QAction(_('&Undo'), self)
         undo_act.setShortcut('Ctrl+Z')
         undo_act.setStatusTip(_('Return equation to previous state'))
-        undo_act.triggered.connect(self.maineq.eq.recover_prev_eq)
+        undo_act.triggered.connect(self.eqlabel.maineq.recover_prev_eq)
         redo_act = QAction(_('&Redo'), self)
         redo_act.setShortcut('Ctrl+Y')
         redo_act.setStatusTip(_('Recover next equation state'))
-        redo_act.triggered.connect(self.maineq.eq.recover_next_eq)
+        redo_act.triggered.connect(self.eqlabel.maineq.recover_next_eq)
         copy_act = QAction(_('&Copy'), self)
         copy_act.setShortcut('Ctrl+C')
         copy_act.setStatusTip(_('Copy selection'))
-        copy_act.triggered.connect(self.maineq.eq.sel2eqbuffer)
+        copy_act.triggered.connect(self.eqlabel.maineq.sel2buffer)
 
         def cut():
-            self.maineq.eq.sel2eqbuffer()
-            self.maineq.eq.remove_sel()
+            self.eqlabel.maineq.sel2buffer()
+            self.eqlabel.maineq.delete()
 
         cut_act = QAction(_('C&ut'), self)
         cut_act.setShortcut('Ctrl+X')
@@ -147,23 +150,23 @@ class MainWindow(QMainWindow):
         paste_act = QAction(_('&Paste'), self)
         paste_act.setShortcut('Ctrl+V')
         paste_act.setStatusTip(_('Paste previous cut or copied selection'))
-        paste_act.triggered.connect(self.maineq.eq.eqbuffer2sel)
+        paste_act.triggered.connect(self.eqlabel.maineq.buffer2sel)
 
         def editlatex():
-            oldlatexcode = eqtools.eqblock2latex(self.maineq.eq.eq,
-                                                 self.maineq.eq.eqsel.index)[0]
+            oldlatexcode = eqqueries.subeq2latex(self.eqlabel.maineq.eq,
+                                                 self.eqlabel.maineq.eqsel.idx)[0]
             newlatexcode = latexdialogs.EditLatexDialog.editlatex(
                 oldlatexcode, self.temp_dir, self)
             if newlatexcode:
-                self.maineq.eq.insert_substituting(newlatexcode)
+                self.eqlabel.maineq.insert_substituting(newlatexcode)
 
         editlatex_act = QAction(_('Edit &LaTeX block'), self)
         editlatex_act.setStatusTip(_('Edit LaTeX code of selected block'))
         editlatex_act.triggered.connect(editlatex)
 
         def selectall():
-            self.maineq.eq.eqsel.index = 0
-            self.maineq.eq.eqsel.display()
+            self.eqlabel.maineq.eqsel.idx = 0
+            self.eqlabel.maineq.eqsel.display()
 
         selectall_act = QAction('&Select all', self)
         selectall_act.setShortcut('Ctrl+A')
@@ -172,9 +175,9 @@ class MainWindow(QMainWindow):
 
         # View
         def zoomin():
-            if self.maineq.eq.eqsel.dpi < 1000:
-                self.maineq.eq.eqsel.dpi += 50
-                self.maineq.eq.eqsel.display(right=self.maineq.eq.eqsel.right)
+            if self.eqlabel.maineq.eqsel.dpi < 1000:
+                self.eqlabel.maineq.eqsel.dpi += 50
+                self.eqlabel.maineq.eqsel.display()
             else:
                 ShowError(_('Equation will no be increased.'), False)
 
@@ -184,9 +187,9 @@ class MainWindow(QMainWindow):
         zoomin_act.triggered.connect(zoomin)
 
         def zoomout():
-            if self.maineq.eq.eqsel.dpi >= 100:
-                self.maineq.eq.eqsel.dpi -= 50
-                self.maineq.eq.eqsel.display(right=self.maineq.eq.eqsel.right)
+            if self.eqlabel.maineq.eqsel.dpi >= 100:
+                self.eqlabel.maineq.eqsel.dpi -= 50
+                self.eqlabel.maineq.eqsel.display()
             else:
                 ShowError(_('Equation will no be decreased.'), False)
 
@@ -196,7 +199,7 @@ class MainWindow(QMainWindow):
         zoomout_act.triggered.connect(zoomout)
 
         def showlatex():
-            latexdialogs.ShowLatexDialog.showlatex(self.maineq.eq, self)
+            latexdialogs.ShowLatexDialog.showlatex(self.eqlabel.maineq, self)
 
         showlatex_act = QAction(_('Show &LaTeX code'), self)
         showlatex_act.setStatusTip(
@@ -207,8 +210,7 @@ class MainWindow(QMainWindow):
         def alice():
             state = activate_game_act.isChecked()
             game.Game.activate(state)
-            self.maineq.eq.eqsel.display(self.maineq.eq.eq,
-                                         self.maineq.eq.eqsel.right)
+            self.eqlabel.maineq.eqsel.display()
 
         activate_game_act = QAction(_('Invite &Alice'), self, checkable=True)
         activate_game_act.triggered.connect(alice)
@@ -225,15 +227,17 @@ class MainWindow(QMainWindow):
         about_qt_act.triggered.connect(QApplication.aboutQt)
 
         # Define menuBar
+        # Not using mnemonics (&) for the menubar because the focus is lost
+        # and equation cannot continue being edited.
         menubar = self.menuBar()
         menubar.setNativeMenuBar(False)
-        file_menu = menubar.addMenu(_('&File'))
+        file_menu = menubar.addMenu(_('File'))
         file_menu.addAction(new_act)
         file_menu.addAction(open_act)
         file_menu.addAction(save_act)
         file_menu.addSeparator()
         file_menu.addAction(exit_act)
-        edit_menu = menubar.addMenu(_('&Edit'))
+        edit_menu = menubar.addMenu(_('Edit'))
         edit_menu.addAction(undo_act)
         edit_menu.addAction(redo_act)
         edit_menu.addSeparator()
@@ -244,14 +248,14 @@ class MainWindow(QMainWindow):
         edit_menu.addAction(editlatex_act)
         edit_menu.addSeparator()
         edit_menu.addAction(selectall_act)
-        view_menu = menubar.addMenu(_('&View'))
+        view_menu = menubar.addMenu(_('View'))
         view_menu.addAction(zoomin_act)
         view_menu.addAction(zoomout_act)
         view_menu.addSeparator()
         view_menu.addAction(showlatex_act)
-        game_menu = menubar.addMenu(_('&Games'))
+        game_menu = menubar.addMenu(_('Games'))
         game_menu.addAction(activate_game_act)
-        help_menu = menubar.addMenu(_('&Help'))
+        help_menu = menubar.addMenu(_('Help'))
         help_menu.addAction(usage_act)
         help_menu.addAction(about_qt_act)
         help_menu.addAction(about_act)
@@ -262,19 +266,19 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
         layout = QVBoxLayout()
         # Create the equation
-        self.maineq = eqlabel.EqLabel(self.temp_dir, self)
-        self.maineq.setAlignment(Qt.AlignCenter)
+        self.eqlabel = eqlabel.EqLabel(self.temp_dir, self)
+        self.eqlabel.setAlignment(Qt.AlignCenter)
         self.scrollarea = MyScrollArea(self)
-        self.scrollarea.setWidget(self.maineq)
+        self.scrollarea.setWidget(self.eqlabel)
         self.scrollarea.setWidgetResizable(True)
         # Create the symbols TabWidget
-        self.tabs = symbolstab.TabWidget(self, self.maineq)
+        self.tabs = symbolstab.TabWidget(self, self.eqlabel)
         self.tabs.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         # Add everything to the central widget
         layout.addWidget(self.scrollarea)
         layout.addWidget(self.tabs)
         central_widget.setLayout(layout)
-        self.maineq.setFocus()
+        self.eqlabel.setFocus()
 
     def usagedialog(self):
         class Dialog(QDialog):

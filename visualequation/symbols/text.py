@@ -121,25 +121,25 @@ def special_format(latex_command, label_text, only_capital=False):
 
 
 COLORS = [
-    LatexSymb('black', 'black'),
-    LatexSymb('blue', 'blue'),
-    LatexSymb('brown', 'brown'),
-    LatexSymb('cyan', 'cyan'),
-    LatexSymb('darkgray', 'darkgray'),
-    LatexSymb('gray', 'gray'),
-    LatexSymb('green', 'green'),
-    LatexSymb('lightgray', 'lightgray'),
-    LatexSymb('lime', 'lime'),
-    LatexSymb('magenta', 'magenta'),
-    LatexSymb('olive', 'olive'),
-    LatexSymb('orange', 'orange'),
-    LatexSymb('pink', 'pink'),
-    LatexSymb('purple', 'purple'),
-    LatexSymb('red', 'red'),
-    LatexSymb('teal', 'teal'),
-    LatexSymb('violet', 'violet'),
-    LatexSymb('white', 'white'),
-    LatexSymb('yellow', 'yellow'),
+    Symbol('black', 'black'),
+    Symbol('blue', 'blue'),
+    Symbol('brown', 'brown'),
+    Symbol('cyan', 'cyan'),
+    Symbol('darkgray', 'darkgray'),
+    Symbol('gray', 'gray'),
+    Symbol('green', 'green'),
+    Symbol('lightgray', 'lightgray'),
+    Symbol('lime', 'lime'),
+    Symbol('magenta', 'magenta'),
+    Symbol('olive', 'olive'),
+    Symbol('orange', 'orange'),
+    Symbol('pink', 'pink'),
+    Symbol('purple', 'purple'),
+    Symbol('red', 'red'),
+    Symbol('teal', 'teal'),
+    Symbol('violet', 'violet'),
+    Symbol('white', 'white'),
+    Symbol('yellow', 'yellow'),
 ]
 
 
@@ -164,20 +164,20 @@ def colorbox(parent):
 
 
 TEXT = [
-    LatexSymb('text', text),
-    LatexSymb('mathcal', special_format(
+    Symbol('text', text),
+    Symbol('mathcal', special_format(
         r'\mathcal{', _('Caligraphic (only capital letters)'), True)),
-    LatexSymb('mathbb', special_format(r'\mathbb{',
-                                       _('Mathbb (only capital letters)'),
-                                       True)),
-    LatexSymb('mathfrak', special_format(r'\mathfrak{',
-                                         _('Fraktur (letters and numbers)'))),
-    LatexSymb('mathsf', special_format(r'\mathsf{',
-                                       _('Sans serif (letters and numbers)'))),
-    LatexSymb('mathbf', special_format(r'\mathbf{',
-                                       _('Bold (letters and numbers)'))),
-    LatexSymb('textbfem', special_format(
+    Symbol('mathbb', special_format(r'\mathbb{',
+                                    _('Mathbb (only capital letters)'),
+                                    True)),
+    Symbol('mathfrak', special_format(r'\mathfrak{',
+                                      _('Fraktur (letters and numbers)'))),
+    Symbol('mathsf', special_format(r'\mathsf{',
+                                    _('Sans serif (letters and numbers)'))),
+    Symbol('mathbf', special_format(r'\mathbf{',
+                                    _('Bold (letters and numbers)'))),
+    Symbol('textbfem', special_format(
         r'\textbf{\em ', _('Bold Italic (letters and numbers)'))),
-    LatexSymb('color', color),
-    LatexSymb('colorbox', colorbox),
+    Symbol('color', color),
+    Symbol('colorbox', colorbox),
 ]

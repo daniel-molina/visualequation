@@ -49,7 +49,7 @@ def postprocess(filename):
         subprocess.call(["mogrify", "-chop", "5x0", filename])
     except OSError:
         raise SystemExit("Command mogrify was not found. "
-                         + " You need installed imagemagick.")
+                         + " You need imagemagick installed.")
 
 
 def code2icon(code, file_output, temp_dir):

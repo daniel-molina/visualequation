@@ -14,31 +14,31 @@
 from .utils import *
 
 SINGLEDELIMITERS = [
-    LatexSymb('lparenthesis', '('),
-    LatexSymb('rparenthesis', ')'),
-    LatexSymb('vert', '|'),
-    LatexSymb('uppervert', r'\|'),
-    LatexSymb('lbracket', r'\{{'),  # {{: It will be part of an operator
-    LatexSymb('rbracket', r'\}}'),  # }}: Idem
-    LatexSymb('langle', r'\langle'),
-    LatexSymb('rangle', r'\rangle'),
-    LatexSymb('lfloor', r'\lfloor'),
-    LatexSymb('rfloor', r'\rfloor'),
-    LatexSymb('lceil', r'\lceil'),
-    LatexSymb('rceil', r'\rceil'),
-    LatexSymb('slash', '/'),
-    LatexSymb('backslash', r'\backslash'),
-    LatexSymb('lsqbracket', '['),
-    LatexSymb('rsqbracket', ']'),
-    LatexSymb('llcorner', r'\llcorner'),
-    LatexSymb('lrcorner', r'\lrcorner'),
-    LatexSymb('ulcorner', r'\ulcorner'),
-    LatexSymb('urcorner', r'\urcorner'),
-    LatexSymb('uparrow', r'\uparrow'),
-    LatexSymb('upperuparrow', r'\Uparrow'),
-    LatexSymb('downarrow', r'\downarrow'),
-    LatexSymb('upperdownarrow', r'\Downarrow'),
-    LatexSymb('blankdelimiter', r'.'),
+    Symbol('lparenthesis', '('),
+    Symbol('rparenthesis', ')'),
+    Symbol('vert', '|'),
+    Symbol('uppervert', r'\|'),
+    Symbol('lbracket', r'\{{'),  # {{: It will be part of an operator
+    Symbol('rbracket', r'\}}'),  # }}: Idem
+    Symbol('langle', r'\langle'),
+    Symbol('rangle', r'\rangle'),
+    Symbol('lfloor', r'\lfloor'),
+    Symbol('rfloor', r'\rfloor'),
+    Symbol('lceil', r'\lceil'),
+    Symbol('rceil', r'\rceil'),
+    Symbol('slash', '/'),
+    Symbol('backslash', r'\backslash'),
+    Symbol('lsqbracket', '['),
+    Symbol('rsqbracket', ']'),
+    Symbol('llcorner', r'\llcorner'),
+    Symbol('lrcorner', r'\lrcorner'),
+    Symbol('ulcorner', r'\ulcorner'),
+    Symbol('urcorner', r'\urcorner'),
+    Symbol('uparrow', r'\uparrow'),
+    Symbol('upperuparrow', r'\Uparrow'),
+    Symbol('downarrow', r'\downarrow'),
+    Symbol('upperdownarrow', r'\Downarrow'),
+    Symbol('blankdelimiter', r'.'),
 ]
 
 
@@ -120,15 +120,15 @@ def free_delimiters(parent):
 
 
 DELIMITERS = [
-    LatexSymb('parenthesisb', Op(1, r'\left( {0} \right)')),
-    LatexSymb('sqbracketsb', Op(1, r'\left[ {0} \right]')),
-    LatexSymb('vertb', Op(1, r'\left| {0} \right|')),
-    LatexSymb('uppervertb', Op(1, r'\left\| {0} \right\|')),
-    LatexSymb('bracketsb', Op(1, r'\left\{{ {0} \right\}}')),
-    LatexSymb('angleb', Op(1, r'\left\langle {0} \right\rangle')),
-    LatexSymb('floorb', Op(1, r'\left\lfloor {0} \right\rfloor')),
-    LatexSymb('ceilb', Op(1, r'\left\lceil {0} \right\rceil')),
-    LatexSymb('lcornerb', Op(1, r'\left\llcorner {0} \right\lrcorner')),
-    LatexSymb('ucornerb', Op(1, r'\left\ulcorner {0} \right\urcorner')),
-    LatexSymb('freedelimiters', free_delimiters),
+    Symbol('parenthesisb', Op(1, r'\left( {0} \right)')),
+    Symbol('sqbracketsb', Op(1, r'\left[ {0} \right]')),
+    Symbol('vertb', Op(1, r'\left| {0} \right|')),
+    Symbol('uppervertb', Op(1, r'\left\| {0} \right\|')),
+    Symbol('bracketsb', Op(1, r'\left\{{ {0} \right\}}')),
+    Symbol('angleb', Op(1, r'\left\langle {0} \right\rangle')),
+    Symbol('floorb', Op(1, r'\left\lfloor {0} \right\rfloor')),
+    Symbol('ceilb', Op(1, r'\left\lceil {0} \right\rceil')),
+    Symbol('lcornerb', Op(1, r'\left\llcorner {0} \right\lrcorner')),
+    Symbol('ucornerb', Op(1, r'\left\ulcorner {0} \right\urcorner')),
+    Symbol('freedelimiters', free_delimiters),
 ]

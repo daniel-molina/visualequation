@@ -11,35 +11,34 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+
 class EqHist:
     def __init__(self, eqsel):
         self.eq_hist_index = 0
-        self.eq_hist = [(list(eqsel.eq), eqsel.index, eqsel.right)]
+        self.eq_hist = [(list(eqsel.eq), eqsel.idx, eqsel.dir)]
 
-    def save(self, eqsel):
+    def add(self, eqsel):
         """
-        Save current equation to the historial and delete any future elements
+        Discard delete any future elements
         from this point
         """
         self.eq_hist_index += 1
         self.eq_hist[self.eq_hist_index:] \
-            = [(list(eqsel.eq), eqsel.index, eqsel.right)]
+            = [(list(eqsel.eq), eqsel.idx, eqsel.dir)]
 
-    def update(self, eqsel):
-        """
-        Substitute current state.
-        """
+    def changecurrent(self, eqsel):
+        """Substitute state currently pointed and forget later history."""
         self.eq_hist[self.eq_hist_index:] \
-            = [(list(eqsel.eq), eqsel.index, eqsel.right)]
+            = [(list(eqsel.eq), eqsel.idx, eqsel.dir)]
 
     def get_prev(self):
-        """ Recover previous equation from the historial """
+        """Recover previous equation from the history."""
         if self.eq_hist_index != 0:
             self.eq_hist_index -= 1
         return self.eq_hist[self.eq_hist_index]
 
     def get_next(self):
-        """ Recover next equation from the historial """
-        if self.eq_hist_index != len(self.eq_hist)-1:
+        """Recover next equation from the history."""
+        if self.eq_hist_index != len(self.eq_hist) - 1:
             self.eq_hist_index += 1
         return self.eq_hist[self.eq_hist_index]

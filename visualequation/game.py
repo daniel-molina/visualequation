@@ -15,7 +15,7 @@ import random
 
 from .symbols import utils
 from .symbols import symbols, arrows, relations, operators
-from . import eqtools
+from . import eqqueries
 
 
 def f(expr):
@@ -106,10 +106,10 @@ class Alice:
             while cond:
                 self.pos = self.cycle(self.pos + 1 if self.right else -1, eq)
                 cond = eq[self.pos] == utils.JUXT
-        # Avoid first argument of index operators: \sideset is picky
+        # Avoid first argument of idx operators: \sideset is picky
         if self.pos != 0 \
                 and hasattr(eq[self.pos - 1], 'type_') \
-                and eq[self.pos - 1].type_ in ('index', 'opindex'):
+                and eq[self.pos - 1].type_ in ('idx', 'opindex'):
             self.pos = self.cycle(self.pos + 1 if self.right else -1, eq)
 
 

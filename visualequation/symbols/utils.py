@@ -25,7 +25,7 @@ from .. import commons
 
 
 class Op(object):
-    """ Class for LaTeX operator (meaning 'with arguments')"""
+    """Class for an equation operator"""
 
     def __init__(self, n_args, latex_code, type_=None):
         self.n_args = n_args
@@ -49,16 +49,21 @@ class Op(object):
                + ", " + repr(self.type_) + ")"
 
 
-LatexSymb = namedtuple('LatexSymb', 'tag code')
+Symbol = namedtuple('Symbol', 'tag code')
 MenuItemData = namedtuple('MenuItemData', 'tag symb_l')
 
 # Use these operators in the code, so it will be easy to change their value
 # in next releases
 SELARG = r'\cdots'
-NEWARG = r'\oblong'
+NEWARG = r'\begingroup\color{purple}\oblong\endgroup'
 REDIT = Op(1, r'\left\lmoustache {0} \right\rgroup')
 LEDIT = Op(1, r'\left\lgroup {0} \right\rmoustache')
+NEDIT = Op(1, r'\left\lmoustache {0} \right\rmoustache')
 JUXT = Op(2, r'{0} {1}')
+# The initial space is needed to distinguish from GROUP operator
+TEMPGROUP = Op(1, r' {0}')
+GROUP = Op(1, r'{0}')
+SOLIDGROUP = Op(1, r'{0} ')
 
 # It does NOT include ' ', "'", '^', '\\' and '~'
 # so it is valid for both text and math environments
@@ -126,23 +131,23 @@ class ChooseSymbDialog(QDialog):
     # Valid for non-sum-like operators
 
 
-LSUB = Op(2, r'\tensor*[_{{{1}}}]{{{0}}}{{}}', 'index')
-SUB = Op(2, r'{0}_{{{1}}}', 'index')
-SUP = Op(2, r'{0}^{{{1}}}', 'index')
-LSUP = Op(2, r'\tensor*[^{{{1}}}]{{{0}}}{{}}', 'index')
-LSUBSUB = Op(3, r'\tensor*[_{{{1}}}]{{{0}}}{{_{{{2}}}}}', 'index')
-SUBSUP = Op(3, r'{0}_{{{1}}}^{{{2}}}', 'index')
-SUPLSUP = Op(3, r'\tensor*[^{{{2}}}]{{{0}}}{{^{{{1}}}}}', 'index')
-LSUBLSUP = Op(3, r'\tensor*[_{{{1}}}^{{{2}}}]{{{0}}}{{}}', 'index')
-LSUBSUP = Op(3, r'\tensor*[_{{{1}}}]{{{0}}}{{^{{{2}}}}}', 'index')
-SUBLSUP = Op(3, r'\tensor*[^{{{2}}}]{{{0}}}{{_{{{1}}}}}', 'index')
-LSUBSUBSUP = Op(4, r'\tensor*[_{{{1}}}]{{{0}}}{{^{{{3}}}_{{{2}}}}}', 'index')
-LSUBSUBLSUP = Op(4, r'\tensor*[_{{{1}}}^{{{3}}}]{{{0}}}{{_{{{2}}}}}', 'index')
-LSUBSUPLSUP = Op(4, r'\tensor*[^{{{3}}}_{{{1}}}]{{{0}}}{{^{{{2}}}}}', 'index')
-SUBSUPLSUP = Op(4, r'\tensor*[^{{{3}}}]{{{0}}}{{^{{{2}}}_{{{1}}}}}', 'index')
+LSUB = Op(2, r'\tensor*[_{{{1}}}]{{{0}}}{{}}', 'script')
+SUB = Op(2, r'{0}_{{{1}}}', 'script')
+SUP = Op(2, r'{0}^{{{1}}}', 'script')
+LSUP = Op(2, r'\tensor*[^{{{1}}}]{{{0}}}{{}}', 'script')
+LSUBSUB = Op(3, r'\tensor*[_{{{1}}}]{{{0}}}{{_{{{2}}}}}', 'script')
+SUBSUP = Op(3, r'{0}_{{{1}}}^{{{2}}}', 'script')
+SUPLSUP = Op(3, r'\tensor*[^{{{2}}}]{{{0}}}{{^{{{1}}}}}', 'script')
+LSUBLSUP = Op(3, r'\tensor*[_{{{1}}}^{{{2}}}]{{{0}}}{{}}', 'script')
+LSUBSUP = Op(3, r'\tensor*[_{{{1}}}]{{{0}}}{{^{{{2}}}}}', 'script')
+SUBLSUP = Op(3, r'\tensor*[^{{{2}}}]{{{0}}}{{_{{{1}}}}}', 'script')
+LSUBSUBSUP = Op(4, r'\tensor*[_{{{1}}}]{{{0}}}{{^{{{3}}}_{{{2}}}}}', 'script')
+LSUBSUBLSUP = Op(4, r'\tensor*[_{{{1}}}^{{{3}}}]{{{0}}}{{_{{{2}}}}}', 'script')
+LSUBSUPLSUP = Op(4, r'\tensor*[^{{{3}}}_{{{1}}}]{{{0}}}{{^{{{2}}}}}', 'script')
+SUBSUPLSUP = Op(4, r'\tensor*[^{{{3}}}]{{{0}}}{{^{{{2}}}_{{{1}}}}}', 'script')
 LSUBSUBSUPLSUP = Op(5,
                     r'\tensor*[_{{{1}}}^{{{4}}}]{{{0}}}{{_{{{2}}}^{{{3}}}}}',
-                    'index')
+                    'script')
 
 # Not valid when using right sub/sup-indices in tall expressions
 # LSUB = Op(2, r'\prescript{{}}{{{1}}}{{{0}}}')

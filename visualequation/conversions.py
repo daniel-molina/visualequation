@@ -22,7 +22,7 @@ import json
 from PyQt5.QtWidgets import *
 
 from . import commons
-from . import eqtools
+from . import eqqueries
 from .symbols import utils
 from .errors import ShowError
 
@@ -35,7 +35,7 @@ def eq2latex_file(eq, latex_file, template_file):
     if isinstance(eq, str):
         latex_code = eq
     elif isinstance(eq, list):
-        latex_code = eqtools.eq2latex_code(eq)
+        latex_code = eqqueries.eq2latex_code(eq)
     else:
         ShowError('Cannot understand equation type when writing LaTeX file.',
                   True)

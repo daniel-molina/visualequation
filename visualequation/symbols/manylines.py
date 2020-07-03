@@ -15,12 +15,12 @@ from .utils import *
 from .delimiters import *
 
 MATRIXTYPES = [
-    LatexSymb('pmatrix', 'pmatrix'),
-    LatexSymb('vmatrix', 'vmatrix'),
-    LatexSymb('uppervmatrix', 'Vmatrix'),
-    LatexSymb('bmatrix', 'bmatrix'),
-    LatexSymb('upperbmatrix', 'Bmatrix'),
-    LatexSymb('matrix', 'matrix'),
+    Symbol('pmatrix', 'pmatrix'),
+    Symbol('vmatrix', 'vmatrix'),
+    Symbol('uppervmatrix', 'Vmatrix'),
+    Symbol('bmatrix', 'bmatrix'),
+    Symbol('upperbmatrix', 'Bmatrix'),
+    Symbol('matrix', 'matrix'),
 ]
 
 
@@ -394,9 +394,9 @@ def aligned(parent):
 
 
 MANYLINES = [
-    LatexSymb('matrix_type', matrix_type),
-    LatexSymb('array', array),
-    LatexSymb('cases', cases),
-    LatexSymb('equations_system', equation_system),
-    LatexSymb('aligned', aligned),
+    Symbol('matrix_type', matrix_type),
+    Symbol('array', array),
+    Symbol('cases', cases),
+    Symbol('equations_system', equation_system),
+    Symbol('aligned', aligned),
 ]

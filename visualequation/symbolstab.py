@@ -13,7 +13,7 @@
 
 """
 Module to manage the menu of Visual Equation and the distribution of the
-symbols in the above panel.
+symbols in the panel.
 """
 import os
 
@@ -27,10 +27,10 @@ from .errors import ShowError
 
 
 class TabWidget(QTabWidget):
-    def __init__(self, parent, maineq):
+    def __init__(self, parent, eqlabel):
         super().__init__(parent)
 
-        self.maineq = maineq
+        self.eqlabel = eqlabel
         self.tabs = []
         for index, menuitemdata in enumerate(lists.MENUITEMSDATA):
             self.tabs.append(QWidget())
@@ -41,8 +41,8 @@ class TabWidget(QTabWidget):
             icon = QIcon(icon_path)
             self.setIconSize(QSize(50, 30))
             self.addTab(self.tabs[index], icon, "")
-            #self.setTabToolTip(index, "Hello")
-            #self.setTabWhatsThis(index, "Hello")
+            # self.setTabToolTip(idx, "Hello")
+            # self.setTabWhatsThis(idx, "Hello")
             layout = QGridLayout(self)
             row = 0
             column = 0
@@ -53,7 +53,7 @@ class TabWidget(QTabWidget):
                     ShowError("Icon " + symb.tag + " not found.", True)
                 label.setPixmap(QPixmap(icon_path))
                 cmd = lambda state, code=symb.code: \
-                      self.handle_click(state, code)
+                    self.handle_click(state, code)
                 label.mousePressEvent = cmd
                 layout.addWidget(label, row, column)
                 label.setAlignment(Qt.AlignCenter)
@@ -61,12 +61,12 @@ class TabWidget(QTabWidget):
                 if column > 9:
                     column = 0
                     row += 1
-             
+
             self.tabs[index].setLayout(layout)
 
     def handle_click(self, event, code):
         modifiers = QApplication.keyboardModifiers()
         if modifiers == Qt.ShiftModifier:
-            self.maineq.eq.insert_substituting(code)
+            self.eqlabel.maineq.insert_substituting(code)
         else:
-            self.maineq.eq.insert(code)
+            self.eqlabel.maineq.insert_from_panel(code)

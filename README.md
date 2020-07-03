@@ -8,7 +8,7 @@ To see some screenshots go to the wiki.
 
 ### Debian 9 stretch/Ubuntu 17.10 artful and next releases (or derivatives)
 
-`sudo apt-get install python3-pyqt5 texlive-latex-recommended texlive-latex-extra dvipng texlive-font-utils texlive-science libimage-exiftool-perl`
+`sudo apt-get install python3-pyqt5 texlive-latex-recommended texlive-latex-extra dvipng texlive-font-utils texlive-science libimage-exiftool-perl imagemagick`
 
 ### Debian 8 jessie/Ubuntu 16.04 xenial and previous releases (or derivatives)
 
@@ -29,6 +29,7 @@ To run the program successfully, you need:
   * dvips
   * dvisvgm
   * epstopdf
+  * imagemagick (needed to generate the icons)
 * exiftool
 
 ## Checking that dependencies are fulfilled

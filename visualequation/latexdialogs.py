@@ -20,7 +20,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
-from . import eqtools
+from . import eqqueries
 from . import commons
 from . import conversions
 
@@ -28,12 +28,12 @@ from . import conversions
 class ShowLatexDialog(QDialog):
     def __init__(self, eq, parent=None):
         super().__init__(parent)
-        self.eq = eq.eq
-        self.index = eq.eqsel.index
+        self.eq = eq.maineq
+        self.index = eq.eqsel.idx
         self.setWindowTitle('LaTeX code')
         self.setSizeGripEnabled(True)
         self.text = QTextEdit(self)
-        self.text.insertPlainText(eqtools.eqblock2latex(self.eq,
+        self.text.insertPlainText(eqqueries.subeq2latex(self.eq,
                                                         self.index)[0])
         self.text.moveCursor(QTextCursor.Start)
         self.text.setReadOnly(True)
@@ -69,9 +69,9 @@ class ShowLatexDialog(QDialog):
     def settext(self):
         self.text.clear()
         if self.onlysel.isChecked():
-            formulalatex = eqtools.eqblock2latex(self.eq, self.index)[0]
+            formulalatex = eqqueries.subeq2latex(self.eq, self.index)[0]
         else:
-            formulalatex = eqtools.eqblock2latex(self.eq, 0)[0]
+            formulalatex = eqqueries.subeq2latex(self.eq, 0)[0]
         if self.fullcode.isChecked():
             with open(commons.LATEX_TEMPLATE, "r") as ftempl:
                 for line in ftempl:
