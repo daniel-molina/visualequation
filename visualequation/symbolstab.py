@@ -69,4 +69,4 @@ class TabWidget(QTabWidget):
         if modifiers == Qt.ShiftModifier:
             self.eqlabel.maineq.insert_substituting(code)
         else:
-            self.eqlabel.maineq.insert_from_panel(code)
+            self.eqlabel.maineq.insert_primitive(code, 0, 0, )

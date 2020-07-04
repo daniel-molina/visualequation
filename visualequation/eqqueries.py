@@ -526,19 +526,19 @@ def supeq_finishing_at(eq, end_idx, subeq_idx=None):
             return -1
 
 
-def indexop2arglist(eq, sel_index):
+def indexop2arglist(eq, sel_idx):
     """
     Convert the block of indices pointed by sel_index to a list of arguments.
     The list has the format [base, lsub_arg, sub_arg, sup_arg, lsup_arg].
     The arguments not available will be replaced by None.
-    If sel_index does not point to an operator index at all, base will be the
-    pointed ublock and the rest will be set to None.
+    If sel_index does not point to an script operator at all, base will be the
+    pointed usubeq and the rest will be set to None.
     """
-    op = eq[sel_index]  # it can be idx operator or not, as explained above
+    op = eq[sel_idx]  # it can be an idx operator or not, as explained above
     if not hasattr(op, 'type_') or op.type_ not in ('script', 'opindex'):
-        end_block = nextsubeq(eq, sel_index)
-        return [eq[sel_index:end_block], None, None, None, None]
-    start_arg1 = sel_index + 1
+        end_block = nextsubeq(eq, sel_idx)
+        return [eq[sel_idx:end_block], None, None, None, None]
+    start_arg1 = sel_idx + 1
     start_arg2 = nextsubeq(eq, start_arg1)
     if op in (utils.LSUB, utils.OPLSUB):
         end_arg2 = nextsubeq(eq, start_arg2)
