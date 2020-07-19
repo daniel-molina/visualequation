@@ -74,21 +74,28 @@ def nextsubeq(eq, idx):
 
 
 def which_arg_is(eq, maybe_arg_idx, op_idx):
-    """
-    *Low level function (no correction checkings)*
+    """Return the ordinal position (starting from 1) of a an operator's
+     argument.
 
-    Requirement: op_idx must be smaller than maybe_arg_idx.
+    .. warning::
+        Low level function (no correction checkings).
+
+    .. note::
+        *op_idx* must be smaller than *maybe_arg_idx*.
 
     Rules:
 
-        *   If op_idx points to a symbol or no argument of the operator starts
-            in maybe_arg_idx, return -1.
-        *   Else, return the ordinal of the argument starting in maybe_arg_idx
-            of operator in op_idx. That is, if it is its first argument,
-            1 is returned; if it is the second, 2 is returned, and so on.
+        *   If *op_idx* points to a symbol or operator with no arguments,
+            return -2.
+        *   If operator in *op_idx* does not have an argument starting at
+            *maybe_arg_idx*, return -1.
+        *   Else, return the ordinal of the argument starting in
+            *maybe_arg_idx* of operator in *op_idx*. That is, if it is its
+            first argument, 1 is returned; if it is the second, 2 is returned,
+            and so on.
     """
     if isinstance(eq[op_idx], str) or eq[op_idx].n_args == 0:
-        return -1
+        return -2
     arg_idx = op_idx + 1
     if arg_idx == maybe_arg_idx:
         return 1
@@ -114,7 +121,9 @@ def eq2latex_code(eq):
 
 
 def whosearg(eq, idx):
-    """
+    """Return the index of the operator of an argument and the argument
+    ordinal.
+
     Theory:
 
         *   Every index in an equation is mapped naturally with the subequation
@@ -123,13 +132,14 @@ def whosearg(eq, idx):
             operator.
 
     Rules:
-        *   If :idx: is 0, return (-1, None).
+
+        *   If *idx* is 0, return (-1, None).
         *   Else:
 
             *   1st output value is the index of the operator which has an
-                argument starting at :idx:.
+                argument starting at *idx*.
             *   2nd output value is the ordinal of operator's argument which
-                starts at :idx:.
+                starts at *idx*.
     """
     if idx == 0:
         return -1, None
@@ -139,6 +149,32 @@ def whosearg(eq, idx):
         if ordinal > 0:
             return start_idx, ordinal
         start_idx -= 1
+
+
+def whosearg_filter_type(eq, idx, types=None):
+    """Return the index of the operator of certain type of an argument and the
+    argument ordinal.
+
+    Implementation note:
+        Maybe it would be interesting to merge code with which_arg_is function.
+
+    :param eq: An equation.
+    :param idx: Index of a possible argument of an operator of certain type.
+    :param types: A collection specifying for operator types of interest. Else,
+    every operator with attribute type_ is considered.
+    :return: A tuple with the same meaning than whosearg function.
+    """
+    g = ((idx, op) for idx, op in enumerate(eq) if hasattr(op, 'type_')
+         and (types is None or op.type_ in types))
+    for op_idx, op in g:
+        arg_idx = op_idx + 1
+        if arg_idx == idx:
+            return op_idx, 0
+        for arg_pos in range(1, op.n_args):
+            arg_idx = nextsubeq(eq, arg_idx)
+            if arg_idx == idx:
+                return op_idx, arg_pos
+    return -1, None
 
 
 def prev_arg(eq, idx, surpass_op=False):
@@ -525,186 +561,3 @@ def supeq_finishing_at(eq, end_idx, subeq_idx=None):
         if idx_after_usubeq - 1 > end_idx:
             return -1
 
-
-def indexop2arglist(eq, sel_idx):
-    """
-    Convert the block of indices pointed by sel_index to a list of arguments.
-    The list has the format [base, lsub_arg, sub_arg, sup_arg, lsup_arg].
-    The arguments not available will be replaced by None.
-    If sel_index does not point to an script operator at all, base will be the
-    pointed usubeq and the rest will be set to None.
-    """
-    op = eq[sel_idx]  # it can be an idx operator or not, as explained above
-    if not hasattr(op, 'type_') or op.type_ not in ('script', 'opindex'):
-        end_block = nextsubeq(eq, sel_idx)
-        return [eq[sel_idx:end_block], None, None, None, None]
-    start_arg1 = sel_idx + 1
-    start_arg2 = nextsubeq(eq, start_arg1)
-    if op in (utils.LSUB, utils.OPLSUB):
-        end_arg2 = nextsubeq(eq, start_arg2)
-        return [eq[start_arg1:start_arg2],
-                eq[start_arg2:end_arg2], None, None, None]
-    elif op in (utils.SUB, utils.OPSUB):
-        end_arg2 = nextsubeq(eq, start_arg2)
-        return [eq[start_arg1:start_arg2],
-                None, eq[start_arg2:end_arg2], None, None]
-    elif op in (utils.SUP, utils.OPSUP):
-        end_arg2 = nextsubeq(eq, start_arg2)
-        return [eq[start_arg1:start_arg2],
-                None, None, eq[start_arg2:end_arg2], None]
-    elif op in (utils.LSUP, utils.OPLSUP):
-        end_arg2 = nextsubeq(eq, start_arg2)
-        return [eq[start_arg1:start_arg2],
-                None, None, None, eq[start_arg2:end_arg2]]
-    elif op in (utils.LSUBSUB, utils.OPLSUBSUB):
-        end_arg2 = nextsubeq(eq, start_arg2)
-        end_arg3 = nextsubeq(eq, end_arg2)
-        return [eq[start_arg1:start_arg2],
-                eq[start_arg2:end_arg2], eq[end_arg2:end_arg3], None, None]
-    elif op in (utils.SUBSUP, utils.OPSUBSUP):
-        end_arg2 = nextsubeq(eq, start_arg2)
-        end_arg3 = nextsubeq(eq, end_arg2)
-        return [eq[start_arg1:start_arg2],
-                None, eq[start_arg2:end_arg2], eq[end_arg2:end_arg3], None]
-    elif op in (utils.SUPLSUP, utils.OPSUPLSUP):
-        end_arg2 = nextsubeq(eq, start_arg2)
-        end_arg3 = nextsubeq(eq, end_arg2)
-        return [eq[start_arg1:start_arg2],
-                None, None, eq[start_arg2:end_arg2], eq[end_arg2:end_arg3]]
-    elif op in (utils.LSUBLSUP, utils.OPLSUBLSUP):
-        end_arg2 = nextsubeq(eq, start_arg2)
-        end_arg3 = nextsubeq(eq, end_arg2)
-        return [eq[start_arg1:start_arg2],
-                eq[start_arg2:end_arg2], None, None, eq[end_arg2:end_arg3]]
-    elif op in (utils.LSUBSUP, utils.OPLSUBSUP):
-        end_arg2 = nextsubeq(eq, start_arg2)
-        end_arg3 = nextsubeq(eq, end_arg2)
-        return [eq[start_arg1:start_arg2],
-                eq[start_arg2:end_arg2], None, eq[end_arg2:end_arg3], None]
-    elif op in (utils.SUBLSUP, utils.OPSUBLSUP):
-        end_arg2 = nextsubeq(eq, start_arg2)
-        end_arg3 = nextsubeq(eq, end_arg2)
-        return [eq[start_arg1:start_arg2],
-                None, eq[start_arg2:end_arg2], None, eq[end_arg2:end_arg3]]
-    elif op in (utils.LSUBSUBSUP, utils.OPLSUBSUBSUP):
-        end_arg2 = nextsubeq(eq, start_arg2)
-        end_arg3 = nextsubeq(eq, end_arg2)
-        end_arg4 = nextsubeq(eq, end_arg3)
-        return [eq[start_arg1:start_arg2],
-                eq[start_arg2:end_arg2], eq[end_arg2:end_arg3],
-                eq[end_arg3:end_arg4], None]
-    elif op in (utils.LSUBSUBLSUP, utils.OPLSUBSUBLSUP):
-        end_arg2 = nextsubeq(eq, start_arg2)
-        end_arg3 = nextsubeq(eq, end_arg2)
-        end_arg4 = nextsubeq(eq, end_arg3)
-        return [eq[start_arg1:start_arg2],
-                eq[start_arg2:end_arg2], eq[end_arg2:end_arg3],
-                None, eq[end_arg3:end_arg4]]
-    elif op in (utils.LSUBSUPLSUP, utils.OPLSUBSUPLSUP):
-        end_arg2 = nextsubeq(eq, start_arg2)
-        end_arg3 = nextsubeq(eq, end_arg2)
-        end_arg4 = nextsubeq(eq, end_arg3)
-        return [eq[start_arg1:start_arg2],
-                eq[start_arg2:end_arg2], None,
-                eq[end_arg2:end_arg3], eq[end_arg3:end_arg4]]
-    elif op in (utils.SUBSUPLSUP, utils.OPSUBSUPLSUP):
-        end_arg2 = nextsubeq(eq, start_arg2)
-        end_arg3 = nextsubeq(eq, end_arg2)
-        end_arg4 = nextsubeq(eq, end_arg3)
-        return [eq[start_arg1:start_arg2],
-                None, eq[start_arg2:end_arg2],
-                eq[end_arg2:end_arg3], eq[end_arg3:end_arg4]]
-    elif op in (utils.LSUBSUBSUPLSUP, utils.OPLSUBSUBSUPLSUP):
-        end_arg2 = nextsubeq(eq, start_arg2)
-        end_arg3 = nextsubeq(eq, end_arg2)
-        end_arg4 = nextsubeq(eq, end_arg3)
-        end_arg5 = nextsubeq(eq, end_arg4)
-        return [eq[start_arg1:start_arg2],
-                eq[start_arg2:end_arg2], eq[end_arg2:end_arg3],
-                eq[end_arg3:end_arg4], eq[end_arg4:end_arg5]]
-    else:
-        ShowError("Equation element not recognised in indexop2arglist: "
-                  + repr(op), True)
-
-
-def flat_arglist(args):
-    """
-    Flat the list of list args without including elements equal to None.
-    """
-    new_args = []
-    for arg in args:
-        if arg is not None:
-            for symb in arg:
-                new_args.append(symb)
-    return new_args
-
-
-def arglist2indexop(args):
-    index_dict = {
-        (True, False, False, False, False): None,
-        (True, True, False, False, False): utils.LSUB,
-        (True, False, True, False, False): utils.SUB,
-        (True, False, False, True, False): utils.SUP,
-        (True, False, False, False, True): utils.LSUP,
-        (True, True, True, False, False): utils.LSUBSUB,
-        (True, False, True, True, False): utils.SUBSUP,
-        (True, False, False, True, True): utils.SUPLSUP,
-        (True, True, False, False, True): utils.LSUBLSUP,
-        (True, True, False, True, False): utils.LSUBSUP,
-        (True, False, True, False, True): utils.SUBLSUP,
-        (True, True, True, True, False): utils.LSUBSUBSUP,
-        (True, True, True, False, True): utils.LSUBSUBLSUP,
-        (True, True, False, True, True): utils.LSUBSUPLSUP,
-        (True, False, True, True, True): utils.SUBSUPLSUP,
-        (True, True, True, True, True): utils.LSUBSUBSUPLSUP,
-    }
-    opindex_dict = {
-        (True, False, False, False, False): None,
-        (True, True, False, False, False): utils.OPLSUB,
-        (True, False, True, False, False): utils.OPSUB,
-        (True, False, False, True, False): utils.OPSUP,
-        (True, False, False, False, True): utils.OPLSUP,
-        (True, True, True, False, False): utils.OPLSUBSUB,
-        (True, False, True, True, False): utils.OPSUBSUP,
-        (True, False, False, True, True): utils.OPSUPLSUP,
-        (True, True, False, False, True): utils.OPLSUBLSUP,
-        (True, True, False, True, False): utils.OPLSUBSUP,
-        (True, False, True, False, True): utils.OPSUBLSUP,
-        (True, True, True, True, False): utils.OPLSUBSUBSUP,
-        (True, True, True, False, True): utils.OPLSUBSUBLSUP,
-        (True, True, False, True, True): utils.OPLSUBSUPLSUP,
-        (True, False, True, True, True): utils.OPSUBSUPLSUP,
-        (True, True, True, True, True): utils.OPLSUBSUBSUPLSUP,
-    }
-    try:
-        if hasattr(args[0][0], 'type_') \
-                and args[0][0].type_ in utils.OPINDEX_ARG_LIST:
-            return opindex_dict[tuple(bool(arg) for arg in args)]
-        else:
-            return index_dict[tuple(bool(arg) for arg in args)]
-    except KeyError:
-        ShowError('Bad argument list in arglist2indexop: '
-                  + repr(args), True)
-
-
-def is_script(eq, sel_index):
-    """
-    Returns a tuple of three elements:
-    The 1st element indicates if the element pointed by sel_index is a script.
-    If it is or if it is the base, the 2nd element indicates the pos of the
-    associated idx operator.
-    The 3rd element indicates which argument of the idx operator is being
-    pointed by sel_index, or 0 if it is the base.
-    """
-    g = ((index, op) for index, op in enumerate(eq) if hasattr(op, 'type_')
-         and op.type_ in ('opindex', 'script'))
-    for op_index, op in g:
-        arg_i_index = op_index + 1
-        if arg_i_index == sel_index:
-            return False, op_index, 0
-        for arg_i in range(1, op.n_args):
-            arg_i_index = nextsubeq(eq, arg_i_index)
-            if arg_i_index == sel_index:
-                return True, op_index, arg_i
-    else:
-        return False, None, None

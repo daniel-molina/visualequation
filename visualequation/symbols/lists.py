@@ -27,51 +27,51 @@ MENUITEMSDATA = []
 ADDITIONAL_LS = []
 
 MENUITEMSDATA.append(MenuItemData(
-    tag="tab_symbols",
+    name="tab_symbols",
     symb_l=LOWER_GREEK + UPPER_GREEK + VAR_GREEK + HEBREW + SYMBOLS1))
 
 MENUITEMSDATA.append(MenuItemData(
-    tag="tab_constructs",
+    name="tab_constructs",
     symb_l=MATHCONSTRUCTS))
 
 ADDITIONAL_LS += SINGLEDELIMITERS
 
 MENUITEMSDATA.append(MenuItemData(
-    tag="tab_delimiters",
+    name="tab_delimiters",
     symb_l=DELIMITERS))
 
 MENUITEMSDATA.append(MenuItemData(
-    tag="tab_functions",
+    name="tab_functions",
     symb_l=FUNCTIONS))
 
 MENUITEMSDATA.append(MenuItemData(
-    tag="tab_variablesize",
+    name="tab_variablesize",
     symb_l=VARIABLESIZE))
 
 MENUITEMSDATA.append(MenuItemData(
-    tag="tab_someoperators",
+    name="tab_someoperators",
     symb_l=SOMEOPERATORS))
 
 MENUITEMSDATA.append(MenuItemData(
-    tag="tab_relations",
+    name="tab_relations",
     symb_l=RELATIONS))
 
 MENUITEMSDATA.append(MenuItemData(
-    tag="tab_arrows",
+    name="tab_arrows",
     symb_l=ARROWS))
 
 ADDITIONAL_LS += COLORS
 
 MENUITEMSDATA.append(MenuItemData(
-    tag="tab_text",
+    name="tab_text",
     symb_l=TEXT))
 
 ADDITIONAL_LS += MATRIXTYPES
 
 MENUITEMSDATA.append(MenuItemData(
-    tag="tab_manylines",
+    name="tab_manylines",
     symb_l=MANYLINES))
 
 MENUITEMSDATA.append(MenuItemData(
-    tag="tab_accents",
+    name="tab_accents",
     symb_l=ACCENTS))

@@ -414,7 +414,7 @@ class Selection:
                     # Case: lidx points to last but one co-citizen
                     if eq[idx] == gop:
                         eq.pop(idx)
-                    eq.insert_primitive(lidx - 1, 0, 0, gop)
+                    eq.insert(lidx - 1, 0, 0, gop)
                     return lidx - 1
                 else:
                     # Case: lidx points somewhere before last but one
@@ -434,12 +434,12 @@ class Selection:
                 #   condition depends on eq.
                 if eqqueries.is_last_citizen(eq, cocitizen_idx):
                     # Case: group is a last but one co-citizen
-                    eq.insert_primitive(old_last_member, 0, 0, utils.JUXT)
+                    eq.insert(old_last_member, 0, 0, utils.JUXT)
                     eq.pop(idx - 1)
                     return idx - 1
                 else:
                     # Case: group is a co-citizen before last but one
-                    eq.insert_primitive(old_last_member, 0, 0, utils.JUXT)
+                    eq.insert(old_last_member, 0, 0, utils.JUXT)
                     eq.pop(cocitizen_idx - 1)
                     return idx
             return -1

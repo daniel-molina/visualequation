@@ -12,11 +12,10 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import functools
-import types
-
 
 from . import eqqueries
 from . import groups
+from . import scriptops
 from . import simpleeqcreator
 from .errors import ShowError
 from .symbols import utils
@@ -35,94 +34,104 @@ def new_selection(func):
     return wrapper
 
 
-def _rinsert_nonjuxtsubeq(eq, idx, usubeq):
-    """Insert an usubeq that is not a JUXT-ublock to the right of a subeq.
+def _rinsert_nonjuxtsubeq(eq, idx, subeq):
+    """Insert a subeq not starting by JUXT to the right of a subeq.
 
     :param idx: The index of a subeq behind which *subeq* will be inserted.
-    :param usubeq: The subequation to insert. It cannot start with a JUXT.
+    :param subeq: The subequation to insert. It cannot start with a JUXT.
     :param eq: The equation in which to insert *subeq*.
-    :return: Index of first inserted element and *idx* updated.
+    :return: Index of first inserted element and *idx* "updated".
     """
     juxt_idx, arg2_idx = eqqueries.other_juxt_arg(eq, idx)
     if juxt_idx < 0 or arg2_idx < idx:
         # idx points to an uarg or a last citizen
         end_idx = eqqueries.nextsubeq(eq, idx)
-        eq[idx:end_idx] = [utils.JUXT] + eq[idx:end_idx] + usubeq
+        if scriptops.is_base(eq, idx):
+            # Uarg subcase: idx points to the base of a (v)script
+            # Convert (v)script operator if needed
+            scriptops.update_scriptblock(eq, idx, utils.JUXT)
+
+        eq[idx:end_idx] = [utils.JUXT] + eq[idx:end_idx] + subeq
         return end_idx + 1, idx + 1
     else:
         # idx points to a citizen but not the last one
-        eq[arg2_idx:arg2_idx] = [utils.JUXT] + usubeq
+        eq[arg2_idx:arg2_idx] = [utils.JUXT] + subeq
         return arg2_idx + 1, idx
 
 
-def _linsert_nonjuxtsubeq(eq, idx, usubeq):
-    """Insert an usubeq that is not a JUXT-ublock to the left of a subeq.
+def _linsert_nonjuxtsubeq(eq, idx, subeq):
+    """Insert an subeq which does not start to the left of a subeq.
 
-    :param idx: The index of a subeq in front of which *usubeq* will be
+    :param idx: The index of a subeq in front of which *subeq* will be
     inserted.
-    :param usubeq: The subequation to insert. It cannot start with a JUXT.
+    :param subeq: The subequation to insert. It cannot start with a JUXT.
     :param eq: The equation in which to insert_from_panel *subeq*.
     :return: Index of first inserted element and *idx* updated.
     """
     juxt_idx, arg2_idx = eqqueries.other_juxt_arg(eq, idx)
     if juxt_idx < 0 or arg2_idx < idx:
         # idx points to eq, an uarg or a last citizen
-        eq[idx:idx] = [utils.JUXT] + usubeq
-        return idx + 1, idx + 1 + len(usubeq)
+        if scriptops.is_base(eq, idx):
+            # Uarg subcase: idx points to the base of a (v)script
+            # Convert (v)script operator if needed
+            scriptops.update_scriptblock(eq, idx, utils.JUXT)
+
+        eq[idx:idx] = [utils.JUXT] + subeq
+        return idx + 1, idx + 1 + len(subeq)
     else:
         # idx points to a citizen but not the last one
-        eq[idx:idx] = usubeq + [utils.JUXT]
-        return idx, idx + len(usubeq) + 1
+        eq[idx:idx] = subeq + [utils.JUXT]
+        return idx, idx + len(subeq) + 1
 
 
-def _rinsert_juxtsubeq(eq, idx, usubeq):
-    """Insert a JUXT-ublock to the right of a subeq.
+def _rinsert_juxtsubeq(eq, idx, subeq):
+    """Insert a subeq which starts by JUXT to the right of a subeq.
 
-    :param eq: The equation in which to insert *usubeq*.
-    :param idx: The index of a subeq of reference to insert *usubeq*.
-    :param usubeq: The subequation to insert. It must start with a JUXT.
+    :param eq: The equation in which to insert *subeq*.
+    :param idx: The index of a subeq of reference to insert *subeq*.
+    :param subeq: The subequation to insert. It must start with a JUXT.
     :return: Index of last citizen inserted and *idx* updated.
     """
-    subeq_last_citizen = eqqueries.last_citizen(usubeq, 1)
+    subeq_last_citizen = eqqueries.last_citizen(subeq, 1)
     juxt_idx, arg2_idx = eqqueries.other_juxt_arg(eq, idx)
     if juxt_idx < 0 or arg2_idx < idx:
         # idx points to eq, an uarg or a last citizen
         end_idx = eqqueries.nextsubeq(eq, idx)
-        eq[idx:end_idx] = [utils.JUXT] + eq[idx:end_idx] + usubeq
+        eq[idx:end_idx] = [utils.JUXT] + eq[idx:end_idx] + subeq
         # We are inserting a JUXT and subeq has another:
         # first citizen od subeq has an offset of 2 JUXTs
         return end_idx + 1 + subeq_last_citizen, idx + 1
     else:
         # idx points to a citizen but not the last one
-        eq[arg2_idx:arg2_idx] = usubeq[:subeq_last_citizen] + [utils.JUXT] \
-                                + usubeq[subeq_last_citizen:]
+        eq[arg2_idx:arg2_idx] = subeq[:subeq_last_citizen] + [utils.JUXT] \
+                                + subeq[subeq_last_citizen:]
         return arg2_idx + subeq_last_citizen + 1, idx
 
 
-def _linsert_juxtsubeq(eq, idx, usubeq):
-    """Insert a JUXT-ublock to the left of a subeq.
+def _linsert_juxtsubeq(eq, idx, subeq):
+    """Insert a subeq which starts by JUXT to the left of a subeq.
 
     :param eq: The equation in which to insert *usubeq*.
     :param idx: The index of a subeq of reference to insert *usubeq*.
-    :param usubeq: The subequation to insert. It must start with a JUXT.
+    :param subeq: The subequation to insert. It must start with a JUXT.
     :return: Index of first citizen inserted and :idx: updated.
     """
     juxt_idx, arg2_idx = eqqueries.other_juxt_arg(eq, idx)
-    subeq_last_citizen = eqqueries.last_citizen(usubeq, 1)
+    subeq_last_citizen = eqqueries.last_citizen(subeq, 1)
     if juxt_idx < 0 or arg2_idx < idx:
         # idx points to eq, an uarg or a last citizen
-        eq[idx:idx] = usubeq[:subeq_last_citizen] + [utils.JUXT] \
-                      + usubeq[subeq_last_citizen:]
-        return idx + 1, idx + len(usubeq) + 1
+        eq[idx:idx] = subeq[:subeq_last_citizen] + [utils.JUXT] \
+                      + subeq[subeq_last_citizen:]
+        return idx + 1, idx + len(subeq) + 1
     else:
         # idx points to a citizen but not the last one
-        eq[idx:idx] = usubeq[1:subeq_last_citizen] + [utils.JUXT] \
-                      + usubeq[subeq_last_citizen:] + [utils.JUXT]
-        return idx, idx + len(usubeq) + 2
+        eq[idx:idx] = subeq[1:subeq_last_citizen] + [utils.JUXT] \
+                      + subeq[subeq_last_citizen:] + [utils.JUXT]
+        return idx, idx + len(subeq) + 2
 
 
-def _rinsert(eq, idx, usubeq):
-    """Insert an usubeq to the right of a subequation.
+def _rinsert(eq, idx, subeq):
+    """Insert an subeq to the right of a subequation.
 
     .. warning::
 
@@ -131,24 +140,24 @@ def _rinsert(eq, idx, usubeq):
 
     Returned index is:
 
-        *   If :subeq: is a JUXT-ublock, the index in :eq: of last citizen
-            of subequation :subeq:.
-        *   Else, the first element of :subeq:.
+        *   If *subeq* starts by JUXT, the index in *eq* of last citizen
+            of subequation *subeq*.
+        *   Else, the first element of *subeq* in *eq*.
 
-    :eq: A valid equation.
-    :idx: The index of a subeq behind which *usubeq* will be inserted.
-    :subeq: The subequation to insert. It can be any valid subequation.
+    :param eq: A valid equation.
+    :param idx: The index of a subeq behind which *usubeq* will be inserted.
+    :param subeq: The subequation to insert. It can be any valid subequation.
     :return: The index that must be selected.
     """
-    if usubeq[0] == utils.JUXT:
-        lcitizen_idx, newidx = _rinsert_juxtsubeq(eq, idx, usubeq)
+    if subeq[0] == utils.JUXT:
+        lcitizen_idx, newidx = _rinsert_juxtsubeq(eq, idx, subeq)
         return lcitizen_idx
     else:
-        felem_idx, newidx = _rinsert_nonjuxtsubeq(eq, idx, usubeq)
-        return felem_idx
+        felem_idx, newidx = _rinsert_nonjuxtsubeq(eq, idx, subeq)
+        return felem_idx + 1 if groups.is_some_group(subeq[0]) else felem_idx
 
 
-def _linsert(eq, idx, usubeq):
+def _linsert(eq, idx, subeq):
     """Insert an usubeq to the left of a subequation.
 
     .. warning::
@@ -165,118 +174,128 @@ def _linsert(eq, idx, usubeq):
 
     :param idx: The index of a subeq in front of which *subeq* will be
     inserted.
-    :param usubeq: The subequation to insert. It can be any valid subequation.
+    :param subeq: The subequation to insert. It can be any valid subequation.
     :return: The index that must be selected.
     """
-    if usubeq[0] == utils.JUXT:
-        fcitizen_idx, newidx = _linsert_juxtsubeq(eq, idx, usubeq)
+    if subeq[0] == utils.JUXT:
+        fcitizen_idx, newidx = _linsert_juxtsubeq(eq, idx, subeq)
         return fcitizen_idx
     else:
-        felem_idx, newidx = _linsert_nonjuxtsubeq(eq, idx, usubeq)
-        return felem_idx
+        felem_idx, newidx = _linsert_nonjuxtsubeq(eq, idx, subeq)
+        return felem_idx + 1 if groups.is_some_group(subeq[0]) else felem_idx
 
 
-def _replace_script_base(eq, idx, usubeq):
-    """Replace the base of a script operator."""
-
-
-
-def _replace_integrating(eq, idx, usubeq):
+def _replace_integrating(eq, idx, subeq):
     """Replace subeq starting at idx by integrating citizens, if needed.
 
-    Requirement:
+    .. note::
+        Do not use this function if selection starts at *idx*: Replacement
+        should be selected in that case. You can use _replace_grouped with a
+        temporal group instead.
 
-        *   subeq must not be [NEWARG]
+    .. note::
+        subeq must not be [NEWARG]. Consider _remove_selection instead.
 
-    If :idx: does not point to a citizen or :subeq: is not a JUXT-ublock,
+    If *idx* does not point to a citizen or *subeq* does not start with JUXT,
     it is an ordinary replacement.
-    Else, citizen which start at :idx: is removed and citizens of :subeq:
-    are added as co-citizens of the corresponding JUXT-ublock in :eq:.
+    Else, citizen which start at *idx* is removed and citizens of *subeq*
+    are added as co-citizens of the corresponding JUXT-ublock in *eq*.
 
-    Returned value:
+    Meaning of returned value:
 
-        *   If every element with index i in :subeq: has index :idx: + i in
-            :eq: after replacement, 0 is returned
+        *   If every element with index i in :subeq: has index *idx* + i in
+            *eq* after replacement, 0 is returned
         *   Else, 1 is returned. It means that:
 
             *   Any citizen, except the last one, with index i in :subeq:, has
-                index :idx: + i - 1 in :eq:.
-            *   Last citizen in :subeq: has index :idx: + i in :eq:.
+                index *idx* + i - 1 in *eq*.
+            *   Last citizen in :subeq: has index *idx* + i in *eq*.
 
-            Note:
-
-                That happens when :subeq: is a JUXT-ublock and :idx: pointed to
+            .. note::
+                That happens when *subeq* is a JUXT-ublock and *idx* pointed to
                 a citizen which was not the last one of some JUXT-ublock in
-                :eq:.
+                *eq*.
 
     :param eq: Equation in which the replacement is done.
     :param idx: The index of a subeq which will be replaced.
-    :param usubeq: Subeq with which subeq starting at :idx: will be replaced.
-    :return: A flag value explained above.
+    :param subeq: Subeq with which subeq starting at :idx: will be replaced.
+    :return: A flag explained above.
     """
+    # If selection is the argument of a group, replace the full group
+    # Note that solid groups should also be replaced totally
+    if idx and groups.is_grouped_someway(eq, idx):
+        idx -= 1
+
     juxt_idx, arg2_idx = eqqueries.other_juxt_arg(eq, idx)
-    if usubeq[0] != utils.JUXT or juxt_idx < 0 or arg2_idx < idx:
+    if subeq[0] != utils.JUXT or juxt_idx < 0 or arg2_idx < idx:
         # subeq does not start with JUXT or idx points to:
         #   1. eq, or
         #   2. An uarg, or
         #   3. A last citizen
-        end_index = eqqueries.nextsubeq(eq, idx)
-        eq[idx:end_index] = usubeq
+        if scriptops.is_base(eq, idx):
+            # Subcase: Substitute (v)script base
+            scriptops.update_scriptblock(eq, idx, subeq[0])
+
+        end = eqqueries.nextsubeq(eq, idx)
+        eq[idx:end] = subeq
         return 0
     else:
         # idx points to the first argument of a JUXT (terminal or not)
-        subeq_last_citizen = eqqueries.last_citizen(usubeq, 1)
-        eq[idx:arg2_idx] = usubeq[1:subeq_last_citizen] + [utils.JUXT] \
-                           + usubeq[subeq_last_citizen:]
+        subeq_last_citizen = eqqueries.last_citizen(subeq, 1)
+        eq[idx:arg2_idx] = subeq[1:subeq_last_citizen] + [utils.JUXT] \
+                           + subeq[subeq_last_citizen:]
         return 1
 
 
-def _replace_grouped(eq, idx, usubeq, temp=False):
+def _replace_grouped(eq, idx, subeq, temp=False):
     """Replace subeq which starts at idx as a group, if needed.
 
-    .. warning::
-        *subeq* must not be [NEWARG]
+    .. note::
+        *subeq* must not be [NEWARG]. Consider _remove_selection instead.
 
     Rules:
 
-        *   If *idx* does not point to a citizen or *subeq* is not a
-            JUXT-ublock, it is an ordinary replacement.
+        *   If *idx* does not point to a citizen or *subeq* does not start
+            with JUXT, it is an ordinary replacement.
         *   Else, the citizen in *idx* is replaced by *subeq* "protected"
             with a group operator.
 
-    If you want a group operator in front of your subeq even if it is not
-    a JUXT-ublock, add it by yourself and call this (or replace_integrating)
-    function then.
+    If you want a group operator in front of *subeq* even if it does not
+    start with JUXT, add it by yourself before calling this function (or
+    _replace_integrating, which would be equivalent).
 
     :param eq: Equation in which the replacement is done.
     :param idx: The index of a subeq which will be replaced.
-    :param usubeq: Subeq with which subeq starting at *idx* will be replaced.
+    :param subeq: Subeq with which subeq starting at *idx* will be replaced.
     :param temp: Indicates whether the group will be temporal, if it is
     included.
     :return: An index pointing to the subequation that must be selected.
     """
-    if usubeq[0] != utils.JUXT:
-        # subeq does not start with JUXT
-        end_idx = eqqueries.nextsubeq(eq, idx)
-        eq[idx:end_idx] = usubeq
-        return idx
+    # If selection is the argument of a group, replace the full group
+    # Note that solid groups should also be replaced totally
+    if groups.is_grouped_someway(eq, idx):
+        idx -= 1
 
     juxt_idx, arg2_idx = eqqueries.other_juxt_arg(eq, idx)
-    if juxt_idx < 0:
-        # idx points to an uarg or eq
+    if juxt_idx < 0 or subeq[0] != utils.JUXT:
+        # idx points to an uarg or eq; or subeq does not start with JUXT
+        if scriptops.is_base(eq, idx):
+            # Subcase: Substitute (v)script base
+            scriptops.update_scriptblock(eq, idx, subeq[0])
+
         end_idx = eqqueries.nextsubeq(eq, idx)
-        eq[idx:end_idx] = usubeq
+        eq[idx:end_idx] = subeq
         return idx
 
     gop = utils.TEMPGROUP if temp else utils.GROUP
     if idx < arg2_idx:
         # idx points to the first argument of a JUXT
-        eq[idx:arg2_idx] = [gop] + usubeq
+        eq[idx:arg2_idx] = [gop] + subeq
         return idx + 1
     else:
-        # idx points to the a last citizen
+        # idx points to a last citizen
         end_idx = eqqueries.nextsubeq(eq, idx)
-        eq[idx:end_idx] = [gop] + usubeq
+        eq[idx:end_idx] = [gop] + subeq
         return idx + 1
 
 
@@ -307,14 +326,25 @@ def _remove_selection(eq, idx, dir):
             *   Else (direction was -1), the co-citizen to the right is
                 selected and direction is not changed.
     """
+    # Correct index if the argument of a group is selected
+    # Note that solid groups also should be removed totally
+    if groups.is_grouped_someway(eq, idx):
+        idx -= 1
+
     if not idx:
+        # Case: remove whole eq
         return remove_eq(eq)
 
     juxt_idx, otherarg = eqqueries.other_juxt_arg(eq, idx)
     if juxt_idx < 0:
         # Case: Remove uarg
-        end_idx = eqqueries.nextsubeq(eq, idx)
-        eq[idx:end_idx] = [utils.NEWARG]
+        if scriptops.is_base(eq, idx):
+            # Uarg subcase: idx points to the base of a (v)script
+            # Convert (v)script operator if needed
+            scriptops.update_scriptblock(eq, idx, utils.NEWARG)
+
+        end = eqqueries.nextsubeq(eq, idx)
+        eq[idx:end] = [utils.NEWARG]
         return idx, 0
 
     # From this point, we know idx points to citizen
@@ -565,48 +595,39 @@ def _flat_external_op_core(eq, idx, dir, remove_mode=0):
         return op_idx + subeq_c.get_idx(offset, sel_ridx), dir
 
 
-def _remove_arg(eq, idx, remove_mode=0):
-    """Remove an argument.
+def _remove_arg(eq, idx, dir, remove_mode=1):
+    """Remove an argument by flatting or downgrading its operator.
 
-    Requirement:
+    .. note::
+        Usually you would want to use this function if the arg is a NEWARG.
 
-        *   It is expected that :idx: points to a NEWARG, so dir is supposed
-            to be 0.
-
-    Parameter :remove_mode: is expected to be:
+    Parameter +remove_mode+ is expected to be:
 
         *   If this function is the consequence of deleting, 1.
         *   If this function is the consequence of suppression, -1.
 
      Rules:
-        *   If :idx: points to a script operator, downgrade the script
-            operator.
+
+        *   If *idx* points to the argument of a (v)script operator which is
+            not the base, downgrade the (v)script operator.
         *   Else, apply rules of _flat_external_op_core.
     """
-    isscript, script_op_idx, arg_pos = eqqueries.is_script(eq, idx)
+    # Note that any group (including solid groups) should also be replaced
+    # totally
+    if groups.is_grouped_someway(eq, idx):
+        idx -= 1
 
-    if not isscript:
-        return _flat_external_op_core(eq, idx, 0, remove_mode)
+    op_idx, arg_pos = eqqueries.whosearg_filter_type(eq, idx)
 
-    args = eqqueries.indexop2arglist(eq, script_op_idx)
-    # Find which element of the list has to be removed
-    # Note that arg_pos only applies non-None arguments
-    valid_pos = 0
-    for pos, arg in enumerate(args):
-        if arg is not None:
-            if valid_pos == arg_pos:
-                args[pos] = None
-                break
-            else:
-                valid_pos += 1
-    new_op = eqqueries.arglist2indexop(args)
-    end_block = eqqueries.nextsubeq(eq, script_op_idx)
-    if new_op is None:
-        eq[script_op_idx:end_block] = args[0]
-    else:
-        new_args = eqqueries.flat_arglist(args)
-        eq[script_op_idx:end_block] = [new_op] + new_args
-    return script_op_idx, 1
+    # Flat operator if not a script
+    if op_idx < 0 \
+            or eq[op_idx] not in utils.ALLSCRIPT_TYPES \
+            or scriptops.is_base(eq, idx):
+        return _flat_external_op_core(eq, idx, dir, remove_mode)
+
+    # From this point it is assumed that we are dealing with the argument
+    # of a script or vscript which is not the base
+    return scriptops.remove_script(eq, idx), 1
 
 
 def _rremove(eq, idx):
@@ -626,14 +647,24 @@ def _rremove(eq, idx):
         if idx < otherarg:
             if eq[otherarg] == utils.JUXT:
                 # Subcase: selection is a citizen before the last but one
-                end_idx = eqqueries.nextsubeq(eq, otherarg + 1)
-                eq[otherarg:end_idx] = []
+                end = eqqueries.nextsubeq(eq, otherarg + 1)
+                eq[otherarg:end] = []
             else:
                 # Subcase: selection is a last but one co-citizen
-                end_idx = eqqueries.nextsubeq(eq, otherarg)
-                eq[juxt_idx:end_idx] \
-                    = eq[idx:otherarg]
+                if scriptops.is_base(eq, juxt_idx):
+                    # Sub-subcase: Dissolve JUXT in (v)script base
+                    scriptops.update_scriptblock(eq, juxt_idx, eq[idx])
+
+                end = eqqueries.nextsubeq(eq, otherarg)
+                eq[juxt_idx:end] = eq[idx:otherarg]
                 idx -= 1
+
+                if idx and eq[idx-1] == utils.GROUP:
+                    # Sub-subcase: Group has no sense any more
+                    # Note that solid groups should not be removed
+                    eq.pop(idx-1)
+                    idx -= 1
+
         else:
             # Subcase: selection is a last citizen
             _flat_external_op_core(eq, idx)
@@ -659,38 +690,58 @@ def _lremove(eq, idx):
     if lcocitizen_idx < 0:
         # Case: selection is not a citizen or it is a first citizen
         _flat_external_op_core()
-    elif eq[idx - 1] == utils.JUXT:
+    elif eq[idx-1] == utils.JUXT:
         # Case: selection is not the last citizen
-        eq[lcocitizen_idx - 1:idx - 1] = []
+        eq[lcocitizen_idx-1:idx-1] = []
         idx = lcocitizen_idx
     else:
         # Case: selection is the last citizen
-        eq[lcocitizen_idx - 1:idx] = []
+        if scriptops.is_base(eq, lcocitizen_idx-1):
+            # Subcase: Dissolve JUXT-ublock in (v)script base
+            scriptops.update_scriptblock(eq, lcocitizen_idx - 1, eq[idx])
+
+        eq[lcocitizen_idx-1:idx] = []
         idx = lcocitizen_idx - 1
+
+        if idx and eq[idx-1] == utils.GROUP:
+            # Subcase: Group has no sense any more
+            # Note that solid groups should not be removed
+            eq.pop(idx-1)
+            idx -= 1
+
     return idx
 
 
-def insert_primitive(eq, idx, dir, pelem):
-    """Insert/replace a subequation from a primitive element.
+def insert(eq, idx, dir, pseudoelem):
+    """Insert/replace a subequation from a primitive or part of a subequation.
 
-    .. warning::
-        *pelem* must not be a NEWARG nor a JUXT.
+    .. note::
+        *pseudoelem* must not be a single NEWARG, JUXT, GROUP or TEMPGROUP.
+        *pseudoelem*[0][0] must not be a JUXT if *pseudoelem*[0][1] > 0.
+        In case you are considering those cases, are you sure there is not a
+        better function.
+
+    .. note::
+        If *pseudoelem* is a tuple, first element must be the an incomplete
+        block and second element an integer specifying how many arguments
+        are left free. If integer is 0, it means that the block is already
+        valid.
 
     :param eq: An equation.
     :param idx: Index of current selection.
     :param dir: Current direction of selection.
-    :param pelem: The primitive parameter to insert.
+    :param pseudoelem: A symbol, operator or tuple.
     :return: New selection index and direction.
 
-    Depending on *pelem* and *dir*, behavior is different:
+    Depending on *pseudoelem* and *dir*, behavior is different:
 
-        *   If *pelem* is a symbol or operator with 0 arguments:
+        *   If *pseudoelem* is a symbol or operator with 0 arguments:
 
             *   If *dir* is 1, insert it to the right of selection.
             *   Elif *dir* is -1, insert it to the left of selection.
             *   Else, substitute selection with the symbol.
 
-        *   If *pelem* is an operator with more than one argument:
+        *   If *pseudoelem* is an operator with more than one argument:
 
             *   If *dir* is 1, insert it to the right of selection with every
                 argument set to a NEWARG.
@@ -702,133 +753,85 @@ def insert_primitive(eq, idx, dir, pelem):
                 every argument set to a NEWARG except the first one, which
                 is set to the subequation that was selected.
 
+        *   If *pseudoelem* is a tuple:
+
+            *   Too lazy to document now...
+            *   If second element of the tuple is 0, insert....
+            *   If *dir* is not 2, append as many NEWARGS as needed to the
+                partial black to obtain a valid block and insert it as in the
+
+
     Final selection and direction:
 
-        *   If *pelem* is a symbol, select it and set direction to 1.
-        *   Elif *pelem* is an operator and dir in [-1, 0, 1], select first
-            argument and set dir to 1.
-        *   Elif *pelem* is an operator and dir is 2, select the second
-            argument and set dir to 0.
+        *   If *pelem* is a symbol or op with 0 arguments, select it and set
+            dir to 1.
+        *   Elif *pelem* is an operator (with some arguments) and dir is in
+            (-1, 0, 1), select first argument and set dir to 1.
+        *   Else, select the first included NEWARG and set dir to 0.
     """
-
-    if isinstance(pelem, str) \
-            or (isinstance(pelem, utils.Op) and not pelem.n_args):
-        usubeq = [pelem]
-    elif dir == 2:
+    # Create subeq to insert
+    n_final_newargs = 0
+    if isinstance(pseudoelem, str) \
+            or (isinstance(pseudoelem, utils.Op) and not pseudoelem.n_args):
+        # pseudoelem is symbol or 0-arg op
+        subeq = [pseudoelem]
+    elif isinstance(pseudoelem, utils.Op) and dir == 2:
+        # pseudoelem is an op and first arg will be current selection
+        n_final_newargs = pseudoelem.n_args - 1
         sel_end = eqqueries.nextsubeq(eq, idx)
-        usubeq = [pelem] + eq[idx:sel_end] + [utils.NEWARG]*(pelem.n_args - 1)
-    else:
-        usubeq = [pelem] + [utils.NEWARG] * pelem.n_args
-
-    if not dir:
-        usubeq_idx = _replace_integrating(eq, idx, usubeq)
-        return usubeq_idx, 1 if len(usubeq) == 1 else usubeq_idx + 1, 0
+        subeq = [pseudoelem] + eq[idx:sel_end] \
+                 + [utils.NEWARG]*n_final_newargs
+    elif isinstance(pseudoelem, utils.Op):
+        # pseudoelem is an op and every argument will be set to a NEWARG
+        n_final_newargs = pseudoelem.n_args
+        subeq = [pseudoelem] + [utils.NEWARG] * n_final_newargs
+    elif pseudoelem[1] == 0:
+        # pseudoelem[0] is a valid block
+        subeq = pseudoelem[0]
     elif dir == 2:
-        usubeq_idx = _replace_integrating(eq, idx, usubeq)
-        arg1_end = eqqueries.nextsubeq(eq, usubeq_idx + 1)
-        return arg1_end, 0
-    elif dir == 1:
-        return _rinsert(eq, idx, usubeq), 1
-    elif dir == -1:
-        return _linsert(eq, idx, usubeq), 1
-
-
-def insert_substituting(eq, idx, dir, pelem):
-    """Substitute current selection with a new subeq depending on primitive
-    element.
-
-    New subequation will be:
-
-        *   If :pelem: is a symbol, the symbol.
-        *   If :pelem: is an operator:
-
-            *   If it is a 0-argument operator, the operator.
-            *   Elif it is a 1-argument operator, selection preceded by the
-                operator.
-            *   Else, operator + selection + "as many NEWARGS as needed"
-
-
-    Return:
-        *   If introduced subequation is a symbol or operator with
-            zero or one arguments, select subequation and set
-            dir = 1.
-        *   If it is an operator with more than one argument, select
-            the second argument and set dir = 0.
-    """
-    if isinstance(pelem, str) or \
-            (isinstance(pelem, utils.Op) and pelem.n_args == 0):
-        _replace_integrating(eq, idx, pelem)
-        dir = 1
-    elif isinstance(pelem, utils.Op) and pelem.n_args == 1:
-        # This insert is a list method
-        eq.insert(idx, pelem)
-        dir = 1
-    elif isinstance(pelem, utils.Op) and pelem.n_args > 1:
-        sel_end = eqqueries.nextsubeq(self.eq, self.eqsel.idx)
-        self.eq[self.eqsel.idx:sel_end] \
-            = [pelem] + self.eq[self.eqsel.idx:sel_end] \
-              + [utils.NEWARG] * (pelem.n_args - 1)
-        self.eqsel.idx = sel_end + 1
-        self.eqsel.dir = 0
+        # pseudoelem[0] needs current selection in first unset argument
+        n_final_newargs = pseudoelem[1] - 1
+        sel_end = eqqueries.nextsubeq(eq, idx)
+        subeq = pseudoelem[0] + eq[idx:sel_end] \
+                 + [utils.NEWARG] * n_final_newargs
     else:
-        ShowError('Unknown type of operator in insert_subst: '
-                  + repr(pelem), True)
+        # pseudoelem[0] needs only NEWARGs
+        n_final_newargs = pseudoelem[1]
+        subeq = pseudoelem[0] + [utils.NEWARG]*n_final_newargs
 
-@updatestate
-def _insert_script_core(self, is_superscript):
-    """
-    Read self.insert_script docstring.
-    """
-    # Select the subequation of interest in the case that selection is a
-    # JUXT.
-    if self.eq[self.eqsel.idx] == utils.JUXT:
-        if self.eqsel.dir == 1:
-            self.eqsel.idx = eqqueries.last_citizen(
-                self.eq, self.eqsel.idx)
+    # _replace_*, _rinsert and _linsert take care of groups and bases **in eq**
+    if dir in (0, 2):
+        # _replace_integrating does not provide a selection as output, but a
+        # flag
+        flag = _replace_integrating(eq, idx, subeq)
+        # Select correctly the replacement
+        if n_final_newargs:
+            # Do not consider flag if there are NEWARGs, subeq is not allowed
+            # to start with JUXT in that case
+            return idx + len(subeq) - n_final_newargs, 0
+        # Correct selection depending on flag and presence of group in subeq
+        elif not flag or groups.is_some_group(subeq[0]):
+            return idx, 1
         else:
-            self.eqsel.idx += 1
-    # Create an arglist with the current indices
-    args = eqqueries.indexop2arglist(self.eq, self.eqsel.idx)
-    # Include a NEWARG if the the index is not available
-    if self.eqsel.dir != -1:
-        script_id = 3 if is_superscript else 2
-    else:
-        script_id = 4 if is_superscript else 1
-    if args[script_id] is None:
-        args[script_id] = [utils.NEWARG]
-        self.eqsel.dir = 0
-    else:
-        self.eqsel.dir = 1
+            return idx - 1, 1
+    # _rinsert and _linsert return always a valid index to select
+    elif dir == 1:
+        return _rinsert(eq, idx, subeq), 1
+    elif dir == -1:
+        return _linsert(eq, idx, subeq), 1
 
-    argselems_frombasetocurrent = 0
-    for i in range(script_id):
-        if args[i] is not None:
-            argselems_frombasetocurrent += len(args[i])
 
-    new_op = eqqueries.arglist2indexop(args)
-    # Flat the list of args
-    new_args = eqqueries.flat_arglist(args)
-    new_ublock = [new_op] + new_args
-    end_prev_ublock = eqqueries.nextsubeq(self.eq, self.eqsel.idx)
-    self.eq[self.eqsel.idx:end_prev_ublock] = new_ublock
-
-    self.eqsel.idx += 1 + argselems_frombasetocurrent
-
-def insert_script(self, is_superscript):
+def insert_script(eq, idx, dir, is_superscript):
     """Insert a sub or superscript and select it.
 
     If it already exists, just select it.
-
-    If a JUXT-ublock is selected, put the script to the right of last
-    citizen if eqsel.dir == 1. Else, put the script to the left of the
-    first citizen.
-
-    Some elements are blacklisted. Nothing is done in that case.
     """
-    # Blacklist some operators
-    if not (hasattr(self.eq[self.eqsel.idx], 'type_')
-            and self.eq[self.eqsel.idx].type_ in utils.INDEX_BLACKLIST):
-        self._insert_script_core(is_superscript)
+    script_idx = scriptops.insert_script(eq, idx, dir, is_superscript)
+    if script_idx < 0:
+        return -script_idx, 1
+    else:
+        return script_idx, 0
+
 
 @updatestate
 def delete(self, supr=False):

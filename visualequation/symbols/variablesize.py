@@ -56,19 +56,15 @@ def variablesize(parent, code):
 
     (sup, inf), ok = Dialog.get(parent)
     if ok:
+        base = Op(0, code, "vs")
         if sup and inf:
-            latex_code = code + r"_{{{0}}}^{{{1}}}"
-            n_operands = 2
+            return [SLUNDEROVER, base], 2
         elif sup:
-            latex_code = code + r"^{{{0}}}"
-            n_operands = 1
+            return [SLOVER, base], 1
         elif inf:
-            latex_code = code + r"_{{{0}}}"
-            n_operands = 1
+            return [SLUNDER, base], 1
         else:
-            latex_code = code
-            n_operands = 0
-        return Op(n_operands, latex_code, "vsize")
+            return base
     else:
         return None
 
@@ -117,18 +113,15 @@ def integrals(parent, code):
 
     (sup, inf), ok = Dialog.get(parent)
     if ok:
+        base = Op(0, code, "int")
         if sup and inf:
-            latex_code = code + r"\limits_{{{0}}}^{{{1}}}"
-            n_operands = 2
+            return [LIMUNDEROVER, base], 2
         elif sup:
-            latex_code = code + r"\limits^{{{0}}}"
-            n_operands = 1
+            return [LIMOVER, base], 1
         elif inf:
-            latex_code = code + r"\limits_{{{0}}}"
-            n_operands = 1
+            return [LIMUNDER, base], 1
         else:
-            return Op(0, code, "int_empty")
-        return Op(n_operands, latex_code, "int_with_args")
+            return base
     else:
         return None
 
@@ -138,29 +131,29 @@ def fint(code):
 
 
 VARIABLESIZE = [
-    Symbol('sum', f(r'\sum')),
-    Symbol('prod', f(r'\prod')),
-    Symbol('coprod', f(r'\coprod')),
-    Symbol('int', fint(r'\int')),
-    Symbol('iint', fint(r'\iint')),
-    Symbol('iiint', fint(r'\iiint')),
-    Symbol('iiiint', fint(r'\iiiint')),
-    Symbol('dotsint', fint(r'\dotsint')),
-    Symbol('oint', fint(r'\oint')),
-    Symbol('oiint', fint(r'\oiint')),
-    Symbol('sqint', fint(r'\sqint')),
-    Symbol('sqiint', fint(r'\sqiint')),
-    Symbol('ointctrclockwise', fint(r'\ointctrclockwise')),
-    Symbol('ointclockwise', fint(r'\ointclockwise')),
-    Symbol('biguplus', f(r'\biguplus')),
-    Symbol('bignplus', f(r'\bignplus')),
-    Symbol('bigcup', f(r'\bigcup')),
-    Symbol('bigcap', f(r'\bigcap')),
-    Symbol('bigoplus', f(r'\bigoplus')),
-    Symbol('bigotimes', f(r'\bigotimes')),
-    Symbol('bigodot', f(r'\bigodot')),
-    Symbol('bigvee', f(r'\bigvee')),
-    Symbol('bigwedge', f(r'\bigwedge')),
-    Symbol('bigsqcup', f(r'\bigsqcup')),
-    Symbol('bigsqcap', f(r'\bigsqcap')),
+    PanelIcon('sum', f(r'\sum')),
+    PanelIcon('prod', f(r'\prod')),
+    PanelIcon('coprod', f(r'\coprod')),
+    PanelIcon('int', fint(r'\int')),
+    PanelIcon('iint', fint(r'\iint')),
+    PanelIcon('iiint', fint(r'\iiint')),
+    PanelIcon('iiiint', fint(r'\iiiint')),
+    PanelIcon('dotsint', fint(r'\dotsint')),
+    PanelIcon('oint', fint(r'\oint')),
+    PanelIcon('oiint', fint(r'\oiint')),
+    PanelIcon('sqint', fint(r'\sqint')),
+    PanelIcon('sqiint', fint(r'\sqiint')),
+    PanelIcon('ointctrclockwise', fint(r'\ointctrclockwise')),
+    PanelIcon('ointclockwise', fint(r'\ointclockwise')),
+    PanelIcon('biguplus', f(r'\biguplus')),
+    PanelIcon('bignplus', f(r'\bignplus')),
+    PanelIcon('bigcup', f(r'\bigcup')),
+    PanelIcon('bigcap', f(r'\bigcap')),
+    PanelIcon('bigoplus', f(r'\bigoplus')),
+    PanelIcon('bigotimes', f(r'\bigotimes')),
+    PanelIcon('bigodot', f(r'\bigodot')),
+    PanelIcon('bigvee', f(r'\bigvee')),
+    PanelIcon('bigwedge', f(r'\bigwedge')),
+    PanelIcon('bigsqcup', f(r'\bigsqcup')),
+    PanelIcon('bigsqcap', f(r'\bigsqcap')),
 ]

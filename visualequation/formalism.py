@@ -14,6 +14,7 @@ Most of definitions do not relay on the actual implementation of an equation
 (a list), so I found better to keep the formalism implementation agnostic.
 
     -   Elements or components of an equation can be of three different types:
+
         *   Symbols (primitive type),
         *   Operators (primitive type), and
         *   Blocks (composed type).
@@ -50,10 +51,10 @@ or in a more common notation
 
     1 + (3 * 2)
 
-    -   "Primitive elements of" an equation are, by definition:
+    -   "Primitives" of an equation are, by definition:
             *   If the equation is a symbol, the equation itself, and
             *   If the equation is a block, the leading operator and the
-                "primitive elements of" the arguments of the leading operator.
+                "primitive" of the arguments of the leading operator.
                 This is a recursive definition that makes sense due to Rule 1.
 
     -   "Subequations of" (or "in" or which are "contained in") an equation
@@ -91,8 +92,8 @@ Examples:
 
 The most used property:
 
-    *   There is a natural map between any primitive element of an equation
-        and every subequation:
+    *   There is a natural map between any primitive of an equation and every
+        subequation:
 
         *   If the element is a symbol, the subequation that is that symbol.
         *   If the element is an operator, the block of which it is the
@@ -144,8 +145,8 @@ have some special characteristics. Those operators do not need
 
 Implementation of an equation in Visual Equation:
 
-Visual Equation uses a flat list of primitive elements to represent an
-equation. The format is equivalent to Polish Notation:
+Visual Equation uses a flat list of primitives to represent an equation. The
+format is equivalent to Polish Notation:
 
     *   An operator always precedes its arguments.
 
@@ -171,11 +172,8 @@ read about Polish Notation.
 
 Some consequences:
 
-    *   Elements of the list representing an equation are only "primitive
-        elements" of the equation. Because of that, when in the source code
-        it is said "an element of an equation" (properly an element of the
-        representation of the equation), it always refer to a primitive
-        element of the formal equation.
+    *   Elements of the list representing an equation are only "primitives"
+        of the equation.
     *   Subequations of an equation are slices of a list.
 
 Primitive types:
@@ -243,9 +241,9 @@ concepts to simplify the writting:
 
 Parent JUXTs and descendant JUXTs:
 
-    -   A "parent JUXT" of an equation is a primitive element of that equation
-        which is a JUXT and the subequation it naturally defines is not an
-        argument of another JUXT.
+    -   A "parent JUXT" of an equation is a primitive of that equation which
+        is a JUXT and the subequation it naturally defines is not an argument
+        of another JUXT.
 
     -   A "descendant JUXT" is every JUXT operator in an equation which is not
         a parent JUXT.

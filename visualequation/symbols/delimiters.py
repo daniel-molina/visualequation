@@ -14,31 +14,31 @@
 from .utils import *
 
 SINGLEDELIMITERS = [
-    Symbol('lparenthesis', '('),
-    Symbol('rparenthesis', ')'),
-    Symbol('vert', '|'),
-    Symbol('uppervert', r'\|'),
-    Symbol('lbracket', r'\{{'),  # {{: It will be part of an operator
-    Symbol('rbracket', r'\}}'),  # }}: Idem
-    Symbol('langle', r'\langle'),
-    Symbol('rangle', r'\rangle'),
-    Symbol('lfloor', r'\lfloor'),
-    Symbol('rfloor', r'\rfloor'),
-    Symbol('lceil', r'\lceil'),
-    Symbol('rceil', r'\rceil'),
-    Symbol('slash', '/'),
-    Symbol('backslash', r'\backslash'),
-    Symbol('lsqbracket', '['),
-    Symbol('rsqbracket', ']'),
-    Symbol('llcorner', r'\llcorner'),
-    Symbol('lrcorner', r'\lrcorner'),
-    Symbol('ulcorner', r'\ulcorner'),
-    Symbol('urcorner', r'\urcorner'),
-    Symbol('uparrow', r'\uparrow'),
-    Symbol('upperuparrow', r'\Uparrow'),
-    Symbol('downarrow', r'\downarrow'),
-    Symbol('upperdownarrow', r'\Downarrow'),
-    Symbol('blankdelimiter', r'.'),
+    PanelIcon('lparenthesis', '('),
+    PanelIcon('rparenthesis', ')'),
+    PanelIcon('vert', '|'),
+    PanelIcon('uppervert', r'\|'),
+    PanelIcon('lbracket', r'\{{'),  # {{: It will be part of an operator
+    PanelIcon('rbracket', r'\}}'),  # }}: Idem
+    PanelIcon('langle', r'\langle'),
+    PanelIcon('rangle', r'\rangle'),
+    PanelIcon('lfloor', r'\lfloor'),
+    PanelIcon('rfloor', r'\rfloor'),
+    PanelIcon('lceil', r'\lceil'),
+    PanelIcon('rceil', r'\rceil'),
+    PanelIcon('slash', '/'),
+    PanelIcon('backslash', r'\backslash'),
+    PanelIcon('lsqbracket', '['),
+    PanelIcon('rsqbracket', ']'),
+    PanelIcon('llcorner', r'\llcorner'),
+    PanelIcon('lrcorner', r'\lrcorner'),
+    PanelIcon('ulcorner', r'\ulcorner'),
+    PanelIcon('urcorner', r'\urcorner'),
+    PanelIcon('uparrow', r'\uparrow'),
+    PanelIcon('upperuparrow', r'\Uparrow'),
+    PanelIcon('downarrow', r'\downarrow'),
+    PanelIcon('upperdownarrow', r'\Downarrow'),
+    PanelIcon('blankdelimiter', r'.'),
 ]
 
 
@@ -55,7 +55,7 @@ def free_delimiters(parent):
             button_l.clicked.connect(self.handle_click_l)
             self.repr_l = QLabel('')
             self.repr_l.setPixmap(QPixmap(os.path.join(
-                commons.ICONS_DIR, self.symb_l.tag + ".png")))
+                commons.ICONS_DIR, self.symb_l.name + ".png")))
             self.repr_l.setAlignment(Qt.AlignCenter)
             hbox_l.addWidget(button_l)
             hbox_l.addWidget(self.repr_l)
@@ -67,7 +67,7 @@ def free_delimiters(parent):
             button_r.clicked.connect(self.handle_click_r)
             self.repr_r = QLabel('')
             self.repr_r.setPixmap(QPixmap(os.path.join(
-                commons.ICONS_DIR, self.symb_r.tag + ".png")))
+                commons.ICONS_DIR, self.symb_r.name + ".png")))
             self.repr_r.setAlignment(Qt.AlignCenter)
             hbox_r.addWidget(button_r)
             hbox_r.addWidget(self.repr_r)
@@ -86,22 +86,22 @@ def free_delimiters(parent):
             self.buttons.rejected.connect(self.reject)
 
         def handle_click_l(self):
-            dialog = ChooseSymbDialog(self, _("Left delimiter"),
+            dialog = ChooseElemDialog(self, _("Left delimiter"),
                                       SINGLEDELIMITERS, 4)
             result = dialog.exec_()
             if result == QDialog.Accepted:
                 self.symb_l = dialog.symb_chosen
                 self.repr_l.setPixmap(QPixmap(os.path.join(
-                    commons.ICONS_DIR, self.symb_l.tag + ".png")))
+                    commons.ICONS_DIR, self.symb_l.name + ".png")))
 
         def handle_click_r(self):
-            dialog = ChooseSymbDialog(self, _("Right delimiter"),
+            dialog = ChooseElemDialog(self, _("Right delimiter"),
                                       SINGLEDELIMITERS, 4)
             result = dialog.exec_()
             if result == QDialog.Accepted:
                 self.symb_r = dialog.symb_chosen
                 self.repr_r.setPixmap(QPixmap(os.path.join(
-                    commons.ICONS_DIR, self.symb_r.tag + ".png")))
+                    commons.ICONS_DIR, self.symb_r.name + ".png")))
 
         @staticmethod
         def get_delimiter(parent=None):
@@ -120,15 +120,15 @@ def free_delimiters(parent):
 
 
 DELIMITERS = [
-    Symbol('parenthesisb', Op(1, r'\left( {0} \right)')),
-    Symbol('sqbracketsb', Op(1, r'\left[ {0} \right]')),
-    Symbol('vertb', Op(1, r'\left| {0} \right|')),
-    Symbol('uppervertb', Op(1, r'\left\| {0} \right\|')),
-    Symbol('bracketsb', Op(1, r'\left\{{ {0} \right\}}')),
-    Symbol('angleb', Op(1, r'\left\langle {0} \right\rangle')),
-    Symbol('floorb', Op(1, r'\left\lfloor {0} \right\rfloor')),
-    Symbol('ceilb', Op(1, r'\left\lceil {0} \right\rceil')),
-    Symbol('lcornerb', Op(1, r'\left\llcorner {0} \right\lrcorner')),
-    Symbol('ucornerb', Op(1, r'\left\ulcorner {0} \right\urcorner')),
-    Symbol('freedelimiters', free_delimiters),
+    PanelIcon('parenthesisb', Op(1, r'\left( {0} \right)')),
+    PanelIcon('sqbracketsb', Op(1, r'\left[ {0} \right]')),
+    PanelIcon('vertb', Op(1, r'\left| {0} \right|')),
+    PanelIcon('uppervertb', Op(1, r'\left\| {0} \right\|')),
+    PanelIcon('bracketsb', Op(1, r'\left\{{ {0} \right\}}')),
+    PanelIcon('angleb', Op(1, r'\left\langle {0} \right\rangle')),
+    PanelIcon('floorb', Op(1, r'\left\lfloor {0} \right\rfloor')),
+    PanelIcon('ceilb', Op(1, r'\left\lceil {0} \right\rceil')),
+    PanelIcon('lcornerb', Op(1, r'\left\llcorner {0} \right\lrcorner')),
+    PanelIcon('ucornerb', Op(1, r'\left\ulcorner {0} \right\urcorner')),
+    PanelIcon('freedelimiters', free_delimiters),
 ]

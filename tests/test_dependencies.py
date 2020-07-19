@@ -24,6 +24,7 @@ import json
 from visualequation import commons
 from visualequation import conversions
 
+
 class DependenciesTest(unittest.TestCase):
 
     def test_latex(self):
@@ -63,7 +64,7 @@ class DependenciesTest(unittest.TestCase):
         dvi_fpath = os.path.join(os.path.dirname(__file__), 'im.dvi')
         eps_fpath = os.path.join(temp_dirpath, 'im.eps')
         try:
-            subprocess.check_output(["dvips", "-E", "-D", "600", "-Ppdf", 
+            subprocess.check_output(["dvips", "-E", "-D", "600", "-Ppdf",
                                      "-o", eps_fpath, dvi_fpath])
         except subprocess.CalledProcessError:
             raise SystemExit("DVI image not found in the directory?")
@@ -92,7 +93,7 @@ class DependenciesTest(unittest.TestCase):
         svg_fpath = os.path.join(temp_dirpath, 'im.svg')
         # dvisgvm does not return error code when file is not found
         try:
-            subprocess.call(["dvisvgm", "--no-fonts", "--scale=5,5", 
+            subprocess.call(["dvisvgm", "--no-fonts", "--scale=5,5",
                              "-o", svg_fpath, dvi_fpath])
         except OSError:
             raise SystemExit("Suggestion: Do you have command dvisvgm?")
@@ -122,7 +123,7 @@ class DependenciesTest(unittest.TestCase):
         fun(png_fpath)
         fun(pdf_fpath)
 
-            
+
     def test_exiftool_write(self):
         temp_dirpath = tempfile.mkdtemp()
         png_fpath = os.path.join(os.path.dirname(__file__), 'im.png')

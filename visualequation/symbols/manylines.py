@@ -15,12 +15,12 @@ from .utils import *
 from .delimiters import *
 
 MATRIXTYPES = [
-    Symbol('pmatrix', 'pmatrix'),
-    Symbol('vmatrix', 'vmatrix'),
-    Symbol('uppervmatrix', 'Vmatrix'),
-    Symbol('bmatrix', 'bmatrix'),
-    Symbol('upperbmatrix', 'Bmatrix'),
-    Symbol('matrix', 'matrix'),
+    PanelIcon('pmatrix', 'pmatrix'),
+    PanelIcon('vmatrix', 'vmatrix'),
+    PanelIcon('uppervmatrix', 'Vmatrix'),
+    PanelIcon('bmatrix', 'bmatrix'),
+    PanelIcon('upperbmatrix', 'Bmatrix'),
+    PanelIcon('matrix', 'matrix'),
 ]
 
 
@@ -46,7 +46,7 @@ def matrix_type(parent):
             button_type.clicked.connect(self.handle_click)
             self.repr_type = QLabel('')
             self.repr_type.setPixmap(QPixmap(os.path.join(
-                commons.ICONS_DIR, self.symb.tag + ".png")))
+                commons.ICONS_DIR, self.symb.name + ".png")))
             self.repr_type.setAlignment(Qt.AlignCenter)
             hbox_type.addWidget(button_type)
             hbox_type.addWidget(self.repr_type)
@@ -71,12 +71,12 @@ def matrix_type(parent):
             self.buttons.rejected.connect(self.reject)
 
         def handle_click(self):
-            dialog = ChooseSymbDialog(self, _("Matrix type"), MATRIXTYPES, 3)
+            dialog = ChooseElemDialog(self, _("Matrix type"), MATRIXTYPES, 3)
             result = dialog.exec_()
             if result == QDialog.Accepted:
                 self.symb = dialog.symb_chosen
                 self.repr_type.setPixmap(QPixmap(os.path.join(
-                    commons.ICONS_DIR, self.symb.tag + ".png")))
+                    commons.ICONS_DIR, self.symb.name + ".png")))
 
         def check_state(self, *args, **kargs):
             state1 = self.validator.validate(self.ledit_rows.text(), 0)[0]
@@ -134,7 +134,7 @@ def array(parent):
             button_l.clicked.connect(self.handle_click_l)
             self.repr_l = QLabel('')
             self.repr_l.setPixmap(QPixmap(os.path.join(
-                commons.ICONS_DIR, self.symb_l.tag + ".png")))
+                commons.ICONS_DIR, self.symb_l.name + ".png")))
             self.repr_l.setAlignment(Qt.AlignCenter)
             hbox_l.addWidget(button_l)
             hbox_l.addWidget(self.repr_l)
@@ -146,7 +146,7 @@ def array(parent):
             button_r.clicked.connect(self.handle_click_r)
             self.repr_r = QLabel('')
             self.repr_r.setPixmap(QPixmap(os.path.join(
-                commons.ICONS_DIR, self.symb_r.tag + ".png")))
+                commons.ICONS_DIR, self.symb_r.name + ".png")))
             self.repr_r.setAlignment(Qt.AlignCenter)
             hbox_r.addWidget(button_r)
             hbox_r.addWidget(self.repr_r)
@@ -177,22 +177,22 @@ def array(parent):
             self.buttons.rejected.connect(self.reject)
 
         def handle_click_l(self):
-            dialog = ChooseSymbDialog(self, _("Left delimiter"),
+            dialog = ChooseElemDialog(self, _("Left delimiter"),
                                       SINGLEDELIMITERS, 4)
             result = dialog.exec_()
             if result == QDialog.Accepted:
                 self.symb_l = dialog.symb_chosen
                 self.repr_l.setPixmap(QPixmap(os.path.join(
-                    commons.ICONS_DIR, self.symb_l.tag + ".png")))
+                    commons.ICONS_DIR, self.symb_l.name + ".png")))
 
         def handle_click_r(self):
-            dialog = ChooseSymbDialog(self, _("Right delimiter"),
+            dialog = ChooseElemDialog(self, _("Right delimiter"),
                                       SINGLEDELIMITERS, 4)
             result = dialog.exec_()
             if result == QDialog.Accepted:
                 self.symb_r = dialog.symb_chosen
                 self.repr_r.setPixmap(QPixmap(os.path.join(
-                    commons.ICONS_DIR, self.symb_r.tag + ".png")))
+                    commons.ICONS_DIR, self.symb_r.name + ".png")))
 
         def check_state(self, *args, **kargs):
             state1 = self.validator.validate(self.ledit_rows.text(), 0)[0]
@@ -394,9 +394,9 @@ def aligned(parent):
 
 
 MANYLINES = [
-    Symbol('matrix_type', matrix_type),
-    Symbol('array', array),
-    Symbol('cases', cases),
-    Symbol('equations_system', equation_system),
-    Symbol('aligned', aligned),
+    PanelIcon('matrix_type', matrix_type),
+    PanelIcon('array', array),
+    PanelIcon('cases', cases),
+    PanelIcon('equations_system', equation_system),
+    PanelIcon('aligned', aligned),
 ]

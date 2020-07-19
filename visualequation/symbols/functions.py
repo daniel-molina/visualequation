@@ -14,7 +14,13 @@
 from .utils import *
 
 
-def opfunctions(parent, code):
+def fun_accepting_args(parent, code):
+    """Functions processed by this function can have arguments and they need
+    to be treated as variable-size symbols when scripted.
+
+    Even when they do not have any argument, they are set to Op with 0
+    arguments so it is known that they are special when scripting them.
+    """
     class Dialog(QDialog):
         def __init__(self, parent=None):
             super().__init__(parent)
@@ -54,63 +60,59 @@ def opfunctions(parent, code):
 
     (argabove, argbelow), ok = Dialog.get(parent)
     if ok:
+        base = Op(0, code, "fun_args")
         if argabove and argbelow:
-            latex_code = code + r"_{{{0}}}^{{{1}}}"
-            n_operands = 2
+            return [SLUNDEROVER, base], 2
         elif argabove:
-            latex_code = code + r"^{{{0}}}"
-            n_operands = 1
+            return [SLOVER, base], 1
         elif argbelow:
-            latex_code = code + r"_{{{0}}}"
-            n_operands = 1
+            return [SLUNDER, base], 1
         else:
-            latex_code = code
-            n_operands = 0
-        return Op(n_operands, latex_code, "opfun")
+            return base
     else:
         return None
 
 
 def f(code):
-    return lambda parent: opfunctions(parent, code)
+    return lambda parent: fun_accepting_args(parent, code)
 
 
 FUNCTIONS = [
-    Symbol('arccos', r'\arccos'),
-    Symbol('arcsin', r'\arcsin'),
-    Symbol('arctan', r'\arctan'),
-    Symbol('arg', r'\arg'),
-    Symbol('cos', r'\cos'),
-    Symbol('cosh', r'\cosh'),
-    Symbol('coth', r'\coth'),
-    Symbol('csc', r'\csc'),
-    Symbol('deg', r'\deg'),
-    Symbol('det', f(r'\det')),
-    Symbol('dim', r'\dim'),
-    Symbol('exp', r'\exp'),
-    Symbol('gcd', f(r'\gcd')),
-    Symbol('hom', r'\hom'),
-    Symbol('inf', f(r'\inf')),
-    Symbol('ker', r'\ker'),
-    Symbol('lg', r'\lg'),
-    Symbol('lim', f(r'\lim')),
-    Symbol('liminf', f(r'\liminf')),
-    Symbol('limsup', f(r'\limsup')),
-    Symbol('ln', r'\ln'),
-    Symbol('log', r'\log'),
-    Symbol('max', f(r'\max')),
-    Symbol('min', f(r'\min')),
-    Symbol('pr', f(r'\Pr')),
-    Symbol('sec', r'\sec'),
-    Symbol('sin', r'\sin'),
-    Symbol('sinh', r'\sinh'),
-    Symbol('sup', f(r'\sup')),
-    Symbol('tan', r'\tan'),
-    Symbol('tanh', r'\tanh'),
-    Symbol('upperre', r'\Re'),
-    Symbol('upperim', r'\Im'),
-    Symbol('wp', r'\wp'),
-    Symbol('if', r'\text{if }'),
-    Symbol('ow', r'\text{o.w.}'),
-    Symbol('otherwise', r'\text{otherwise}'),
+    PanelIcon('arccos', r'\arccos'),
+    PanelIcon('arcsin', r'\arcsin'),
+    PanelIcon('arctan', r'\arctan'),
+    PanelIcon('arg', r'\arg'),
+    PanelIcon('cos', r'\cos'),
+    PanelIcon('cosh', r'\cosh'),
+    PanelIcon('coth', r'\coth'),
+    PanelIcon('csc', r'\csc'),
+    PanelIcon('deg', r'\deg'),
+    PanelIcon('det', f(r'\det')),
+    PanelIcon('dim', r'\dim'),
+    PanelIcon('exp', r'\exp'),
+    PanelIcon('gcd', f(r'\gcd')),
+    PanelIcon('hom', r'\hom'),
+    PanelIcon('inf', f(r'\inf')),
+    PanelIcon('ker', r'\ker'),
+    PanelIcon('lg', r'\lg'),
+    PanelIcon('lim', f(r'\lim')),
+    PanelIcon('liminf', f(r'\liminf')),
+    PanelIcon('limsup', f(r'\limsup')),
+    PanelIcon('ln', r'\ln'),
+    PanelIcon('log', r'\log'),
+    PanelIcon('max', f(r'\max')),
+    PanelIcon('min', f(r'\min')),
+    PanelIcon('pr', f(r'\Pr')),
+    PanelIcon('sec', r'\sec'),
+    PanelIcon('sin', r'\sin'),
+    PanelIcon('sinh', r'\sinh'),
+    PanelIcon('sup', f(r'\sup')),
+    PanelIcon('tan', r'\tan'),
+    PanelIcon('tanh', r'\tanh'),
+    PanelIcon('upperre', r'\Re'),
+    PanelIcon('upperim', r'\Im'),
+    PanelIcon('wp', r'\wp'),
+    PanelIcon('if', r'\text{if }'),
+    PanelIcon('ow', r'\text{o.w.}'),
+    PanelIcon('otherwise', r'\text{otherwise}'),
 ]

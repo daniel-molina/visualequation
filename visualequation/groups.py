@@ -151,23 +151,35 @@ Solid group (utils.SOLIDGROUP):
     It is their responsibility to not select any subequation of a SOLIDGROUP
     different than its argument.
 """
+ALLGROUPS = (utils.GROUP, utils.TEMPGROUP, utils.SOLIDGROUP)
+
+
+def is_some_group(elem):
+    """Return whether primitive passed is a group of some kind."""
+    return elem in ALLGROUPS
+
+
+def is_grouped_someway(eq, idx):
+    """Return whether pointed subequation is the argument of a group of some
+    kind"""
+    return idx and is_some_group(eq[idx-1])
 
 
 def remove_nonsense_group(eq, idx):
     """Remove group in idx-1 if it exists and eq[idx] is not a JUXT.
     Return the corrected index of element that was pointed by idx.
     """
-    if idx > 0 and eq[idx - 1] == utils.GROUP and eq[idx] != utils.JUXT:
+    if idx and eq[idx-1] == utils.GROUP and eq[idx] != utils.JUXT:
         eq.pop(idx - 1)
         return idx - 1
     return idx
 
 
 def ungroup(eq, idx):
-    """Remove an existing group or temporary group if existing it exists.
+    """Remove an existing group or temporary group if it exists.
 
     :eq: Equation of interest.
-    :idx: Index of the *argument* of the group or temporary group.
+    :idx: Index of the **argument** of the group of some kind.
     """
     # Let us always use the group index from now on
     g_idx = idx - 1
@@ -193,12 +205,13 @@ def group(eq, idx):
     group to a group.
 
     If subequation is already the argument of a group or idx does not point
-    to a parent JUXT, do nothing.
+    to a parent JUXT, do nothing since a group has no sense there.
 
-    Requirement: Do not send me :idx: pointing to descendant JUXTs!
+    .. note::
+        Do not send *idx* pointing to a descendant JUXTs.
 
     :eq: Equation of interest.
-    :idx: Index in :eq: of the subequation which will be protected.
+    :idx: Index in *eq* of the subequation which will be protected.
     """
     if eq[idx] == utils.JUXT:
         if idx and eq[idx-1] == utils.TEMPGROUP:

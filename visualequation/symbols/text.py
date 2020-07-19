@@ -121,30 +121,30 @@ def special_format(latex_command, label_text, only_capital=False):
 
 
 COLORS = [
-    Symbol('black', 'black'),
-    Symbol('blue', 'blue'),
-    Symbol('brown', 'brown'),
-    Symbol('cyan', 'cyan'),
-    Symbol('darkgray', 'darkgray'),
-    Symbol('gray', 'gray'),
-    Symbol('green', 'green'),
-    Symbol('lightgray', 'lightgray'),
-    Symbol('lime', 'lime'),
-    Symbol('magenta', 'magenta'),
-    Symbol('olive', 'olive'),
-    Symbol('orange', 'orange'),
-    Symbol('pink', 'pink'),
-    Symbol('purple', 'purple'),
-    Symbol('red', 'red'),
-    Symbol('teal', 'teal'),
-    Symbol('violet', 'violet'),
-    Symbol('white', 'white'),
-    Symbol('yellow', 'yellow'),
+    PanelIcon('black', 'black'),
+    PanelIcon('blue', 'blue'),
+    PanelIcon('brown', 'brown'),
+    PanelIcon('cyan', 'cyan'),
+    PanelIcon('darkgray', 'darkgray'),
+    PanelIcon('gray', 'gray'),
+    PanelIcon('green', 'green'),
+    PanelIcon('lightgray', 'lightgray'),
+    PanelIcon('lime', 'lime'),
+    PanelIcon('magenta', 'magenta'),
+    PanelIcon('olive', 'olive'),
+    PanelIcon('orange', 'orange'),
+    PanelIcon('pink', 'pink'),
+    PanelIcon('purple', 'purple'),
+    PanelIcon('red', 'red'),
+    PanelIcon('teal', 'teal'),
+    PanelIcon('violet', 'violet'),
+    PanelIcon('white', 'white'),
+    PanelIcon('yellow', 'yellow'),
 ]
 
 
 def color(parent):
-    dialog = ChooseSymbDialog(parent, _("Choose color"), COLORS, 3)
+    dialog = ChooseElemDialog(parent, _("Choose color"), COLORS, 3)
     result = dialog.exec_()
     if result == QDialog.Accepted:
         return Op(1, r'\begingroup\color{{' + dialog.symb_chosen.code
@@ -154,7 +154,7 @@ def color(parent):
 
 
 def colorbox(parent):
-    dialog = ChooseSymbDialog(parent, _("Choose color"), COLORS, 3)
+    dialog = ChooseElemDialog(parent, _("Choose color"), COLORS, 3)
     result = dialog.exec_()
     if result == QDialog.Accepted:
         return Op(1, r'\colorbox{{' + dialog.symb_chosen.code
@@ -164,20 +164,20 @@ def colorbox(parent):
 
 
 TEXT = [
-    Symbol('text', text),
-    Symbol('mathcal', special_format(
+    PanelIcon('text', text),
+    PanelIcon('mathcal', special_format(
         r'\mathcal{', _('Caligraphic (only capital letters)'), True)),
-    Symbol('mathbb', special_format(r'\mathbb{',
-                                    _('Mathbb (only capital letters)'),
-                                    True)),
-    Symbol('mathfrak', special_format(r'\mathfrak{',
-                                      _('Fraktur (letters and numbers)'))),
-    Symbol('mathsf', special_format(r'\mathsf{',
-                                    _('Sans serif (letters and numbers)'))),
-    Symbol('mathbf', special_format(r'\mathbf{',
-                                    _('Bold (letters and numbers)'))),
-    Symbol('textbfem', special_format(
+    PanelIcon('mathbb', special_format(r'\mathbb{',
+                                       _('Mathbb (only capital letters)'),
+                                       True)),
+    PanelIcon('mathfrak', special_format(r'\mathfrak{',
+                                         _('Fraktur (letters and numbers)'))),
+    PanelIcon('mathsf', special_format(r'\mathsf{',
+                                       _('Sans serif (letters and numbers)'))),
+    PanelIcon('mathbf', special_format(r'\mathbf{',
+                                       _('Bold (letters and numbers)'))),
+    PanelIcon('textbfem', special_format(
         r'\textbf{\em ', _('Bold Italic (letters and numbers)'))),
-    Symbol('color', color),
-    Symbol('colorbox', colorbox),
+    PanelIcon('color', color),
+    PanelIcon('colorbox', colorbox),
 ]

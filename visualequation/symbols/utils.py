@@ -49,16 +49,17 @@ class Op(object):
                + ", " + repr(self.type_) + ")"
 
 
-Symbol = namedtuple('Symbol', 'tag code')
-MenuItemData = namedtuple('MenuItemData', 'tag symb_l')
+PanelIcon = namedtuple('PanelIcon', 'name code')
+MenuItemData = namedtuple('MenuItemData', 'name symb_l')
 
 # Use these operators in the code, so it will be easy to change their value
 # in next releases
 SELARG = r'\cdots'
 NEWARG = r'\begingroup\color{purple}\oblong\endgroup'
-REDIT = Op(1, r'\left\lmoustache {0} \right\rgroup')
-LEDIT = Op(1, r'\left\lgroup {0} \right\rmoustache')
-NEDIT = Op(1, r'\left\lmoustache {0} \right\rmoustache')
+REDIT = Op(1, r'\left\lmoustache {0} \right\rgroup')        # right
+LEDIT = Op(1, r'\left\lgroup {0} \right\rmoustache')        # left
+NEDIT = Op(1, r'\left\lmoustache {0} \right\rmoustache')    # new
+SEDIT = Op(1, r'\left\rmoustache {0} \right\lmoustache')    # substitute
 JUXT = Op(2, r'{0} {1}')
 # The initial space is needed to distinguish from GROUP operator
 TEMPGROUP = Op(1, r' {0}')
@@ -97,168 +98,145 @@ ASCII_LATEX_TRANSLATION = {
 }
 
 
-class Symb(QLabel):
-    def __init__(self, parent, symb):
+class PanelElem(QLabel):
+    def __init__(self, parent, pelem):
         super().__init__('')
         self.parent = parent
-        self.symb = symb
+        self.pelem = pelem
         self.setPixmap(QPixmap(os.path.join(commons.ICONS_DIR,
-                                            symb.tag + ".png")))
+                                            pelem.name + ".png")))
         self.setAlignment(Qt.AlignCenter)
 
     def mousePressEvent(self, event):
-        self.parent.symb_chosen = self.symb
+        self.parent.pelem_chosen = self.pelem
         self.parent.accept()
 
 
-class ChooseSymbDialog(QDialog):
-    def __init__(self, parent, caption, symb_list, n_columns):
+class ChooseElemDialog(QDialog):
+    def __init__(self, parent, caption, pelem_list, n_columns):
         super().__init__(parent)
         self.setWindowTitle(caption)
         self.setMinimumSize(QSize(300, 300))
         layout = QGridLayout(self)
         row = 1
         column = 1
-        for symb in symb_list:
-            symb = Symb(self, symb)
-            layout.addWidget(symb, row, column)
+        for pelem in pelem_list:
+            pelem = PanelElem(self, pelem)
+            layout.addWidget(pelem, row, column)
             column += 1
             if column > n_columns:
                 column = 1
                 row += 1
         self.setLayout(layout)
 
-    # Valid for non-sum-like operators
 
-
+# Standard script operators
 LSUB = Op(2, r'\tensor*[_{{{1}}}]{{{0}}}{{}}', 'script')
 SUB = Op(2, r'{0}_{{{1}}}', 'script')
 SUP = Op(2, r'{0}^{{{1}}}', 'script')
 LSUP = Op(2, r'\tensor*[^{{{1}}}]{{{0}}}{{}}', 'script')
 LSUBSUB = Op(3, r'\tensor*[_{{{1}}}]{{{0}}}{{_{{{2}}}}}', 'script')
 SUBSUP = Op(3, r'{0}_{{{1}}}^{{{2}}}', 'script')
-SUPLSUP = Op(3, r'\tensor*[^{{{2}}}]{{{0}}}{{^{{{1}}}}}', 'script')
+LSUPSUP = Op(3, r'\tensor*[^{{{2}}}]{{{0}}}{{^{{{1}}}}}', 'script')
 LSUBLSUP = Op(3, r'\tensor*[_{{{1}}}^{{{2}}}]{{{0}}}{{}}', 'script')
 LSUBSUP = Op(3, r'\tensor*[_{{{1}}}]{{{0}}}{{^{{{2}}}}}', 'script')
 SUBLSUP = Op(3, r'\tensor*[^{{{2}}}]{{{0}}}{{_{{{1}}}}}', 'script')
 LSUBSUBSUP = Op(4, r'\tensor*[_{{{1}}}]{{{0}}}{{^{{{3}}}_{{{2}}}}}', 'script')
 LSUBSUBLSUP = Op(4, r'\tensor*[_{{{1}}}^{{{3}}}]{{{0}}}{{_{{{2}}}}}', 'script')
-LSUBSUPLSUP = Op(4, r'\tensor*[^{{{3}}}_{{{1}}}]{{{0}}}{{^{{{2}}}}}', 'script')
-SUBSUPLSUP = Op(4, r'\tensor*[^{{{3}}}]{{{0}}}{{^{{{2}}}_{{{1}}}}}', 'script')
-LSUBSUBSUPLSUP = Op(5,
+LSUBLSUPSUP = Op(4, r'\tensor*[^{{{3}}}_{{{1}}}]{{{0}}}{{^{{{2}}}}}', 'script')
+SUBLSUPSUP = Op(4, r'\tensor*[^{{{3}}}]{{{0}}}{{^{{{2}}}_{{{1}}}}}', 'script')
+LSUBSUBLSUPSUP = Op(5,
                     r'\tensor*[_{{{1}}}^{{{4}}}]{{{0}}}{{_{{{2}}}^{{{3}}}}}',
                     'script')
 
-# Not valid when using right sub/sup-indices in tall expressions
-# LSUB = Op(2, r'\prescript{{}}{{{1}}}{{{0}}}')
-# SUB = Op(2, r'{0}_{{{1}}}')
-# SUP = Op(2, r'{0}^{{{1}}}')
-# LSUP = Op(2, r'\prescript{{{1}}}{{}}{{{0}}}')
-# LSUBSUB = Op(3, r'\prescript{{}}{{{1}}}{{{0}}}_{{{2}}}')
-# SUBSUP = Op(3, r'{0}_{{{1}}}^{{{2}}}')
-# SUPLSUP = Op(3, r'\prescript{{{2}}}{{}}{{{0}}}^{{{1}}}')
-# LSUBLSUP = Op(3, r'\prescript{{{2}}}{{{1}}}{{{0}}}')
-# LSUBSUP = Op(3, r'\prescript{{}}{{{1}}}{{{0}}}^{{{2}}}')
-# SUBLSUP = Op(3, r'\prescript{{{2}}}{{}}{{{0}}}_{{{1}}}')
-# LSUBSUBSUP = Op(4, r'\prescript{{}}{{{1}}}{{{0}}}^{{{3}}}_{{{2}}}')
-# LSUBSUBLSUP = Op(4, r'\prescript{{{3}}}{{{1}}}{{{0}}}_{{{2}}}')
-# LSUBSUPLSUP = Op(4, r'\prescript{{{3}}}{{{1}}}{{{0}}}^{{{2}}}')
-# SUBSUPLSUP = Op(4, r'\prescript{{{3}}}{{}}{{{0}}}^{{{2}}}_{{{1}}}')
-# LSUBSUBSUPLSUP = Op(5, r'\prescript{{{4}}}{{{1}}}{{{0}}}_{{{2}}}^{{{3}}}')
+# Script operators used when we want to force the use of parenthesis for the
+# base. "P" stands for "parenthesis" or "protected".
+PLSUB = Op(2, r'\tensor*[_{{{1}}}]\left({0}\right){{}}', 'pscript')
+PSUB = Op(2, r'\left({0}\right)_{{{1}}}', 'pscript')
+PSUP = Op(2, r'\left({0}\right)^{{{1}}}', 'pscript')
+PLSUP = Op(2, r'\tensor*[^{{{1}}}]\left({0}\right){{}}', 'pscript')
+PLSUBSUB = Op(3, r'\tensor*[_{{{1}}}]\left({0}\right){{_{{{2}}}}}', 'pscript')
+PSUBSUP = Op(3, r'\left({0}\right)_{{{1}}}^{{{2}}}', 'pscript')
+PSUPLSUP = Op(3, r'\tensor*[^{{{2}}}]\left({0}\right){{^{{{1}}}}}', 'pscript')
+PLSUBLSUP = Op(3, r'\tensor*[_{{{1}}}^{{{2}}}]\left({0}\right){{}}', 'pscript')
+PLSUBSUP = Op(3, r'\tensor*[_{{{1}}}]\left({0}\right){{^{{{2}}}}}', 'pscript')
+PSUBLSUP = Op(3, r'\tensor*[^{{{2}}}]\left({0}\right){{_{{{1}}}}}', 'pscript')
+PLSUBSUBSUP = Op(4, r'\tensor*[_{{{1}}}]\left({0}\right){{^{{{3}}}_{{{2}}}}}',
+                 'pscript')
+PLSUBSUBLSUP = Op(4, r'\tensor*[_{{{1}}}^{{{3}}}]\left({0}\right){{_{{{2}}}}}',
+                  'pscript')
+PLSUBSUPLSUP = Op(4, r'\tensor*[^{{{3}}}_{{{1}}}]\left({0}\right){{^{{{2}}}}}',
+                  'pscript')
+PSUBSUPLSUP \
+    = Op(4, r'\tensor*[^{{{3}}}]\left({0}\right){{^\left({2}}}_{{{1}}}}}',
+         'pscript')
+PLSUBSUBSUPLSUP \
+    = Op(5, r'\tensor*[_{{{1}}}^{{{4}}}]\left({0}\right){{_{{{2}}}^{{{3}}}}}',
+         'pscript')
 
-
-# Valid for sum-like operators, bad right alignment for left indices
-# LSUB = Op(2, r'{{\vphantom{{{0}}}}}_{{{1}}}{0}')
-# SUB = Op(2, r'{0}_{{{1}}}')
-# SUP = Op(2, r'{0}^{{{1}}}')
-# LSUP = Op(2, r'{{\vphantom{{{0}}}}}^{{{1}}}{0}')
-# LSUBSUB = Op(3, r'{{\vphantom{{{0}}}}}_{{{1}}}{0}_{{{2}}}')
-# SUBSUP = Op(3, r'{0}_{{{1}}}^{{{2}}}')
-# SUPLSUP = Op(3, r'{{\vphantom{{{0}}}}}^{{{2}}}{0}^{{{1}}}')
-# LSUBLSUP = Op(3, r'{{\vphantom{{{0}}}}}_{{{1}}}^{{{2}}}{0}')
-# LSUBSUP = Op(3, r'{{\vphantom{{{0}}}}}_{{{1}}}{0}^{{{2}}}')
-# SUBLSUP = Op(3, r'{{\vphantom{{{0}}}}}^{{{2}}}{0}_{{{1}}}')
-# LSUBSUBSUP = Op(4, r'{{\vphantom{{{0}}}}}_{{{1}}}{0}^{{{3}}}_{{{2}}}')
-# LSUBSUBLSUP = Op(4, r'{{\vphantom{{{0}}}}}_{{{1}}}^{{{3}}}{0}_{{{2}}}')
-# LSUBSUPLSUP = Op(4, r'{{\vphantom{{{0}}}}}^{{{3}}}_{{{1}}}{0}^{{{2}}}')
-# SUBSUPLSUP = Op(4, r'{{\vphantom{{{0}}}}}^{{{3}}}{0}^{{{2}}}_{{{1}}}')
-# LSUBSUBSUPLSUP = Op(5, r'{{\vphantom{{{0}}}}}_{{{1}}}^{{{4}}}{0}_{{{2}}}^{{{3}}}')
-
-# Valid only for sum-like operators
-OPLSUB = Op(2, r'\sideset{{_{{{1}}}}}{{}}{0}', 'opindex')
-OPSUB = Op(2, r'\sideset{{}}{{_{{{1}}}}}{0}', 'opindex')
-OPSUP = Op(2, r'\sideset{{}}{{^{{{1}}}}}{0}', 'opindex')
-OPLSUP = Op(2, r'\sideset{{^{{{1}}}}}{{}}{0}', 'opindex')
-OPLSUBSUB = Op(3, r'\sideset{{_{{{1}}}}}{{_{{{2}}}}}{0}', 'opindex')
-OPSUBSUP = Op(3, r'\sideset{{}}{{_{{{1}}}^{{{2}}}}}{0}', 'opindex')
-OPSUPLSUP = Op(3, r'\sideset{{^{{{2}}}}}{{^{{{1}}}}}{0}', 'opindex')
-OPLSUBLSUP = Op(3, r'\sideset{{_{{{1}}}^{{{2}}}}}{{}}{0}', 'opindex')
-OPLSUBSUP = Op(3, r'\sideset{{_{{{1}}}}}{{^{{{2}}}}}{0}', 'opindex')
-OPSUBLSUP = Op(3, r'\sideset{{^{{{2}}}}}{{_{{{1}}}}}{0}', 'opindex')
-OPLSUBSUBSUP = Op(4, r'\sideset{{_{{{1}}}}}{{^{{{3}}}_{{{2}}}}}{0}', 'opindex')
-OPLSUBSUBLSUP = Op(4, r'\sideset{{_{{{1}}}^{{{3}}}}}{{_{{{2}}}}}{0}',
-                   'opindex')
-OPLSUBSUPLSUP = Op(4, r'\sideset{{^{{{3}}}_{{{1}}}}}{{^{{{2}}}}}{0}',
-                   'opindex')
-OPSUBSUPLSUP = Op(4, r'\sideset{{^{{{3}}}}}{{^{{{2}}}_{{{1}}}}}{0}',
-                  'opindex')
-OPLSUBSUBSUPLSUP = Op(5,
+# Script operators with "\sideset". Valid only for variable-size and fun-args
+LOLSUB = Op(2, r'\sideset{{_{{{1}}}}}{{}}{0}', 'sideset')
+LOSUB = Op(2, r'\sideset{{}}{{_{{{1}}}}}{0}', 'sideset')
+LOSUP = Op(2, r'\sideset{{}}{{^{{{1}}}}}{0}', 'sideset')
+LOLSUP = Op(2, r'\sideset{{^{{{1}}}}}{{}}{0}', 'sideset')
+LOLSUBSUB = Op(3, r'\sideset{{_{{{1}}}}}{{_{{{2}}}}}{0}', 'sideset')
+LOSUBSUP = Op(3, r'\sideset{{}}{{_{{{1}}}^{{{2}}}}}{0}', 'sideset')
+LOLSUPSUP = Op(3, r'\sideset{{^{{{2}}}}}{{^{{{1}}}}}{0}', 'sideset')
+LOLSUBLSUP = Op(3, r'\sideset{{_{{{1}}}^{{{2}}}}}{{}}{0}', 'sideset')
+LOLSUBSUP = Op(3, r'\sideset{{_{{{1}}}}}{{^{{{2}}}}}{0}', 'sideset')
+LOSUBLSUP = Op(3, r'\sideset{{^{{{2}}}}}{{_{{{1}}}}}{0}', 'sideset')
+LOLSUBSUBSUP = Op(4, r'\sideset{{_{{{1}}}}}{{^{{{3}}}_{{{2}}}}}{0}',
+                  'sideset')
+LOLSUBSUBLSUP = Op(4, r'\sideset{{_{{{1}}}^{{{3}}}}}{{_{{{2}}}}}{0}',
+                   'sideset')
+LOLSUBLSUPSUP = Op(4, r'\sideset{{^{{{3}}}_{{{1}}}}}{{^{{{2}}}}}{0}',
+                   'sideset')
+LOSUBLSUPSUP = Op(4, r'\sideset{{^{{{3}}}}}{{^{{{2}}}_{{{1}}}}}{0}',
+                  'sideset')
+LOLSUBSUBLSUPSUP = Op(5,
                       r'\sideset{{_{{{1}}}^{{{4}}}}}{{_{{{2}}}^{{{3}}}}}{0}',
-                      'opindex')
+                      'sideset')
+
+SCRIPT_TYPES = ('script', 'pscript', 'sideset')
 
 # First elements are the most common
-INDEX_OPS = (
+SCRIPT_OPS = (
     SUP, SUB, SUBSUP, LSUP, LSUB,
-    LSUBSUB, SUPLSUP, LSUBLSUP, LSUBSUP, SUBLSUP,
-    LSUBSUBSUP, LSUBSUBLSUP, LSUBSUPLSUP, SUBSUPLSUP,
-    LSUBSUBSUPLSUP,
+    LSUBSUB, LSUPSUP, LSUBLSUP, LSUBSUP, SUBLSUP,
+    LSUBSUBSUP, LSUBSUBLSUP, LSUBLSUPSUP, SUBLSUPSUP,
+    LSUBSUBLSUPSUP,
 )
 
-OPINDEX_OPS = (
-    OPSUP, OPSUB, OPSUBSUP, OPLSUP, OPLSUB,
-    OPLSUBSUB, OPSUPLSUP, OPLSUBLSUP, OPLSUBSUP, OPSUBLSUP,
-    OPLSUBSUBSUP, OPLSUBSUBLSUP, OPLSUBSUPLSUP, OPSUBSUPLSUP,
-    OPLSUBSUBSUPLSUP,
+PSCRIPT_OPS = (
+    PSUP, PSUB, PSUBSUP, PLSUP, PLSUB,
+    PLSUBSUB, PSUPLSUP, PLSUBLSUP, PLSUBSUP, PSUBLSUP,
+    PLSUBSUBSUP, PLSUBSUBLSUP, PLSUBSUPLSUP, PSUBSUPLSUP,
+    PLSUBSUBSUPLSUP,
 )
 
-# The operator with the following types_ use the OPINDEX operator when indexed
-OPINDEX_ARG_LIST = (
-    'vsize',
-    'opfun',
+SSSCRIPT_OPS = (
+    LOSUP, LOSUB, LOSUBSUP, LOLSUP, LOLSUB,
+    LOLSUBSUB, LOLSUPSUP, LOLSUBLSUP, LOLSUBSUP, LOSUBLSUP,
+    LOLSUBSUBSUP, LOLSUBSUBLSUP, LOLSUBLSUPSUP, LOSUBLSUPSUP,
+    LOLSUBSUBLSUPSUP,
 )
 
-# The operators with the following types_ are forbidden to be indexed
-INDEX_BLACKLIST = (
-    'opconstruct',
-    'int_with_args',
-)
+# Generic vscript operators
+UNDER = Op(2, r'\underset{{{1}}}{{{0}}}', 'setscript')
+OVER = Op(2, r'\overset{{{1}}}{{{0}}}', 'setscript')
+UNDEROVER = Op(2, r'\overset{{{2}}}{{{\underset{{{1}}}{{{0}}}}}}', 'setscript')
 
-# INDICES = [
-#    LatexSymb('lsub', LSUB, r'{{}}_{{\square}}\cdot'),
-#    LatexSymb('sub', SUB, r'\cdot_{{\square}}'),
-#    LatexSymb('super', SUP, r'\cdot^{{\square}}'),
-#    LatexSymb('lsup', LSUP, r'{{}}^{{\square}}\cdot'),
-#    LatexSymb('lsubsub', LSUBSUB, r'{{}}_{{\square}}\cdot_{{\square}}'),
-#    LatexSymb('subsup', SUBSUP, r'\cdot^{{\square}}_{{\square}}'),
-#    LatexSymb('suplsup', SUPLSUP, r'{{}}^{{\square}}\cdot^{{\square}}'),
-#    LatexSymb('lsublsup', LSUBLSUP, r'{{}}^{{\square}}_{{\square}}\cdot'),
-#    LatexSymb('lsubsup', LSUBSUP, r'{{}}_{{\square}}\cdot^{{\square}}'),
-#    LatexSymb('sublsup', SUBLSUP, r'{{}}^{{\square}}\cdot_{{\square}}'),
-#    LatexSymb('lsubsubsup', LSUBSUBSUP,
-#              r'{{}}_{{\square}}\cdot^{{\square}}_{{\square}}'),
-#    LatexSymb('lsubsublsup', LSUBSUBLSUP,
-#              r'{{}}_{{\square}}^{{\square}}\cdot_{{\square}}'),
-#    LatexSymb('lsubsuplsup', LSUBSUPLSUP,
-#              r'{{}}^{{\square}}_{{\square}}\cdot^{{\square}}'),
-#    LatexSymb('subsuplsup', SUBSUPLSUP,
-#              r'{{}}^{{\square}}\cdot^{{\square}}_{{\square}}'),
-#    LatexSymb('lsubsubsuplsup', LSUBSUBSUPLSUP,
-#              r'{{}}^{{\square}}_{{\square}}\cdot^{{\square}}_{{\square}}'),
-# ]
+# vscript operators with limits
+LIMUNDER = Op(2, r'{0}\limits_{{{1}}}', 'limscript')
+LIMOVER = Op(2, r'{0}\limits^{{{1}}}', 'limscript')
+LIMUNDEROVER = Op(3, r'{0}\limits_{{{1}}}^{{{2}}}', 'limscript')
 
-#    ('binomial', (Op(2, r'\binom{{{0}}}{{{1}}}'),
-#     [r'\binom{{\cdot}}{{\square}}'])),
+# vscript operators for fun_args and variable-size (vs)
+# "SL" stands for script-like
+SLUNDER = Op(2, r'{0}_{{{1}}}', 'script-like')
+SLOVER = Op(2, r'{0}^{{{1}}}', 'script-like')
+SLUNDEROVER = Op(3, r'{0}_{{{1}}}^{{{2}}}', 'script-like')
 
-# MENUITEMSDATA.append(MenuItemData(
-#    tag="tab_indices",
-#    symb_l=INDICES, clickable_size=(60, 60), dpi=200, expr=r'a^b'))
+VSCRIPT_TYPES = ('setscript', 'limscript', 'script-like')
+
+ALLSCRIPT_TYPES = SCRIPT_TYPES + VSCRIPT_TYPES
