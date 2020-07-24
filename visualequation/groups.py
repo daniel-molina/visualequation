@@ -18,69 +18,85 @@ from .symbols import utils
 
 There are 3 kind of groups, all of them being 1-argument operators:
 
-    * Temporal groups.
-    * Groups (permeable).
-    * Solid groups.
-    
-Temporal group (utils.TEMPGROUP):
+    * Temporal groups (TEMPGROUPs).
+    * Permeable groups (GROUPs).
+    * Solid groups (SOLIDGROUPs).
+
+Notation:
+
+    *   When using the word "group" in lowercase, it can refer to any of them.
+    *   The uppercase always refer to a particular operator.
+    *   group block refer to the subequation defined by some group operator.
+    *   GROUP-block refer to the subequation defined by a permeable group and
+        equivalently for TEMPGROUP-block and SOLIDGROUP-block.
+    *   Sometimes, "temporal block" or "solid block" terms can be used as an
+        alternative to TEMPGROUP-block and SOLIDGROUP-block, respectively.
+
+Note that an argument of any group is classified as uarg.
+
+Temporal group (TEMPGROUP):
 
     It is an invisible operator intended to be used to temporally select more 
     than one contiguous co-citizen. When selection changes, if that is not
-    done with the intention of extending or shrinking the TEMPGROUP, the group
-    is removed.
+    done with the intention of extending or shrinking the TEMPGROUP, the
+    temporal group must be removed.
     
     Properties:
         *   The argument of a TEMPGROUP is always the current selection of
             the equation.
         *   There can only be one TEMPGROUP in the equation at the same time.
-        *   It does not care about if subequations of its argument are
+        *   TEMPGROUPS do not care whether subequations of its argument are
             selectable or not.
     
     The argument of a TEMPGROUP makes sense to be:
     
         *   A JUXT-ublock.
     That is because symbols and any other kind of block can be selected without
-    the need of a group, regardless of whether they are usubeq or citizens. 
+    the need of a group, regardless of whether they are usubeqs or citizens. 
     However, it is intentionally forbidden for a JUXT-ublock to be a citizen 
     due to JUXT composition rules. GROUPS and TEMPGROUPS are the available 
-    mechanism to have JUXT-ublocks inside a another JUXT-ublock without being
-    part of a "visible" operator.
+    mechanism to have a selected JUXT-ublock inside a another JUXT-ublock,
+    without being part of any "visible" operator for the user.
 
     A temporal group makes sense to be:
     
         *   A citizen.
-    That is because usubeqs (subeqs which are not argument of a JUXT) can be 
-    always selected without the need of a TEMPGROUP.
+    That is because uargs or the whole eq can be always selected without the
+    need of a TEMPGROUP.
      
     Implementation to create a temporal group must be equivalent to:
     
-        *   Extract the citizens which are going to be selected from an 
-            original JUXT-ublock.
-        *   Create a new JUXT-ublock with all of them, respecting their order.
-        *   Replace extracted citizens with a TEMPGROUP which argument is the
-            new JUXT-ublock. TEMPGROUP is then *one* citizen of the original
-            JUXT-ublock.
+        *   Choose the subeqs which are going to be citizens of the JUXT-ublock
+            argument of the TEMPGROUP.
+        *   Create a JUXT-ublock with all of them, respecting the intended 
+            order when placing the citizens.
+        *   Preceed the JUXT-ublock with at TEMPGROUP and place it as a 
+            citizen of certain JUXT-ublock.
 
-    Equation methods that cares about TEMPGROUPS:
-        * Methods that modify the equation.
-        * Methods that change the current selection.
-    It is their responsibility to check if current selection is the argument of
-    a TEMPGROUP and delete it or replace it if reasonable. 
+    Equation methods which must care about TEMPGROUPS:
     
-Group (utils.GROUP):
+        *   Methods which modify subeq currently selected if it is a 
+            JUXT-ublock.
+        *   Methods which change current selection if it is a JUXT-ublock.
+    It is their responsibility to check if current selection is the argument of
+    a TEMPGROUP and delete it if reasonable. 
+    
+Permeable group (GROUP):
 
-    It is an invisible operator that protects a JUXT-ublock so all its 
-    citizens will be always selectable as a whole (apart from individually), 
-    even if it results being part of another JUXT-ublock.
+    It is an invisible operator that protects a JUXT-ublock so it is assured 
+    that all its citizens are selectable as a whole (apart from individually).
+    They are important to be left in the equation even when they are not 
+    needed because the user can edit the equation later so it can finally be 
+    part of another JUXT-ublock.
 
     Properties:
     
-        *   Subequations that starts with a GROUP are not selsubeqs, but its
+        *   Blocks which leading op is a GROUP are not selsubeqs, but its
             argument, a JUXT-ublock, always is.
-        *   It does not care if subequations of itself strictly smaller than 
-            its argument are selectable or not.
+        *   GROUPs do not care if subequations of itself strictly smaller 
+            than its argument are selectable or not.
         *   There can be many GROUPs in the equation at the same time and some
-            of them can be subequations of other GROUPs.
+            of them can belong to other GROUPs.
           
     The argument of a GROUP makes sense to be:
     
@@ -89,24 +105,34 @@ Group (utils.GROUP):
     
     A group makes sense to be:
     
-        *   A citizen or ublock (including the whole equation).
-    That is because a a block which is an usubeq (always selectable) 
-    can become a citizen after later equation edition. As a consequence, a 
-    group makes sense everywhere.
+        *   An usubeq.
+    That is because an uarg or the whole eq can become a citizen after later
+    equation edition. As a consequence, a group makes sense everywhere.
 
-    Implementation to create a group:
+    Implementation to create a permeable group:
     
     To introduce a GROUP is usually trivial because it is an action typically
-    executed due to an explicit petition from the user, who previously need
+    executed due to an explicit petition from the user, who previously needed
     to select the subequation which will be the argument of the GROUP. That
     implies that, if needed, a TEMPGROUP has been previously created, and then
-    it is just a matter of substituting the TEMPGROUP by a GROUP.
+    it is just a matter of substituting the TEMPGROUP by a GROUP. Else, it is
+    only needed to insert a GROUP before the the usubeq.
 
-    Equation methods that cares about TEMPGROUPs:
+    Equation methods that cares about GROUPs:
     
-        *   Methods that modify the equation.
-    It is their responsibility to check if an edited JUXT-ublock is the 
-    argument of a GROUP and delete or replace the GROUP if reasonable.
+        *   Methods which manipulate JUXT-ublocks.
+        
+            It is their responsibility to check if a deleted JUXT-ublock is the
+            argument of a GROUP and then delete it if the JUXT-ublock stop
+            being a JUXT-ublock.
+    
+        *   Methods which manipulate JUXT-ublocks as a whole (copy, move, 
+            delete...).
+        
+            It is their responsibility to check if they are the argument of a 
+            GROUP and perform the operation with the permeable group instead of with 
+            its argument.
+        
 
 Solid group (utils.SOLIDGROUP):
 
@@ -115,9 +141,9 @@ Solid group (utils.SOLIDGROUP):
 
     Properties:
     
-        *   Subequations that start with SOLIDGROUPs are not selsubeqs, but
-            its argument always is.
-        *   Subequations of itself strictly smaller than its argument cannot
+        *   Subequations which leading operator are a SOLIDGROUP are not
+            not selsubeqs, but its argument always is.
+        *   Subequations of its argument strictly smaller than it cannot
             be selected.
         *   There can be many SOLIDGROUPs in the equation at the same time, and
             some of them can be subequations of other SOLIDGROUPs.
@@ -131,19 +157,21 @@ Solid group (utils.SOLIDGROUP):
     
     A solid group makes sense to be:
     
-        *   A citizen or ublock (including the whole equation).
-    User is free to set any selectable block to be a solid group.
+        *   An ublock.
+    Solid groups can be anywhere.
 
-    Implementation of a solid group:
+    Implementation of a solid group (not decided yet):
     
         Just putting a SOLIDBLOCK in front of a block would be sufficient, but 
-        it would be needed to check if an element is part of a solidblock 
-        each time.
+        it would be needed to check if an element is part of a solid block 
+        each time. (This is the intended implementation)
         
         Another option is to implement tags for operators. Then every 
         every element of the argument(s) of the argument of the solid block 
         would carry a tag "unselectable". Symbols would be promoted to 
         operators with no arguments so they can have tags.
+        
+        Another one is to use a terminal zero-arg operator to indicate the end.
 
     Equation methods that cares about SOLIDGROUPs:
     
@@ -154,67 +182,112 @@ Solid group (utils.SOLIDGROUP):
 ALLGROUPS = (utils.GROUP, utils.TEMPGROUP, utils.SOLIDGROUP)
 
 
-def is_some_group(elem):
+def is_group(elem):
     """Return whether primitive passed is a group of some kind."""
     return elem in ALLGROUPS
 
 
-def is_grouped_someway(eq, idx):
+def is_grouped(eq, idx):
     """Return whether pointed subequation is the argument of a group of some
     kind"""
-    return idx and is_some_group(eq[idx-1])
+    return idx != 0 and is_group(eq[idx-1])
 
 
-def remove_nonsense_group(eq, idx):
-    """Remove group in idx-1 if it exists and eq[idx] is not a JUXT.
-    Return the corrected index of element that was pointed by idx.
-    """
-    if idx and eq[idx-1] == utils.GROUP and eq[idx] != utils.JUXT:
-        eq.pop(idx - 1)
-        return idx - 1
-    return idx
+def is_pgrouped(eq, idx):
+    """Return whether pointed subequation is the argument of a GROUP."""
+    return idx != 0 and eq[idx-1] == utils.GROUP
+
+
+def is_tgrouped(eq, idx):
+    """Return whether pointed subequation is the argument of a TEMPGROUP."""
+    return idx != 0 and eq[idx-1] == utils.TEMPGROUP
+
+
+def is_sgrouped(eq, idx):
+    """Return whether pointed subequation is the argument of a SOLIDGROUP."""
+    return idx != 0 and eq[idx-1] == utils.SOLIDGROUP
 
 
 def ungroup(eq, idx):
-    """Remove an existing group or temporary group if it exists.
+    """Remove an existing group of any kind if it exists.
 
-    :eq: Equation of interest.
-    :idx: Index of the **argument** of the group of some kind.
-    """
-    # Let us always use the group index from now on
-    g_idx = idx - 1
-    if not idx or eq[g_idx] not in [utils.TEMPGROUP, utils.GROUP]:
-        # Case: No group at all
-        return
+    Return:
 
-    assert eq[g_idx-1] == utils.JUXT
-
-    juxt_idx, arg2_idx = eqqueries.other_juxt_arg(eq, g_idx)
-    if juxt_idx < 0 or arg2_idx < g_idx:
-        # Easy cases: Group is an usubeq or last citizen
-        eq.pop(g_idx)
-    else:
-        # Complex case: Group is a citizen and not the last one
-        group_last_citizen = eqqueries.last_citizen(eq, g_idx + 2)
-        eq.insert(group_last_citizen, utils.JUXT)
-        eq[g_idx:g_idx + 2] = []
-
-
-def group(eq, idx):
-    """Protect subequation with a group operator or transform a temporary
-    group to a group.
-
-    If subequation is already the argument of a group or idx does not point
-    to a parent JUXT, do nothing since a group has no sense there.
+        *   If *idx* points to a JUXT-ublock which is the argument of some
+            group which in turn is a not-last citizen of some other
+            JUXT-ublock, minus the index of primitive pointed by *idx* in *eq*
+            after the call is returned.
+        *   Else, the index of primitive pointed by *idx* in *eq* after the
+            call is returned.
 
     .. note::
-        Do not send *idx* pointing to a descendant JUXTs.
+        If returned value is negative, it means that *idx* pointed to a
+        a JUXT-ublock and a JUXT was introduced by this call before its last
+        citizen.
+        Else (returned value is 0 or positive), every primitive of subeq
+        pointed by *idx* can be accessed as expected by using the returned
+        value as a corrected primitive's index pointed by *idx*.
 
-    :eq: Equation of interest.
-    :idx: Index in *eq* of the subequation which will be protected.
+    :param eq: Equation of interest.
+    :param idx: Index of the **argument** of a group of some kind.
+    :return: +/- the index of the primitive pointed by *idx* in *eq* after the
+    call.
     """
-    if eq[idx] == utils.JUXT:
-        if idx and eq[idx-1] == utils.TEMPGROUP:
-            eq[idx-1] = utils.GROUP
-        elif not idx or eq[idx-1] != utils.GROUP:
-            eq.insert(idx, utils.GROUP)
+    if not idx or eq[idx-1] not in ALLGROUPS:
+        # Case: No group at all
+        return idx
+
+    g_idx = idx - 1
+
+    juxt_idx, arg2_idx = eqqueries.other_juxt_arg(eq, g_idx)
+    if juxt_idx < 0 or arg2_idx < g_idx or eq[idx] != utils.JUXT:
+        # Easy cases: Group is an uarg, whole eq, last citizen or its argument
+        # is not a JUXT-ublock (it can happens for solid groups).
+        eq.pop(g_idx)
+        return g_idx
+    else:
+        # Complex case: group-block is a citizen which is not a last one and
+        # its argument is a JUXT-ublock
+        group_last_citizen = eqqueries.last_citizen(eq, g_idx + 2)
+        eq.insert(group_last_citizen, utils.JUXT)
+        eq[g_idx-1:g_idx+1] = []
+        return -(g_idx-1)
+
+
+def group(eq, idx, solid=False):
+    """If necessary, protect a subequation with a group or transform a group
+    to another type.
+
+    .. note::
+        A temporal group cannot be set with this function.
+
+    .. note::
+        *idx* must not point to a descendant JUXT (that has no sense).
+
+
+    :param eq: Equation of interest.
+    :param idx: Index in *eq* of the subequation which will be protected.
+    :return: Updated *idx* in *eq* after the call.
+    """
+    if isinstance(eq[idx], str) or not eq[idx].n_args:
+        return idx
+
+    gop = utils.SOLIDGROUP if solid else utils.GROUP
+
+    if not idx:
+        eq.insert(0, gop)
+        return 1
+
+    if eq[idx-1] not in ALLGROUPS:
+        if not solid and eq[idx] != utils.JUXT:
+            return idx
+        eq.insert(idx, gop)
+        return idx + 1
+
+    # From this point idx points to the arg of a group
+    if not solid and eq[idx] != utils.JUXT:
+        eq.pop(idx - 1)
+        return idx - 1
+
+    eq[idx-1] = gop
+    return idx

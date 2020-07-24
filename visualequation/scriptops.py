@@ -12,7 +12,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from . import eqqueries
-from .symbols import utils
+from .symbols.utils import Op, NEWARG
 from .errors import ShowError
 
 # Vertical script operators
@@ -479,7 +479,7 @@ def scriptblock2args(eq, idx):
         return retv
 
     op = eq[idx]  # it can be an index operator, but not necessarily
-    if not hasattr(op, 'type_') or op.type_ not in utils.SCRIPT_TYPES:
+    if not hasattr(op, 'type_') or op.type_ not in SCRIPT_TYPES:
         return -1
 
     if op.type_ == "setscript":
@@ -577,7 +577,7 @@ def which_script(eq, idx):
         *   The 2nd element indicates which argument of the script operator is
             being pointed by *idx*, 0 if it is the base.
     """
-    return eqqueries.whosearg_filter_type(eq, idx, utils.SCRIPT_TYPES)
+    return eqqueries.whosearg_filter_type(eq, idx, SCRIPT_TYPES)
 
 
 def is_scriptop(eq, idx):
@@ -621,8 +621,9 @@ def remove_script(eq, idx):
 
     :param eq: An equation.
     :param idx: The index in *eq* of the script.
-    :return: Position of script operator of the script to remove before
-    removal.
+    :return: Position of script operator whose script is going to be removed.
+    (It will be there a new script operator or the base, if there was only one
+    script),
     """
     op_idx, arg_ord = eqqueries.whosearg_filter_type(eq, idx)
     end_block = eqqueries.nextsubeq(eq, op_idx)
@@ -726,7 +727,7 @@ def insert_script(eq, idx, dir, is_superscript, subeq=None):
     the index of the script is returned but negative.
     """
     if subeq is None:
-        subeq = [utils.NEWARG]
+        subeq = [NEWARG]
 
     if not is_base(eq, idx):
         # Case: idx does not point to a base

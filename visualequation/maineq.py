@@ -23,12 +23,10 @@ from . import conversions
 from . import eqqueries
 from . import eqhist
 from . import eqsel
-from . import simpleeqcreator
-from .errors import ShowError
 from .symbols import utils
 
 """
-The module that manages the equation being edited.
+The module that manages the equation shown to the user to be edited.
 """
 
 
