@@ -2,7 +2,8 @@
 
 Below you can read most of definitions and rules used in Visual Equation code.
 There are a lot of definitions, but I hope they are intuitive. It is intended
-to be only as rigorous as needed to avoid ambiguity.
+to be only as rigorous as needed to avoid ambiguity, but relationships become
+complex and some technicalities must be used.
 
 > **Disclaimer**: *Definitions have being changed and extended as it has been
 > required by new features, it is possible that some of the code notation has
@@ -121,16 +122,20 @@ operator.
 > following definitions. However, in the code some concepts defined will be 
 > usually referred to equations.*
 
+### Basic subequation definitions
 A **0-level subequation of another subequation S** is S.
 
-A **N-level subequation of another subequation S**, N being a positive integer,
-is:
+A **N-level subequation of another subequation S**, N being a positive
+integer, is:
 
 *   If S is a symbol, it does not exist.
 *   If S is a block B, a **(N-1)-level subequation of a B-arg**.
 
 This is a recursive definition that finishes when the nesting level is 0 and 
 previous definition applies.
+
+The **nesting level**, or simply the **level**, of a N-level subequation of
+another subequation is the (non-negative) value N.
 
 A **strict subequation** of S is a subequation of S that is not S.
 
@@ -194,6 +199,9 @@ a subequation of S and N a positive integer, is a subeq such that:
 
 *   It is a subequation of S, and
 *   SB is a N-level subequation of it.
+
+The **nesting level**, or simply the **level**, of a N-level superequation of
+a subequation in another subequation is the (positive) value N.
 
 A **superquation** (**supeq**) of a subeq SB in a subequation S is a N-level
  superquation of SB in S for any positive value of N.
@@ -348,17 +356,40 @@ There are reasons to avoid the user to select some subequations:
 > With that objective in mind, several terms which specify the reasons for an
 > element to be selectable have been defined.
 
+### Effectively selectable subequations
+
 A subequation S of an equation E is **effectively selectable** if S is
 guaranteed to be selectable if E is not modified.
 
 **Rule**: At least one subeq of an equation must be effectively selectable.
+
+### User subequations
 
 A **user subequation** (**usubeq**) is a subeq S that can be selected unless a 
 superequation of S does not allow S to be selected.
 
 > **Remark**:
 >
-> Strict subequations of a subequation can be usubeqs or not.
+>1. Strict subequations of a subequation can be usubeqs or not.
+>1. A effectively selectable subequation is a usubeq. The opposite is not
+>   (always) true.
+
+Any subequation term preceded by a "user" and abbreviations by a
+juxtaposed "u" is a user subequation. Abbreviations would be usupeq, usupeq, 
+X-ublock, uarg, lop-X-uarg (last two should be avoided to avoid confusing
+a casual reader).
+
+> **Example**:
+>
+> (A) X-ublock is block a B which lop-B is (a) X and B is an ublock.
+
+A **mark** M is a symbol that is not an usubeq.
+
+> **Property**:
+> 
+> A mark must have a usupeq.
+
+### Selectable arguments
 
 An operator OP **has a selectable argument** (**has a selarg**) with
 ordinal OR if OP does not impose any selectivity conditions on any subequation
@@ -376,20 +407,7 @@ strict subequations of S).
 > subequation while a *selectable property* is a characteristic that a
 > subequation inherits because of its superequations.
 
-Any subequation term preceded by a "user" and abbreviations by a
-juxtaposed "u" is a user subequation. Abbreviations would be usupeq, usupeq, 
-X-ublock, uarg, lop-X-uarg (last two should be avoided to avoid confusing
-a casual reader).
-
-> **Example**:
->
-> (A) X-ublock is block a B which lop-B is (a) X and B is an ublock.
-
-A **mark** M is a symbol that is not an usubeq.
-
-> **Property**:
-> 
-> A mark must have a usupeq.
+### Operators and selectivity
 
 A **rugose operator** (**rugop**) is an operator OP such that an OP-block is a
 usubeq.
@@ -419,50 +437,59 @@ that can have other uses or interpretations such as to represent a number with
 more than one digit. To connect several subequations with the same selectivity
 rules, chains of juxts are used.
 
-A **juxt** is a binary op such that its second argument is not allowed to
-be selected and is restricted to be a juxt-block or mark.
+### Juxts
 
-The **parent juxt** (**pjuxt**) of a juxt-block JB is the leading operator of 
-JB.
+A **juxt** is a binary op such that:
 
-A **descendant juxt** (**djuxt**) D of a juxt-block JB is a juxt such that
-D-block is the second argument of:
+*   Its second argument is not allowed to be selected, and
+*   It does not impose restrictions on the selectivity of strict subeqs of its
+    second argument.
+*   Its second argument must be a juxt-block or a mark.
 
-*   The parent juxt of JB, or
-*   Another **descendant juxt** of JB.
+A **descendant juxt** (**djuxt**) DJ is a juxt of an equation or non-juxt-block
+Q such that:
 
-> **Property**:
+*   The position of the DJ-block is the second argument of another juxt of Q.
+
+### Parent and descendant juxts
+
+A **parent juxt** (**pjuxt**) PJ is a juxt of an equation or non-juxt-block Q
+such that:
+ 
+*   PJ is a rugop, and
+*   The second argument of PJ is a djuxt-block.
+*   The position of the PJ-block cannot be the argument of another juxt of Q.
+
+> Remark:
 >
-> A juxt-block always have one parent juxt and, at least, one descendant juxt.
+>1. juxts and juxt-blocks can be completely determined in a subequation.
+>1. Determination of djuxts, pjuxts, djuxt-blocks and pjuxt-blocks or
+>   juxt-ublocks in a subequation S can only be done if it is known that S is
+>   the entire equation or S is not a juxt-block.
+>1. A pjuxt-block has one pjuxt and, at least, one djuxt.
+>1. A pjuxt-block is a usubeq and a djuxt-block of an equation is not a usubeq.
+>1. A juxt-ublock is a pjuxt-block and a pjuxt-block is a juxt-ublock. Another
+>   name for them can be an **entire juxt-block**.
 
-A **constituent juxt** (**cjuxt**) of a juxt-block JB is a juxt that is a
-parent or descendant juxt of JB.
+### Constituent and terminal juxts
 
-A **terminal juxt** (**tjuxt**) of a juxt-block JB is a juxt such that:
+A **constituent juxt** (**cjuxt**) of a juxt-ublock JU is a juxt that is:
 
-*   It is a djuxt of JB, and
-*   Its second argument is a mark.
+*   the parent juxt of JU, or
+*   lop-Q, being Q the second argument of another **cjuxt** of JU.
+
+This is a recursive definition which could be improved to be a little more
+constructive.
+
+A **terminal juxt** (**tjuxt**) of a juxt-block JB is a cjuxt of JB which
+second argument is a mark.
 
 In visual equation implementation, the mark used for the second arg of a
 tjuxt is named *TXUJ* (that is the word JUXT reversed, not a typo).
 
-A **juxted** of a juxt-block JB is a first arg of a cjuxt of JB.
+A **juxted** of a juxt-block JB is a first arg of a cjuxt of a JB.
 
-A **entire juxt-block** of an equation E is a juxt-block which is not the
-second argument of a juxt of E.
-
-> **Property**:
->
-> A juxt-block which is not a entire juxt-block is not effectively selectable.
-
-To be organised and simplify the concepts, twe following two operators are
-used as juxts in visual equation.
-
-*PJUXT* is the only juxt which is a rugop. It does not allow the second
-argument to be a mark.
-
-*DJUXT* is the only juxt which is a slipop. A DJUXT-block is only allowed to be
-the second argument of a PJUXT in an equation.
+The only pjuxt and djuxt in visual equation are called *PJUXT* and *DJUXT*.
 
 > **Remarks**:
 >
@@ -515,7 +542,20 @@ nested structure of juxts.
 
 ## Equation metrics
 
-WIP...
+A **0-ulevel usubeq of a subeq S** is:
+ 
+*   If S is a usubeq, S.
+*   Else, it does not exist.
+
+A **N-ulevel usubeq of a subeq S**, N being a positive integer, is:
+
+*   If S is a symbol, it does not exist.
+*   If S is a block B, a **(N-1)-ulevel usubeq of a B-arg**.
+
+The **user nesting level** (**ulevel**), of a N-ulevel usubeq of a subeq is the
+(non-negative) value N.
+
+A neighbour 
 
 A **guy from an ublock UB** is a subeq of UB such that:
 
