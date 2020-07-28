@@ -22,7 +22,7 @@ This formalism is build to give elements the following "meta-properties":
 
 #### Identity, equality an properties
 
-*   Every element is **unique** and is allowed to a a unique *proper noun*.
+*   Every element is **unique** and is allowed to have a unique *proper noun*.
     One element that is **not the same** element than other must have a
     different proper noun.
 *   There can be elements **equal** to others and they are allowed to have a
@@ -30,8 +30,10 @@ This formalism is build to give elements the following "meta-properties":
     it is said that they are **different**.
 *   Every element can be referred by a **property** it has. That property is
     probably shared by other elements. When specifying an element by its
-    property, nothing is said by any other properties that the element has if
-    those properties are not inherited by the original property.
+    properties, nothing is said about any other properties that the element
+    has if those properties cannot be deduced from the original property.
+    Definitions will give a **definiendum** to refer to an element satisfying
+    certain properties.
 
 #### Identity and equation edition    
 
@@ -44,14 +46,18 @@ This formalism is build to give elements the following "meta-properties":
 
 #### How to refer equation elements
 
+The expression **A d** or **is a d** refers to an arbitrary element which
+satisfies the **definiens** of a **definiendum** d or asserts that an element
+satisfies the **properties** stated in the **definiens** of **definiendum** d.
+
+Definiendums of elements with certain properties which include elements that
+are different will be lowercase.
+
 The expression **A CN** refers to an arbitrary element with **common name** CN.
 Common names will be uppercase.
 
-The expression **A p** refers to an arbitrary element which has **property** p.
-Properties will be lowercase.
-
 The expression **A p PN** gives the proper noun PN to an arbitrary element with
-**property** p. Proper nouns will be uppercase.
+the common **properties** to elements called p. Proper nouns will be uppercase.
 
 The expression **A CN PN** gives the proper noun PN to an arbitrary element
 with common name CN.
