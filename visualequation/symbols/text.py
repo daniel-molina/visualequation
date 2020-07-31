@@ -142,13 +142,15 @@ COLORS = [
     PanelIcon('yellow', 'yellow'),
 ]
 
-
+# By the moment it does not manage correctly bases of loscript ops.
 def color(parent):
     dialog = ChooseElemDialog(parent, _("Choose color"), COLORS, 3)
     result = dialog.exec_()
     if result == QDialog.Accepted:
-        return Op(1, r'\begingroup\color{{' + dialog.symb_chosen.code
-                  + r'}}{0}\endgroup')
+        # Surrounding brackets needed to place sub/super-scripts correctly
+        # Other possibility: \mathbin{\textcolor{color}{subeq}}
+        return Op(1, r'{{\begingroup\color{{' + dialog.symb_chosen.code
+                  + r'}}{0}\endgroup}}')
     else:
         return None
 

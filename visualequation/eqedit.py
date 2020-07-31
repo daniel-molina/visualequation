@@ -48,7 +48,7 @@ def _rinsert_nonjuxtsubeq(eq, idx, subeq):
         if scriptops.is_base(eq, idx):
             # Uarg subcase: idx points to the base of a script
             # Convert script operator if needed
-            scriptops.update_scriptblock(eq, idx, utils.JUXT)
+            scriptops.update_scriptblock(eq, idx - 1, utils.JUXT)
 
         eq[idx:end_idx] = [utils.JUXT] + eq[idx:end_idx] + subeq
         return end_idx + 1, idx + 1
@@ -73,7 +73,7 @@ def _linsert_nonjuxtsubeq(eq, idx, subeq):
         if scriptops.is_base(eq, idx):
             # Uarg subcase: idx points to the base of a (v)script
             # Convert (v)script operator if needed
-            scriptops.update_scriptblock(eq, idx, utils.JUXT)
+            scriptops.update_scriptblock(eq, idx-1, utils.JUXT)
 
         eq[idx:idx] = [utils.JUXT] + subeq
         return idx + 1, idx + 1 + len(subeq)
@@ -86,6 +86,10 @@ def _linsert_nonjuxtsubeq(eq, idx, subeq):
 def _rinsert_juxtsubeq(eq, idx, subeq):
     """Insert a subeq which starts by JUXT to the right of a subeq.
 
+    .. note::
+        If *idx* points to a citizen and subeq is a JUXT-ublock, citizens of
+        *subeq* are integrated as co-citizens of the citizen in *idx*.
+
     :param eq: The equation in which to insert *subeq*.
     :param idx: The index of a subeq of reference to insert *subeq*.
     :param subeq: The subequation to insert. It must start with a JUXT.
@@ -97,8 +101,8 @@ def _rinsert_juxtsubeq(eq, idx, subeq):
         # idx points to eq, an uarg or a last citizen
         end_idx = eqqueries.nextsubeq(eq, idx)
         eq[idx:end_idx] = [utils.JUXT] + eq[idx:end_idx] + subeq
-        # We are inserting a JUXT and subeq has another:
-        # first citizen od subeq has an offset of 2 JUXTs
+        # We are inserting a JUXT and subeq has another JUXT:
+        # that means that first citizen of subeq has an offset of 2
         return end_idx + 1 + subeq_last_citizen, idx + 1
     else:
         # idx points to a citizen but not the last one
@@ -109,6 +113,10 @@ def _rinsert_juxtsubeq(eq, idx, subeq):
 
 def _linsert_juxtsubeq(eq, idx, subeq):
     """Insert a subeq which starts by JUXT to the left of a subeq.
+
+    .. note::
+        If *idx* points to a citizen and subeq is a JUXT-ublock, citizens of
+        *subeq* are integrated as co-citizens of the citizen in *idx*.
 
     :param eq: The equation in which to insert *usubeq*.
     :param idx: The index of a subeq of reference to insert *usubeq*.
@@ -131,6 +139,10 @@ def _linsert_juxtsubeq(eq, idx, subeq):
 
 def _rinsert(eq, idx, subeq):
     """Insert a subeq to the right of another subeq.
+
+    .. note::
+        If a JUXT-ublock is inserted to the right of a citizen, citizens are
+        integrated as co-citizens.
 
     .. note::
 
@@ -156,10 +168,53 @@ def _rinsert(eq, idx, subeq):
         return felem_idx + 1 if groups.is_group(subeq[0]) else felem_idx
 
 
+def _safely_dissolve_simplejuxtublock(eq, idx, is_1st_arg_kept,):
+    """Disolve JUXT-ublock made up by two citizens.
+
+    Apart from removing the JUXT and the non-kept citizen, it checks if the
+    JUXT-ublock was the base of a script op or the arg of a group and correct
+    the environment.
+
+    .. note::
+        If the JUXT-ublock is a base, scripts can be modified after
+        modification of the base.
+
+    :param eq: An equation.
+    :param idx: The index of a JUXT ublock of two citizens.
+    :param is_1st_arg_kept: True if the first arg of the JUXT-ublock is
+    preserved. Else, The second one is preserved.
+    :return: Index of kept JUXT arg in *eq* after the call.
+    """
+    idx1 = idx + 1
+    end1 = eqqueries.nextsubeq(eq, idx1)
+    idx2 = end1 + 1
+    end2 = eqqueries.nextsubeq(eq, idx2)
+    kept_arg = eq[idx1:end1] if is_1st_arg_kept else eq[idx2:end2]
+
+    if not idx:
+        eq[:] = kept_arg
+        return 0
+
+    if eq[idx-1] in (utils.GROUP, utils.TEMPGROUP) \
+            or (eq[idx-1] == utils.SOLIDGROUP and len(kept_arg) == 1):
+        # No need to use groups.ungroup in this simple case
+        eq[idx-1:end2] = kept_arg
+        return idx - 1
+
+    eq[idx:end2] = kept_arg
+    if scriptops.is_base(eq, idx):
+        scriptops.update_scriptblock(eq, idx - 1, eq[idx])
+    return idx
+
+
 def _linsert(eq, idx, subeq):
     """Insert an usubeq to the left of a subequation.
 
-    .. warning::
+    .. note::
+        If a JUXT-ublock is inserted to the left of a citizen, citizens are
+        integrated as co-citizens.
+
+    .. note::
 
         *   *idx* must not point to a NEWARG.
         *   *usubeq* must not be [NEWARG].
@@ -184,7 +239,7 @@ def _linsert(eq, idx, subeq):
         return felem_idx + 1 if groups.is_group(subeq[0]) else felem_idx
 
 
-def _replace_integrating(eq, idx, subeq):
+def _replace_integrating(eq, idx, subeq, subeq_idx=None):
     """Replace subeq starting at *idx* by integrating citizens, if needed.
 
     If *idx* does not point to a citizen or *subeq* does not start with JUXT,
@@ -192,42 +247,30 @@ def _replace_integrating(eq, idx, subeq):
     Else, citizen C which start at *idx* is removed and citizens of *subeq*
     are added as co-citizens of the JUXT-ublock in *eq* to which C belonged.
 
+    Return the index in *eq* of primitive with index *subeq_idx* in *subeq*
+    after substitution.
+
     .. note::
         Avoid this function if *idx* points to current selection: Replacement
         should be probably selected in that case and if *subeq* starts by JUXT,
-        _replace_grouped with a temporal group would be the appropriated
-        function to use.
+        _replace_tgrouped would be the appropriated function to use.
 
     .. note::
-        To be consistent, prefer _replace_grouped if *subeq* if *subeq* is
-        actually a group. Returned value will probably be more useful too.
+        To be consistent, prefer _replace_tgrouped if *subeq* is actually a
+        group.
 
     .. note::
         *subeq* must not be [NEWARG]. Consider _remove_selection instead.
 
     .. note::
-        If *idx* points to the argument of a group, result is equivalent to
-        passing *idx*-1.
-
-    Meaning of returned value:
-
-        *   If every element with index i in :subeq: has index *idx* + i in
-            *eq* after replacement, 0 is returned
-        *   Else, 1 is returned. In this case:
-
-            *   Any citizen, except the last one, with index i in :subeq:, has
-                index *idx* + i - 1 in *eq*.
-            *   Last citizen in :subeq: has index *idx* + i in *eq*.
-
-            .. note::
-                That happens when *subeq* is a JUXT-ublock and *idx* pointed to
-                a citizen which was not the last one of some JUXT-ublock in
-                *eq*.
+        If *idx* points to the argument of a group, the group op index is
+        considered instead of *idx* to perform the substitution.
 
     :param eq: Equation in which the replacement is done.
     :param idx: The index of a subeq which will be replaced.
     :param subeq: Subeq with which subeq starting at :idx: will be replaced.
-    :return: A flag explained above.
+    :param subeq_idx: The index of a primitive of *subeq*.
+    :return: The index in *eq* of primitive with index *subeq_idx* in *subeq*.
     """
     # If selection is the argument of a group, replace the full group
     if idx and groups.is_grouped(eq, idx):
@@ -241,21 +284,25 @@ def _replace_integrating(eq, idx, subeq):
         #   3. A last citizen
         if scriptops.is_base(eq, idx):
             # Subcase: Substitute (v)script base
-            scriptops.update_scriptblock(eq, idx, subeq[0])
+            scriptops.update_scriptblock(eq, idx - 1, subeq[0])
 
         end = eqqueries.nextsubeq(eq, idx)
         eq[idx:end] = subeq
-        return 0
+        return idx + subeq_idx
     else:
         # idx points to the first argument of a JUXT (terminal or not)
         subeq_last_citizen = eqqueries.last_citizen(subeq, 1)
         eq[idx:arg2_idx] = subeq[1:subeq_last_citizen] + [utils.JUXT] \
                            + subeq[subeq_last_citizen:]
-        return 1
+        retval = idx + subeq_idx
+        if subeq_idx >= subeq_last_citizen:
+            retval += 1
+        return retval
 
 
-def _replace_grouped(eq, idx, subeq, temp=False):
-    """Replace subeq which starts at idx as a group, if needed.
+def _replace_tgrouped(eq, idx, subeq):
+    """Replace subequation as a whole. Precede replacement by a TEMPGROUP
+    if needed.
 
     .. note::
         *subeq* must not be [NEWARG]. Consider _remove_selection instead.
@@ -269,19 +316,17 @@ def _replace_grouped(eq, idx, subeq, temp=False):
         *   If *idx* does not point to a citizen or *subeq* does not start
             with JUXT, it is an ordinary replacement.
         *   Else, the citizen in *idx* is replaced by *subeq* "protected"
-            with a GROUP or TEMPGROUP operator, depending on *temp*.
+            with a TEMPGROUP.
 
-    If you want a group operator in front of *subeq* even if it does not
-    start with JUXT (which only has sense for SOLDGROUPs), add it by yourself
-    before calling this function.
+    .. note::
+        If *subeq*[0] is a group operator, no TEMPGROUP addition is considered.
+        Note that, returned value in that case is the index of the group op,
+        which should not be selected.
 
     :param eq: Equation in which the replacement is done.
     :param idx: The index of a subeq which will be replaced.
     :param subeq: Subeq with which subeq starting at *idx* will be replaced.
-    :param temp: Indicates whether the group will be temporal, if it is
-    included.
-    :return: The index of *subeq* in *eq* except in the case that *subeq* is
-    some group, in which case the index of its argument in *eq* is returned.
+    :return: The index of the first element of *subeq* in *eq*.
     """
     # If *idx* points to the argument of a group, replace the full group
     if groups.is_grouped(eq, idx):
@@ -292,23 +337,21 @@ def _replace_grouped(eq, idx, subeq, temp=False):
         # idx points to an uarg or eq; or subeq does not start with JUXT
         if scriptops.is_base(eq, idx):
             # Subcase: Substitute script base
-            scriptops.update_scriptblock(eq, idx, subeq[0])
+            scriptops.update_scriptblock(eq, idx - 1, subeq[0])
 
-        end_idx = eqqueries.nextsubeq(eq, idx)
-        eq[idx:end_idx] = subeq
-        return idx if subeq[0] not in groups.ALLGROUPS else idx + 1
+        end = eqqueries.nextsubeq(eq, idx)
+        eq[idx:end] = subeq
+        return idx
 
     # From this point, subeq starts with JUXT and idx points to a citizen
-    gop = utils.TEMPGROUP if temp else utils.GROUP
     if idx < arg2_idx:
         # Subcase: idx points to a citizen which is not a last one
-        eq[idx:arg2_idx] = [gop] + subeq
-        return idx + 1
+        eq[idx:arg2_idx] = [utils.TEMPGROUP] + subeq
     else:
         # Subcase: idx points to a last citizen
-        end_idx = eqqueries.nextsubeq(eq, idx)
-        eq[idx:end_idx] = [gop] + subeq
-        return idx + 1
+        end = eqqueries.nextsubeq(eq, idx)
+        eq[idx:end] = [utils.TEMPGROUP] + subeq
+    return idx + 1
 
 
 def remove_eq(eq):
@@ -317,13 +360,22 @@ def remove_eq(eq):
 
 
 def _remove_selection(eq, idx, dir):
-    """Remove current selection and return what should be selected.
+    """Remove selection and return what must be selected. Direction is only
+    used to define next selection.
 
-    It does nothing if *idx* points to an empty argument.
+    This function does nothing if *idx* points to a NEWARG.
 
-    Requirement:
+    .. note::
+        It has sense to call this function if:
+
+        *   Backward delete with dir == 1.
+        *   Forward delete with dir in (-1, 0).
+
+
+    .. note::
 
         *   *idx* must not point to a NEWARG.
+        *   *dir* must be in (-1, 0, 1). 2 is not a valid value.
 
     Rules depending on selection:
 
@@ -339,6 +391,10 @@ def _remove_selection(eq, idx, dir):
                 and direction is not changed.
             *   Else (direction was -1), the co-citizen to the right is
                 selected and direction is not changed.
+
+    :param eq: An equation.
+    :param idx: Index of current selection.
+    :param dir: Direction of selection. Only values (-1, 0, 1). Must not be 2.
     """
     # Correct index if the argument of a group is selected
     if groups.is_grouped(eq, idx):
@@ -354,7 +410,7 @@ def _remove_selection(eq, idx, dir):
         if scriptops.is_base(eq, idx):
             # Uarg subcase: idx points to the base of a script
             # Convert (v)script operator if needed
-            scriptops.update_scriptblock(eq, idx, utils.NEWARG)
+            scriptops.update_scriptblock(eq, idx - 1, utils.NEWARG)
 
         end = eqqueries.nextsubeq(eq, idx)
         eq[idx:end] = [utils.NEWARG]
@@ -363,9 +419,12 @@ def _remove_selection(eq, idx, dir):
     # From this point, we know idx points to citizen
     if otherarg < idx:
         # Case: Remove last citizen
-        # It does not matter which kind of replace you use in this case
-        _replace_grouped(eq, juxt_idx, eq[otherarg:idx])
-        return juxt_idx, 1
+        if eqqueries.is_parent_juxt(eq, juxt_idx):
+            return _safely_dissolve_simplejuxtublock(eq, juxt_idx, True)
+
+        end = eqqueries.nextsubeq(eq, juxt_idx)
+        eq[juxt_idx:end] = eq[otherarg:idx]
+        return juxt_idx, 1 if dir else 0
 
     # From here, selection is a citizen which is not the last one
     # Low-level hardcore starts... :P
@@ -387,7 +446,7 @@ def _remove_selection(eq, idx, dir):
         return idx, dir
 
 
-def flat_block(eq, idx, dir):
+def flat_block(eq, idx, dir=1):
     """Flat selection by removing leading op and joining args in a JUXT-ublock.
     If selection is the arg of a SOLIDGROUP or GROUP, the group op is
     substituted by a TEMPGROUP or deleted.
@@ -436,8 +495,7 @@ def flat_block(eq, idx, dir):
         return idx, dir
 
     if groups.is_sgrouped(eq, idx):
-        eq.pop(idx-1)
-        return idx - 1, dir
+        return groups.ungroup(eq, idx), dir
 
     arg_idx = idx + 1
     vargs = []  # list of valid args
@@ -455,8 +513,8 @@ def flat_block(eq, idx, dir):
     subeq_c = simpleeqcreator.SimpleEqCreator()
     for varg in vargs:
         subeq_c.extend(varg)
-    new_subeq = subeq_c.get_eq()
-    return _replace_grouped(eq, idx, new_subeq, temp=True), dir
+    new_idx = _replace_tgrouped(eq, idx, subeq_c.get_eq())
+    return new_idx + 1 if groups.is_group(eq[new_idx]) else new_idx, dir
 
 
 def is_flat_block_allowed(eq, idx):
@@ -464,10 +522,11 @@ def is_flat_block_allowed(eq, idx):
             and (eq[idx] != utils.JUXT or groups.is_pgrouped(eq, idx)
                  or groups.is_sgrouped(eq, idx))
 
-def flat_external_block(eq, idx, dir, remove_mode=0):
+
+def flat_external_block(eq, idx, dir=1, remove_mode=0):
     """Core function to flat the least external block of selection
     (essentially remove the leading operator and join uargs in JUXT-ublock).
-    It also removes external GROUPs in some circunstances.
+    It also ungroups in some circunstances.
 
     Parameter *remove_mode* is expected to be:
 
@@ -502,7 +561,7 @@ def flat_external_block(eq, idx, dir, remove_mode=0):
             *   A citizen of a grouped JUXT-ublock, or
             *   The argument of a group which block is the citizen of a
                 grouped JUXT-ublock,
-        the JUXT-ublock is ungrouped.
+        then, the JUXT-ublock is ungrouped.
 
         Elif selection is:
 
@@ -560,14 +619,14 @@ def flat_external_block(eq, idx, dir, remove_mode=0):
                             *   Else select the first non-NEWARG to the left
                                 and set dir=1.
 
-                        *   If remove_mode == 1 (SUPR mode):
+                        *   If remove_mode == 1 (FORWARD mode):
 
                             *   If there is at least one non-NEWARG argument to
                                 the right, select the first one and set dir=1.
                             *   Else, select the first non-NEWARG to the left
                                 and set dir=1.
 
-                        *   If remove_mode == -1 (DEL mode):
+                        *   If remove_mode == -1 (BACKWARD mode):
 
                             *   If there is at least one non-NEWARG argument to
                                 the left, select the first one and set dir=1.
@@ -608,16 +667,14 @@ def flat_external_block(eq, idx, dir, remove_mode=0):
 
     if juxt_idx > 0 and groups.is_pgrouped(eq, juxt_idx):
         # Case: Selection is a citizen of a grouped JUXT-ublock
-        eq.pop(juxt_idx-1)
-        return idx - 1, dir
+        return groups.ungroup(eq, juxt_idx, idx), dir
 
     if groups.is_grouped(eq, idx):
         parent_juxt_idx = eqqueries.parent_juxt(eq, idx-1)
         if parent_juxt_idx >= 0 and groups.is_pgrouped(eq, parent_juxt_idx):
             # Case: Selection is the arg of a group which block is the citizen
             # of a grouped JUXT-ublock
-            eq.pop(parent_juxt_idx-1)
-            return idx - 1, dir
+            return groups.ungroup(eq, parent_juxt_idx, idx), dir
 
 
     # Set variables that define rest of function's casuistic:
@@ -627,15 +684,12 @@ def flat_external_block(eq, idx, dir, remove_mode=0):
     #   case applies
     arg_idx = idx
     offset = 0
-    old_sel_was_last_citizen = False
     if juxt_idx >= 0:
         # Current selection is a citizen
         # (and it is assumed that the JUXT-ublock is not the whole equation)
         parent_juxt = eqqueries.parent_juxt(eq, idx)
         arg_idx = parent_juxt
         offset = parent_juxt - idx
-        if arg2_idx < idx:
-            old_sel_was_last_citizen = True
 
     # Index of operator and ordinal of selected argument (starting from 1)
     op_idx, arg_ord = eqqueries.whosearg(eq, arg_idx)
@@ -699,12 +753,9 @@ def flat_external_block(eq, idx, dir, remove_mode=0):
         subeq_c.extend(varg)
 
     # Replace the equation and select correctly
-    takecare = _replace_integrating(eq, op_idx, subeq_c.get_eq())
-    if takecare and (sel_ridx != len(vargs)
-                     or (offset and not old_sel_was_last_citizen)):
-        return op_idx + subeq_c.get_idx(offset, sel_ridx) - 1, dir
-    else:
-        return op_idx + subeq_c.get_idx(offset, sel_ridx), dir
+    # Note!: Returned value has been recoded without testing, there can be bugs
+    return _replace_integrating(eq, op_idx, subeq_c.get_eq(),
+                                subeq_c.get_idx(offset, sel_ridx)), dir
 
 
 def is_flat_external_block_allowed(eq, idx):
@@ -716,6 +767,7 @@ def is_flat_external_block_allowed(eq, idx):
         idx -= 1
 
     juxt_idx, ignored = eqqueries.other_juxt_arg(eq, idx)
+    # Condition is: Not a citizen or citizen of JUXT-ublock != eq
     return juxt_idx != 0
 
 
@@ -724,19 +776,20 @@ def _remove_arg(eq, idx, dir, remove_mode=1):
     script op.
 
     .. note::
-        Usually you would want to use this function if the arg is a NEWARG.
+        Usually you would want to use this function if the arg is a NEWARG,
+        but that is not a requirement.
 
     Parameter *remove_mode* is expected to be:
 
-        *   If this function is the consequence of deleting, 1.
-        *   If this function is the consequence of suppression, -1.
+        *   1 for forward remove.
+        *   -1 for backward remove.
 
      Rules:
 
         *   If *idx* points to the argument of a script operator which is
             not the base, downgrade the script operator if there are more
             scripts or remove it if it was the only script.
-        *   Else, apply rules of _flat_external_op_core.
+        *   Else, apply rules of flat_external_block.
     """
     # Any group (including solid groups) should also be replaced completely
     if groups.is_grouped(eq, idx):
@@ -746,7 +799,7 @@ def _remove_arg(eq, idx, dir, remove_mode=1):
 
     # Flat operator if not a script
     if op_idx < 0 \
-            or eq[op_idx] not in scriptops.SCRIPT_TYPES \
+            or eq[op_idx] not in scriptops.SCRIPT_OP_TYPES \
             or scriptops.is_base(eq, idx):
         return flat_external_block(eq, idx, dir, remove_mode)
 
@@ -757,103 +810,90 @@ def _remove_arg(eq, idx, dir, remove_mode=1):
 def _rremove(eq, idx):
     """Remove "to the right" of selection and return new valid index.
 
+    .. note::
+        Selection must NOT be the whole equation so it is provided that this
+        function always modify the equation.
+
     Rules:
 
-        *   If selection is the whole equation, do nothing.
-        *   Elif it has a co-citizen to the right, remove it.
+        *   If selection has a co-citizen to the right, remove it.
         *   Else, flat the least external operator.
 
     Selection and direction are not modified.
     """
     juxt_idx, otherarg = eqqueries.other_juxt_arg(eq, idx)
-    if juxt_idx >= 0:
-        # Case: selection is a citizen
-        if idx < otherarg:
-            if eq[otherarg] == utils.JUXT:
-                # Subcase: selection is a citizen before the last but one
-                end = eqqueries.nextsubeq(eq, otherarg + 1)
-                eq[otherarg:end] = []
-            else:
-                # Subcase: selection is a last but one co-citizen
-                if scriptops.is_base(eq, juxt_idx):
-                    # Sub-subcase: Dissolve JUXT in (v)script base
-                    scriptops.update_scriptblock(eq, juxt_idx, eq[idx])
+    if juxt_idx < 0 or otherarg < idx:
+        # Cases: selection is an uarg or a last citizen
+        return flat_external_block(eq, idx, 1, -1)[0]
+    elif eq[otherarg] == utils.JUXT:
+        # Case: selection is a citizen before the last but one
+        end = eqqueries.nextsubeq(eq, otherarg + 1)
+        eq[otherarg:end] = []
+        return idx
 
-                end = eqqueries.nextsubeq(eq, otherarg)
-                eq[juxt_idx:end] = eq[idx:otherarg]
-                idx -= 1
+    # From this point, selection is a last but one co-citizen
+    is_juxtublock_dissolved = eqqueries.is_parent_juxt(eq, juxt_idx)
+    if is_juxtublock_dissolved:
+        # Case: JUXT-ublock only has two citizens
+        return _safely_dissolve_simplejuxtublock(eq, juxt_idx, True)
 
-                if idx and eq[idx-1] == utils.GROUP:
-                    # Sub-subcase: Group has no sense any more
-                    # Note that solid groups should not be removed
-                    eq.pop(idx-1)
-                    idx -= 1
-
-        else:
-            # Subcase: selection is a last citizen
-            flat_external_block(eq, idx)
-    elif idx:
-        # Case: selection is an uarg
-        flat_external_block(eq, idx)
-    return idx
+    end = eqqueries.nextsubeq(eq, otherarg)
+    eq[juxt_idx:end] = eq[idx:otherarg]
+    return idx - 1
 
 
 def _lremove(eq, idx):
     """Remove "to the left" of selection and return a valid index.
 
+    .. note::
+        Selection must NOT be the whole equation so it is provided that this
+        function always modify the equation.
+
     Rules:
 
-        *   If selection is the whole equation, do nothing.
-        *   Elif it has a co-citizen to the left, remove it.
+        *   If selection has a co-citizen to the left, remove it.
         *   Else, flat the least external operator.
 
     Selection and direction are not modified.
     """
-    # Check if it is the arg of a JUXT and leave it clean
+
     lcocitizen_idx = eqqueries.cocitizen(eq, idx, forward=False)
     if lcocitizen_idx < 0:
         # Case: selection is not a citizen or it is a first citizen
-        flat_external_block()
+        return flat_external_block(eq, idx, -1, 1)
     elif eq[idx-1] == utils.JUXT:
-        # Case: selection is not the last citizen
+        # Case: selection is a non-last, non-first citizen
         eq[lcocitizen_idx-1:idx-1] = []
-        idx = lcocitizen_idx
-    else:
-        # Case: selection is the last citizen
-        if scriptops.is_base(eq, lcocitizen_idx-1):
-            # Subcase: Dissolve JUXT-ublock in (v)script base
-            scriptops.update_scriptblock(eq, lcocitizen_idx - 1, eq[idx])
+        return lcocitizen_idx
 
-        eq[lcocitizen_idx-1:idx] = []
-        idx = lcocitizen_idx - 1
+    # From this point, selection is a last citizen
+    if eqqueries.is_parent_juxt(eq, lcocitizen_idx-1):
+        return _safely_dissolve_simplejuxtublock(eq, lcocitizen_idx-1, False)
 
-        if idx and eq[idx-1] == utils.GROUP:
-            # Subcase: Group has no sense any more
-            # Note that solid groups should not be removed
-            eq.pop(idx-1)
-            idx -= 1
-
-    return idx
+    eq[lcocitizen_idx-1:idx] = []
+    return lcocitizen_idx - 1
 
 
 def insert(eq, idx, dir, pseudoelem):
     """Insert/replace a subequation from a primitive or part of a subequation.
 
     .. note::
-        *pseudoelem* must not be a single NEWARG, JUXT, GROUP or TEMPGROUP.
-        *pseudoelem*[0][0] must not be a JUXT if *pseudoelem*[0][1] > 0.
-        In case you are considering those cases, are you sure there is not a
-        better function?
+        If *pseudoelem* is a tuple, first element must be a complete or
+        incomplete block and the second element an integer specifying how many
+        arguments are left free. If that integer is 0, it means that the block
+        is already complete.
 
     .. note::
-        If *pseudoelem* is a tuple, first element must be an incomplete block
-        and the second element an integer specifying how many arguments are
-        left free. If integer is 0, it means that the block is already valid.
+        *pseudoelem* must not be a single NEWARG, JUXT op or group op.
+        *pseudoelem*[0][0] must not be a JUXT if *pseudoelem*[1] > 0.
+        In case you are considering those cases, are you sure there is not a
+        better function?
 
     :param eq: An equation.
     :param idx: Index of current selection.
     :param dir: Current direction of selection.
-    :param pseudoelem: A symbol, operator or tuple.
+    :param pseudoelem: A symbol, operator or tuple as indicated in the first
+    note.
     :return: New selection index and direction.
 
     Depending on *pseudoelem* and *dir*, behavior is different:
@@ -873,24 +913,22 @@ def insert(eq, idx, dir, pseudoelem):
             *   Elif *dir* is 0, substitute selection with the operator with
                 every argument set to a NEWARG.
             *   Elif *dir* is 2, substitute selection with the operator with
-                every argument set to a NEWARG except the first one, which
-                is set to the subequation that was selected.
+                first arg set to selected subequation and the rest of args, if
+                any, set to NEWARGs.
 
         *   If *pseudoelem* is a tuple:
 
-            *   Too lazy to document now...
-            *   If second element of the tuple is 0, insert....
-            *   If *dir* is not 2, append as many NEWARGS as needed to the
-                partial black to obtain a valid block and insert it as in the
-
+            *   If *pseudoelem*[1] == 0, replace *pseudoelem*[0] grouped.
+            *   Else, equivalent to consider *pseudoelem*[0] an Op with
+                n_args == *pseudoelem*[1].
 
     Final selection and direction:
 
-        *   If *pelem* is a symbol or op with 0 arguments, select it and set
-            dir to 1.
-        *   Elif *pelem* is an operator (with some arguments) and dir is in
-            (-1, 0, 1), select first argument and set dir to 1.
-        *   Else, select the first included NEWARG and set dir to 0.
+        *   If *psudoelem* is a symbol, op with 0 arguments or tuple with
+            *psudoelem*[1] == 0, select it and set dir to 1.
+        *   Elif dir is in (-1, 0, 1), select first NEWARG and set dir to 0.
+        *   Elif there is at least a NEWARG, select it and set dir to 0.
+        *   Else, select introduced subequation and set dir to 1.
     """
     # Create subeq to insert
     n_final_newargs = 0
@@ -923,21 +961,18 @@ def insert(eq, idx, dir, pseudoelem):
         subeq = pseudoelem[0] + [utils.NEWARG]*n_final_newargs
 
     # _replace_*, _rinsert and _linsert take care of groups and script ops
-    # **in eq**.
+    # **only in eq**, not in the passed subeq.
     if dir in (0, 2):
-        # _replace_integrating does not provide a selection as output, but a
-        # flag
-        flag = _replace_integrating(eq, idx, subeq)
+        subeq_idx = _replace_tgrouped(eq, idx, subeq)
         # Select correctly the replacement
         if n_final_newargs:
-            # Do not consider flag if there are NEWARGs, subeq is not allowed
-            # to start with JUXT in that case
-            return idx + len(subeq) - n_final_newargs, 0
-        # Correct selection depending on flag and presence of group in subeq
-        elif not flag or groups.is_group(subeq[0]):
-            return idx, 1
+            # subeq cannot be a JUXT-ublock if n_final_newargs > 0
+            return subeq_idx + len(subeq) - n_final_newargs, 0
+        elif groups.is_group(subeq[0]):
+            # If subeq had a group leading op, select its argument
+            return subeq_idx + 1, 1
         else:
-            return idx - 1, 1
+            return subeq_idx, 1
     # _rinsert and _linsert return always a valid index to select
     elif dir == 1:
         return _rinsert(eq, idx, subeq), 1
@@ -946,48 +981,48 @@ def insert(eq, idx, dir, pseudoelem):
 
 
 def insert_script(eq, idx, dir, is_superscript):
-    """Insert a sub or superscript and select it.
+    """Insert a script and select it.
 
     If it already exists, just select it.
+
+    :param eq: An equation.
+    :param idx: Index in *eq* of the base of the script.
     """
     script_idx = scriptops.insert_script(eq, idx, dir, is_superscript)
-    if script_idx < 0:
-        return -script_idx, 1
-    else:
-        return script_idx, 0
+    return script_idx, 0 if script_idx >= 0 else -script_idx, 1
 
 
-def delete(eq, idx, dir, supr=False):
-    """Remove subeq or subeq to the.
+def delete(eq, idx, dir, forward=False):
+    """Remove a subequation according to selection and removal mode and return
+    next selection.
 
-    self.eqsel.dir works as the position of a cursor:
+    .. note::
+        In some cases this function does not modify the equation.
 
-        * If +1, it is to the right of selection.
-        * If -1, it is to the left of selection.
-
-    By default, it removes what is to the left of the cursor (current
-    selection or "something to the left").
-
-    If :supr: is True, this function works like a suppression, removing
-    what is to the right of the cursor ("something to the right" or current
-    selection).
-
-    :supr: If True, use suppression rules instead of deletion ones.
+    :param eq: An equation.
+    :param idx: The index of currently selected subeq.
+    :param dir: Current direction (-1, 0, 1, or 2).
+    :param forward: A boolean indicating the remove direction.
     """
-    if idx == 0:
-        # Remove whole equation
-        return remove_eq(eq)
-    elif eq[idx] == utils.NEWARG:
+    if not idx:
+        if (not dir and forward) or (dir == 1 and not forward) \
+                or (dir == -1 and forward):
+            return remove_eq(eq)
+        return idx, dir
+
+    if eq[idx] == utils.NEWARG:
         # Downgrade script op or flat least external operator
-        return _remove_arg(eq, idx, dir, -1 if supr else 1)
-    elif (dir == 1 and not supr) \
-            or (dir == -1 and supr):
+        return _remove_arg(eq, idx, dir, -1 if forward else 1)
+
+    if (dir == 1 and not forward) or (dir == -1 and forward):
         # Remove current selection and set a nice selection
         return _remove_selection(eq, idx, dir)
-    elif dir == 1:
+
+    if dir == 1:
         # Remove to the right
         return _rremove(eq, idx), dir
-    else:
+
+    if dir == -1:
         # Remove to the left
         return _lremove(eq, idx), dir
 

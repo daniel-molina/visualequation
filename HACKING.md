@@ -404,10 +404,11 @@ particular, they are considered usubeqs, usupeqs, X-ublocks, upars, lop-X
 > **Note**: This section includes some rules that will allow that at least one
 > subeq of an equation will be selectable.
 
-A subequation S of an equation E is selectable if:
+A **selectable subequation** (**selsubeq**) of an equation E is a subequation
+SS of E such that:
  
-*   S is a usubeq, and
-*   S has no usupeq which is a subeq of a parameter of a non-user arg.
+*   SS is a usubeq, and
+*   SS has no usupeq which is a subeq of a parameter of a non-user arg.
 
 > **Properties**:
 >
@@ -622,3 +623,405 @@ GOP):
     If N == 0 or S is a GOP, RMA is the representative of S (**END**).
 6.  Set ORD to 1.
     Go to step 5.
+
+## Moving and editing
+
+### Naive movements and editions:
+
+Reasonable movements that do not collide with Readline's default key bindings.
+
+#### Clever movements
+
+They are triggered with LEFT and RIGHT keys.
+
+People who does not know any key-bindings will use them almost exclusively
+to change the selection.
+
+They are intended to satisfy the following conditions:
+
+*   It must be possible to select any selsubeq.
+*   It must require very few movements to select selsubeqs close to current
+    selection.
+*   Navigating far away must not require too many movements.
+*   They must be someway reasonable so the user can learn their behaviour soon.
+*   They must be a compromise between being practical and not discouraging
+    a new user to use the program.
+
+LEFT (fast):
+
+*   If dir is 1, set it to -1.
+*   Else, move to the closest symbol to the left without changing dir.
+*   Marginal case: If first symbol of eq is selected, select the last one.
+
+RIGHT (slow, exhaustive and redundant):
+
+*   If dir is -1, set it to 1.
+*   Navigate equation forward, selecting selsubeqs before entering them and
+    before exiting them.
+    A precise description is quite complex. That is redacted in the docstring
+    of the function implementing this behaviour.
+
+#### Longer movements
+
+They are: M-LEFT and M-RIGHT.
+
+*   They select the mate to the left/right.
+*   Marginal case: If it is the first/last mate, choose the last/first mate.
+*   They do not change current dir unless needed by VOID presence.
+*   Successive call to one of both commands will remember N-mate level of the
+    selection before applying the first command.
+
+#### Bigger selections
+
+They are: RETURN, SHIFT-LEFT and SHIFT-RIGHT.
+
+RETURN:
+
+*   Select supeq of current selection.
+*   Do not change dir unless selection was a VOID.
+
+SHIFT-LEFT, SHIFT-RIGHT:
+
+*   If selection is the representative of a non-first/non-last juxted, include
+    in selection the juxted to the left/right.
+*   If selection is already formed by several juxted, shrink or extend it
+    if possible. If an extension is not possible (no more juxted in that
+    directions, select the juxt-ublock)
+*   Else, select supeq with -1/+1 dir.
+
+
+#### Manipulations
+
+*   Insertion is done to the right of the cursor.
+*   DEL remove the subeq to the right of the cursor.
+*   BACKSPACE remove subeq to the left of the cursor.
+
+There are several marginal cases not documented in this text yet.
+
+### Advanced movements
+
+The intention of these command is to imitate Readline default keybindings as
+much as possible. We will use Readline's command names with the following
+equivalence:
+
+*   character (char) -> symbol
+*   word -> mate
+
+Details:
+
+*   Symbols are unaware of equation structure, just as characters for
+    Readline.
+*   Mates have bounds, as words have. A word bound in Readline is a
+    non-alphanumeric character. In visual equation, we consider as "word"
+    bounds:
+
+    *   The natural limits of a supeq, and
+    *   VOIDs.
+
+*   In addition, mates are nested in an equation, contrary to words in a
+    line. That is indicated with ulevel of the mate. Following the
+    symbolism of words, 1-ulevel mates would be words of the same
+    line, 2-ulevel mates would be, for example, lines of the same page,
+    3-ulevel mates pages of the same book, and so on.
+*   If dir is -1, a numerical argument is not passed, the command accept a
+    numerical argument -1 and some consequence is to operate on the opposite
+    direction, then the command is applied in the oppposite direction without
+    any other side effect that a -1 argument would have (e.g., adding a subeq
+    to the kill ring).
+*   If dir is -1 and a numerical argument was passed, the effect is equivalent 
+    to pass the same numerical argument multiplied by -1.
+
+
+beginning-of-line (C-a)
+    Select the first symbol of equation.
+end-of-line (C-e)
+    Select the last symbol of equation.
+forward-char (C-f)
+    Select symbol to the right if it is not the last one. Else, do not move.
+backward-char (C-b)
+    Select symbol to the left if it is not the first one, if it exists. Else,
+    do not move.
+forward-word (M-f)
+    Select last symbol of mate to the right, if it exists. Else, do not move.
+    Successive calls of forward-word and backward-word must know the mate-
+    ulevel which was applied in previous call since in general it cannot be
+    deduced from final selection.
+backward-word (M-b)
+    Select last symbol of neighbour to the left, if it exists. Else, do not
+    move.
+    Successive calls of forward-word and backward-word must know the mate-
+    ulevel which was applied in previous call since in general it cannot be
+    deduced from final selection.
+clear-screen (C-l)
+    Not clear how to use it by the moment.
+
+
+### Advanced editions
+
+WIP!! Non applicable original documentation of readline can be read here until
+it is finished.
+
+#### Commands for manipulating the history (not yet implemented but intended)
+
+#### Commands for changing text
+end-of-file (C-d)
+    Exit visual equation if equation is a VOID.
+delete-char (C-d)
+    Delete first symbol of selection. Else, delete last symbol. When given a 
+    numeric argument, save deleted subeq on the kill ring (not documented in 
+    manpage of readline but implemented).
+backward-delete-char (BACKSPACE, C-?, C-h)
+    Delete last symbol of selection. When given a numeric argument, save
+    deleted subeq on the kill ring (not documented in man page of readline
+    but implemented).
+quoted-insert (C-q, C-v)
+      Insert a subequation specifying a keycode.
+tab-insert (M-TAB)
+      Insert some long white character (to be defined).
+self-insert (a, b, A, 1, !, ...)
+      Insert the character typed.
+transpose-chars (C-t)
+    Drag the symbol before selection forward over the first symbol of
+    selection, moving selection to the next symbol. If there are no symbols
+    to the right
+      Drag the character before point forward over  the  character  at
+      point,  moving point forward as well.  If point is at the end of
+      the line, then this transposes the two characters before  point.
+      Negative arguments have no effect.
+transpose-words (M-t)
+      Drag  the  word  before  point past the word after point, moving
+      point over that word as well.  If point is at  the  end  of  the
+      line, this transposes the last two words on the line.
+upcase-word (M-u)
+      Uppercase  the current (or following) word.  With a negative ar‐
+      gument, uppercase the previous word, but do not move point.
+downcase-word (M-l)
+      Lowercase the current (or following) word.  With a negative  ar‐
+      gument, lowercase the previous word, but do not move point.
+capitalize-word (M-c)
+      Capitalize the current (or following) word.  With a negative ar‐
+      gument, capitalize the previous word, but do not move point.
+overwrite-mode
+      Toggle overwrite mode.  With an explicit positive numeric  argu‐
+      ment, switches to overwrite mode.  With an explicit non-positive
+      numeric argument, switches to insert mode.  This command affects
+      only  emacs mode; vi mode does overwrite differently.  Each call
+      to readline() starts in insert mode.  In overwrite mode, charac‐
+      ters  bound to self-insert replace the text at point rather than
+      pushing the text  to  the  right.   Characters  bound  to  back‐
+      ward-delete-char  replace  the  character  before  point  with a
+      space.  By default, this command is unbound.
+
+Killing and Yanking
+
+   Killing and Yanking
+       kill-line (C-k)
+              Kill the text from point to the end of the line.
+       backward-kill-line (C-x Rubout)
+              Kill backward to the beginning of the line.
+       unix-line-discard (C-u)
+              Kill backward from point to the  beginning  of  the  line.   The
+              killed text is saved on the kill-ring.
+       kill-whole-line
+              Kill  all  characters on the current line, no matter where point
+              is.
+       kill-word (M-d)
+              Kill from point the end of  the  current  word,  or  if  between
+              words,  to  the  end  of the next word.  Word boundaries are the
+              same as those used by forward-word.
+       backward-kill-word (M-Rubout)
+              Kill the word behind point.  Word boundaries  are  the  same  as
+              those used by backward-word.
+       unix-word-rubout (C-w)
+              Kill  the  word behind point, using white space as a word bound‐
+              ary.  The killed text is saved on the kill-ring.
+       unix-filename-rubout
+              Kill the word behind point, using  white  space  and  the  slash
+              character  as  the word boundaries.  The killed text is saved on
+              the kill-ring.
+       delete-horizontal-space (M-\)
+              Delete all spaces and tabs around point.
+       kill-region
+              Kill the text between the point and  mark  (saved  cursor  posi‐
+              tion).  This text is referred to as the region.
+       copy-region-as-kill
+              Copy the text in the region to the kill buffer.
+       copy-backward-word
+              Copy  the word before point to the kill buffer.  The word bound‐
+              aries are the same as backward-word.
+       copy-forward-word
+              Copy the word following point to  the  kill  buffer.   The  word
+              boundaries are the same as forward-word.
+       yank (C-y)
+              Yank the top of the kill ring into the buffer at point.
+       yank-pop (M-y)
+              Rotate  the kill ring, and yank the new top.  Only works follow‐
+              ing yank or yank-pop.
+   Numeric Arguments
+       digit-argument (M-0, M-1, ..., M--)
+              Add this digit to the argument already accumulating, or start  a
+              new argument.  M-- starts a negative argument.
+       universal-argument
+              This  is another way to specify an argument.  If this command is
+              followed by one or more digits, optionally with a leading  minus
+              sign,  those digits define the argument.  If the command is fol‐
+              lowed by digits, executing universal-argument again ends the nu‐
+              meric argument, but is otherwise ignored.  As a special case, if
+              this command is immediately followed by a character that is nei‐
+              ther a digit or minus sign, the argument count for the next com‐
+              mand is multiplied by four.  The  argument  count  is  initially
+              one,  so  executing this function the first time makes the argu‐
+              ment count four, a second time makes the argument count sixteen,
+              and so on.
+   Completing
+       complete (TAB)
+              Attempt to perform completion on the text before point.  The ac‐
+              tual completion performed is  application-specific.   Bash,  for
+              instance,  attempts  completion  treating the text as a variable
+              (if the text begins with $), username (if the text  begins  with
+              ~),  hostname (if the text begins with @), or command (including
+              aliases and functions) in turn.  If none  of  these  produces  a
+              match,  filename  completion  is  attempted.   Gdb, on the other
+              hand, allows completion of program functions and variables,  and
+              only attempts filename completion under certain circumstances.
+       possible-completions (M-?)
+              List  the  possible  completions of the text before point.  When
+              displaying completions, readline sets the number of columns used
+              for  display to the value of completion-display-width, the value
+              of the environment variable COLUMNS, or  the  screen  width,  in
+              that order.
+       insert-completions (M-*)
+              Insert  all completions of the text before point that would have
+              been generated by possible-completions.
+       menu-complete
+              Similar to complete, but replaces the word to be completed  with
+              a  single match from the list of possible completions.  Repeated
+              execution of menu-complete steps through the  list  of  possible
+              completions,  inserting  each  match in turn.  At the end of the
+              list of completions, the bell is rung (subject to the setting of
+              bell-style) and the original text is restored.  An argument of n
+              moves n positions forward in the list of matches; a negative ar‐
+              gument may be used to move backward through the list.  This com‐
+              mand is intended to be bound to TAB, but is unbound by default.
+       menu-complete-backward
+              Identical to menu-complete, but moves backward through the  list
+              of  possible  completions,  as if menu-complete had been given a
+              negative argument.  This command is unbound by default.
+       delete-char-or-list
+              Deletes the character under the cursor if not at  the  beginning
+              or  end  of  the  line (like delete-char).  If at the end of the
+              line, behaves identically to possible-completions.
+   Keyboard Macros
+       start-kbd-macro (C-x ()
+              Begin saving the characters  typed  into  the  current  keyboard
+              macro.
+       end-kbd-macro (C-x ))
+              Stop saving the characters typed into the current keyboard macro
+              and store the definition.
+       call-last-kbd-macro (C-x e)
+              Re-execute the last keyboard macro defined, by making the  char‐
+              acters  in  the  macro  appear  as  if  typed  at  the keyboard.
+              print-last-kbd-macro () Print the last keyboard macro defined in
+              a format suitable for the inputrc file.
+
+   Miscellaneous
+       re-read-init-file (C-x C-r)
+              Read  in  the  contents of the inputrc file, and incorporate any
+              bindings or variable assignments found there.
+       abort (C-g)
+              Abort the current editing command and ring the  terminal's  bell
+              (subject to the setting of bell-style).
+       do-uppercase-version (M-a, M-b, M-x, ...)
+              If  the  metafied character x is lowercase, run the command that
+              is bound to the corresponding uppercase character.
+       prefix-meta (ESC)
+              Metafy the next character typed.  ESC f is equivalent to Meta-f.
+       undo (C-_, C-x C-u)
+              Incremental undo, separately remembered for each line.
+       revert-line (M-r)
+              Undo all changes made to this line.  This is like executing  the
+              undo  command  enough  times  to  return the line to its initial
+              state.
+       tilde-expand (M-&)
+              Perform tilde expansion on the current word.
+       set-mark (C-@, M-<space>)
+              Set the mark to the point.  If a numeric argument  is  supplied,
+              the mark is set to that position.
+       exchange-point-and-mark (C-x C-x)
+              Swap  the  point  with the mark.  The current cursor position is
+              set to the saved position, and the old cursor position is  saved
+              as the mark.
+       character-search (C-])
+              A character is read and point is moved to the next occurrence of
+              that character.  A negative count searches for  previous  occur‐
+              rences.
+       character-search-backward (M-C-])
+              A  character  is  read and point is moved to the previous occur‐
+              rence of that character.  A negative count searches  for  subse‐
+              quent occurrences.
+       skip-csi-sequence
+              Read  enough  characters to consume a multi-key sequence such as
+              those defined for keys like Home and End.  Such sequences  begin
+              with a Control Sequence Indicator (CSI), usually ESC-[.  If this
+              sequence is bound to "\[", keys producing  such  sequences  will
+              have  no  effect  unless explicitly bound to a readline command,
+              instead of inserting stray characters into the  editing  buffer.
+              This is unbound by default, but usually bound to ESC-[.
+       insert-comment (M-#)
+              Without  a  numeric  argument,  the  value  of the readline com‐
+              ment-begin variable is inserted at the beginning of the  current
+              line.  If a numeric argument is supplied, this command acts as a
+              toggle: if the characters at the beginning of the  line  do  not
+              match  the value of comment-begin, the value is inserted, other‐
+              wise the characters in comment-begin are deleted from the begin‐
+              ning  of the line.  In either case, the line is accepted as if a
+              newline had been typed.   The  default  value  of  comment-begin
+              makes  the  current line a shell comment.  If a numeric argument
+              causes the comment character to be removed, the line will be ex‐
+              ecuted by the shell.
+       dump-functions
+              Print  all  of the functions and their key bindings to the read‐
+              line output stream.  If a numeric argument is supplied, the out‐
+              put  is  formatted  in such a way that it can be made part of an
+              inputrc file.
+       dump-variables
+              Print all of the settable variables  and  their  values  to  the
+              readline  output stream.  If a numeric argument is supplied, the
+              output is formatted in such a way that it can be made part of an
+              inputrc file.
+       dump-macros
+              Print  all of the readline key sequences bound to macros and the
+              strings they output.  If a numeric  argument  is  supplied,  the
+              output is formatted in such a way that it can be made part of an
+              inputrc file.
+       emacs-editing-mode (C-e)
+              When in vi command mode, this causes a switch to  emacs  editing
+              mode.
+       vi-editing-mode (M-C-j)
+              When  in  emacs editing mode, this causes a switch to vi editing
+              mode.
+
+
+
+There are two modes:
+
+    *   Normal.
+    *   Overwrite.
+They modify behaviour to remove and insert subequations.
+
+In normal mode:
+
+    *   Insertion is done to the right of the cursor.
+    *   DEL remove the subeq to the right of the cursor.
+    *   BACKSPACE remove subeq to the left of the cursor.
+
+Note: The cursor is the parenthesis of the selection, which is the right limit
+when dir is 1 and the left limit when dir is -1.
+
+In overwrite mode:
+
+    *   Insertion substitute current selection.
+    *   DEL is equivalent than in normal mode. (???)
+    *   BACKSPACE substitute subeq to the left by a NEWARG.
+
+Key combinations do not have a different behavior in overwrite mode.

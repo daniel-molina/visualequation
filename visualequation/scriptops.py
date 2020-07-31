@@ -175,7 +175,7 @@ LOLSUBUNDERSUBLSUPOVERSUP \
     = Op(7, r'\sideset{{_{{{1}}}^{{{4}}}}}{{_{{{3}}}^{{{6}}}}}{{{0}}}'
             r'_{{{2}}}^{{{5}}}', 'loscript')
 
-SCRIPT_TYPES = ('setscript', 'script', 'loscript')
+SCRIPT_OP_TYPES = ('setscript', 'script', 'loscript')
 
 LOSCRIPT_BASE_TYPES = ('vs', 'fun_args', 'opconstruct')
 
@@ -479,7 +479,7 @@ def scriptblock2args(eq, idx):
         return retv
 
     op = eq[idx]  # it can be an index operator, but not necessarily
-    if not hasattr(op, 'type_') or op.type_ not in SCRIPT_TYPES:
+    if not hasattr(op, 'type_') or op.type_ not in SCRIPT_OP_TYPES:
         return -1
 
     if op.type_ == "setscript":
@@ -577,11 +577,11 @@ def which_script(eq, idx):
         *   The 2nd element indicates which argument of the script operator is
             being pointed by *idx*, 0 if it is the base.
     """
-    return eqqueries.whosearg_filter_type(eq, idx, SCRIPT_TYPES)
+    return eqqueries.whosearg_filter_type(eq, idx, SCRIPT_OP_TYPES)
 
 
 def is_scriptop(eq, idx):
-    return hasattr(eq[idx], 'type_') and eq[idx].type_ in SCRIPT_TYPES
+    return hasattr(eq[idx], 'type_') and eq[idx].type_ in SCRIPT_OP_TYPES
 
 
 def is_base(eq, idx):
@@ -650,18 +650,19 @@ def remove_script(eq, idx):
     return op_idx
 
 
-def update_scriptblock(eq, idx, pelem):
+def update_scriptblock(eq, op_idx, pelem):
     """Update a script block if needed by providing the new first primitive
     element of the base.
 
     .. note::
-        *idx* must point to the BASE of an existing script operator.
+        The script operator is updated independently of which is its current
+        base. That means that you are free to set the new base before or after
+        calling this function.
 
     :param eq: An equation.
-    :param idx: Index of the base.
+    :param op_idx: Index of the script op.
     :param pelem: First primitive element of the new base.
     """
-    op_idx = idx - 1
     end_block = eqqueries.nextsubeq(eq, op_idx)
     args = scriptblock2args(eq, op_idx)
     if do_require_loscript(pelem):
@@ -717,7 +718,7 @@ def insert_script(eq, idx, dir, is_superscript, subeq=None):
             *eq* is not modified and minus the index of the script is returned.
 
     :param eq: An equation.
-    :param idx: The index of a script operator or the index of its base.
+    :param idx: The index of the subeq which will be the base of the script.
     :param dir: Direction in which to include the script. 0 means vscript.
     :param is_superscript: Boolean indicating whether it is a superscript.
     If False, a subscript is inserted.

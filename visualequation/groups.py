@@ -208,52 +208,6 @@ def is_sgrouped(eq, idx):
     return idx != 0 and eq[idx-1] == utils.SOLIDGROUP
 
 
-def ungroup(eq, idx):
-    """Remove an existing group of any kind if it exists.
-
-    Return:
-
-        *   If *idx* points to a JUXT-ublock which is the argument of some
-            group which in turn is a not-last citizen of some other
-            JUXT-ublock, minus the index of primitive pointed by *idx* in *eq*
-            after the call is returned.
-        *   Else, the index of primitive pointed by *idx* in *eq* after the
-            call is returned.
-
-    .. note::
-        If returned value is negative, it means that *idx* pointed to a
-        a JUXT-ublock and a JUXT was introduced by this call before its last
-        citizen.
-        Else (returned value is 0 or positive), every primitive of subeq
-        pointed by *idx* can be accessed as expected by using the returned
-        value as a corrected primitive's index pointed by *idx*.
-
-    :param eq: Equation of interest.
-    :param idx: Index of the **argument** of a group of some kind.
-    :return: +/- the index of the primitive pointed by *idx* in *eq* after the
-    call.
-    """
-    if not idx or eq[idx-1] not in ALLGROUPS:
-        # Case: No group at all
-        return idx
-
-    g_idx = idx - 1
-
-    juxt_idx, arg2_idx = eqqueries.other_juxt_arg(eq, g_idx)
-    if juxt_idx < 0 or arg2_idx < g_idx or eq[idx] != utils.JUXT:
-        # Easy cases: Group is an uarg, whole eq, last citizen or its argument
-        # is not a JUXT-ublock (it can happens for solid groups).
-        eq.pop(g_idx)
-        return g_idx
-    else:
-        # Complex case: group-block is a citizen which is not a last one and
-        # its argument is a JUXT-ublock
-        group_last_citizen = eqqueries.last_citizen(eq, g_idx + 2)
-        eq.insert(group_last_citizen, utils.JUXT)
-        eq[g_idx-1:g_idx+1] = []
-        return -(g_idx-1)
-
-
 def group(eq, idx, solid=False):
     """If necessary, protect a subequation with a group or transform a group
     to another type.
@@ -291,3 +245,46 @@ def group(eq, idx, solid=False):
 
     eq[idx-1] = gop
     return idx
+
+
+def ungroup(eq, idx, retidx=None):
+    """Remove an existing group of any kind, if it exists.
+
+    Return corrected value of index *retidx* in *eq* after the call to this
+    function.
+
+    :param eq: Equation of interest.
+    :param idx: Index of the **argument** of a group of some kind.
+    :param retidx: An index of *eq* different than the group op to remove and,
+    in the case that the group-block is a citizen which is not a last one,
+    the index of the JUXT preceding the GROUP.
+    None is equivalent to *idx*.
+    :return: The index of the primitive pointed by *retidx* after the call.
+    """
+    if retidx is None:
+        retidx = idx
+
+    if not is_grouped(eq, idx):
+        return retidx
+
+    g_idx = idx - 1
+
+    juxt_idx, arg2_idx = eqqueries.other_juxt_arg(eq, g_idx)
+    if juxt_idx < 0 or arg2_idx < g_idx or eq[idx] != utils.JUXT:
+        # Easy cases: Group is an uarg, whole eq, last citizen or its argument
+        # is not a JUXT-ublock (it can happens for solid groups).
+        eq.pop(g_idx)
+        return retidx if retidx < g_idx else retidx - 1
+    else:
+        # Complex case: group-block is a citizen which is not a last one and
+        # argument of the group-block is a JUXT-ublock
+        group_last_citizen = eqqueries.last_citizen(eq, idx + 1)
+        eq.insert(group_last_citizen, utils.JUXT)
+        eq[g_idx-1:g_idx+1] = []
+        if retidx < g_idx-1:
+            return retidx
+        elif retidx < group_last_citizen:
+            return retidx - 2
+        else:
+            return retidx - 1
+
