@@ -294,10 +294,10 @@ superquation of SB in S.
  
 ### Basic ideas
 
-An *equation* is represented by a **list** and any equation primitive is an
-element of that list.
-
-*Subequations* are always **sublists**.
+*   Symbols are strings.
+*   Blocks are lists instead of tuples so they can be modified.
+*   Operators are objects with some properties.
+*   Arguments are not represented.
 
 Since an equation must always be valid, when an operator is introduced and the 
 user has not yet specified one or more of its parameters, they are set to the
@@ -306,43 +306,12 @@ special symbol *VOID*, which is represented by a small square when displayed.
 To give special properties to symbols, 0-args operators are considered in the
 implementation, but they are considered symbols in this formalism.
 
-### Format
-Visual Equation uses a flat list of primitives to represent an equation. The
-format is similar to Polish Notation:
-
-> An operator always precedes its parameters.
-
-To describe the format of an subequation, consider the action **extend a list
-L with subequation S**.
-
-Consider a list L and subequation S. To extend L with S,
-
-*   If S is a symbol, append S to L.
-*   If S is a block:
-    1.  Append the lop-S to L, then
-    2.  Extend L with the parameters of lop-S, one after another.
-
-This is a recursive definition that makes sense because subequations are
-finite.
-
 > **Example**:
 >
 > Here is equation of previous examples in the implementation format:
 >
-> `[Sum, 1, Prod, 2, 3]`
+> `[Sum, 1, [Prod, 2, 3]]`
 
-If you are having troubles understanding the format, maybe it can help to
-read about Polish Notation somewhere (like Wikipedia).
-
-### Python types correspondence
-
-*Elements* of the list representing an equation are (exclusively) *primitives* 
-of the equation.
-
-*Subequations* of an equation are **slices** of a list. In python notation, if 
-`L` is a list, a subequation of L can always be expressed as `L[a:b]`,
-0 <= a < b <= len(L). Note that python syntax was used, so `L[b]` is
-excluded in `L[a:b]`.
 
 Symbols are represented as **strings** (+) that match their LaTeX code.
 
@@ -357,50 +326,9 @@ Operators are represented by instances of a **class Op**, which properties are:
 >
 > In the future an operator may include a list of tags.
 
-Since equations must always be valid, when an operator is introduced and the
-user has not yet specified one or more of its parameters, undefined parameters
-are set to the symbol **VOID**, which is represented by a small square when 
-displayed.
-
 ## Building rules
 
-The following definitions specify the terminology used to prohibit certain
-subequations to be built.
-
-Building rules are defined by the **auxiliary** property. An element which is
-not a block have intrinsically this property or not. Blocks inherit this
-property from its lop.
-
-> **Note*:
->
-> The auxiliary property has only the same meaning for symbols and blocks.
-
-Depending on its type, an elements with the auxiliary property is referred as:
-
-*   Auxiliary symbol
-*   Auxiliary operator (auxop)
-*   Auxiliary arguments (auxarg)
-*   Auxiliary block (auxarg)
-
-**Rule**: An auxiliary subequation is allowed to be the parameter of an
-auxiliary argument that explicitly allows it.
-
-**Rule**: A Non-Auxiliary subequations is allowed to be an equation or a
-parameters of a non-auxiliary argument.
-
-A **marker** is an auxiliary symbol.
-
-**Rule**: A marker has no representation in a displayed equation (they are
-only used for programming convenience).
-
-A **dummy argument** is an auxiliary argument which parameter is restricted to
-be a marker. Different dummy arguments will specify in its definition which
-specific marks can be its parameter.
-
-> **Remarks**:
->
->1. Markers can only be accepted in a dummy args or non-dummy auxargs.
->1. Auxblocks can only be accepted in non-dummy auxargs.
+Any subequation can be the parameter of any operator.
 
 ## Selection rules
 
@@ -503,18 +431,11 @@ A subequation S of an equation E is selectable if:
 **GOP** is the common noun of they only (in an equality sense) operator with a
 non-user argument. Characteristics of GOP:
  
-*   It is a binary operator, and
+*   It is a unary operator, and
 *   It is a non-user op, and
-*   Its first argument is a non-user arg, and
-*   Its second argument is dummy and accepts a marker called **POG**.
+*   Its argument is a non-user arg
 
 ### User subequations definitions and rules
-
-**Rule**: A symbol that is not a user symbol is a marker.
-
-> Property:
->
-> If a non-user symbol has no representation in a displayed equation.
 
 A **0-ulevel usubeq of a subeq S** is:
  
@@ -564,7 +485,7 @@ FS.
 A **faithful operator** is an operator FOP such that:
 
 *   It is a uop, or
-*   If it has N args, N-1 args are dummy.
+*   It has one arg.
 
 > **Properties**:
 >
@@ -574,106 +495,40 @@ A **faithful operator** is an operator FOP such that:
 >   and only if, one parameter of FSO is a faithful subeq.
 >1. If NFO is a non-faithful op, a NFO-block can be faithful or non-faithful.
 
-**Rule**: A non-faithful op must be an auxop.
+**Rule**: Every operator of visualequation is faithful.
 
-> **Properties**:
+> **Property**:
 >
-> A non-auxiliary block is faithful.
+> Any block is faithful.
 
 ## Juxtaposing subequations
 Visual Equation uses some operators named juxts to display subequations
 contiguously. That typically means that subequations are being multiplied, but
 that can have other uses or interpretations such as to represent a number with
-more than one digit. To connect several subequations together, chains of juxts
-are used.
+more than one digit. To connect several subequations together, a juxt with the
+required number of arguments is used.
 
-### Types of juxts
-
-There are common properties of **juxt** ops. If an operator is a juxt:
- 
-*   It is a binary op, and
-*   Its first argument is an uarg, and
-*   Its second argument is an auxarg which parameters must be a juxt-block or
-    a mark.
-
-Two juxts are considered in Visual Equation:
-
-A **descendant juxt** (**djuxt**) is a juxt DJ such that
-
-*   DJ is an non-user auxiliary operator, and
-*   The second argument of PJ is restricted to be a djuxt-block or a mark.
-
-**Rule**: Every operator that is not a djuxt must be a faithful operator.
-
-**DJUXT** is the common noun of the djuxt considered in visual equation. The
-marker accepted by its second argument has as common noun **TXUJ**.
-
-A **parent juxt** (**pjuxt**) is a juxt PJ such that:
- 
-*   PJ is a user non-auxiliary operator, and
-*   The second argument of PJ is restricted to be a djuxt-block.
-
-**PJUXT** is the common noun of the pjuxt considered in visual equation.
-
-> Remarks:
->
->1. A DJUXT-block cannot be an equation.
->1. If a subequation is a djuxt-block, it has at least one superequation.
->1. A pjuxt-block has one pjuxt and, at least, one djuxt.
->1. A pjuxt-block is a usubeq and a djuxt-block of an equation is not a usubeq.
->1. To be a pjuxt-block is equivalent to be a juxt-ublock (the second term is
->   preferred). 
->1. A pjuxt-block can be seen as an "entire" juxt-block.
-
-### Constituent and terminal juxts
-
-A **constituent juxt** (**cjuxt**) of a juxt-ublock JU is a juxt that is:
-
-*   The parent juxt of JU, or
-*   The leading operator of the second parameter of another **cjuxt** of JU
-    if that parameter is not a marker.
-
-A **terminal juxt** (**tjuxt**) of a juxt-block JB is a cjuxt of JB which
-second argument is a marker.
-
-> **Corollary:**
->
-> A block is not faithful if, and only if, it is non-terminal djuxt-block.
-
-> **Property**:
->
-> A non-faithful subeq is a mark or non-terminal djuxt-block.
-
-A **juxted** of a juxt-block JB is the first parameter of a cjuxt of a JB.
-
-> **Remarks**:
->
->1. A tjuxt is a cjuxt.
->1. A tjuxt is a djuxt.
+A **juxted** is a parameter of a juxt.
 
 > **Example**:
 >
 > To display A B C D, being all of them symbols, the corresponding equation is
 >
->   `(PJUXT, A, (DJUXT, B, (DJUXT, C, (DJUXT, D, TXUJ))))`
+>   `(JUXT4, A, B, C, D)`
 >
-> In visual equation implementation:
+> In visual equation implementation it is not needed to specify the number
+> of arguments of the juxt since it can be deduced from the length of the list:
 >
->   `[PJUXT, A, DJUXT, B, DJUXT, C, D, TXUJ]`
-
-There is an important fact about juxts: they are an artifact of no interest to
-the user. The user may need to select individual elements, all of them or
-its own combination of them, but not something attending to the arbitrary
-nested structure of juxts.
+>   `[JUXT, A, B, C, D]`
 
 > **Example**:
 >
 > If it is intentional that some contiguous juxtaposed subequations are
 > selectable as a whole, an structure like this would be used:
 >
->   `(PJUXT, (PJUXT, A, (DJUXT, B, TXUJ)), (DJUXT, C, TXUJ))`
+>   `(JUXT2, (JUXT2, A, B), C)`
 >
-> If A, B and C are ordinary symbols, the following are the selection
+> If A, B and C are user symbols, the following are the selection
 > possibilities of the previous equation:
 >
 >   `(A B C)`
@@ -682,35 +537,16 @@ nested structure of juxts.
 >   `A (B) C`
 >   `A B (C)`
 >
-> However, the user must not worry about this internal structure.
+> Another example with a juxt-block inside a juxt-block.
 >
-> **Properties and remarks**:
+>    `(JUXT2, (FRAC, A, (JUXT2, B, C)), X)`
 >
->1. A juxt-ublock with N cjuxts has N juxteds.
->1. There can be juxts in a juxt-ublock JU that are not cjuxts of JU. In that
->   case, they are cjuxts of another juxt-ublock which is a subeq of a juxted
->   of JU. Previous example was an example of that case. Another one is the 
->   following equation where FRAC is a binary rugop and a A, B, C and X are
->   ordinary symbols.
->
->    `(PJUXT, (FRAC, A, (PJUXT, B, (DJUXT, C, TXUJ)), (DJUXT, X, TXUJ)))`
->
-> The equation is itself a juxt-ublock with one djuxt. The first juxted is the
-> ublock `(FRAC, A, (PJUXT, B, (DJUXT, C, TXUJ))`, and the second juxted is
-> the symbol X. Second argument of first juxted is itself another juxt-ublock 
-> `(PJUXT, B, (DJUXT, C, TXUJ)` with two juxteds.
+> The equation is itself a juxt-ublock with two juxteds. The first juxted is
+> the ublock `(FRAC, A, (JUXT2, B, C))`, and the second juxted is the symbol
+> `X`. Second argument of the first juxted is itself another juxt-ublock with 
+> two juxteds `(JUXT2, B, C)`.
 
 ## Equation metrics
-
-The following properties will be used in the definitions below:
-
-> **Properties**:
->
->1. djuxt-blocks are (the only) non-faithful subeqs with representation when
->   the equation is displayed.
->1. A juxted is faithful.
->1. Every representative of a juxted of the same JB has the same ulevel with
->   respect to any common superequation.
 
 A **N-ulevel peer** of an equation E, N being a positive number, is a subeq
 P of US such that:
@@ -721,14 +557,14 @@ P of US such that:
 > **Note**: That and next definitions refer to an equation because selectivity
 > property is used, which require an equation to be defined.
 
-A **N-ulevel aide** of an equation E, N being a positive number, is a subeq
+A **N-ulevel aide** of an equation E, N being a non-negative number, is a subeq
 AI of US such that:
 
 *   AI is a M-ulevel peer of E, 0 < M < N, and
 *   AI has no strict subeqs which are selectable.
 
-A **N-ulevel mate** of an equation E, N being a positive number, is a subeq MA 
-of S such that:
+A **N-ulevel mate** of an equation E, N being a non-negative number, is a subeq
+MA of S such that:
 
 *   MA is a N-ulevel peer of E, or
 *   MA is a M-ulevel aide of E.
@@ -751,11 +587,38 @@ they are N-ulevel mates of the same equation.
 >1. A N-ulevel peer P is a M-ulevel mate for M bigger than N if P is a symbol
 >   or the representative of the parameter of a non-user arg.
 
-The **peer to the left** of another peer P is a subeq LP that results of the
-following algorithm:
+The **mate to the left** of another mate MA is a subeq LMA that results of the
+following algorithm (it supposes that the only operator with a non-user arg is
+GOP):
 
-1.  Set SUP to the supeq of P and ORD to the ordinal of the argument of SUP-lop
-    such that its parameter is P.
-2. 
-3.
-4.
+1.  Set S to MA.
+    Set N to 0.
+2.  If S has no supeq, LMA does not exist (**END**).
+3.  Set ORD to the ordinal of the argument of which S is parameter.
+    Set S to the supeq of S.
+    If S is a usubeq, N++.
+4.  If ORD == 1, go to step 2.
+    Else, ORD--.
+5.  If S is a usubeq, N--.
+    Set S to the parameter ORD of S.
+    If N == 0 or S is a GOP, LMA is the representative of S (**END**).
+6.  Set ORD to arity(lop-S).
+    Go to step 5.
+
+The **mate to the right** of another mate MA is a subeq RMA that results of the
+following algorithm (it supposes that the only operator with a non-user arg is
+GOP):
+
+1.  Set S to MA.
+    Set N to 0.
+2.  If S has no supeq, RMA does not exist (**END**).
+3.  Set ORD to the ordinal of the argument of which S is parameter.
+    Set S to the supeq of S.
+    If S is a usubeq, N++.
+4.  If ORD == arity(lop-S), go to step 2.
+    Else, ORD++.
+5.  If S is a usubeq, N--.
+    Set S to the parameter ORD of S.
+    If N == 0 or S is a GOP, RMA is the representative of S (**END**).
+6.  Set ORD to 1.
+    Go to step 5.
