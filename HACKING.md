@@ -441,7 +441,7 @@ non-user argument. Characteristics of GOP:
 A **0-ulevel usubeq of a subeq S** is:
  
 *   If S is a usubeq, S.
-*   Elif S is a symbol, it does not exist.
+*   Elif S is a symbol, it does not exist. (Today every symbol is usubeq)
 *   Else (S is a block), a **0-ulevel** usubeq of a S-par**.
 
 A **N-ulevel usubeq of a subeq S**, N being a positive integer, is:
@@ -473,13 +473,13 @@ The **user nesting level** (**ulevel**) of a N-ulevel usubeq of a subeq is the
 A **faithful subequation** is a subequation that has one, and only one,
 0-ulevel usubeq.
 
-The **representative** of a faithful subequation FS is the 0-ulevel usubeq of
-FS.
+The **user representative** (**urepr**) of a faithful subequation FS is the 0
+-ulevel usubeq of FS.
 
 > Properties:
 >
 >1. A usubeq is always a faithful subeq.
->1. The representative of a usubeq US is US.
+>1. The urepr of a usubeq US is US.
 >1. A faithful subeq can have any number of N-ulevel usubeqs for N > 0,
 >   including not having anyone.
 
@@ -599,12 +599,12 @@ GOP):
     Set S to the supeq of S.
     If S is a usubeq, N++.
 4.  If ORD == 1, go to step 2.
-    Else, ORD--.
-5.  If S is a usubeq, N--.
+5.  ORD--.
+6.  If S is a usubeq, N--.
     Set S to the parameter ORD of S.
     If N == 0 or S is a GOP, LMA is the representative of S (**END**).
-6.  Set ORD to arity(lop-S).
-    Go to step 5.
+7.  Set ORD to arity(lop-S).
+    Go to step 6.
 
 The **mate to the right** of another mate MA is a subeq RMA that results of the
 following algorithm (it supposes that the only operator with a non-user arg is
@@ -617,12 +617,12 @@ GOP):
     Set S to the supeq of S.
     If S is a usubeq, N++.
 4.  If ORD == arity(lop-S), go to step 2.
-    Else, ORD++.
-5.  If S is a usubeq, N--.
+5.  ORD++.
+6.  If S is a usubeq, N--.
     Set S to the parameter ORD of S.
     If N == 0 or S is a GOP, RMA is the representative of S (**END**).
-6.  Set ORD to 1.
-    Go to step 5.
+7.  Set ORD to 1.
+    Go to step 6.
 
 ## Moving and editing
 

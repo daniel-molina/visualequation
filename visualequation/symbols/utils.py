@@ -32,8 +32,10 @@ class Op(object):
         self.latex_code = latex_code
         self.type_ = type_ if type_ is not None else ""
 
-    def __call__(self, *args):
-        return self.latex_code.format(*args)
+    def __call__(self, args_list):
+        if self.n_args < 0:
+            return " ".join(args_list)
+        return self.latex_code.format(*args_list)
 
     def __eq__(self, other):
         if type(self) is type(other):
@@ -60,11 +62,11 @@ REDIT = Op(1, r'\left\lmoustache {0} \right\rgroup')        # right
 LEDIT = Op(1, r'\left\lgroup {0} \right\rmoustache')        # left
 NEDIT = Op(1, r'\left\lmoustache {0} \right\rmoustache')    # new
 SEDIT = Op(1, r'\left\rmoustache {0} \right\lmoustache')    # substitute
-JUXT = Op(2, r'{0} {1}')
-# The initial space is needed to distinguish from GROUP operator
-TEMPGROUP = Op(1, r' {0}')
-GROUP = Op(1, r'{0}')
-SOLIDGROUP = Op(1, r'{0} ')
+JUXT = Op(-1, r'J')
+TJUXT = Op(-1, r'T')
+GOP = Op(1, r'{0}')
+
+NONUOPS = (GOP,)
 
 # It does NOT include ' ', "'", '^', '\\' and '~'
 # so it is valid for both text and math environments
