@@ -288,6 +288,14 @@ def nextpar(idx, eq, retsub=False):
     return get(ridx, eq) if retsub else ridx
 
 
+def isjuxtblock(subeq, idx=None):
+    """Return whether an element is a juxt-block (included temporal)."""
+    s = subeq if idx is None else get(idx, subeq)
+    if not isinstance(s, list) or len(s) == 1:
+        return False
+    return s[0] in (utils.JUXT, utils.TJUXT)
+
+
 def isusubeq(subeq, idx=None):
     """Return whether an element is a usubeq.
 
@@ -326,6 +334,27 @@ def urepr(idx, eq, retsub=False):
     return elem if retsub else opidx
 
 
+def biggest_supeq_with_urepr(idx, eq, retsub=False):
+    """Get ref of biggest subeq which has pointed usubeq as urepr or index.
+
+    If pointed subeq is not a usubeq, -1 is returned.
+    If no supeq has pointed usubeq as urepr, return -3
+    (include case idx == [] and eq being an usubeq).
+    """
+    eqref = eq
+    candidate = -3
+    for lev, pos in enumerate(idx):
+        if isusubeq(eqref):
+            candidate = None
+        elif not isinstance(candidate, list):
+            candidate = eqref if retsub else idx[:lev]
+        eqref = eqref[pos]
+
+    if not isusubeq(eqref):
+        return -1
+    return -3 if candidate is None else candidate
+
+
 def level(idx):
     """Return the nesting level of a subeq of an equation.
 
@@ -341,16 +370,14 @@ def ulevel(idx, eq):
 
     If *idx* does not point to a usubeq, -1 is returned.
     """
-    if not isusubeq(eq, idx):
-        return -1
-
     eqref = eq
     ulev = 0
     for pos in idx:
         if isusubeq(eqref):
             ulev += 1
-        # Last pos is not used. It is assured that elem there is a usubeq.
         eqref = eqref[pos]
+    if not isusubeq(eqref):
+        return -1
     return ulev
 
 

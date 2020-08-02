@@ -64,6 +64,12 @@ VDIR = 2    # overwrite direction in normal mode
 
 SELARG = r'\cdots'
 VOID = r'\begingroup\color{purple}\oblong\endgroup'
+
+
+def void():
+    return [VOID]
+
+
 REDIT = Op(1, r'\left\lmoustache {0} \right\rgroup')        # right
 LEDIT = Op(1, r'\left\lgroup {0} \right\rmoustache')        # left
 NEDIT = Op(1, r'\left\lmoustache {0} \right\rmoustache')    # new
@@ -71,8 +77,9 @@ SEDIT = Op(1, r'\left\rmoustache {0} \right\lmoustache')    # substitute
 JUXT = Op(-1, r'J')
 TJUXT = Op(-1, r'T')
 GOP = Op(1, r'{0}')
+TEXTFILTER = Op(1, r' \text{{{0}}}')    # Filters start with space
 
-NONUOPS = (GOP,)
+NONUOPS = (GOP, TEXTFILTER)
 
 # It does NOT include ' ', "'", '^', '\\' and '~'
 # so it is valid for both text and math environments
@@ -143,9 +150,24 @@ EXOP0 = Op(0, "Op0 ")
 EXOP1 = Op(1, r"\sqrt{{0}} ")
 EXOP2 = Op(2, r"\frac{{0}}{{1}} ")
 EXOP3 = Op(3, r"{{0}}_{{1}}^{{2}} ")
+
 EXEQ0 = [EXOP0]
 EXEQ1 = [EXOP1, ["2"]]
 EXEQ2 = [EXOP2, ["a"], ["b"]]
 EXEQ3 = [EXOP3, ["x"], ["0"], ["2"]]
-EXEQ = [JUXT, [EXOP2, [JUXT, [EXOP0], ["3"]], ["r"]], ["y"]]
+
+EXEQNN = [EXOP2, ["3"], [EXOP1, ["r"]]]
+
+EXEQGN = [GOP, [EXOP2, ["a"], ["b"]]]
+EXEQNG = [EXOP2, [GOP, ["a"]], ["b"]]
+EXEQGNG = [GOP, [EXOP2, [GOP, ["a"]], ["b"]]]
+EXEQNGN = [EXOP2, [GOP, [EXOP2, ["a"], ["x"]]], ["b"]]
+EXEQGFN = [GOP, [TEXTFILTER, [EXOP2, ["a"], ["b"]]]]
+EXEQNGFN = [EXOP1, [GOP, [TEXTFILTER, [EXOP2, ["a"], ["b"]]]]]
+
+EXEQNJ = [EXOP2, ["3"], [JUXT, ["r"], ["t"]]]
+EXEQJN = [JUXT, [EXOP1, ["x"]], ["s"], ["t"]]
+EXEQJJ = [JUXT, ["2"], [JUXT, ["d"], ["3"]], ["y"]]
+EXEQJNJ = [JUXT, [EXOP2, [JUXT, [EXOP0], ["3"]], ["r"]], ["y"]]
+
 
