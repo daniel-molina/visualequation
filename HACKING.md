@@ -294,9 +294,10 @@ superquation of SB in S.
  
 ### Basic ideas
 
-*   Symbols are strings.
-*   Blocks are lists instead of tuples so they can be modified.
+*   Symbols are 1-elem lists containing a string (list is needed to keep
+    references to it).
 *   Operators are objects with some properties.
+*   Blocks are lists which first element is the lop and the rest are lop-pars.
 *   Arguments are not represented.
 
 Since an equation must always be valid, when an operator is introduced and the 
@@ -310,12 +311,12 @@ implementation, but they are considered symbols in this formalism.
 >
 > Here is equation of previous examples in the implementation format:
 >
-> `[Sum, 1, [Prod, 2, 3]]`
+> `[Sum, ["1"], [Prod, ["2"], ["3"]]]`
 
 
-Symbols are represented as **strings** (+) that match their LaTeX code.
+The **string** of a symbol is its LaTeX code.
 
-Operators are represented by instances of a **class Op**, which properties are:
+The **class** of the object of an operator has the following properties:
 
 *   The number of arguments it has.
 *   A string indicating its LaTeX code and the position of its arguments.
@@ -518,9 +519,10 @@ A **juxted** is a parameter of a juxt.
 >   `(JUXT4, A, B, C, D)`
 >
 > In visual equation implementation it is not needed to specify the number
-> of arguments of the juxt since it can be deduced from the length of the list:
+> of arguments of the juxt since it can be deduced from the length of the
+> list.
 >
->   `[JUXT, A, B, C, D]`
+>   `[JUXT, [A], [B], [C], [D]]`
 
 > **Example**:
 >
@@ -620,7 +622,7 @@ GOP):
 5.  ORD++.
 6.  If S is a usubeq, N--.
     Set S to the parameter ORD of S.
-    If N == 0 or S is a GOP, RMA is the representative of S (**END**).
+    If N == 0, S is a GOP or S is a symbol, RMA is the urepr of S (**END**).
 7.  Set ORD to 1.
     Go to step 6.
 

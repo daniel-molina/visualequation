@@ -34,6 +34,7 @@ class Op(object):
 
     def __call__(self, args_list):
         if self.n_args < 0:
+            # Used for (T)JUXTs
             return " ".join(args_list)
         return self.latex_code.format(*args_list)
 
@@ -56,8 +57,13 @@ MenuItemData = namedtuple('MenuItemData', 'name symb_l')
 
 # Use these operators in the code, so it will be easy to change their value
 # in next releases
+LDIR = -1   # left direction
+RDIR = 1    # rigth direction
+ODIR = 0    # overwrite mode
+VDIR = 2    # overwrite direction in normal mode
+
 SELARG = r'\cdots'
-NEWARG = r'\begingroup\color{purple}\oblong\endgroup'
+VOID = r'\begingroup\color{purple}\oblong\endgroup'
 REDIT = Op(1, r'\left\lmoustache {0} \right\rgroup')        # right
 LEDIT = Op(1, r'\left\lgroup {0} \right\rmoustache')        # left
 NEDIT = Op(1, r'\left\lmoustache {0} \right\rmoustache')    # new
@@ -130,3 +136,16 @@ class ChooseElemDialog(QDialog):
                 column = 1
                 row += 1
         self.setLayout(layout)
+
+
+# Some useful stuff for testing
+EXOP0 = Op(0, "Op0 ")
+EXOP1 = Op(1, r"\sqrt{{0}} ")
+EXOP2 = Op(2, r"\frac{{0}}{{1}} ")
+EXOP3 = Op(3, r"{{0}}_{{1}}^{{2}} ")
+EXEQ0 = [EXOP0]
+EXEQ1 = [EXOP1, ["2"]]
+EXEQ2 = [EXOP2, ["a"], ["b"]]
+EXEQ3 = [EXOP3, ["x"], ["0"], ["2"]]
+EXEQ = [JUXT, [EXOP2, [JUXT, [EXOP0], ["3"]], ["r"]], ["y"]]
+
