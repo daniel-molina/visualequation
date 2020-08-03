@@ -51,6 +51,9 @@ class Op(object):
         return "Op(" + repr(self.n_args) + ", " + repr(self.latex_code) \
                + ", " + repr(self.type_) + ")"
 
+    def __hash__(self):
+        return hash(repr(self))
+
 
 PanelIcon = namedtuple('PanelIcon', 'name code')
 MenuItemData = namedtuple('MenuItemData', 'name symb_l')

@@ -11,8 +11,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import copy
+
 from . import eqqueries
-from .symbols.utils import Op, NEWARG
+from .symbols import utils
+from .symbols.utils import Op, VOID
 from .errors import ShowError
 
 # Vertical script operators
@@ -29,7 +32,7 @@ LSUBSUB = Op(3, r'\tensor*[_{{{1}}}]{{{0}}}{{_{{{2}}}}}', 'script')
 LSUBLSUP = Op(3, r'\tensor*[_{{{1}}}^{{{2}}}]{{{0}}}{{}}', 'script')
 LSUBSUP = Op(3, r'\tensor*[_{{{1}}}]{{{0}}}{{^{{{2}}}}}', 'script')
 SUBLSUP = Op(3, r'\tensor*[^{{{2}}}]{{{0}}}{{_{{{1}}}}}', 'script')
-SUBSUP = Op(3, r'\tensor*{{{0}}}{{^{{{3}}}_{{{2}}}}}', 'script')
+SUBSUP = Op(3, r'\tensor*{{{0}}}{{^{{{2}}}_{{{1}}}}}', 'script')
 LSUPSUP = Op(3, r'\tensor*[^{{{1}}}]{{{0}}}{{^{{{2}}}}}', 'script')
 LSUBSUBLSUP = Op(4, r'\tensor*[_{{{1}}}^{{{3}}}]{{{0}}}{{_{{{2}}}}}', 'script')
 LSUBSUBSUP = Op(4, r'\tensor*[_{{{1}}}]{{{0}}}{{^{{{3}}}_{{{2}}}}}', 'script')
@@ -282,23 +285,24 @@ LOSCRIPT_OP2ID_DICT = {
 ID2LOSCRIPT_OP_DICT = {v: k for k, v in LOSCRIPT_OP2ID_DICT.items()}
 
 
-def init_script_args(base, type_):
-    "Return an args list with certain base and no scripts."
+def init_script_pars(base, type_):
+    "Return an pars list with certain base and no scripts."
+    basepar = [copy.deepcopy(base)]
     if type_ == "setscript":
-        return [base] + [None]*2
+        return basepar + [None]*2
     if type_ == "script":
-        return [base] + [None]*4
-    return [base] + [None]*6
+        return basepar + [None]*4
+    return basepar + [None]*6
 
 
-def get_script_pos_in_args(args, dir, is_superscript):
-    """Return script position in an args list. If script parameters are not
-    compatible with args, return -1.
+def get_script_pos_in_pars(pars, scriptdir, is_superscript):
+    """Return script position in a pars list. If script parameters are not
+    compatible with pars, return -1.
 
     .. note::
-        Only compatibility of referred script in provided *args* is checked.
-        In particular, it is NOT checked whether the base (args[0]) is valid
-        for the op associated to *args*.
+        Only compatibility of referred script in provided *pars* is checked.
+        In particular, it is NOT checked whether the base (pars[0]) is valid
+        for the op associated to *pars*.
 
     Combinations which do not return -1:
 
@@ -306,239 +310,214 @@ def get_script_pos_in_args(args, dir, is_superscript):
         *   len(args) == 5 and dir in (-1, 1)
         *   len(args) == 7 and dir in (-1, 0, 1)
 
-    :param args: An args list of a script operator.
-    :param dir: 0 for under/over, -1 for lsub/lsup and 1 for sub/sup.
+    :param pars: A pars list of a script operator.
+    :param scriptdir: 0 for under/over, -1 for lsub/lsup and 1 for sub/sup.
     :param is_superscript: True for over, lsup and sup. Ow, False.
-    :return: script position in args (from 1 to len(args)-1 since base is not a
+    :return: script position in pars (from 1 to len(pars)-1 since base is not a
     script) or -1.
     """
-    if len(args) == 3:
-        if dir != 0:
+    if len(pars) == 3:
+        if scriptdir != 0:
             return -1
         return 2 if is_superscript else 1
-    elif len(args) == 5:
-        if dir not in (-1, 1):
+    elif len(pars) == 5:
+        if scriptdir not in (-1, 1):
             return -1
-        if dir == -1:
+        if scriptdir == -1:
             return 3 if is_superscript else 1
         else:
             return 4 if is_superscript else 2
     else:
-        if dir == -1:
+        if scriptdir == -1:
             return 4 if is_superscript else 1
-        elif dir == 0:
+        elif scriptdir == 0:
             return 5 if is_superscript else 2
-        elif dir == 1:
+        elif scriptdir == 1:
             return 6 if is_superscript else 3
         else:
             return -1
 
 
-def set_script_in_args(args, dir, is_superscript, psarg):
-    args[get_script_pos_in_args(args, dir, is_superscript)] = psarg
+def set_script_in_pars(pars, scriptdir, is_superscript, pspar):
+    pars[get_script_pos_in_pars(pars, scriptdir, is_superscript)] = pspar
 
 
-def get_script_in_args(args, dir, is_superscript):
-    """Get current script in args according to parameters.
+def get_script_in_pars(pars, scriptdir, is_superscript):
+    """Get current script in pars according to parameters.
 
-    If script is not compatible with passed args, -1 is returned.
+    If script is not compatible with passed pars, -1 is returned.
     """
-    pos = get_script_pos_in_args(args, dir, is_superscript)
-    return args[pos] if pos > 0 else -1
+    pos = get_script_pos_in_pars(pars, scriptdir, is_superscript)
+    return pars[pos] if pos > 0 else -1
 
 
-def scriptop_args2loscript_args(args):
-    """Transform, if needed, args to match the best loscript op.
+def scriptop_pars2loscript_pars(pars):
+    """Transform, if needed, pars to match the best loscript op.
 
     .. note::
         This function only changes script positions being used, it does NOT
         check whether the base is valid for certain type_. It does not care
         about valid bases.
     """
-    if len(args) == 3:
-        return [args[0], None, args[1], None, None, args[2], None]
-    elif len(args) == 5:
-        return [args[0], args[1], None, args[2], args[3], None, args[4]]
+    if len(pars) == 3:
+        return [pars[0], None, pars[1], None, None, pars[2], None]
+    elif len(pars) == 5:
+        return [pars[0], pars[1], None, pars[2], pars[3], None, pars[4]]
     else:
-        return args
+        return pars
 
 
-def scriptop_args2script_args(args):
-    """Transform, if needed, args to match the best script op.
+def scriptop_pars2script_pars(pars):
+    """Transform, if needed, pars to match the best script op.
 
     .. note::
         This function only changes script positions being used, it does NOT
         check whether the base is valid for certain type_. It does not care
         about valid bases.
 
-    Consider scriptop_args2nonloscript_args function if you do not want to
+    Consider scriptop_pars2nonloscript_pars function if you do not want to
     impose script on setscript.
     """
-    if len(args) == 3:
-        return [args[0], None, args[1], None, args[2]]
-    elif len(args) == 5:
-        return args
-    elif args[2] is None and args[5] is None:
-        return [args[0], args[1], args[3], args[4], args[6]]
+    if len(pars) == 3:
+        return [pars[0], None, pars[1], None, pars[2]]
+    elif len(pars) == 5:
+        return pars
+    elif pars[2] is None and pars[5] is None:
+        return [pars[0], pars[1], pars[3], pars[4], pars[6]]
     else:
-        return [args[0], None, args[2], None, args[5]]
+        return [pars[0], None, pars[2], None, pars[5]]
 
 
-def scriptop_args2setscript_args(args):
-    """Transform, if needed, args to match the best setscript op.
+def scriptop_pars2setscript_pars(pars):
+    """Transform, if needed, pars to match the best setscript op.
 
     .. note::
         This function only changes script positions being used, it does NOT
         check whether the base is valid for certain type_. It does not care
         about valid bases.
 
-    Consider scriptop_args2nonloscript_args function if you do not want to
+    Consider scriptop_pars2nonloscript_pars function if you do not want to
     impose setscript on script.
     """
-    if len(args) == 3:
-        return args
-    elif len(args) == 5:
-        return [args[0], args[2], args[4]]
-    elif args[2] is None and args[5] is None:
-        return [args[0], args[3], args[6]]
+    if len(pars) == 3:
+        return pars
+    elif len(pars) == 5:
+        return [pars[0], pars[2], pars[4]]
+    elif pars[2] is None and pars[5] is None:
+        return [pars[0], pars[3], pars[6]]
     else:
-        return [args[0], args[2], args[5]]
+        return [pars[0], pars[2], pars[5]]
 
 
-def scriptop_args2nonloscript_args(args):
-    """Decide if setscript or script fit better certain args and return the
-    correspondent args.
+def scriptop_pars2nonloscript_pars(pars):
+    """Decide if setscript or script fit better certain pars and return the
+    correspondent pars.
 
     .. note::
         This function only changes script positions being used, it does NOT
         check whether the base is valid for certain type_. It does not care
         about valid bases.
     """
-    if len(args) != 7:
-        return args
-    if args[2] is None and args[5] is None:
-        return [args[0], args[1], args[3], args[4], args[6]]
+    if len(pars) != 7:
+        return pars
+    if pars[2] is None and pars[5] is None:
+        return [pars[0], pars[1], pars[3], pars[4], pars[6]]
     else:
-        return [args[0], args[2], args[5]]
+        return [pars[0], pars[2], pars[5]]
 
 
-def do_require_loscript(base_pelem):
-    """Return if a loscript operator is needed given the first primitive of
-    the base.
-
-    :param base_pelem: symbol or leading operator of the base.
-    :return: A boolean.
-    """
-    if hasattr(base_pelem, 'type_') \
-            and base_pelem.type_ in LOSCRIPT_BASE_TYPES:
+def do_require_loscript(base):
+    """Return whether a loscript operator is needed given its base."""
+    # Valid for symbols/0-args ops and blocks.
+    if hasattr(base[0], 'type_') and base[0].type_ in LOSCRIPT_BASE_TYPES:
         return True
     else:
         return False
 
 
-def scriptblock2args(eq, idx):
-    """Return a list of arguments of the script-block pointed by *idx*.
+def scriptblock2pars(subeq, idx=None):
+    """Return a list of arguments of the passed script-block.
 
-    The list has the format [base, lsub_arg, ..., sup_arg].
-    The arguments not available will be set to None.
+    The list will have the format [base, lsub_arg, ..., sup_arg].
+    The parameters not available will be set to None.
 
-    If *idx* does not point to a script operator, -1 will be returned.
+    If lop-block is not a script operator, -1 will be returned.
 
     .. note::
-        It is OK if the script block pointed by *idx* does not have a valid
-        base according to do_require_loscript (probably because you are
-        modificating *eq*). What decides the args returned is the script op.
-
-    :param eq: An equation.
-    :param idx: Index of a script operator in *eq*.
-    :return: The args list of the script block or -1.
+        It is OK if the script-block does not have a valid base according to
+        do_require_loscript (probably because you are modificating the eq).
+        What decides the pars returned is the script op.
     """
 
-    def args(opid):
+    def pars(opid, sub):
         """Return the args list provided a tuple from any script operator
         dictionary.
 
         .. note::
-            In this nested function, parameter *idx* MUST point to a script
-            operator. It is supposed that first argument (the base) is not
+            It is supposed that first argument of *s* (the base) is not
             included in *opid*.
 
-        :param eq: An equation.
-        :param idx: The index of a script operator in *eq*.
         :param opid: A tuple specifying the arguments used by the script
         operator, not considering the base.
+        :param sub: A script-block (mandatory for this nested function).
         :return: The args list of the script operator.
         """
-        arg_idx = idx + 1
-        arg_end = eqqueries.nextsubeq(eq, arg_idx)
-        retv = [eq[arg_idx:arg_end]] + [None] * len(opid)
+        retv = [copy.deepcopy(sub[1])] + [None] * len(opid)
+        par_pos = 2
         for i, valid in enumerate(opid):
             if valid:
-                arg_idx, arg_end = arg_end, eqqueries.nextsubeq(eq, arg_idx)
-                retv[i+1] = eq[arg_idx:arg_end]
+                retv[i+1] = copy.deepcopy(sub[par_pos])
+                par_pos += 1
         return retv
 
-    op = eq[idx]  # it can be an index operator, but not necessarily
+    s = subeq if idx is None else eqqueries.get(idx, subeq)
+    op = s[0]
+    # Check that it is effectively a script-block
     if not hasattr(op, 'type_') or op.type_ not in SCRIPT_OP_TYPES:
         return -1
 
     if op.type_ == "setscript":
-        return args(SETSCRIPT_OP2ID_DICT[op])
+        return pars(SETSCRIPT_OP2ID_DICT[op], s)
     elif op.type_ == "script":
-        return args(SCRIPT_OP2ID_DICT[op])
+        return pars(SCRIPT_OP2ID_DICT[op], s)
     else:
-        return args(LOSCRIPT_OP2ID_DICT[op])
+        return pars(LOSCRIPT_OP2ID_DICT[op], s)
 
 
-def flat_args(args):
-    """Flat an args list without including elements equal to None.
-
-    .. note::
-        Example: [[JUXT, 2, 3], None, [8]] -> [JUXT, 2, 3, 8]
-    """
-    new_args = []
-    for arg in args:
-        if arg is not None:
-            for symb in arg:
-                new_args.append(symb)
-    return new_args
-
-
-def valid_args_pos(args, flat_pos):
-    """Return the position of the n-th non-None arg in args."""
-    valid_args_found = 0
-    for args_pos, args_arg in enumerate(args):
-        if args_arg is not None:
-            if valid_args_found == flat_pos:
-                return args_pos
+def valid_pars_pos(pars, flat_pos):
+    """Return the position of the n-th non-None par in pars."""
+    valid_pars_found = 0
+    for pars_pos, pars_arg in enumerate(pars):
+        if pars_arg is not None:
+            if valid_pars_found == flat_pos:
+                return pars_pos
             else:
-                valid_args_found += 1
+                valid_pars_found += 1
 
 
-def ublock_arg_idx_given_its_args(args, arg_pos):
-    """Return the index of an argument in a block given its args
-    representation and the position in args of the argument.
+def par_ord_from_pars_pos(pars, par_pos):
+    """Return the ordinal of a parameter of a operator given the pars
+    representation of its block and the position in pars of the parameter.
 
-    :param args: An args list.
-    :param arg_pos: The position of the arg in *args* (first arg pos is 0).
-    :return: The index in the ublock. Operator (which is not present in *args*)
-    would have index 0.
+    :param pars: A pars list.
+    :param par_pos: The position of the par in *pars* (first par pos is 0).
+    :return: The parameter ordinal associted to *par_pos*.
     """
-    # Include the first pelem (the leading op) which is not included in args
-    pelems = 1
-    for i in range(arg_pos):
-        if args[i] is not None:
-            pelems += len(args[i])
-    return pelems
+    # Take into account the the leading op, which is not included in args
+    ordinal = 1
+    for i in range(par_pos):
+        if pars[i] is not None:
+            ordinal += 1
+    return ordinal
 
 
-def args2scriptop(args):
-    """Return the operator associated to an arglist.
+def pars2scriptop(pars):
+    """Return the operator associated to a pars list.
 
     .. note::
         If every argument, except possibly the base, is None, None is returned.
     """
-    key = tuple(bool(arg) for arg in args[1:])
+    key = tuple(bool(par) for par in pars[1:])
     try:
         if len(key) == 2:
             return ID2SETSCRIPT_OP_DICT[key]
@@ -547,64 +526,45 @@ def args2scriptop(args):
         elif len(key) == 6:
             return ID2LOSCRIPT_OP_DICT[key]
         else:
-            ShowError('Wrong number of arguments in arg list processed by '
-                      'args2scriptop: ' + repr(args), True)
+            ShowError('Wrong number of parameters in pars list processed by '
+                      'pars2scriptop: ' + repr(pars), True)
     except KeyError:
-        ShowError('Wrong arg list in args2scriptop: ' + repr(args), True)
+        ShowError('Wrong pars list in pars2scriptop: ' + repr(pars), True)
 
 
-def args2scriptblock(args):
-    """Return a script block associated to certain args of any script op.
+def pars2scriptblock(pars):
+    """Return a script block associated to certain pars list of any script op.
 
     .. note::
         If every argument, except possibly the base, is None, -1 is returned.
     """
-    op = args2scriptop(args)
+    op = pars2scriptop(pars)
     if op is None:
         return -1
     else:
-        return [op] + flat_args(args)
+        return [op] + [item for item in pars if item is not None]
 
 
-def which_script(eq, idx):
-    """Return information about scripts arguments.
-
-    Returns a tuple of two elements:
-
-        *   If idx points to an argument (base included) of an script
-            operator in *eq*, the 1st element indicates the index in *eq* of
-            the associated script operator. Else, it is -1.
-        *   The 2nd element indicates which argument of the script operator is
-            being pointed by *idx*, 0 if it is the base.
-    """
-    return eqqueries.whosearg_filter_type(eq, idx, SCRIPT_OP_TYPES)
+def is_scriptop(elem, idx=None):
+    """Return whether an operator is an script op."""
+    op = elem if idx is None else eqqueries.get(idx, elem)
+    return op.type_ in SCRIPT_OP_TYPES
 
 
-def is_scriptop(eq, idx):
-    return hasattr(eq[idx], 'type_') and eq[idx].type_ in SCRIPT_OP_TYPES
+def remove_script(idx, eq):
+    """Remove pointed script from equation. Intentionally not accepting subeqs
+    because its supeq may need to be modified.
 
-
-def is_base(eq, idx):
-    return idx != 0 and is_scriptop(eq, idx-1)
-
-
-def remove_script(eq, idx):
-    """Remove a script.
-
-     It can downgrade the script op or remove it, depending whether other
-     scripts remain or not.
+     Downgrade script op or remove it, depending on whether other scripts
+     remain. It may modify a script-supeq of the script-block.
 
     .. note::
         *idx* MUST point to an argument of a script operator DIFFERENT than
         the base.
 
     .. note::
-        In the typical case in which the script operator will be updated but
-        not removed, the updated operator will be in the same position than the
-        original.
-        If operator is removed, the base is placed in the same position in
-        which the operator was except in the case:
-
+        If script op is removed, the base is placed in the same position in
+        which the script op-block was except in the case detailed below:
 
     Special rule:
 
@@ -612,143 +572,144 @@ def remove_script(eq, idx):
 
             *   The only script of a script operator is requested to be
                 removed, and
-            *   Script operator had type_ == "loscript", and
-            *   Script operator was the leading op of the base of a more
-                external script operator (setscript or script),
+            *   Script op had type_ == "loscript", and
+            *   Script-block was the base of another more external script
+                operator (setscript or script),
 
         then, the internal script operator is removed and the external script
         operator is changed to the equivalent one of type_ "loscript".
 
     :param eq: An equation.
     :param idx: The index in *eq* of the script.
-    :return: Position of script operator whose script is going to be removed.
-    (It will be there a new script operator or the base, if there was only one
-    script),
+    :return: Position of a script block or bare base. Useful because it points
+    to the external script op in the special case.
     """
-    op_idx, arg_ord = eqqueries.whosearg_filter_type(eq, idx)
-    end_block = eqqueries.nextsubeq(eq, op_idx)
-    args = scriptblock2args(eq, op_idx)
+    supeq = eqqueries.supeq(idx, eq, True)
+    pars = scriptblock2pars(supeq)
     # Remove script.
-    # Note: Subtracting 1 since indexing starts from 0 and ordinals from 1
-    args[valid_args_pos(args, arg_ord - 1)] = None
-    new_block = args2scriptblock(args)
+    # Note: Subtracting 1 since indexing starts from 0 and real pars from 1
+    pars[valid_pars_pos(pars, idx[-1] - 1)] = None
+    new_block = pars2scriptblock(pars)
 
+    old_scriptop_type = supeq[0].type_
     if new_block != -1:
-        eq[op_idx:end_block] = new_block
-    else:
-        eq[op_idx:end_block] = args[0]
-        if eq[op_idx].type_ == "loscript" and is_base(eq, op_idx):
-            # Special subcase mentioned in docstring
-            ext_op_idx = op_idx-1
-            # It is OK to call this function even if the base would require
-            # an operator of type_ loscript.
-            temp_ext_op_args = scriptblock2args(eq, ext_op_idx)
-            new_ext_op_args = scriptop_args2loscript_args(temp_ext_op_args)
-            end_ext_block = eqqueries.nextsubeq(eq, ext_op_idx)
-            eq[ext_op_idx:end_ext_block] = args2scriptblock(new_ext_op_args)
+        # Case: Downgrade script op
+        supeq[:] = new_block
+        return idx[:-1]
 
-    return op_idx
+    # Case: Remove op
+    supeq[:] = pars[0]
+
+    # Was script-block a loscript-block and base of another script-block?
+    if old_scriptop_type != "loscript" or len(idx) < 2 or idx[-2] != 1:
+        return idx[:-1]
+    supeqsupeq = eqqueries.get(idx[:-2], eq)
+    if not is_scriptop(supeqsupeq[0]):
+        return idx[:-1]
+
+    # Subcase: Adapt external script op if internal script was loscript
+    ext_op_idx = supeqsupeq[0]
+    # It is OK to call the following function even if the base would require
+    # an operator of type_ loscript.
+    temp_ext_op_args = scriptblock2pars(supeqsupeq)
+    new_ext_op_args = scriptop_pars2loscript_pars(temp_ext_op_args)
+    supeqsupeq[:] = pars2scriptblock(new_ext_op_args)
+
+    return idx[:-2]
 
 
-def update_scriptblock(eq, op_idx, pelem):
-    """Update a script block if needed by providing the new first primitive
-    element of the base.
+def update_scriptblock(nextbase, subeq, idx=None):
+    """Update a script op if needed by providing the next base it will have.
+
+    It must be passed the script block or its index.
 
     .. note::
         The script operator is updated independently of which is its current
         base. That means that you are free to set the new base before or after
         calling this function.
-
-    :param eq: An equation.
-    :param op_idx: Index of the script op.
-    :param pelem: First primitive element of the new base.
     """
-    end_block = eqqueries.nextsubeq(eq, op_idx)
-    args = scriptblock2args(eq, op_idx)
-    if do_require_loscript(pelem):
-        new_args = scriptop_args2loscript_args(args)
+    scriptblock = subeq if idx is None else eqqueries.get(idx, subeq)
+    args = scriptblock2pars(scriptblock)
+    if do_require_loscript(nextbase):
+        new_args = scriptop_pars2loscript_pars(args)
     else:
-        new_args = scriptop_args2nonloscript_args(args)
-    eq[op_idx:end_block] = args2scriptblock(new_args)
+        new_args = scriptop_pars2nonloscript_pars(args)
+    scriptblock[:] = pars2scriptblock(new_args)
 
 
-def _insert_initial_script(eq, idx, dir, is_superscript, subeq):
+def _insert_initial_script(baseref, scriptdir, is_superscript, newscript):
     """Insert a script to a block which is (currently) not a base or requested
     script is not compatible with operator script of base pointed.
 
-    Return script index in eq.
+    Index of the script will be index of *baseref* plus [2]
     """
-    end = eqqueries.nextsubeq(eq, idx)
-    if do_require_loscript(eq[idx]):
+    if do_require_loscript(baseref):
         type_ = "loscript"
-    elif dir == 0:
+    elif scriptdir == 0:
         type_ = "setscript"
     else:
         type_ = "script"
-    args = init_script_args(eq[idx:end], type_)
-    # referred script is guaranteed to be valid in args because we
-    # constructed args with that intention
-    set_script_in_args(args, dir, is_superscript, subeq)
-    eq[idx:end] = args2scriptblock(args)
-    return end + 1
+    pars = init_script_pars(baseref, type_)
+    # referred script is guaranteed to be valid in pars list because we
+    # constructed pars with the correct type_
+    set_script_in_pars(pars, scriptdir, is_superscript, newscript)
+    baseref[:] = pars2scriptblock(pars)
 
 
-def insert_script(eq, idx, dir, is_superscript, subeq=None):
-    """Insert a script and return its index in the equation.
+def insert_script(idx, eq, scriptdir, is_superscript, newscript=None):
+    """Insert a script and return its index.
 
     Rules:
 
         *   If *idx* does not point to a current base, a script operator will
             be added, being the base the subeq pointed by *idx*.
-            The index of the script in *eq* will be returned.
-        *   Elif *idx* points to a current base and requested script does not
+            The index of the script will be returned.
+        *   Elif *idx* points to a current base, requested script does not
             exist and the script is compatible with the script operator, script
             operator is upgraded and the index of the new script is returned.
         *   Elif *idx* points to a current base, requested script does not
             exist and the script is not compatible with the script operator,
-            a new script block containing the requested script will be the
-            base of the current script operator. In detail:
-
-                *   The new script operator will have as base the base of the
-                    old script operator
-                *   The new script operator will have only one script,
-                    the requested one.
+            the simplest script block including the requested script will
+            be the base of the current script operator.
             The index of the new script in *eq* is returned.
         *   Else (*idx* points to a current base and requested script exists),
-            *eq* is not modified and minus the index of the script is returned.
+            *eq* is not modified and index of the script is returned with
+            last value multiplied by -1.
 
-    :param eq: An equation.
     :param idx: The index of the subeq which will be the base of the script.
-    :param dir: Direction in which to include the script. 0 means vscript.
+    :param eq: An equation.
+    :param scriptdir: Direction in which to include the script. 0 means
+    vscript.
     :param is_superscript: Boolean indicating whether it is a superscript.
     If False, a subscript is inserted.
-    :param subeq: A subeq with which to initialize the script.
-    If it is None, a NEWARG is inserted instead.
+    :param newscript: A subeq with which to initialize the script.
+    If it is None, a VOID is inserted instead.
     :return: The index of inserted script in *eq*. If it already existed,
-    the index of the script is returned but negative.
+    the last value of the index will be negative.
     """
-    if subeq is None:
-        subeq = [NEWARG]
+    if newscript is None:
+        newscript = utils.void()
 
-    if not is_base(eq, idx):
+    supeq = eqqueries.supeq(idx, eq, True)
+    if supeq == -2 or not is_scriptop(supeq[0]):
         # Case: idx does not point to a base
-        return _insert_initial_script(eq, idx, dir, is_superscript, subeq)
+        baseref = eq if supeq == -2 else supeq[idx[-1]]
+        _insert_initial_script(baseref, scriptdir, is_superscript, newscript)
+        return idx + [2]
 
-    scriptop_idx = idx-1
-    args = scriptblock2args(eq, scriptop_idx)
-    script_pos = get_script_pos_in_args(args, dir, is_superscript)
+    pars = scriptblock2pars(supeq)
+    script_pos = get_script_pos_in_pars(pars, scriptdir, is_superscript)
     if script_pos == -1:
         # Case: Requested script is not compatible with current operator
-        return _insert_initial_script(eq, idx, dir, is_superscript, subeq)
+        return _insert_initial_script(eq, idx, scriptdir, is_superscript,
+                                      newscript)
 
-    if args[script_pos] is not None:
+    if pars[script_pos] is not None:
         # Case: Requested script already exists
-        return -(scriptop_idx
-                 + ublock_arg_idx_given_its_args(args, script_pos))
+        return idx[:-1] + [-par_ord_from_pars_pos(pars, script_pos)]
 
     # Case: Requested script is compatible with current script op type_ and
     # script is not present
-    args[script_pos] = subeq
-    end_current_scriptop = eqqueries.nextsubeq(eq, scriptop_idx)
-    eq[scriptop_idx:end_current_scriptop] = args2scriptblock(args)
-    return scriptop_idx + ublock_arg_idx_given_its_args(args, script_pos)
+    pars[script_pos] = newscript
+    supeq[:] = pars2scriptblock(pars)
+    return idx[:-1] + [par_ord_from_pars_pos(pars, script_pos)]
