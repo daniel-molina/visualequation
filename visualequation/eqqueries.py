@@ -393,10 +393,6 @@ def mate(idx, eq, right, ulevel_diff=0, retsub=False):
     *ulevel_diff* must be M - N.
 
     .. note::
-        Let be N the ulevel of subeq pointed by *idx*. If *ulevel_diff* is
-        not 0, subeq MUST be is a M-ulevel aide for every M > N.
-
-    .. note::
         If first call to this function is done with *ulevel_diff* equal to 0,
         then a next call using the correspondent second output value is a valid
         call to look for mates to the right or left.

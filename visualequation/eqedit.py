@@ -16,7 +16,7 @@ import functools
 
 from . import eqqueries
 #from . import groups
-#from . import scriptops
+from . import scriptops
 #from . import simpleeqcreator
 from .symbols import utils
 
@@ -69,14 +69,21 @@ def debug(fun):
 class EditableEq:
     @debuginit
     def __init__(self, eq0=None, sel_idx0=None, dir0=None, do_overwrite=False):
+        # Equation. It must be assured that any reference to self.eq will be
+        # always valid.
         self.eq = copy.deepcopy(eq0) if eq0 is not None else utils.void()
+        # The index of the *user subeq* (usubeq) where public methods will
+        # act. It is typically the selected subeq.
         self.idx = sel_idx0[:] if sel_idx0 is not None else []
+        # Typically the direction of the selection. It modifies methods
+        # behavior.
         if dir0 is not None:
             self.dir = dir0
         elif eqqueries.get(self.idx, self.eq) == utils.void():
             self.dir = utils.VDIR
         else:
             self.dir = utils.RDIR
+        # Another modifier for the methods: the overwrite mode.
         self.ovrwrt = do_overwrite if do_overwrite is not None else False
 
     def _set(self, elem, idx=None):
@@ -87,29 +94,98 @@ class EditableEq:
 
         .. note::
             It is a "hard" replacement, meaning that it does not check for
-            supeqs which are non-usubeqs.
+            supeqs matching any condition.
         """
         if idx is None:
             idx = self.idx
 
+        # Replace whole eq
         if not idx:
             self.eq[:] = copy.deepcopy(elem)
             return
 
+        # Find strict subeq of eq to replace (not that easy in python)
         eqref = self.eq
         for lev, pos in enumerate(idx):
             if lev == len(idx) - 1:
                 break
             eqref = eqref[pos]
 
+        # Replace
         eqref[idx[-1]][:] = copy.deepcopy(elem)
+
+    def _get_safe_dir(self, dirflag=0, subeq=None):
+        """Set direction respecting overwrite mode and subeq being selected.
+
+        If *dirflag* is:
+
+            *    1, right.
+            *   -1, left.
+            *    5, self.dir unless that is utils.VDIR; in that case, right.
+            *   -5, self.dir unless that is utils.VDIR; in that case, left.
+            *    0, you trust that self.ovrwrt is True or *subeq* is VOID-like.
+
+        If *subeq* is:
+
+            *   None, it uses subeq pointed by self.idx to check if whether
+                is a void.
+            *   0, it is equivalent to pass utils.void().
+            *   ow., it uses passed subequation considered for direction.
+
+        """
+        if self.ovrwrt:
+            return utils.ODIR
+        if subeq == 0:
+            return utils.VDIR
+        s = eqqueries.get(self.idx, self.eq) if subeq is None else subeq
+        if s == utils.void():
+            return utils.VDIR
+        if dirflag == 1:
+            return utils.RDIR
+        if dirflag == -1:
+            return utils.LDIR
+        if dirflag == 5:
+            return self.dir if self.dir != utils.VDIR else utils.RDIR
+        if dirflag == -5:
+            return self.dir if self.dir != utils.VDIR else utils.LDIR
+
+    def _get_biggest_subeq_same_urepr(self, idx=None):
+        """If *idx* points to a usubeq U and it has supeq which urepr is US,
+        return the index of the biggest supeq with that property. If *idx*
+        points to non-usubeq subeq or mentioned supeq does not exist, *idx*
+        is returned.
+
+        Case *idx* being None is equivalent to pass self.idx.
+        """
+        usubeq_idx = self.idx[:] if idx is None else idx[:]
+        new_idx = eqqueries.biggest_supeq_with_urepr(usubeq_idx, self.eq)
+        if not isinstance(new_idx, list):
+            return usubeq_idx
+        return new_idx
+
+    def _condtly_correct_scriptop(self, newbase, idx=None, supeq=None):
+        """Correct a script operator if idx points to a base and it is needed.
+
+        .. note::
+            Calling this function never harms. It only acts if necessary.
+
+        :param newbase: The new block which will be used in *idx*.
+        :param idx: Index of the element which may be a base. None -> self.idx.
+        :param supeq: (Optional) If you know the supeq of *idx*, you can pass
+        it.
+        """
+        base_idx = self.idx if idx is None else idx
+        sup = eqqueries.supeq(base_idx, self.eq, True) \
+            if supeq is None else supeq
+        if sup != -2 and base_idx[-1] == 1 and scriptops.is_scriptop(sup[0]):
+            scriptops.update_scriptblock(newbase, sup)
 
     @debug
     def _rinsert(self, subeq):
         """Insert a subeq to the right. If subeq is a JUXT-block, a TJUXT-block
         is inserted instead.
 
-        Return the index of inserted subeq.
+        Return the index of inserted subeq (without considering its urepr).
         """
         sel = eqqueries.get(self.idx, self.eq)
         sup = eqqueries.supeq(self.idx, self.eq, True)
@@ -126,6 +202,7 @@ class EditableEq:
         else:
             # Case: selection is a non-juxt-block and is not a juxted
             sel[:] = [utils.JUXT] + [sel[:]] + [s_new]
+            self._condtly_correct_scriptop(sel, None, sup)
             return self.idx + [2]
 
     @debug
@@ -133,7 +210,7 @@ class EditableEq:
         """Insert a subeq to the left. If subeq is a JUXT-block, a TJUXT-block
         is inserted instead.
 
-        Return the index of inserted subeq
+        Return the index of inserted subeq (without considering its urepr).
         """
         sel = eqqueries.get(self.idx, self.eq)
         sup = eqqueries.supeq(self.idx, self.eq, True)
@@ -150,93 +227,200 @@ class EditableEq:
         else:
             # Case: selection is a non-juxt-block and is not a juxted
             sel[:] = [utils.JUXT] + [s_new] + [sel[:]]
+            if sup != -2 and self.idx[-1] == 1 \
+                    and scriptops.is_scriptop(sup[0]):
+                scriptops.update_scriptblock(sel, sup)
             return self.idx + [1]
 
     @debug
-    def _replace_integrating(self, idx, subeq):
-        """Replace selection or biggest supeq having selection as urepr if
-        that exists (in any other case, replace pointed subeq).
+    def _replace_integrating(self, idx_eq, s_repl):
+        """If *idx_eq* points to non-usubeq, replace it by *s_repl*. Elif it
+        exists a biggest supeq having pointed usubeq as urepr, replace that.
+        Else, replace pointed usubeq.
 
         .. note::
             Do NOT use this method by pointing the urepr of the whole eq.
             To replace current selection you should use _replace.
 
-        .. note::
-            Passed index will be the index of whole replacement or first
-            integrated juxted.
+        If *s_repl* is a juxt-block JB and actual subeq being replaced is a
+        juxted of a juxt-block EJB, juxteds of JB are integrated as juxteds of
+        EJB.
+
+        Return the index where subeq was finally replaced (*idx_eq* or supeq)
+        without considering its urepr.
         """
-        repl_idx = eqqueries.biggest_supeq_with_urepr(idx, self.eq)
-        if not isinstance(repl_idx, list):
-            repl_idx = idx[:]
+        # Choose correct subeq to replace
+        repl_idx = self._get_biggest_subeq_same_urepr(idx_eq)
+
+        # This method assumes there is a supeq
         sup = eqqueries.supeq(repl_idx, self.eq, True)
-        if not eqqueries.isb(subeq) or not eqqueries.isjuxtblock(subeq) \
+        if not eqqueries.isb(s_repl) or not eqqueries.isjuxtblock(s_repl) \
                 or sup[0] != utils.JUXT:
-            sup[repl_idx[-1]][:] = copy.deepcopy(subeq)
+            # Case: No juxteds are integrated
+            self._condtly_correct_scriptop(s_repl, repl_idx, sup)
+            sup[repl_idx[-1]][:] = copy.deepcopy(s_repl)
             return repl_idx
 
-        # From this point it is assured that some juxteds will be integrated
-        sup[:] = sup[:repl_idx[-1]] + subeq[1:] + sup[repl_idx[-1]+1:]
+        # Case: some juxteds will be integrated
+        sup[:] = sup[:repl_idx[-1]] + s_repl[1:] + sup[repl_idx[-1] + 1:]
         return repl_idx
 
     @debug
     def replace(self, subeq):
-        """Replace selection or biggest supeq having selection as urepr if
-        that exists (in any other case, replace pointed subeq).
+        """Replace the biggest supeq having selection as urepr if that exists
+        or selected subeq, which is expected to be an usubeq.
 
         It sets index to the urepr of replacement.
-
-        .. note::
-            It expects current selection to be an usubeq.
         """
-        repl_idx = eqqueries.biggest_supeq_with_urepr(self.idx, self.eq)
-        if not isinstance(repl_idx, list):
-            repl_idx = self.idx[:]
+        repl_idx = self._get_biggest_subeq_same_urepr()
+
+        # Correct script op if needed
+        self._condtly_correct_scriptop(subeq, repl_idx)
+
+        # Replace
         self._set(subeq, repl_idx)
+
+        # Select the urepr of replacement
         self.idx[:] = repl_idx + eqqueries.urepr([], subeq)
-        if subeq == utils.void() and not self.ovrwrt:
-            self.dir = utils.VDIR
+        self.dir = self._get_safe_dir(5, subeq)
+
+    def empty(self):
+        """Replace by VOID the biggest supeq having selection as urepr if that
+        exists or selected subeq, which is expected to be an usubeq."""
+        self.replace(utils.void())
 
     def remove_eq(self):
+        """Replace the whole eq by a VOID."""
         self._set(utils.void(), [])
         self.idx[:] = []
-        if not self.ovrwrt:
-            self.dir = utils.VDIR
+        self.dir = self._get_safe_dir(0, 0)
 
-    def _clever_vanish(self):
-        """Remove selection or biggest supeq having selection as urepr if
-        that exists (in any other case, replace pointed subeq). It does not
-        remove any visible outlop structure, but yes filters and juxts when
-        only one juxted is left.
-
-        It sets idx and dir.
+    @debug
+    def _vanish_juxted(self):
+        """Vanish (maybe artificially) "selected" juxted. It removes
+        the juxt op if only one juxted is left.
 
         .. note::
-            It must be called only to make disappear current selection.
-            Expected use is:
+            It does not check supeqs. self.idx must point to a juxted.
 
-                *   Backward delete with dir == 1.
-                *   Forward delete with dir in (-1, 0).
+            If the real juxted is a non-usubeq and its urepr is selected,
+            change self.idx before calling this function so it points to the
+            right juxted.
 
-        .. note:
-            Final selection is intentionally not documented here. Read the
-            source code, that is intended to be clear.
+        It sets self.idx and self.dir.
+
+        It has sense to call this function if selection is a juxted and
+        desired operation is:
+
+            *   Backward delete with dir == RDIR.
+            *   Forward delete with dir in (LDIR, VDIR, ODIR).
+
+        .. note::
+            Final selection is tricky.
+
+        .. note::
+            Implementation notes:
+
+                *   Do NOT use here any clever function modifying the self.idx
+                    if that consider that convenient! Use _set when necessary.
+                *   No need to check for script-ops, it is a juxted.
         """
-        # Adjust the replacement index
-        repl_idx = eqqueries.biggest_supeq_with_urepr(self.idx, self.eq)
-        if not isinstance(repl_idx, list):
-            repl_idx = self.idx[:]
+        juxtblock = eqqueries.supeq(self.idx, self.eq, True)
+        if len(juxtblock) == self.idx[-1] + 1:
+            # Case: Vanish last juxted
+            if self.ovrwrt:
+                # Overwrite mode -> Select next mate in original eq or VOID
+                rmate = eqqueries.mate(self.idx, self.eq, True)[0]
+                if rmate == -1:
+                    self._set(utils.void())
+                    return
+                # (!) The other overwrite case is not completed until later
 
-        if not repl_idx:
+            # Normal mode -> Select juxted to the left, prefer RDIR
+            if len(juxtblock) > 3:
+                del juxtblock[-1]
+                self.idx[-1] -= 1
+            else:
+                juxtblock[:] = copy.deepcopy(juxtblock[1])
+                del self.idx[-1]
+
+            if self.ovrwrt:
+                self.idx = rmate
+            else:
+                self.idx = eqqueries.urepr(self.idx, self.eq)
+                self.dir = self._get_safe_dir(1)
+            return
+
+        if self.idx[-1] == 1:
+            # Case: Vanish first juxted -> Juxted to the right, prefer LDIR
+            if len(juxtblock) == 3:
+                juxtblock[:] = copy.deepcopy(juxtblock[2])
+                del self.idx[-1]
+            else:
+                del juxtblock[1]
+            self.idx = eqqueries.urepr(self.idx, self.eq)
+            self.dir = self._get_safe_dir(-1)
+            return
+
+        # Case: Intermediate juxted
+        del juxtblock[self.idx[-1]]
+        # If dir is RDIR -> Juxted to the left, prefer same DIR.
+        # Else -> Juxted to the right (done automatically), prefer same DIR.
+        if self.dir == utils.RDIR:
+            self.idx[-1] -= 1
+        self.idx = eqqueries.urepr(self.idx, self.eq)
+        self.dir = self._get_safe_dir(5)
+
+
+    def _remove_selection(eq, idx, dir):
+        """Remove selection and return what must be selected. Direction is only
+        used to define next selection.
+
+        This function does nothing if *idx* points to a NEWARG.
+
+        .. note::
+            It has sense to call this function if:
+
+            *   Backward delete with dir == 1.
+            *   Forward delete with dir in (-1, 0).
+
+
+        .. note::
+
+            *   *idx* must not point to a NEWARG.
+            *   *dir* must be in (-1, 0, 1). 2 is not a valid value.
+
+        Rules depending on selection:
+
+            *   If it is an uarg or eq, a NEWARG is put in its place, it is
+                selected and direction is set to 0.
+            *   Elif it is a last citizen, after its removal the co-citizen
+                to the left is selected and direction is set to 1.
+            *   Elif it is a first citizen, after its removal the co-citizen to
+                the right is selected and direction is set to -1.
+            *   Else (intermediate citizen), the citizen is removed and:
+
+                *   If direction was 1, the co-citizen to the left is selected
+                    and direction is not changed.
+                *   Else (direction was -1), the co-citizen to the right is
+                    selected and direction is not changed.
+
+        :param eq: An equation.
+        :param idx: Index of current selection.
+        :param dir: Direction of selection. Only values (-1, 0, 1). Must not
+        be 2.
+        """
+        # Correct index if the argument of a group is selected
+        if groups.is_grouped(eq, idx):
+            idx -= 1
+
+        if not idx:
             # Case: remove whole eq
-            self.remove_eq()
-
-        sup = eqqueries.supeq(repl_idx, self.eq, True)
-        if not eqqueries.isjuxtblock(sup):
-            # Case: Remove non-juxted subeq
+            return remove_eq(eq)
 
         juxt_idx, otherarg = eqqueries.other_juxt_arg(eq, idx)
         if juxt_idx < 0:
-
+            # Case: Remove uarg
             if scriptops.is_base(eq, idx):
                 # Uarg subcase: idx points to the base of a script
                 # Convert (v)script operator if needed
@@ -275,92 +459,8 @@ class EditableEq:
                 idx -= 1
             return idx, dir
 
-
-def _remove_selection(eq, idx, dir):
-    """Remove selection and return what must be selected. Direction is only
-    used to define next selection.
-
-    This function does nothing if *idx* points to a NEWARG.
-
-    .. note::
-        It has sense to call this function if:
-
-        *   Backward delete with dir == 1.
-        *   Forward delete with dir in (-1, 0).
-
-
-    .. note::
-
-        *   *idx* must not point to a NEWARG.
-        *   *dir* must be in (-1, 0, 1). 2 is not a valid value.
-
-    Rules depending on selection:
-
-        *   If it is an uarg or eq, a NEWARG is put in its place, it is
-            selected and direction is set to 0.
-        *   Elif it is a last citizen, after its removal the co-citizen
-            to the left is selected and direction is set to 1.
-        *   Elif it is a first citizen, after its removal the co-citizen to
-            the right is selected and direction is set to -1.
-        *   Else (intermediate citizen), the citizen is removed and:
-
-            *   If direction was 1, the co-citizen to the left is selected
-                and direction is not changed.
-            *   Else (direction was -1), the co-citizen to the right is
-                selected and direction is not changed.
-
-    :param eq: An equation.
-    :param idx: Index of current selection.
-    :param dir: Direction of selection. Only values (-1, 0, 1). Must not be 2.
-    """
-    # Correct index if the argument of a group is selected
-    if groups.is_grouped(eq, idx):
-        idx -= 1
-
-    if not idx:
-        # Case: remove whole eq
-        return remove_eq(eq)
-
-    juxt_idx, otherarg = eqqueries.other_juxt_arg(eq, idx)
-    if juxt_idx < 0:
-        # Case: Remove uarg
-        if scriptops.is_base(eq, idx):
-            # Uarg subcase: idx points to the base of a script
-            # Convert (v)script operator if needed
-            scriptops.update_scriptblock(eq, idx - 1, utils.VOID)
-
-        end = eqqueries.nextsubeq(eq, idx)
-        eq[idx:end] = [utils.VOID]
-        return idx, 0
-
-    # From this point, we know idx points to citizen
-    if otherarg < idx:
-        # Case: Remove last citizen
-        if eqqueries.is_parent_juxt(eq, juxt_idx):
-            return _safely_dissolve_simplejuxtublock(eq, juxt_idx, True)
-
-        end = eqqueries.nextsubeq(eq, juxt_idx)
-        eq[juxt_idx:end] = eq[otherarg:idx]
-        return juxt_idx, 1 if dir else 0
-
-    # From here, selection is a citizen which is not the last one
-    # Low-level hardcore starts... :P
-    juxt_juxt_idx, prev_cocitizen_idx \
-        = eqqueries.other_juxt_arg(eq, juxt_idx)
-    eq[juxt_idx:otherarg] = []
-    if juxt_juxt_idx < 0:
-        # Case: first citizen WAS just removed
-        if eq[idx] != utils.JUXT:
-            idx -= 1
-        return idx, -1
-    else:
-        # Case: intermediate citizen WAS just removed and dir was 1
-        if dir == 1:
-            idx = prev_cocitizen_idx
-        elif eq[juxt_idx] != utils.JUXT:
-            # Subcase: Removed citizen WAS before last but one citizen
-            idx -= 1
-        return idx, dir
+    def flat(self):
+        pass
 
 
 def flat_block(eq, idx, dir=1):
@@ -724,6 +824,165 @@ def _remove_arg(eq, idx, dir, remove_mode=1):
     return scriptops.remove_script(eq, idx), 1
 
 
+def _clever_vanish(self):
+    """Vanish biggest supeq having selection as urepr if that exists. Else,
+    vanish selection. It removes juxts when only one juxted is left.
+
+    It totally removes a script if that is the actual subeq to vanish.
+
+    It does not remove
+
+    It sets idx and dir.
+
+    .. note::
+        It must be called only to make disappear current selection.
+        Expected use is:
+
+            *   Backward delete with dir == 1.
+            *   Forward delete with dir in (-1, 0).
+
+    .. note:
+        Final selection is intentionally not documented here. Read the
+        source code which is intended to be clear.
+    """
+    # Adjust the replacement index
+    repl_idx = eqqueries.biggest_supeq_with_urepr(self.idx, self.eq)
+    if not isinstance(repl_idx, list):
+        repl_idx = self.idx[:]
+
+    if not repl_idx:
+        # Case: remove whole eq
+        self.remove_eq()
+
+    sup = eqqueries.supeq(repl_idx, self.eq, True)
+    if not eqqueries.isjuxtblock(sup):
+        # Case: Vanish a non-juxted
+        if scriptops.is_scriptop(sup[0]):
+            # Uarg subcase: idx points to the base of a script
+            # Convert (v)script operator if needed
+            scriptops.update_scriptblock(eq, idx - 1, utils.VOID)
+
+        end = eqqueries.nextsubeq(eq, idx)
+        eq[idx:end] = [utils.VOID]
+        return idx, 0
+
+    # From this point, we know idx points to citizen
+    if otherarg < idx:
+        # Case: Remove last citizen
+        if eqqueries.is_parent_juxt(eq, juxt_idx):
+            return _safely_dissolve_simplejuxtublock(eq, juxt_idx, True)
+
+        end = eqqueries.nextsubeq(eq, juxt_idx)
+        eq[juxt_idx:end] = eq[otherarg:idx]
+        return juxt_idx, 1 if dir else 0
+
+    # From here, selection is a citizen which is not the last one
+    # Low-level hardcore starts... :P
+    juxt_juxt_idx, prev_cocitizen_idx \
+        = eqqueries.other_juxt_arg(eq, juxt_idx)
+    eq[juxt_idx:otherarg] = []
+    if juxt_juxt_idx < 0:
+        # Case: first citizen WAS just removed
+        if eq[idx] != utils.JUXT:
+            idx -= 1
+        return idx, -1
+    else:
+        # Case: intermediate citizen WAS just removed and dir was 1
+        if dir == 1:
+            idx = prev_cocitizen_idx
+        elif eq[juxt_idx] != utils.JUXT:
+            # Subcase: Removed citizen WAS before last but one citizen
+            idx -= 1
+        return idx, dir
+
+
+def _remove_selection(eq, idx, dir):
+    """Remove selection and return what must be selected. Direction is only
+    used to define next selection.
+
+    This function does nothing if *idx* points to a NEWARG.
+
+    .. note::
+        It has sense to call this function if:
+
+        *   Backward delete with dir == 1.
+        *   Forward delete with dir in (-1, 0).
+
+
+    .. note::
+
+        *   *idx* must not point to a NEWARG.
+        *   *dir* must be in (-1, 0, 1). 2 is not a valid value.
+
+    Rules depending on selection:
+
+        *   If it is an uarg or eq, a NEWARG is put in its place, it is
+            selected and direction is set to 0.
+        *   Elif it is a last citizen, after its removal the co-citizen
+            to the left is selected and direction is set to 1.
+        *   Elif it is a first citizen, after its removal the co-citizen to
+            the right is selected and direction is set to -1.
+        *   Else (intermediate citizen), the citizen is removed and:
+
+            *   If direction was 1, the co-citizen to the left is selected
+                and direction is not changed.
+            *   Else (direction was -1), the co-citizen to the right is
+                selected and direction is not changed.
+
+    :param eq: An equation.
+    :param idx: Index of current selection.
+    :param dir: Direction of selection. Only values (-1, 0, 1). Must not be 2.
+    """
+    # Correct index if the argument of a group is selected
+    if groups.is_grouped(eq, idx):
+        idx -= 1
+
+    if not idx:
+        # Case: remove whole eq
+        return remove_eq(eq)
+
+    juxt_idx, otherarg = eqqueries.other_juxt_arg(eq, idx)
+    if juxt_idx < 0:
+        # Case: Remove uarg
+        if scriptops.is_base(eq, idx):
+            # Uarg subcase: idx points to the base of a script
+            # Convert (v)script operator if needed
+            scriptops.update_scriptblock(eq, idx - 1, utils.VOID)
+
+        end = eqqueries.nextsubeq(eq, idx)
+        eq[idx:end] = [utils.VOID]
+        return idx, 0
+
+    # From this point, we know idx points to citizen
+    if otherarg < idx:
+        # Case: Remove last citizen
+        if eqqueries.is_parent_juxt(eq, juxt_idx):
+            return _safely_dissolve_simplejuxtublock(eq, juxt_idx, True)
+
+        end = eqqueries.nextsubeq(eq, juxt_idx)
+        eq[juxt_idx:end] = eq[otherarg:idx]
+        return juxt_idx, 1 if dir else 0
+
+    # From here, selection is a citizen which is not the last one
+    # Low-level hardcore starts... :P
+    juxt_juxt_idx, prev_cocitizen_idx \
+        = eqqueries.other_juxt_arg(eq, juxt_idx)
+    eq[juxt_idx:otherarg] = []
+    if juxt_juxt_idx < 0:
+        # Case: first citizen WAS just removed
+        if eq[idx] != utils.JUXT:
+            idx -= 1
+        return idx, -1
+    else:
+        # Case: intermediate citizen WAS just removed and dir was 1
+        if dir == 1:
+            idx = prev_cocitizen_idx
+        elif eq[juxt_idx] != utils.JUXT:
+            # Subcase: Removed citizen WAS before last but one citizen
+            idx -= 1
+        return idx, dir
+
+
 def _rremove(eq, idx):
     """Remove "to the right" of selection and return new valid index.
 
@@ -905,7 +1164,7 @@ def insert_script(eq, idx, dir, is_superscript):
     :param eq: An equation.
     :param idx: Index in *eq* of the base of the script.
     """
-    script_idx = scriptops.insert_script(eq, idx, dir, is_superscript)
+    script_idx = scriptops.insert_script(idx, eq, dir, is_superscript)
     return script_idx, 0 if script_idx >= 0 else -script_idx, 1
 
 
