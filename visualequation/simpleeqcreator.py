@@ -12,6 +12,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from collections import namedtuple
+from copy import deepcopy
 
 from . import eqqueries
 from .symbols import utils
@@ -24,115 +25,109 @@ class SimpleEqCreator:
 
     It is possible to initialize the equation during construction. Else,
     it will be initialized with the first call to extend.
+
+    If equation is not initialized, it is equal to VOID.
+
+    If equation is only initialized, it is equal to initial eq.
+
+    Else, it is a JUXT-block including any inserted subeq which is not a
+    JUXT-block as a juxted. Juxteds of an inserted JUXT-block are integrated
+    as juxteds of the whole eq.
+
+    .. note::
+        If a TJUXT-block is passed, it is integrated as a single juxted. In
+        particular, the TJUXT op will be present in the whole eq. Of course,
+        you should not insert more than one TJUXT-block to be consistent with
+        visual equation conventions.
     """
+
+    LogEntry = namedtuple('LogEntry', 'was_jb pos')
+
     def __init__(self, subeq=None):
-        if subeq is None:
-            # There is an element in self.log for each subeq introduced by
-            #   the user, in order.
-            # If correspondent subeq was not a JUXT-ublock, each element is a
-            #   NonJuxtUblockEntry, else, it is a JuxtUblockEntry.
-            self.log = []
-            self.eq = [utils.NEWARG]
-        else:
+        self.log = []
+        self.eq = utils.void()
+        if subeq is not None:
             self._init(subeq)
 
-    # Notation:
-    #   idx  -> InDeX of some element in originally inserted subequation.
-    #   fnje -> index of First Non-Juxt Element of subeq in current Equation
-    #   lcjs -> index of Last Citizen of original juxt-ublock Subeq in itself
-    #   weel -> Was current Equation Extended later?
+    def get_idx(self, subeq_idx, subeq_entry=-1):
+        """Return the index of in composed eq by specifying the index of the
+        element in a inserted subeq and which inserted subeq you refer.
 
-    JuxtLog = namedtuple('JuxtLog', 'fnje len lcjs')
-    NonJuxtLog = namedtuple('NonJuxtLog', 'fnje len')
-
-    def get_idx(self, idx, subeq_entry=-1):
-        """Return the index of an element of an introduced subeq in the eq.
-
-        :idx: It is the index of the element in subeq.
-        :subeq_entry: It specifies the subeq you are referring.
-
-        Note that :subeq_entry: 0 refers to subequation which initialized the
-        equation. It can be a negative number, which can be useful, for
-        example, if you just know how many calls to extend were done from the
-        moment in which the subequation in which you are interested was
-        introduced.
+        .. note::
+            If inserted subeq was a JUXT-block, you must not pass *subeq_idx*
+            in ([], [0]) since the original juxt was probably discarded and
+            only one juxt op is present as the lop of the composed eq (This
+            paragraph does not apply to TJUXT-blocks.)
         """
-        if isinstance(self.log[subeq_entry], self.NonJuxtLog) \
-                or idx >= self.log[subeq_entry].lcjs:
-            return self.log[subeq_entry].fnje + idx
-        else:
-            return self.log[subeq_entry].fnje - 1 + idx
+        if self.log[subeq_entry].pos < 0:
+            return subeq_idx[:]
+        if not self.log[subeq_entry].was_jb:
+            return [self.log[subeq_entry].pos] + subeq_idx
+        return [self.log[subeq_entry].pos + subeq_idx[0] - 1] + subeq_idx[1:]
 
     def _init(self, subeq):
-        if subeq[0] == utils.JUXT:
-            fnje = 1
-            lcjs = eqqueries.last_citizen(subeq, 1)
-            self.log.append(self.JuxtLog(fnje, len(subeq), lcjs))
+        self.eq[:] = deepcopy(subeq)
+        if len(subeq) > 1 and subeq[0] == utils.JUXT:
+            self.log[:] = [self.LogEntry(True, 1)]
+            return [1]
         else:
-            fnje = 0
-            self.log.append(self.NonJuxtLog(fnje, len(subeq)))
-        self.eq = list(subeq)
-        return fnje
+            # Let us use a special value for position in this case
+            # It will be overwritten in next call to extend
+            self.log[:] = [self.LogEntry(False, -1)]
+            return []
 
     def _update(self, subeq):
-        """Extend current equation with subeq and changecurrent the internal state.
+        """Extend current equation with subeq and update the log.
 
-        If subeq is not a JUXT-ublock, insert_from_panel it to the right as a citizen.
-        Else, insert_from_panel any citizen of subeq as citizens of current equation.
+        It supposes that eq has been already initialized.
         """
-        # Add new log data
-        if subeq[0] == utils.JUXT:
-            fnje = len(self.eq) + 2
-            lcjs = eqqueries.last_citizen(subeq, 1)
-            self.log.append(self.JuxtLog(fnje, len(subeq), lcjs))
-        else:
-            fnje = len(self.eq) + 1
-            self.log.append(self.NonJuxtLog(fnje, len(subeq)))
+        # Marginal case: Set initial eq as a juxted if it was not a JUXT-block
+        # self.eq will have only one juxted here, but it will have at least 2
+        # before this function returns
+        if self.eq[0] != utils.JUXT:
+            self.eq[:] = [utils.JUXT, deepcopy(self.eq)]
+            self.log[:] = [self.LogEntry(False, 1)]
 
-        # Extend equation and correct previous log data
-        if isinstance(self.log[-2], self.NonJuxtLog):
-            self.eq.insert(self.log[-2].fnje, utils.JUXT)
-            self.log[-2].fnje += 1
+        # Add new subeq
+        next_juxted_pos = len(self.eq)
+        if len(subeq) > 1 and subeq[0] == utils.JUXT:
+            self.log.append(self.LogEntry(True, next_juxted_pos))
+            self.eq[:] += deepcopy(subeq[1:])
         else:
-            self.eq.insert(self.log[-2].lcjs, utils.JUXT)
-            self.log[-2].lcjs += 1
-        self.eq.extend(subeq)
-
-        return fnje
+            self.log.append(self.LogEntry(False, next_juxted_pos))
+            self.eq.append(deepcopy(subeq))
+        return [next_juxted_pos]
 
     def extend(self, subeq):
         """Extend current equation, or initialize it.
 
-        Return the index of the first element of subeq in the equation if it is
-        an usubeq. Else, return the index of the first citizen of subeq in
-        current equation. Note that these indices can be invalid after next
-        uses of this method. Use self.get_idx in those cases.
+        Return the index in eq of *subeq* if it was not a JUXT-block. Else,
+        it returns the index of the first juxted of *subeq*.
 
-        If the equation was not initialized, first call to extend will
-        initialize the original equation equal to subeq.
+        If the equation was not initialized, first call to this method will
+        initialize the original equation to subeq.
 
-        Behaviour for calls when equation has been already initialized:
-            *   If current equation is not a JUXT-ublock, new equation will be
-                a JUXT-ublock such that:
+        .. note::
+            Returned values are reliable unless:
 
-                *   First citizen is the original equation.
-                *   If subeq is not a JUXT-ublock, subeq will be the second
-                    citizen of the new equation.
-                    Else, any citizen of subeq will be a citizen of the new
-                    equation after the current equation, respecting the
-                    order they have in subeq.
-            *   Else:
-
-                *   If subeq is not a JUXT-ublock, it will be added as a
-                    citizen after the last citizen of the current equation.
-                *   Else, any citizen of subeq will be added in order after the
-                    last citizen of current equation.
+                *   It was the returned value by the first call to this
+                    method, and
+                *   A non juxt-block subeq was inserted in that first call, and
+                *   The instance of this class was not initialized using the
+                    constructor, and
+                *   At least one more call to this method has been done from
+                    that first call.
+            In the specified case, originally returned value would be [] and
+            after the second call previously inserted subequation will be in
+            [1]. You can 1. Relay on mentioned behavior or 2. Call method
+            get_idx (with *subeq_entry* equal to 0) to obtain the correct
+            value.
         """
         if not self.log:
-            # eq not initialized by the user
+            # eq not yet initialized
             return self._init(subeq)
         else:
             return self._update(subeq)
 
     def get_eq(self):
-        return list(self.eq)
+        return deepcopy(self.eq)
