@@ -11,13 +11,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import copy
+from copy import deepcopy
 import functools
 
 from . import eqqueries
-#from . import groups
 from . import scriptops
-#from . import simpleeqcreator
+from . import simpleeqcreator
 from .symbols import utils
 
 
@@ -67,11 +66,48 @@ def debug(fun):
 
 
 class EditableEq:
+    """Class to edit an equation.
+
+    Philosophy about JUXTs:
+        By default, any operation will integrate juxteds of a juxt-block unless
+        it is protected by a GOP. TJUXTs are only used to temporally select a
+        several juxteds of a JUXT-block. A JUXT-block will only be used as a
+        juxted under specific circumstances (mainly under user request).
+
+    Implementation note:
+        This is a large class and it is easy to get lost. Let's try to respect
+        the following conventions.
+
+            *   Methods starting with underscore (_), apart from being used
+                only by other methods of this class, they should not modify
+                other attributes than self.eq. Instead, they can return
+                useful information or the self.idx and self.dir that should be
+                set under a typical use of that method.
+
+            *   Methods not starting with underscore are intended to be safe
+                to call independently of the input. They should set any
+                property of the class so the method performs an operation
+                completely.
+
+            *   A method which acts on the indicated index if:
+
+                *   Index points to a non-usubeq, or
+                *   Index points to a usubeq which 1-level supeq is a usubeq.
+                and, on the contrary, acts over the biggest supeq having
+                pointed index as urepr, is known as a 'supeq-checker'.
+
+            *   A method which assures that returned or set index points always
+                to an usubeq is known as a 'final-idx-checker'.
+
+            *   A method which assures that operation will not change a base
+                without correcting the correspondent script op is known as a
+                'base-checker'.
+    """
     @debuginit
     def __init__(self, eq0=None, sel_idx0=None, dir0=None, do_overwrite=False):
         # Equation. It must be assured that any reference to self.eq will be
         # always valid.
-        self.eq = copy.deepcopy(eq0) if eq0 is not None else utils.void()
+        self.eq = deepcopy(eq0) if eq0 is not None else utils.void()
         # The index of the *user subeq* (usubeq) where public methods will
         # act. It is typically the selected subeq.
         self.idx = sel_idx0[:] if sel_idx0 is not None else []
@@ -87,21 +123,23 @@ class EditableEq:
         self.ovrwrt = do_overwrite if do_overwrite is not None else False
 
     def _set(self, elem, idx=None):
-        """Replace selection. If replacement is a JUXT-block, it will be
-        replaced as a whole (TJUXTs are used only to build selections).
+        """A 'hard' replacement. If replacement is a JUXT-block, it will be
+        replaced as a whole.
 
-        If *idx* is not specified, it means current selection.
+            *   Not a supeq-checker
+            *   Not a final-idx-checker
+            *   Not a base-checker
 
-        .. note::
-            It is a "hard" replacement, meaning that it does not check for
-            supeqs matching any condition.
+        If *idx* is not specified, it is equivalent to pass self.idx.
+
+        It does not return because replacement is always done in *idx*.
         """
         if idx is None:
             idx = self.idx
 
         # Replace whole eq
         if not idx:
-            self.eq[:] = copy.deepcopy(elem)
+            self.eq[:] = deepcopy(elem)
             return
 
         # Find strict subeq of eq to replace (not that easy in python)
@@ -112,10 +150,14 @@ class EditableEq:
             eqref = eqref[pos]
 
         # Replace
-        eqref[idx[-1]][:] = copy.deepcopy(elem)
+        eqref[idx[-1]][:] = deepcopy(elem)
 
-    def _get_safe_dir(self, dirflag=0, subeq=None):
+    def _get_safe_dir(self, dirflag=0, subeq=None, idx=None):
         """Set direction respecting overwrite mode and subeq being selected.
+
+            *   Not a supeq-checker
+            *   Not final-idx-checker
+            *   base-checker not applicable.
 
         If *dirflag* is:
 
@@ -127,17 +169,23 @@ class EditableEq:
 
         If *subeq* is:
 
-            *   None, it uses subeq pointed by self.idx to check if whether
-                is a void.
+            *   None, it uses subeq pointed by idx to check whether it is a
+                VOID.
             *   0, it is equivalent to pass utils.void().
-            *   ow., it uses passed subequation considered for direction.
+            *   ow., it uses passed subequation to consider returned direction.
 
+        If *idx* is:
+
+            *   None, self.idx is used instead.
+            *   ow., subeq pointed by *idx is considered instead of *subeq*. To
+                use this parameter, *subeq* must be None.
         """
         if self.ovrwrt:
             return utils.ODIR
         if subeq == 0:
             return utils.VDIR
-        s = eqqueries.get(self.idx, self.eq) if subeq is None else subeq
+        s_idx = self.idx if idx is None else idx
+        s = eqqueries.get(s_idx, self.eq) if subeq is None else subeq
         if s == utils.void():
             return utils.VDIR
         if dirflag == 1:
@@ -155,6 +203,8 @@ class EditableEq:
         points to non-usubeq subeq or mentioned supeq does not exist, *idx*
         is returned.
 
+        This function is used by those methods with the tag: supeq-checker.
+
         Case *idx* being None is equivalent to pass self.idx.
         """
         usubeq_idx = self.idx[:] if idx is None else idx[:]
@@ -168,6 +218,12 @@ class EditableEq:
 
         .. note::
             Calling this function never harms. It only acts if necessary.
+
+        This function is used by those methods with the tag: base-checker.
+
+
+        It does no return because replacement, if it is done, does not change
+        eq structure.
 
         :param newbase: The new block which will be used in *idx*.
         :param idx: Index of the element which may be a base. None -> self.idx.
@@ -185,7 +241,16 @@ class EditableEq:
         """Insert a subeq to the right. If subeq is a JUXT-block, a TJUXT-block
         is inserted instead.
 
-        Return the index of inserted subeq (without considering its urepr).
+        *   Not a supeq-checker
+        *   Not a final-idx-checker
+        *   base-checker
+
+        It has sense to call this function when inserting and:
+
+            *   Non-overwrite mode is used, and
+            *   Direction is RDIR.
+
+        It returns the index of insert subeq.
         """
         sel = eqqueries.get(self.idx, self.eq)
         sup = eqqueries.supeq(self.idx, self.eq, True)
@@ -195,6 +260,7 @@ class EditableEq:
             # Note: Checked in doc that insertions after len(L)-1 are allowed
             sup.insert(self.idx[-1] + 1, s_new)
             return self.idx[:-1] + [self.idx[-1] + 1]
+
         elif sel[0] == utils.JUXT:
             # Case: selection is a juxt-block and is not a juxted
             sel.append(s_new)
@@ -210,7 +276,16 @@ class EditableEq:
         """Insert a subeq to the left. If subeq is a JUXT-block, a TJUXT-block
         is inserted instead.
 
-        Return the index of inserted subeq (without considering its urepr).
+        *   Not a supeq-checker
+        *   Not a final-idx-checker
+        *   base-checker
+
+        It has sense to call this function when inserting and:
+
+            *   Non-overwrite mode is used, and
+            *   Direction is LDIR.
+
+        It returns the index of inserted subeq.
         """
         sel = eqqueries.get(self.idx, self.eq)
         sup = eqqueries.supeq(self.idx, self.eq, True)
@@ -233,24 +308,30 @@ class EditableEq:
             return self.idx + [1]
 
     @debug
-    def _replace_integrating(self, idx_eq, s_repl):
-        """If *idx_eq* points to non-usubeq, replace it by *s_repl*. Elif it
-        exists a biggest supeq having pointed usubeq as urepr, replace that.
-        Else, replace pointed usubeq.
+    def _replace_integrating(self, s_repl, idx=None):
+        """Replace a subequation integrating juxteds if appropriated.
+
+        *   supeq-checker
+        *   Not a final-idx-checker
+        *   base-checker
 
         .. note::
-            Do NOT use this method by pointing the urepr of the whole eq.
-            To replace current selection you should use _replace.
+            *   Do NOT use this method by pointing the urepr of the whole eq.
+            *   To replace current selection you should use _replace.
 
         If *s_repl* is a juxt-block JB and actual subeq being replaced is a
         juxted of a juxt-block EJB, juxteds of JB are integrated as juxteds of
         EJB.
 
-        Return the index where subeq was finally replaced (*idx_eq* or supeq)
-        without considering its urepr.
+        If *idx* is None that is equivalent to pass self.idx. Note however that
+        this method should not be used to replace actual selection.
+
+        Return the index of subeq where replacement was finally done (*idx*
+        or supeq's).
         """
         # Choose correct subeq to replace
-        repl_idx = self._get_biggest_subeq_same_urepr(idx_eq)
+        referred_idx = self.idx if idx is None else idx
+        repl_idx = self._get_biggest_subeq_same_urepr(referred_idx)
 
         # This method assumes there is a supeq
         sup = eqqueries.supeq(repl_idx, self.eq, True)
@@ -258,7 +339,7 @@ class EditableEq:
                 or sup[0] != utils.JUXT:
             # Case: No juxteds are integrated
             self._condtly_correct_scriptop(s_repl, repl_idx, sup)
-            sup[repl_idx[-1]][:] = copy.deepcopy(s_repl)
+            sup[repl_idx[-1]][:] = deepcopy(s_repl)
             return repl_idx
 
         # Case: some juxteds will be integrated
@@ -266,48 +347,67 @@ class EditableEq:
         return repl_idx
 
     @debug
-    def replace(self, subeq):
-        """Replace the biggest supeq having selection as urepr if that exists
-        or selected subeq, which is expected to be an usubeq.
+    def _replace(self, subeq, idx=None):
+        """Replace pointed subeq or a supeq.
 
-        It sets index to the urepr of replacement.
+        *   supeq-checker
+        *   final-idx-checker
+        *   base-checker
+
+        If *idx* is None that is equivalent to pass self.idx.
+
+        Return expected index to be selected.
+
+        It should be called in overwrite mode or when inserting if selection
+        is a VOID.
         """
-        repl_idx = self._get_biggest_subeq_same_urepr()
+        repl_idx = self._get_biggest_subeq_same_urepr(idx)
 
-        # Correct script op if needed
+        # Correct script op if needed in the case that repl_idx points to a
+        # base
         self._condtly_correct_scriptop(subeq, repl_idx)
 
         # Replace
         self._set(subeq, repl_idx)
 
         # Select the urepr of replacement
-        self.idx[:] = repl_idx + eqqueries.urepr([], subeq)
-        self.dir = self._get_safe_dir(5, subeq)
+        return repl_idx + eqqueries.urepr([], subeq)
 
-    def empty(self):
-        """Replace by VOID the biggest supeq having selection as urepr if that
-        exists or selected subeq, which is expected to be an usubeq."""
-        self.replace(utils.void())
+    def _empty(self, idx=None):
+        """Replace pointed subeq or supeq by a VOID.
+
+        *   supeq-checker
+        *   final-idx-checker
+        *   base-checker
+
+        It returns the index of inserted VOID.
+        """
+        return self._replace(utils.void(), idx)
 
     def remove_eq(self):
         """Replace the whole eq by a VOID."""
-        self._set(utils.void(), [])
         self.idx[:] = []
+        self._set(utils.void())
         self.dir = self._get_safe_dir(0, 0)
 
     @debug
-    def _vanish_juxted(self):
-        """Vanish (maybe artificially) "selected" juxted. It removes
-        the juxt op if only one juxted is left.
+    def _vanish_juxted(self, idx=None):
+        """Vanish "selected" juxted. It removes the juxt op if only one juxted
+        is left.
+
+        *   Not a supeq-checker
+        *   final-idx-checker
+        *   base-checker
 
         .. note::
-            It does not check supeqs. self.idx must point to a juxted.
+            It does not check supeqs. self.idx MUST point to a juxted.
 
             If the real juxted is a non-usubeq and its urepr is selected,
             change self.idx before calling this function so it points to the
             right juxted.
 
-        It sets self.idx and self.dir.
+        Return index expected to be selected and its direction. That's done
+        that way because final selection is tricky for this operation.
 
         It has sense to call this function if selection is a juxted and
         desired operation is:
@@ -316,239 +416,109 @@ class EditableEq:
             *   Forward delete with dir in (LDIR, VDIR, ODIR).
 
         .. note::
-            Final selection is tricky.
-
-        .. note::
             Implementation notes:
 
-                *   Do NOT use here any clever function modifying the self.idx
-                    if that consider that convenient! Use _set when necessary.
-                *   No need to check for script-ops, it is a juxted.
+                *   Do NOT use here any supeq-checker. Use _set when necessary.
+                *   Pointed subeq cannot be a base because it must be a juxted,
+                    but its juxt-block can.
         """
-        juxtblock = eqqueries.supeq(self.idx, self.eq, True)
-        if len(juxtblock) == self.idx[-1] + 1:
+        j_idx = self.idx[:] if idx is None else idx[:]
+        juxtblock = eqqueries.supeq(j_idx, self.eq, True)
+        if len(juxtblock) == j_idx[-1] + 1:
             # Case: Vanish last juxted
             if self.ovrwrt:
-                # Overwrite mode -> Select next mate in original eq or VOID
-                rmate = eqqueries.mate(self.idx, self.eq, True)[0]
+                # Overwrite mode -> Replace by VOID or select next mate
+                rmate = eqqueries.mate(j_idx, self.eq, True)[0]
                 if rmate == -1:
-                    self._set(utils.void())
-                    return
+                    self._set(utils.void(), j_idx)
+                    return j_idx, self._get_safe_dir()
                 # (!) The other overwrite case is not completed until later
 
             # Normal mode -> Select juxted to the left, prefer RDIR
             if len(juxtblock) > 3:
                 del juxtblock[-1]
-                self.idx[-1] -= 1
+                j_idx[-1] -= 1
             else:
-                juxtblock[:] = copy.deepcopy(juxtblock[1])
-                del self.idx[-1]
+                juxtblock[:] = deepcopy(juxtblock[1])
+                del j_idx[-1]
+                print(repr(j_idx), repr(self.eq))
+                self._condtly_correct_scriptop(juxtblock, j_idx)
 
             if self.ovrwrt:
-                self.idx = rmate
+                return rmate, self._get_safe_dir()
             else:
-                self.idx = eqqueries.urepr(self.idx, self.eq)
-                self.dir = self._get_safe_dir(1)
-            return
+                return (eqqueries.urepr(j_idx, self.eq),
+                        self._get_safe_dir(1, None, j_idx))
 
-        if self.idx[-1] == 1:
+        if j_idx[-1] == 1:
             # Case: Vanish first juxted -> Juxted to the right, prefer LDIR
-            if len(juxtblock) == 3:
-                juxtblock[:] = copy.deepcopy(juxtblock[2])
-                del self.idx[-1]
-            else:
+            if len(juxtblock) > 3:
                 del juxtblock[1]
-            self.idx = eqqueries.urepr(self.idx, self.eq)
-            self.dir = self._get_safe_dir(-1)
-            return
+            else:
+                juxtblock[:] = deepcopy(juxtblock[2])
+                del j_idx[-1]
+                self._condtly_correct_scriptop(juxtblock, j_idx)
+
+            return (eqqueries.urepr(j_idx, self.eq),
+                    self._get_safe_dir(-1, None, j_idx))
 
         # Case: Intermediate juxted
-        del juxtblock[self.idx[-1]]
+        del juxtblock[j_idx[-1]]
         # If dir is RDIR -> Juxted to the left, prefer same DIR.
         # Else -> Juxted to the right (done automatically), prefer same DIR.
         if self.dir == utils.RDIR:
-            self.idx[-1] -= 1
-        self.idx = eqqueries.urepr(self.idx, self.eq)
-        self.dir = self._get_safe_dir(5)
+            j_idx[-1] -= 1
+        return (eqqueries.urepr(j_idx, self.eq),
+                self._get_safe_dir(5, None, j_idx))
 
+    @debug
+    def _flat(self, idx=None):
+        """Remove lop of block pointed by index while leaving its args
+        (joined by a juxt-block if necessary).
 
-    def _remove_selection(eq, idx, dir):
-        """Remove selection and return what must be selected. Direction is only
-        used to define next selection.
+        *   Not a supeq-checker
+        *   Not a final-idx-checker
+        *   base-checker
 
-        This function does nothing if *idx* points to a NEWARG.
+        *idx* can point to any subeq, not necessarily an usubeq.
+
+       It return True if equation was edited. Else, False.
 
         .. note::
-            It has sense to call this function if:
+            It does not edit eq if it is pointed:
 
-            *   Backward delete with dir == 1.
-            *   Forward delete with dir in (-1, 0).
-
-
-        .. note::
-
-            *   *idx* must not point to a NEWARG.
-            *   *dir* must be in (-1, 0, 1). 2 is not a valid value.
-
-        Rules depending on selection:
-
-            *   If it is an uarg or eq, a NEWARG is put in its place, it is
-                selected and direction is set to 0.
-            *   Elif it is a last citizen, after its removal the co-citizen
-                to the left is selected and direction is set to 1.
-            *   Elif it is a first citizen, after its removal the co-citizen to
-                the right is selected and direction is set to -1.
-            *   Else (intermediate citizen), the citizen is removed and:
-
-                *   If direction was 1, the co-citizen to the left is selected
-                    and direction is not changed.
-                *   Else (direction was -1), the co-citizen to the right is
-                    selected and direction is not changed.
-
-        :param eq: An equation.
-        :param idx: Index of current selection.
-        :param dir: Direction of selection. Only values (-1, 0, 1). Must not
-        be 2.
+                *   A symbol (or 0-args op), or
+                *   A juxt-block.
         """
-        # Correct index if the argument of a group is selected
-        if groups.is_grouped(eq, idx):
-            idx -= 1
+        flat_idx = self.idx if idx is None else idx
+        s = eqqueries.get(flat_idx, self.eq)
+        if len(s) == 1 or s[0] in (utils.JUXT, utils.TJUXT):
+            return False
 
-        if not idx:
-            # Case: remove whole eq
-            return remove_eq(eq)
-
-        juxt_idx, otherarg = eqqueries.other_juxt_arg(eq, idx)
-        if juxt_idx < 0:
-            # Case: Remove uarg
-            if scriptops.is_base(eq, idx):
-                # Uarg subcase: idx points to the base of a script
-                # Convert (v)script operator if needed
-                scriptops.update_scriptblock(eq, idx - 1, utils.VOID)
-
-            end = eqqueries.nextsubeq(eq, idx)
-            eq[idx:end] = [utils.VOID]
-            return idx, 0
-
-        # From this point, we know idx points to citizen
-        if otherarg < idx:
-            # Case: Remove last citizen
-            if eqqueries.is_parent_juxt(eq, juxt_idx):
-                return _safely_dissolve_simplejuxtublock(eq, juxt_idx, True)
-
-            end = eqqueries.nextsubeq(eq, juxt_idx)
-            eq[juxt_idx:end] = eq[otherarg:idx]
-            return juxt_idx, 1 if dir else 0
-
-        # From here, selection is a citizen which is not the last one
-        # Low-level hardcore starts... :P
-        juxt_juxt_idx, prev_cocitizen_idx \
-            = eqqueries.other_juxt_arg(eq, juxt_idx)
-        eq[juxt_idx:otherarg] = []
-        if juxt_juxt_idx < 0:
-            # Case: first citizen WAS just removed
-            if eq[idx] != utils.JUXT:
-                idx -= 1
-            return idx, -1
+        validpars = [par for par in s[1:] if par != utils.void()]
+        if not validpars:
+            s[:] = utils.void()
         else:
-            # Case: intermediate citizen WAS just removed and dir was 1
-            if dir == 1:
-                idx = prev_cocitizen_idx
-            elif eq[juxt_idx] != utils.JUXT:
-                # Subcase: Removed citizen WAS before last but one citizen
-                idx -= 1
-            return idx, dir
+            repl_subeq = simpleeqcreator.SimpleEqCreator()
+            for validpar in validpars:
+                repl_subeq.extend(validpar)
+            s[:] = repl_subeq.get_eq()
 
-    def flat(self):
-        pass
-
-
-def flat_block(eq, idx, dir=1):
-    """Flat selection by removing leading op and joining args in a JUXT-ublock.
-    If selection is the arg of a SOLIDGROUP or GROUP, the group op is
-    substituted by a TEMPGROUP or deleted.
-
-    Return final selection and direction.
-
-
-    .. note::
-        It is expected that *idx* points to current selection. In particular,
-        *idx* must not point to a group op.
-
-    .. note::
-        (To guarantee that a call to this function modifies the equation) it
-        is required that *idx* must NOT point to:
-
-            *   A symbol, or
-            *   Op with no args, or
-            *   A JUXT-ublock which is not the arg of a GROUP or SOLIDGROUP.
-        You can use is_flat_block_allowed to check those conditions.
-
-
-    Rules:
-
-        *   If selected ublock is a JUXT-ublock (protected by a group), change
-            the group to a TEMPGROUP.
-        *   Elif selected ublock is a (non-JUXT-ublock) arg of a SOLIDGROUP,
-            delete the SOLIDGROUP.
-        *   Elif leading op of selected ublock only has NEWARG uargs, delete
-            selection and select another subequation of *eq* according to the
-            rules of _remove_selection.
-        *   Elif selected ublock has one uarg (different than NEWARG), replace
-            selection by that uarg and select it with the same direction as
-            originally. If originally selected ublock was a citizen, do the
-            replacement with a temporary group if uarg is a JUXT-ublock.
-        *   Else, join every non-NEWARG uarg of selected ublock in a
-            JUXT-ublock and replace selection by that JUXT-ublock. In the case
-            that some uargs were JUXT-ublocks, integrate their citizens as
-            co-citizens of the created JUXT-ublock, in the expected order.
-            Select the JUXT-ublock without modifying original direction. If
-            originally selected ublock was a citizen, do the replacement with
-            a temporary group.
-    """
-    if eq[idx] == utils.JUXT:
-        # It is required that if idx points to a JUXT it is preceded by a group
-        eq[idx-1] = utils.TEMPGROUP
-        return idx, dir
-
-    if groups.is_sgrouped(eq, idx):
-        return groups.ungroup(eq, idx), dir
-
-    arg_idx = idx + 1
-    vargs = []  # list of valid args
-    for ignored in range(eq[idx].n_args):
-        next_arg_idx = eqqueries.nextsubeq(eq, arg_idx)
-        if eq[arg_idx] != utils.VOID:
-            vargs.append(eq[arg_idx:next_arg_idx])
-        arg_idx = next_arg_idx
-
-    if not vargs:
-        # Subcase: No argument is valid, delete the entire operator.
-        return _remove_selection(eq, idx, dir)
-
-    # It is OK if some of the vargs are groups or solid groups.
-    subeq_c = simpleeqcreator.SimpleEqCreator()
-    for varg in vargs:
-        subeq_c.extend(varg)
-    new_idx = _replace_tgrouped(eq, idx, subeq_c.get_eq())
-    return new_idx + 1 if groups.is_group(eq[new_idx]) else new_idx, dir
-
-
-def is_flat_block_allowed(eq, idx):
-    return not isinstance(eq[idx], str) and eq[idx].n_args != 0 \
-            and (eq[idx] != utils.JUXT or groups.is_pgrouped(eq, idx)
-                 or groups.is_sgrouped(eq, idx))
+        self._condtly_correct_scriptop(s, flat_idx)
+        return True
 
 
 def flat_external_block(eq, idx, dir=1, remove_mode=0):
     """Core function to flat the least external block of selection
     (essentially remove the leading operator and join uargs in JUXT-ublock).
-    It also ungroups in some circunstances.
+    It also ungroups in some circumstances.
 
     Parameter *remove_mode* is expected to be:
 
-        *   If the call to this function is the consequence of deleting, 1.
-        *   If the call to this function is the consequence of suppression, -1.
+        *   If the call to this function is the consequence of backward
+            deleting, 1.
+        *   If the call to this function is the consequence of forward
+            deleting, -1.
         *   Otherwise (special key-combination), 0.
 
     .. note::
@@ -563,13 +533,6 @@ def flat_external_block(eq, idx, dir=1, remove_mode=0):
         Note that this operation has no sense in those cases and you should
         leave equation unmodified even if the user asked explicitly to perform
         the operation.
-
-    .. note::
-        If selection is the argument of a group, it is guaranteed that the
-        group block will still be present and unmodified in the final equation
-        and its argument still selected. Note that in that case, rules are
-        applied as if the whole group block were virtually selected (which is
-        not allowed by selection rules) instead of its argument.
 
     Rules:
 
