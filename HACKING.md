@@ -474,6 +474,8 @@ The **user nesting level** (**ulevel**) of a N-ulevel usubeq of a subeq is the
 A **faithful subequation** is a subequation that has one, and only one,
 0-ulevel usubeq.
 
+**Rule**: Every symbol is faithful.
+
 The **user representative** (**urepr**) of a faithful subequation FS is the 0
 -ulevel usubeq of FS.
 
@@ -489,6 +491,10 @@ A **faithful operator** is an operator FOP such that:
 *   It is a uop, or
 *   It has one arg.
 
+A **filter** is a faithful op which is not a user op and has a user arg.
+
+**Rule**: There are no filters in visual equation (maybe in a future (?)).
+
 > **Properties**:
 >
 >1. If FS is a faithful subeq and FS is the parameter of an arg of a faithful
@@ -499,9 +505,11 @@ A **faithful operator** is an operator FOP such that:
 
 **Rule**: Every operator of visualequation is faithful.
 
-> **Property**:
+> **Properties**:
 >
-> Any block is faithful.
+>1. Every subeq is faithful.
+>
+>1. The only non-user blocks are GOP-blocks.
 
 ## Juxtaposing subequations
 Visual Equation uses some operators named juxts to display subequations
