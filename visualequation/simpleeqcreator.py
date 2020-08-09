@@ -82,8 +82,8 @@ class SimpleEqCreator:
         It supposes that eq has been already initialized.
         """
         # Marginal case: Set initial eq as a juxted if it was not a JUXT-block
-        # self.eq will have only one juxted here, but it will have at least 2
-        # before this function returns
+        # self.eq will have only one juxted after this block, but it will have
+        # at least 2 when this function returns
         if self.eq[0] != utils.JUXT:
             self.eq[:] = [utils.JUXT, deepcopy(self.eq)]
             self.log[:] = [self.LogEntry(False, 1)]
@@ -98,11 +98,15 @@ class SimpleEqCreator:
             self.eq.append(deepcopy(subeq))
         return [next_juxted_pos]
 
-    def extend(self, subeq):
+    def append(self, subeq, include_voids=True):
         """Extend current equation, or initialize it.
 
-        Return the index in eq of *subeq* if it was not a JUXT-block. Else,
-        it returns the index of the first juxted of *subeq*.
+        Return:
+
+            *   If *include_voids* is False and subeq is a VOID, -1.
+            *   Elif *subeq* was not a JUXT-block subeq, the index in eq of
+                *subeq*.
+            *   Else, the index of the first juxted of *subeq*.
 
         If the equation was not initialized, first call to this method will
         initialize the original equation to subeq.
@@ -119,15 +123,48 @@ class SimpleEqCreator:
                     that first call.
             In the specified case, originally returned value would be [] and
             after the second call previously inserted subequation will be in
-            [1]. You can 1. Relay on mentioned behavior or 2. Call method
+            [1]. You can: 1. Relay on the mentioned behavior or 2. Call method
             get_idx (with *subeq_entry* equal to 0) to obtain the correct
             value.
         """
+        if not include_voids and subeq == utils.void():
+            return -1
+
         if not self.log:
             # eq not yet initialized
             return self._init(subeq)
         else:
             return self._update(subeq)
 
+    def extend(self, subeq_list, include_voids=True):
+        """Given a list of subeqs, append all of them.
+
+        Return the number of inserted subeqs.
+        """
+        n_inserted_subeqs = 0
+        for s in subeq_list:
+            if include_voids or s != utils.void():
+                self.append(s)
+                n_inserted_subeqs += 1
+        return n_inserted_subeqs
+
     def get_eq(self):
         return deepcopy(self.eq)
+
+    def n_inserted_subeqs(self):
+        return len(self.log)
+
+    def n_juxteds(self):
+        """Return number of juxteds.
+
+        Marginal cases:
+
+            *   Non-initialized eq: return 0.
+            *   Equation was just initialized (by ctor or not) with a
+                non-JUXT-block subeq: return 1.
+        """
+        if not self.log:
+            return 0
+        if self.eq[0] != utils.JUXT:
+            return 1
+        return len(self.eq) - 1

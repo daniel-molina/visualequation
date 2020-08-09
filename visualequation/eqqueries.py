@@ -20,6 +20,11 @@ Symbols: [symb]
 Blocks:  [lop, par1, par2, ..., parn]
 
 Example: [JUXT, ["2"], ["x"], [FRAC, ["c"], ["d"]]]
+
+.. note::
+    This module was coded to manage filters. However, they are not allowed.
+    You could drop support for them in the future at this module-level.
+    Note that there can be still GOP-blocks inside GOP-blocks.
 """
 from .symbols import utils
 
@@ -296,6 +301,13 @@ def isjuxtblock(subeq, idx=None):
     return s[0] in (utils.JUXT, utils.TJUXT)
 
 
+def isjuxted(idx, eq):
+    """Return whether a subeq is a juxted. If a supeq exist, you can use
+    isjuxtblock instead."""
+    if not idx:
+        return False
+    return isjuxtblock(eq, idx[:-1])
+
 def isusubeq(subeq, idx=None):
     """Return whether an element is a usubeq.
 
@@ -319,7 +331,7 @@ def urepr(idx, eq, retsub=False):
     It supposes that symbols are usubeqs and non-user ops have only one arg.
 
     *eq* can be a subeq since user representation does not depend on eq. If you
-    do that and *retsub* is False, remember to join the complementary index to
+    do that and *retsub* is False, remember to join a complementary index to
     the left of the output if you want it to refer to a superequation of *eq*.
     """
     elem = get(idx, eq)
