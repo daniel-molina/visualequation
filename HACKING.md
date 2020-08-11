@@ -751,37 +751,40 @@ the lop-block is flatted. (TODO: Document better)
 Reserved by readline:
 C-@, C-], C-\_, C-?
 M-C-\[, M-C-], M-C-?
-M-space, M-#, M-&, M-* (requisitioned), M--, M-., M-digit, M-<, M->, M-?, M-\,
-M-~ (requisitioned), M-\_ (requisitioned).
+M-space, M-#, M-&, M-\* (requisitioned), M--, M-., M-digit, M-<, M->, M-?, 
+M-\, M-~ (requisitioned), M-\_ (requisitioned).
 
 If both C-x and C-M-x versions are provided, C-x do an insert and M-x do an
-insert substituing current selection in the first arg.
+insert substituting current selection in the first arg.
 
-*   Insert a function (C-%, M-%, C-M-%): First time is cosinus, then sinus
+*   Insert a function (C-%, M-%, M-C-%): First time is cosinus, then sinus
     then... Diferent forms are: Simple (valid for everone), functions with
     arguments, the same but substituting.
-*   Insert a root (M-%, C-M-%): First time is a square root, next time is
+*   Insert a root (M-%, M-C-%): First time is a square root, next time is
     generic.
 *   Modify subequation by another similar (M-@).
 *   Group and ungroup (SHIFT+RETURN), (C-SHIFT-RETURN).
-*   Insert a sumatory (M-+, C-M-+): Next times modify the number of args.
-*   Insert a productory (M-\*, C-M-\*): Next times modify the number of args.
-*   Insert an integral (M-$, C-M-$):  Next times modify the number of args.
+*   Insert a sumatory (M-+, M-C-+): Next times modify the number of args.
+*   Insert a productory (M-\*, M-C-\*): Next times modify the number of args.
+*   Insert an integral (M-$, M-C-$):  Next times modify the number of args.
 *   Insert a fraction (C-/, M-/)
-*   Insert an equal-like symbol (C-=, M-=, C-M-=). 
+*   Insert an equal-like symbol (C-=, M-=, M-C-=). 
 *   Insert a "less than"-like (C-<)
 *   Insert a "bigger than"-like (C->) 
-*   Insert a parenthesis (M-(, C-M-(): It can be acelerated providing a \[...
-*   Insert a matrix (M-), C-M-)):
-*   Insert an equation system (M-{, C-M-{). Next times modify the format. A
+*   Insert a parenthesis (M-(, M-C-(): It can be acelerated providing a \[...
+*   Insert a matrix (M-), M-C-)):
+*   Insert an equation system (M-{, M-C-{). Next times modify the format. A
     digit modifies the number of equations.
-*   Insert an underbrace, overbrace... (M-}, C-M-}).
+*   Insert an underbrace, overbrace... (M-}, M-C-}).
 *   Insert an arrow (C-~)
-*   Insert a hat-like (M-~, C-M-~)
+*   Insert a hat-like (M-\_, M-C-\_)
+*   Insert a hat-like of variable size (M-~, M-C-~)
 *   Insert a small operator (C-*)
-*   Insert a color (M-&, C-M-&)
+*   Insert a color (M-&, M-C-&)
 *   Insert a colored background (C-!, M-!)
-*   Insert a special text (M-#, C-M-#)
+*   Insert a special text (C-#): It is a symbol-like operator because a
+    windowed dialog will always appear and modification of the text will
+    require a special dialog.
 
 ### Advanced movements
 
@@ -865,21 +868,27 @@ different equation. It will be the last one of the history. It can be both
 an a anonymous or named save.
 
 open-equation (C-o)
-    Quick-save current equation and choose a previously saved equation in a
-    window for edition.
-    This is the windowed version of reverse-search-history explained below.
-accept-line (C-m)
-    Save current equation as a new equation and start a new empty one. This
-    is a fast "Save as" that does not specify an equation name nor categories,
-    but the equation will be uniquely identified anyway.
-accept-line-with-name (C-j)
+    This command is managed completely with a graphical interface.
+    If equation being edited has modifications, it is asked if it want to be
+    saved as a new equation or, if applicable, overwriting its previous entry
+    in the history list. Then, choose an equation from the history with
+    different search facilities and fetch it. Summary:
+
+*   If it currently has already a place in the history:
+    *   The user is asked whether discarding modifications, overwrite or save
+        as a new equation.
+*   Else:
+    *   The user is asked whether discarding the equation or save as a new
+        equation.
+    
+accept-line (C-j, C-m)
     This is a VE extension of accept-line (accept-line is also bounded to
-    C-j by default in readline). This a full non-windowed version of "Save as".
+    C-j by default in readline). This a non-windowed version of "Save as":
     Specify a name and save current equation as a new equation with that name.
-    It is possible to specify a category or subcategory by introducing the name
-    in the form `category/name` or `category/subcategory/name`. To accept the
+    It is possible to specify a category by introducing it separated by slashes
+    in the form `[category[/subcategory[/...]]/]name`. To accept the
     name press again C-j or C-m or RETURN.
-    C-j acts differently while searching in the history.
+    **Note**: C-j acts differently while searching in the history.
 previous-history (C-p)
     Quick-save displayed equation and fetch the previous equation from the
     history list, moving back in the list. 
@@ -1166,10 +1175,18 @@ skip-csi-sequence
       instead of inserting stray characters into the  editing  buffer.
       This is unbound by default, but usually bound to ESC-[.
 insert-comment (M-#)
-      Without  a  numeric  argument, the equation is saved in the
-      history list and new equation is started. With a numeric
-       argument, it is equivalent to accept-line command.
-      
+    Save current equation at the end of the history list (as a new equation)
+    and start editing a new empty equation. This is a fast "Save as... + New" 
+    that does not specify an equation name nor categories when saving, but the
+    equation will be uniquely identified anyway. With a numeric argument, it is
+    equivalent to non-windowed "Save as..." command.  
+overwrite-maybe (M-C-#)
+    This is a VE extension.
+    If equation already form part of the history, overwrite it entry. Else,
+    it is equivalent to insert-comment. With a numeric argument you can modify
+    previous name and categories. Use at least one slash to discard previous 
+    categories. `/newname` will rename equation as newname and will remove any
+    category it had.
 dump-functions
       Print  all  of the functions and their key bindings to the read‐
       line output stream.  If a numeric argument is supplied, the out‐
