@@ -672,10 +672,12 @@ RIGHT (slow, exhaustive and redundant):
     of the function implementing this behaviour.
 
 #### Longer movements
+**Note**: Key Control is preferred for words instead of Meta in clever commands
+since they are commonly used by desktop applications.
 
-They are: M-LEFT and M-RIGHT.
+They are: C-LEFT and C-RIGHT.
 
-*   If DIR is LDIR/RDIR, M-RIGHT/M-LEFT whill change direction to RDIR/LDIR.
+*   If DIR is LDIR/RDIR, C-RIGHT/C-LEFT whill change direction to RDIR/LDIR.
 *   Else, select the mate to the left/right.
 *   Marginal case: If it is the first/last mate, choose the last/first mate.
 *   Successive call to one of both commands will remember N-mate level of the
@@ -690,9 +692,9 @@ RETURN:
 *   Select supeq of current selection.
 *   Do not change dir unless selection was a VOID.
 
-SHIFT-RETURN:
+SHIFT-RETURN/C-SHIFT-RETURN:
 
-*   ??
+*   Group/ungroup.
 
 SHIFT-LEFT, SHIFT-RIGHT:
 
@@ -705,8 +707,8 @@ SHIFT-LEFT, SHIFT-RIGHT:
 
 #### View size
 
-*   Increase size of equation for edition (C-+)
-*   Decrease size of equation for edition (C--)
+*   Increase size of equation for edition ()
+*   Decrease size of equation for edition ()
 
 #### Manipulations
 
@@ -736,17 +738,21 @@ the lop-block is flatted. (TODO: Document better)
 *   Transpose subeq backward (SHIFT-TAB): Swap positions of current selection
     and its position with the mate the right instead, leaving original
     selection selected and with LDIR.
-*   Transpose supeq forward (M-TAB): Swap positions of supeq SUP of current
+
+Better avoid this key combinations. Maybe a desktop has them reserved and they
+are quite advanced so a user will usually be interested in equivalent key
+combinations explained below.
+*   Transpose supeq forward (C-TAB): Swap positions of supeq SUP of current
     selection and the mate to the right of SUP, leaving original selection
     selected. Exception: If LDIR, swap position with the mate the left of SUP 
     instead, leaving original selection selected and with LDIR.
-*   Transpose supeq backward (M-SHIFT-TAB): Swap positions of supeq SUP of
+*   Transpose supeq backward (C-SHIFT-TAB): Swap positions of supeq SUP of
     current selection and the mate to the left of SUP, leaving original 
     selection selected. Exception: If LDIR, swap position with the mate the 
     right of SUP instead, leaving original selection selected and with LDIR.
 
-*   M-DEL
-*   M-BACKSPACE
+*   C-DEL
+*   C-BACKSPACE
 
 Reserved by readline:
 C-@, C-], C-\_, C-?
@@ -757,21 +763,22 @@ M-\, M-~ (requisitioned), M-\_ (requisitioned).
 If both C-x and C-M-x versions are provided, C-x do an insert and M-x do an
 insert substituting current selection in the first arg.
 
-*   Insert a function (C-%, M-%, M-C-%): First time is cosinus, then sinus
-    then... Diferent forms are: Simple (valid for everone), functions with
+*   Insert a function (C-,, M-,, M-C-,): First time is cosinus, then sinus
+    then... Different forms are: Simple (valid for everone), functions with
     arguments, the same but substituting.
 *   Insert a root (M-%, M-C-%): First time is a square root, next time is
     generic.
 *   Modify subequation by another similar (M-@).
 *   Group and ungroup (SHIFT+RETURN), (C-SHIFT-RETURN).
-*   Insert a sumatory (M-+, M-C-+): Next times modify the number of args.
-*   Insert a productory (M-\*, M-C-\*): Next times modify the number of args.
-*   Insert an integral (M-$, M-C-$):  Next times modify the number of args.
-*   Insert a fraction (C-/, M-/)
-*   Insert an equal-like symbol (C-=, M-=, M-C-=). 
+*   Insert a sumatory (C-+, M-+, M-C-+): Next times modify the number of args.
+*   Insert a productory (C-*, M-\*, M-C-\*).
+*   Insert an integral (C-$, M-$, M-C-$)..
+*   Insert a fraction (M-/, M-C-/)
+*   Insert an equal-like symbol (C-=).
+*   Insert a multi-line equation (M-=, M-C-=) 
 *   Insert a "less than"-like (C-<)
 *   Insert a "bigger than"-like (C->) 
-*   Insert a parenthesis (M-(, M-C-(): It can be acelerated providing a \[...
+*   Insert a parenthesis (M-(, M-C-(): It can be accelerated providing a \[...
 *   Insert a matrix (M-), M-C-)):
 *   Insert an equation system (M-{, M-C-{). Next times modify the format. A
     digit modifies the number of equations.
@@ -779,12 +786,13 @@ insert substituting current selection in the first arg.
 *   Insert an arrow (C-~)
 *   Insert a hat-like (M-\_, M-C-\_)
 *   Insert a hat-like of variable size (M-~, M-C-~)
-*   Insert a small operator (C-*)
+*   Insert a small operator (C--)
 *   Insert a color (M-&, M-C-&)
 *   Insert a colored background (C-!, M-!)
-*   Insert a special text (C-#): It is a symbol-like operator because a
+*   Insert a special text (C-.): It is a symbol-like operator because a
     windowed dialog will always appear and modification of the text will
-    require a special dialog.
+    require a special dialog. Options M-. and M-C-. may be considered with
+    enough checkings.
 
 ### Advanced movements
 
@@ -849,7 +857,7 @@ forward-word (M-f)
 backward-word (M-b)
     Counterpart of forward-word.
 clear-screen (C-l)
-    (Quick) Save current equation. If it was not already saved, do a "Save as".
+    Undecided.
 
 
 ### Advanced editions
@@ -867,6 +875,12 @@ as a new "anonymous" equation as the last equation of the history.
 different equation. It will be the last one of the history. It can be both
 an a anonymous or named save.
 
+save-as (C-SHIFT-s)
+    Save current equation as a new equation, possibly specifying a name and
+    categories in a window.
+save (C-s)
+    If equation being edited was never saved it is equivalent to save-as.
+    Else, it overwrites saved equation with this one.
 open-equation (C-o)
     This command is managed completely with a graphical interface.
     If equation being edited has modifications, it is asked if it want to be
@@ -882,34 +896,50 @@ open-equation (C-o)
         equation.
     
 accept-line (C-j, C-m)
-    This is a VE extension of accept-line (accept-line is also bounded to
-    C-j by default in readline). This a non-windowed version of "Save as":
+    This a non-windowed version of "Save as".
     Specify a name and save current equation as a new equation with that name.
     It is possible to specify a category by introducing it separated by slashes
     in the form `[category[/subcategory[/...]]/]name`. To accept the
     name press again C-j or C-m or RETURN.
     **Note**: C-j acts differently while searching in the history.
+insert-comment (M-#)
+    Save current equation at the end of the history list (as a new equation)
+    and start editing a new empty equation. This is a fast accept-line such 
+    that it does not ask for an equation name nor categories when saving.
+    However, the equation will be uniquely identified anyway. With a numeric 
+    argument, it is equivalent to accept-line.
+save-no-window (M-C-#)
+    This is a VE extension. It acts like command save (C-s).
+    If equation already form part of the history, overwrite its entry. Else,
+    it is equivalent to insert-comment. With a numeric argument you can specify
+    a name and categories. If you are renaming an existing equation and
+    you want to discard previous categories, just precede the name by a slash.
 previous-history (C-p)
-    Quick-save displayed equation and fetch the previous equation from the
+    save-no-window displayed equation and fetch the previous equation from the
     history list, moving back in the list. 
 next-history (C-n)
-    Quick-save displayed equation and fetch the next equation from the history 
-    list, moving forward in the list.
+    save-no-window displayed equation and fetch the next equation from the 
+    history list, moving forward in the list.
 beginning-of-history (M-<)
-    Quick-save displayed equation and fetch to the first equation in the
+    save-no-window displayed equation and fetch to the first equation in the
     history.
 end-of-history (M->)
-    Quick-save displayed equation and fetch the last equation of the history.
+    save-no-window displayed equation and fetch the last equation of the 
+    history.
 reverse-search-history (C-r)
-    Quick-save current equation and search backward starting at the current
+    save-no-window current equation and search backward starting at the current
     equation and moving up through the history as necessary. This is an 
     incremental search. You can introduce part of the name, category or other 
     fields (TODO: specify). You can fetch the equation with C-j. Any
     other key combination will fetch the equation and then apply the command
     to the equation.
-forward-search-history
-    Not used. C-s is used to save current equation with a window. There, it is
-    possible to give it a name and a category. That is a "Save as...".
+forward-search-history (M-C-R)
+    Counter part of reverse-search-history. C-s is not used because that is a
+    command with a long tradition in desktop applications to save files. If
+    we allow key-bindings to be configurable, this will be one of the first
+    commands supported.
+    **Note**: By default, M-C-R is assigned to revert-line along with M-R in
+    readline.
 non-incremental-reverse-search-history (Not implemented!)
     Replace current equation by some previous equation of the history and
     discard any edition information of previous equation (so command undo will 
@@ -1174,19 +1204,6 @@ skip-csi-sequence
       have  no  effect  unless explicitly bound to a readline command,
       instead of inserting stray characters into the  editing  buffer.
       This is unbound by default, but usually bound to ESC-[.
-insert-comment (M-#)
-    Save current equation at the end of the history list (as a new equation)
-    and start editing a new empty equation. This is a fast "Save as... + New" 
-    that does not specify an equation name nor categories when saving, but the
-    equation will be uniquely identified anyway. With a numeric argument, it is
-    equivalent to non-windowed "Save as..." command.  
-overwrite-maybe (M-C-#)
-    This is a VE extension.
-    If equation already form part of the history, overwrite it entry. Else,
-    it is equivalent to insert-comment. With a numeric argument you can modify
-    previous name and categories. Use at least one slash to discard previous 
-    categories. `/newname` will rename equation as newname and will remove any
-    category it had.
 dump-functions
       Print  all  of the functions and their key bindings to the read‐
       line output stream.  If a numeric argument is supplied, the out‐
