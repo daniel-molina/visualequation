@@ -856,31 +856,63 @@ it is finished.
 
 #### Commands for manipulating the history
 
-accept-line (C-j, C-m)
-    Save equation in the history list and start a new one. C-j acts differently
-    while searching in the history.
+**Quick-save** means that if equation being edited was previously saved, it is
+overwritten and its position in the history is not moidified. Else, it is saved
+as a new "anonymous" equation as the last equation of the history.
+
+**Save as (a new equation)** means that equation being edited is saved as a
+different equation. It will be the last one of the history. It can be both
+an a anonymous or named save.
+
+open-equation (C-o)
+    Quick-save current equation and choose a previously saved equation in a
+    window for edition.
+    This is the windowed version of reverse-search-history explained below.
+accept-line (C-m)
+    Save current equation as a new equation and start a new empty one. This
+    is a fast "Save as" that does not specify an equation name nor categories,
+    but the equation will be uniquely identified anyway.
+accept-line-with-name (C-j)
+    This is a VE extension of accept-line (accept-line is also bounded to
+    C-j by default in readline). This a full non-windowed version of "Save as".
+    Specify a name and save current equation as a new equation with that name.
+    It is possible to specify a category or subcategory by introducing the name
+    in the form `category/name` or `category/subcategory/name`. To accept the
+    name press again C-j or C-m or RETURN.
+    C-j acts differently while searching in the history.
 previous-history (C-p)
-    Fetch the previous equation from the history list, moving back in the list.
+    Quick-save displayed equation and fetch the previous equation from the
+    history list, moving back in the list. 
 next-history (C-n)
-    Fetch the next equation from the history list, moving forward in the list.
+    Quick-save displayed equation and fetch the next equation from the history 
+    list, moving forward in the list.
 beginning-of-history (M-<)
-    Move to the first equation in the history.
+    Quick-save displayed equation and fetch to the first equation in the
+    history.
 end-of-history (M->)
-    Move to the end of the input history, i.e., the equation currently being entered.
+    Quick-save displayed equation and fetch the last equation of the history.
 reverse-search-history (C-r)
-    Search backward starting at the current equation and moving up through 
-    the history as necessary. This is an incremental search.
-forward-search-history (C-s)
-    Search forward starting at the current line and moving down
-    through the history as necessary. This is an incremental
-    search.
-non-incremental-reverse-search-history (M-p)
-    Search backward through the history starting at the current line
-    using  a  non-incremental  search  for  a string supplied by the
-    user.
-non-incremental-forward-search-history (M-n)
-    Search forward  through  the  history  using  a  non-incremental
-    search for a string supplied by the user.
+    Quick-save current equation and search backward starting at the current
+    equation and moving up through the history as necessary. This is an 
+    incremental search. You can introduce part of the name, category or other 
+    fields (TODO: specify). You can fetch the equation with C-j. Any
+    other key combination will fetch the equation and then apply the command
+    to the equation.
+forward-search-history
+    Not used. C-s is used to save current equation with a window. There, it is
+    possible to give it a name and a category. That is a "Save as...".
+non-incremental-reverse-search-history (Not implemented!)
+    Replace current equation by some previous equation of the history and
+    discard any edition information of previous equation (so command undo will 
+    not work). Equation taken is searched backward through the history starting
+    at the current equation, using a non-incremental search for a string 
+    supplied by the user. To accept the input, press RETURN, C-j or C-m. 
+    To abort press BACKSPACE, a backward-delete-char command or an abort 
+    command.
+    No-Implementation note: I cannot find a way to like this command! I do not
+    have any reason to implement it.
+non-incremental-forward-search-history (Not implemented!)
+    The counterpart of non-incremental-reverse-search-history.
 yank-nth-arg (M-C-y)
     Insert  the  first argument to the previous command (usually the
     second word on the previous line) at point.  With an argument n,
@@ -972,7 +1004,7 @@ Code equivalence:
 *   y, Y -> upsilon, Upsilon (**)
 *   z, Z -> zeta, Z 
 
-quoted-insert-extra (M-q):
+quoted-insert-extra (M-C-q):
       This command supplies the missing greek letters of quoted-insert (C-q). 
       Assigned key combination is not used in readline by default.
       If next input is an alphanumeric character not listed in the list below,
@@ -981,9 +1013,7 @@ quoted-insert-extra (M-q):
       except for some letters which have a variant. In that case, it is
       equivalent to pass a positive numeric argument but the variant is used
       for the insertion instead.
-      If next input is a number, the number is introduced. (That is useful to 
-      introduce several times a number. e.g, to introduce 3 ten times type: 
-      M-1 0 C-q 3).
+      If next input is a number, the number is introduced.
 
 Code equivalence:
 
@@ -1025,175 +1055,142 @@ capitalize-word (M-c)
       Capitalize the current (or following) word.  With a negative ar‐
       gument, capitalize the previous word, but do not move point.
 overwrite-mode
-    Not used. A similar (gedit-like) behavior can be obtained with INSERT.
-    See above.
+    A similar behavior (gedit-like) can be obtained with INSERT. See above.
 
-Killing and Yanking
+#### Killing and Yanking
+kill-line (C-k)
+      Kill the text from point to the end of the line.
+backward-kill-line (C-x Rubout)
+      Kill backward to the beginning of the line.
+unix-line-discard (C-u)
+      Kill backward from point to the  beginning  of  the  line.   The
+      killed text is saved on the kill-ring.
+kill-word (M-d)
+      Kill from point the end of  the  current  word,  or  if  between
+      words,  to  the  end  of the next word.  Word boundaries are the
+      same as those used by forward-word.
+backward-kill-word (M-Rubout)
+      Kill the word behind point.  Word boundaries  are  the  same  as
+      those used by backward-word.
+unix-word-rubout (C-w)
+      Kill  the  word behind point, using white space as a word bound‐
+      ary.  The killed text is saved on the kill-ring.
+delete-horizontal-space (M-\)
+    If selection is a parameter, remove any juxted which may be
+    a VOID. Else, flat the lop-block.
+kill-region (Maybe we bound it even if it is not a default of readline)
+    Kill the text between the point and  mark  (saved  cursor  posi‐
+    tion).  This text is referred to as the region.
+copy-region-as-kill (Maybe we can reserve a key combination)
+    Copy the text in the region to the kill buffer.
+yank (C-y)
+    Yank the top of the kill ring into the buffer at point.
+yank-pop (M-y)
+    Rotate  the kill ring, and yank the new top.  Only works follow‐
+    ing yank or yank-pop.
+#### Numeric Arguments
+digit-argument (M-0, M-1, ..., M--)
+  Add this digit to the argument already accumulating, or start  a
+  new argument. M-- starts a negative argument.
 
-   #### Killing and Yanking
-   kill-line (C-k)
-          Kill the text from point to the end of the line.
-   backward-kill-line (C-x Rubout)
-          Kill backward to the beginning of the line.
-   unix-line-discard (C-u)
-          Kill backward from point to the  beginning  of  the  line.   The
-          killed text is saved on the kill-ring.
-   kill-whole-line
-          Kill  all  characters on the current line, no matter where point
-          is.
-   kill-word (M-d)
-          Kill from point the end of  the  current  word,  or  if  between
-          words,  to  the  end  of the next word.  Word boundaries are the
-          same as those used by forward-word.
-   backward-kill-word (M-Rubout)
-          Kill the word behind point.  Word boundaries  are  the  same  as
-          those used by backward-word.
-   unix-word-rubout (C-w)
-          Kill  the  word behind point, using white space as a word bound‐
-          ary.  The killed text is saved on the kill-ring.
-   unix-filename-rubout
-          Kill the word behind point, using  white  space  and  the  slash
-          character  as  the word boundaries.  The killed text is saved on
-          the kill-ring.
-   delete-horizontal-space (M-\)
-          If selection is a parameter, remove any juxted which may be
-          a VOID. ELse, flat the lop-block.
-   kill-region (Maybe we can reserve a key combination)
-          Kill the text between the point and  mark  (saved  cursor  posi‐
-          tion).  This text is referred to as the region.
-   copy-region-as-kill (Maybe we can reserve a key combination)
-          Copy the text in the region to the kill buffer.
-   yank (C-y)
-          Yank the top of the kill ring into the buffer at point.
-   yank-pop (M-y)
-          Rotate  the kill ring, and yank the new top.  Only works follow‐
-          ing yank or yank-pop.
-   #### Numeric Arguments
-   digit-argument (M-0, M-1, ..., M--)
-          Add this digit to the argument already accumulating, or start  a
-          new argument.  M-- starts a negative argument.
-   universal-argument
-          This  is another way to specify an argument.  If this command is
-          followed by one or more digits, optionally with a leading  minus
-          sign,  those digits define the argument.  If the command is fol‐
-          lowed by digits, executing universal-argument again ends the nu‐
-          meric argument, but is otherwise ignored.  As a special case, if
-          this command is immediately followed by a character that is nei‐
-          ther a digit or minus sign, the argument count for the next com‐
-          mand is multiplied by four.  The  argument  count  is  initially
-          one,  so  executing this function the first time makes the argu‐
-          ment count four, a second time makes the argument count sixteen,
-          and so on.
-   #### Completing
-   complete
-    Not used. Key reserved for other command described above.
-   possible-completions (M-?)
-          List  the  possible  completions of the text before point.  When
-          displaying completions, readline sets the number of columns used
-          for  display to the value of completion-display-width, the value
-          of the environment variable COLUMNS, or  the  screen  width,  in
-          that order.
-   insert-completions (M-*)
-          Insert  all completions of the text before point that would have
-          been generated by possible-completions.
-   menu-complete
-          Similar to complete, but replaces the word to be completed  with
-          a  single match from the list of possible completions.  Repeated
-          execution of menu-complete steps through the  list  of  possible
-          completions,  inserting  each  match in turn.  At the end of the
-          list of completions, the bell is rung (subject to the setting of
-          bell-style) and the original text is restored.  An argument of n
-          moves n positions forward in the list of matches; a negative ar‐
-          gument may be used to move backward through the list.  This com‐
-          mand is intended to be bound to TAB, but is unbound by default.
-   menu-complete-backward
-          Identical to menu-complete, but moves backward through the  list
-          of  possible  completions,  as if menu-complete had been given a
-          negative argument.  This command is unbound by default.
-   delete-char-or-list
-          Deletes the character under the cursor if not at  the  beginning
-          or  end  of  the  line (like delete-char).  If at the end of the
-          line, behaves identically to possible-completions.
-   #### Keyboard Macros
-   start-kbd-macro (C-c ()
-          Begin saving the characters  typed  into  the  current  keyboard
-          macro.
-   end-kbd-macro (C-c ))
-          Stop saving the characters typed into the current keyboard macro
-          and store the definition.
-   call-last-kbd-macro (C-c e)
-          Re-execute the last keyboard macro defined, by making the  char‐
-          acters  in  the  macro  appear  as  if  typed  at  the keyboard.
-          print-last-kbd-macro () Print the last keyboard macro defined in
-          a format suitable for the inputrc file.
+#### Completing
+complete
+    Not used. Using menu-complete instead with its key binding instead.
+possible-completions (M-?)
+    List the possible variations of the selected subequation. You can choose
+    one using the cursor keys and accept it with RETURN, C-j or C-m. To
+    abort, use ESC or a key binding associated to abort.
+insert-completions
+    Not used. M-* used to introduce productories instead.
+menu-complete (C-i)
+    Replace selection with a variation. Repeated execution of the command steps
+    through the list of possible variations, inserting each match in turn. At
+    the end of the list, the original subequation is restored. An argument of
+    n moves n positions forward in the list of possible variations. A negative
+    argument moves backward through the list.
+    Note: C-i is used by default for complete command in readline while this
+    one is unbounded.
 
-   #### Miscellaneous
-   re-read-init-file (C-c C-r)
-          Read a configuration file.
-   abort (C-g)
-          Abort the current editing command. It does not ring.
-   do-uppercase-version (M-a, M-b, M-x, ...)
-          If  the  metafied character x is lowercase, run the command that
-          is bound to the corresponding uppercase character.
-   prefix-meta (ESC ??)
-          Metafy the next character typed.  ESC f is equivalent to Meta-f.
-   undo (C-_, C-c C-u)
-          Incremental undo, separately remembered for each equation.
-   revert-line (M-r)
-          Undo all changes made to this equation.  This is like executing
-          the undo command enough times to return the equation to its
-          initial state.
-   tilde-expand (M-&)
-          Perform tilde expansion on the current word.
-   set-mark (C-@, M-<space>)
-          Set the mark to the point.  If a numeric argument  is  supplied,
-          the mark is set to that position.
-   exchange-point-and-mark (C-c C-c)
-          Swap  the  point  with the mark.  The current cursor position is
-          set to the saved position, and the old cursor position is  saved
-          as the mark.
-   character-search (C-])
-          A character is read and point is moved to the next occurrence of
-          that character.  A negative count searches for  previous  occur‐
-          rences.
-   character-search-backward (M-C-])
-          A  character  is  read and point is moved to the previous occur‐
-          rence of that character.  A negative count searches  for  subse‐
-          quent occurrences.
-   skip-csi-sequence
-          Read  enough  characters to consume a multi-key sequence such as
-          those defined for keys like Home and End.  Such sequences  begin
-          with a Control Sequence Indicator (CSI), usually ESC-[.  If this
-          sequence is bound to "\[", keys producing  such  sequences  will
-          have  no  effect  unless explicitly bound to a readline command,
-          instead of inserting stray characters into the  editing  buffer.
-          This is unbound by default, but usually bound to ESC-[.
-   insert-comment (M-#)
-          Without  a  numeric  argument, the equation is saved in the
-          history list and new equation is started. With a numeric
-           argument, it is equivalent to accept-line command.
-          
-   dump-functions
-          Print  all  of the functions and their key bindings to the read‐
-          line output stream.  If a numeric argument is supplied, the out‐
-          put  is  formatted  in such a way that it can be made part of an
-          inputrc file.
-   dump-variables
-          Print all of the settable variables  and  their  values  to  the
-          readline  output stream.  If a numeric argument is supplied, the
-          output is formatted in such a way that it can be made part of an
-          inputrc file.
-   dump-macros
-          Print  all of the readline key sequences bound to macros and the
-          strings they output.  If a numeric  argument  is  supplied,  the
-          output is formatted in such a way that it can be made part of an
-          inputrc file.
-   emacs-editing-mode (C-e)
-          When in vi command mode, this causes a switch to  emacs  editing
-          mode.
-   vi-editing-mode (M-C-j)
-          When  in  emacs editing mode, this causes a switch to vi editing
-          mode.
+#### Keyboard Macros
+start-kbd-macro (C-c ()
+      Begin saving the characters  typed  into  the  current  keyboard
+      macro.
+end-kbd-macro (C-c ))
+      Stop saving the characters typed into the current keyboard macro
+      and store the definition.
+call-last-kbd-macro (C-c e)
+      Re-execute the last keyboard macro defined, by making the  char‐
+      acters  in  the  macro  appear  as  if  typed  at  the keyboard.
+      print-last-kbd-macro () Print the last keyboard macro defined in
+      a format suitable for the inputrc file.
+
+#### Miscellaneous
+re-read-init-file (C-c C-r)
+      Read a configuration file.
+abort (C-g, M-C-g, C-c C-g)
+      Abort the current editing command. It does not ring.
+do-uppercase-version (M-a, M-b, M-x, ...)
+      If  the  metafied character x is lowercase, run the command that
+      is bound to the corresponding uppercase character.
+prefix-meta (ESC)
+      Metafy the next character typed.
+undo (C-_, C-c C-u)
+      Incremental undo, separately remembered for each equation.
+revert-line (M-r)
+      Undo all changes made to this equation.  This is like executing
+      the undo command enough times to return the equation to its
+      initial state.
+tilde-expand (M-&)
+    Not used. M-& used to insert a color as described above.
+set-mark (C-@, M-<space>)
+      Set the mark to the point.  If a numeric argument  is  supplied,
+      the mark is set to that position.
+exchange-point-and-mark (C-c C-c)
+      Swap  the  point  with the mark.  The current cursor position is
+      set to the saved position, and the old cursor position is  saved
+      as the mark.
+character-search (C-])
+      A character is read and point is moved to the next occurrence of
+      that character.  A negative count searches for  previous  occur‐
+      rences.
+character-search-backward (M-C-])
+      A  character  is  read and point is moved to the previous occur‐
+      rence of that character.  A negative count searches  for  subse‐
+      quent occurrences.
+skip-csi-sequence
+      Read  enough  characters to consume a multi-key sequence such as
+      those defined for keys like Home and End.  Such sequences  begin
+      with a Control Sequence Indicator (CSI), usually ESC-[.  If this
+      sequence is bound to "\[", keys producing  such  sequences  will
+      have  no  effect  unless explicitly bound to a readline command,
+      instead of inserting stray characters into the  editing  buffer.
+      This is unbound by default, but usually bound to ESC-[.
+insert-comment (M-#)
+      Without  a  numeric  argument, the equation is saved in the
+      history list and new equation is started. With a numeric
+       argument, it is equivalent to accept-line command.
+      
+dump-functions
+      Print  all  of the functions and their key bindings to the read‐
+      line output stream.  If a numeric argument is supplied, the out‐
+      put  is  formatted  in such a way that it can be made part of an
+      inputrc file.
+dump-variables
+      Print all of the settable variables  and  their  values  to  the
+      readline  output stream.  If a numeric argument is supplied, the
+      output is formatted in such a way that it can be made part of an
+      inputrc file.
+dump-macros
+      Print  all of the readline key sequences bound to macros and the
+      strings they output.  If a numeric  argument  is  supplied,  the
+      output is formatted in such a way that it can be made part of an
+      inputrc file.
+emacs-editing-mode (C-e)
+      When in vi command mode, this causes a switch to  emacs  editing
+      mode.
+vi-editing-mode (M-C-j)
+      When  in  emacs editing mode, this causes a switch to vi editing
+      mode.
 
 
 
