@@ -11,8 +11,9 @@ complex and some technicalities must be used.
 
 > **Note**:
 >
-> The main use of parenthesis throughout the text to help the reader understand
-> the sentences and their scope, not to provide additional information.
+> The main use of parenthesis throughout the text is to help the reader
+> understand sentences and their scope. Information inside parenthesis should
+> be always redundant for the meticulous reader.
 
 ## Formalism of an equation
 
@@ -634,167 +635,278 @@ GOP):
 7.  Set ORD to 1.
     Go to step 6.
 
-## Moving and editing
+## Equation operations
 
-### Naive movements and editions:
+Navigation, edition and other equations-related operations are classified into
+basic and advanced.
 
-Reasonable movements that do not collide with Readline's default key bindings.
+> **Note**: At least part of some operations should be presented
+> in some way that a casual user is someway "forced" to know about them.
+> An initial window with tips or a dropdown are possibilities.
 
-#### Clever movements
+There are two operation modes which in some cases operates differently when
+the same input is sent to the program. The are:
 
-They are triggered with LEFT and RIGHT keys.
+*   Normal operation mode
+*   Overwrite operation mode
 
-People who does not know any key-bindings will use them almost exclusively
-to change the selection.
+### Normal mode
 
-They are intended to satisfy the following conditions:
+Characteristics:
 
-*   It must be possible to select any selsubeq.
-*   It must require very few movements to select selsubeqs close to current
-    selection.
-*   Navigating far away must not require too many movements.
+*   Subequations are selected asymmetrically, unless selected subeq is a VOID.
+*   The rounded part of the selection is called the **cursor**.
+*   If the cursor is to the right of selected subeq, direction of selection is
+    RDIR. If the cursor is to the left of the selected subeq, direction is
+    LDIR. If a VOID is selected, direction is VDIR.
+*   Insertion is done to the right of the cursor if RDIR or LDIR. If VDIR,
+    insertion is really a replacement in which the VOID is substituted.
+*   DEL remove the subeq to the right of the cursor, if it exists.
+*   BACKSPACE remove subeq to the left of the cursor, if it exists.
+
+If DEL or BACKSPACE do not find a juxted to delete and selection is the par of
+a lop, the lop-block is flatted.
+
+### Overwrite mode
+
+*   Subequations are selected symmetrically. We do not use the concept of
+    cursor in this mode, but it would cover the whole selection if considering 
+    the equivalent mode in a graphical text editor. Direction is always called
+    ODIR.
+*   Insertion always substitute current selection.
+*   DEL removes the selected subequation.
+*   BACKSPACE removes the subeq to the left (honoring graphical texts editors
+    but not readline's behaviour of replacing with a white space).
+    
+If DEL or BACKSPACE do not find a juxted to delete and selection is the par of
+a lop, the lop-block is flatted.
+
+### Basic operations
+
+Basic operations must be intuitive for an user with no experience with emacs
+or command-line shortcuts.
+
+The scope of basic operations is everything that can be done only with the
+mouse and cursor movement keys, RETURN, BACKSPACE, DEL and some common uses of
+CONTROL, ALT and SHIFT.
+
+> **Note**:
+>
+> Key bindings requiring CONTROL being selected are noted by C-x.
+> Key bindings requiring ALT being selected are noted by M-x.
+> Key bindings requiring CONTROL and ALT being selected are noted by M-C-x.
+>
+> In each particular case, instead of "x", the correspondent key which 
+> completes the key binding will be used. For example, C-s if it is required
+> to press CONTROL and then the S key without releasing the CONTROL key.
+
+A limited amount of usual key bindings used in graphical applications that
+collide with readline's default key bindings and/or philosophy are honored
+in order to be consistent with the fact that Visual Equation is a graphical
+application at the end and to help users which are used to shortcuts of
+graphical environments but not those of emacs/readline. In the future it may be
+possible to choose a "package" of shortcuts or even define them individually.
+
+#### Fundamental movements
+Users who do not know any key-bindings, with no previous experience 
+with Visual Equation or which will not dedicate time to learn the rest of
+movements will likely use these fundamental movements all the time.
+
+Because of that, fundamental movements are intended to satisfy the following
+conditions:
+
+*   It must be possible to select any selsubeq by using them.
+*   Thye must require very few keystrokes to select selsubeqs which are close 
+    to current selection.
+*   Navigating far away must not require too many keystrokes.
 *   They must be someway reasonable so the user can learn their behaviour soon.
 *   They must be a compromise between being practical and not discouraging
-    a new user to use the program.
+    a new user to use the program because they look strange.
 
-LEFT (fast):
+##### LEFT (fast movement):
 
-*   If dir is 1, set it to -1.
+*   If RDIR, set LDIR.
 *   Else, move to the closest symbol to the left without changing dir.
-*   Marginal case: If first symbol of eq is selected, select the last one.
+    If that symbol is not a selsubeq, select instead its usupeq of lower level.
+    
+**Marginal case**: If no candidate is found, select the last symbol or its
+usupeq of lower lever in the case that it is not a selsubeq.
 
-RIGHT (slow, exhaustive and redundant):
+##### RIGHT (slow, exhaustive and redundant):
 
-*   If dir is -1, set it to 1.
+*   If LDIR, set RDIR.
 *   Navigate equation forward, selecting selsubeqs before entering them and
     before exiting them.
-    A precise description is quite complex. That is redacted in the docstring
-    of the function implementing this behaviour.
 
 #### Longer movements
-**Note**: Key Control is preferred for words instead of Meta in clever commands
-since they are commonly used by desktop applications.
 
-They are: C-LEFT and C-RIGHT.
+> **Note**: CONTROL is preferred for "words" movements instead of ALT in basic
+> commands because they are commonly used by desktop applications.
 
-*   If DIR is LDIR/RDIR, C-RIGHT/C-LEFT whill change direction to RDIR/LDIR.
-*   Else, select the mate to the left/right.
-*   Marginal case: If it is the first/last mate, choose the last/first mate.
-*   Successive call to one of both commands will remember N-mate level of the
-    selection before applying the first command.
+##### C-LEFT and C-RIGHT
 
-#### Bigger selections
+> **Note**: The behavior does more honor to gedit and equivalent readline
+> key combination than to kwrite. 
 
-They are: RETURN, SHIFT-LEFT and SHIFT-RIGHT.
+When using C-RIGHT/C-LEFT:
+*   If LDIR/RDIR, direction will change to RDIR/LDIR.
+*   Else, the mate to the right/left of selection is selected when
+    C-RIGHT/C-LEFT is used.
+    Marginal case: If selection is the last/first mate, choose the first/last
+    mate.
+*   Successive keystrokes of these key combinations (valid for an interleaved
+    use of them) will remember the N-mate level of the selection before 
+    applying the first of these key combinations.
 
-RETURN:
+#### Increasing and shortening selections
+
+##### RETURN
 
 *   Select supeq of current selection.
-*   Do not change dir unless selection was a VOID.
+*   Do not change dir unless selection it was VDIR. In that case, use RDIR.
 
-SHIFT-RETURN/C-SHIFT-RETURN:
+##### SHIFT-LEFT and SHIFT-RIGHT:
 
-*   Group/ungroup.
-
-SHIFT-LEFT, SHIFT-RIGHT:
-
+When using SHIFT-LEFT/SHIFT-RIGHT:
 *   If selection is the representative of a non-first/non-last juxted, include
-    in selection the juxted to the left/right.
-*   If selection is already formed by several juxted, shrink or extend it
-    if possible. If an extension is not possible (no more juxted in that
-    directions, select the juxt-ublock)
-*   Else, select supeq with -1/+1 dir.
-
-#### View size
-
-*   Increase size of equation for edition ()
-*   Decrease size of equation for edition ()
+    in selection the juxted to the left/right. In the case that dir is not
+    ODIR, set LDIR/RDIR.
+*   If selection is already formed by several juxteds, shrink or extend the
+    side matching the direction if that is LDIR or RDIR. If it is ODIR, the
+    equivalent direction is determined by which was the first keystroke of the
+    sequence. It is possible to change the direction in the LDIR/RDIR case
+    by pressing RIGHT/LEFT.
+*   If an extension is not possible (no more juxteds in the direction of
+    expansion or a non-juxted is selected, select the supeq of selection and
+    set LDIR/RDIR.
 
 #### Manipulations
 
-Basic ideas, full behavior is not documented here.
+##### Cut (C-x)
+ 
+Remove selected subeq and save/overwrite VE's clipboard.
 
-*   Insertion is done to the right of the cursor. In overwrite mode, current
-    selection is replaced.
-*   DEL, RUBOUT (Forward delete) remove selection if LDIR or juxted to the
-    right of the cursor.
-*   BACKSPACE (Backward delete) remove selection if RDIR or juxted to the
-    left of the cursor.
+##### Copy (C-c)
 
-**Note**: If a delete does not find a juxted or selection is a VOID, typically 
-the lop-block is flatted. (TODO: Document better)
+Save/overwrite VE's clipboard with selection.
 
-*   Cut (C-x): Remove selected subeq and save/overwrite VE's clipboard.
-*   Copy (C-c): Save/overwrite VE's clipboard with selection.
-*   Paste (C-v): Insert VE's clipboard to the right of the cursor. In overwrite
-    mode, current selection is replaced.
-*   Undo (C-z): Undo last sequence of manipulations in a gedit-style.
-*   Redo (C-SHIFT-z): Redo last sequence of manipulations in a gedit-style.
+##### Paste (C-v)
 
-*   Transpose subeq forward (TAB): Swap positions of current selection and its 
-    mate to the right, leaving original selection selected. Exception: If LDIR,
-    swap position with the mate the left instead, leaving original selection 
-    selected and with LDIR.
-*   Transpose subeq backward (SHIFT-TAB): Swap positions of current selection
-    and its position with the mate the right instead, leaving original
-    selection selected and with LDIR.
+Insert VE's clipboard (in overwrite mode, selection is replaced).
 
-Better avoid this key combinations. Maybe a desktop has them reserved and they
-are quite advanced so a user will usually be interested in equivalent key
-combinations explained below.
-*   Transpose supeq forward (C-TAB): Swap positions of supeq SUP of current
-    selection and the mate to the right of SUP, leaving original selection
-    selected. Exception: If LDIR, swap position with the mate the left of SUP 
-    instead, leaving original selection selected and with LDIR.
-*   Transpose supeq backward (C-SHIFT-TAB): Swap positions of supeq SUP of
-    current selection and the mate to the left of SUP, leaving original 
-    selection selected. Exception: If LDIR, swap position with the mate the 
-    right of SUP instead, leaving original selection selected and with LDIR.
+##### Undo (C-z)
 
-*   C-DEL
-*   C-BACKSPACE
+Undo last manipulation, if it exists.
 
-Reserved by readline:
-C-@, C-], C-\_, C-?
-M-C-\[, M-C-], M-C-?
-M-space, M-#, M-&, M-\* (requisitioned), M--, M-., M-digit, M-<, M->, M-?, 
-M-\, M-~ (requisitioned), M-\_ (requisitioned).
+##### Redo (C-SHIFT-z)
 
-If both C-x and C-M-x versions are provided, C-x do an insert and M-x do an
-insert substituting current selection in the first arg.
+Redo last manipulation, if it exists.
 
-*   Insert a function (C-,, M-,, M-C-,): First time is cosinus, then sinus
-    then... Different forms are: Simple (valid for everone), functions with
-    arguments, the same but substituting.
-*   Insert a root (M-%, M-C-%): First time is a square root, next time is
-    generic.
-*   Modify subequation by another similar (M-@).
-*   Group and ungroup (SHIFT+RETURN), (C-SHIFT-RETURN).
-*   Insert a sumatory (C-+, M-+, M-C-+): Next times modify the number of args.
-*   Insert a productory (C-*, M-\*, M-C-\*).
-*   Insert an integral (C-$, M-$, M-C-$)..
-*   Insert a fraction (M-/, M-C-/)
-*   Insert an equal-like symbol (C-=).
-*   Insert a multi-line equation (M-=, M-C-=) 
-*   Insert a "less than"-like (C-<)
-*   Insert a "bigger than"-like (C->) 
-*   Insert a parenthesis (M-(, M-C-(): It can be accelerated providing a \[...
-*   Insert a matrix (M-), M-C-)):
-*   Insert an equation system (M-{, M-C-{). Next times modify the format. A
-    digit modifies the number of equations.
-*   Insert an underbrace, overbrace... (M-}, M-C-}).
-*   Insert an arrow (C-~)
-*   Insert a hat-like (M-\_, M-C-\_)
-*   Insert a hat-like of variable size (M-~, M-C-~)
-*   Insert a small operator (C--)
-*   Insert a color (M-&, M-C-&)
-*   Insert a colored background (C-!, M-!)
-*   Insert a special text (C-.): It is a symbol-like operator because a
-    windowed dialog will always appear and modification of the text will
-    require a special dialog. Options M-. and M-C-. may be considered with
-    enough checkings.
+##### Transpose forward (TAB)
 
-### Advanced movements
+Swap positions of current selection and its mate to the right, leaving original
+selection selected. Exception: If LDIR, swap position with the mate the left 
+instead, leaving original selection selected.
+
+No direction is changed.
+
+Marginal case: If there is no mate, perform a transpose backwards.
+
+##### Transpose backward (SHIFT-TAB)
+
+Swap positions of current selection and mate the left, leaving original
+selection selected. Exception: If LDIR, swap position with the mate the right 
+instead, leaving original selection selected.
+
+No direction is changed.
+
+Marginal case: If there is no mate, perform a transpose forward.
+
+##### C-DEL
+
+If selection is a juxted (or combination of them) remove all the juxted of
+the same juxt-block from the cursor to the right if not ODIR. If ODIR,
+remove selection and juxteds to the right.
+
+If selection is not a juxted, it is equivalent to press DEL.
+
+##### C-BACKSPACE
+
+If selection is a juxted (or combination of them) remove all the juxted of
+the same juxt-block from the cursor to the left if not ODIR. If ODIR, remove
+juxteds to the left of selection.
+
+If selection is not a juxted, it is equivalent to press BACKSPACE.
+
+##### Group (SHIFT-RETURN)
+
+Make strict usubeqs of selected block not selectable. It has no effect if
+selection is a symbol.
+
+##### Ungroup (C-SHIFT-RETURN)
+
+Make strict usubeqs of selected block selectable. It has no effect if
+selection is a symbol.
+
+#### Shortcuts for inserting symbols and operators
+
+> **Temporal Note**:
+>
+> The following key bindings are used by readline and should not be used.
+>
+>*  C-@, C-], C-\_, C-?
+>*  M-C-\[, M-C-], M-C-?
+>* M-SPACE, M-#, M-&, M-\* (requisitioned), M--, M-., M-digit, M-<, M->, M-?, 
+>M-\, M-~ (requisitioned), M-\_ (requisitioned).
+
+> **Notes**:
+>
+>*  Every C-x key binding of this section inserts a symbol.
+>*  Every M-x key binding of this section inserts an operator with all their
+>*  parameters set to VOID.
+>*  Every M-C-x key binding of this section replaces selection with an operator
+>   which has as first parameter the previous selection and any other it may
+>   have set to VOID.
+>*  Several keystrokes of the same key binding produce different
+>   symbols/operators of common characteristics.
+
+##### Functions (C-,, M-,, M-C-,)
+First time is cosinus, then sinus then... The symbol version matches every 
+function and the operator versions match functions which can have arguments.
+##### Roots (M-%, M-C-%)
+First time is a square root, next time is generic.
+##### Modify subequation with a variant (M-@)
+Full details to be defined.
+##### Sumatory (C-+, M-+, M-C-+)
+Sucesive keystrokes of the operator versions modify the number and position of
+the args.
+##### Productory (C-*, M-\*, M-C-\*)
+Equivalent to summatory.
+##### Integral (C-$, M-$, M-C-$)
+Equivalent to summatory.
+##### Fraction (M-/, M-C-/)
+##### Equal-like symbols (C-=)
+##### Multi-line equations (M-=, M-C-=) 
+##### "Less than"-like symbol (C-<)
+##### "Bigger than"-like symbol (C->) 
+##### Pair of delimiters (M-(, M-C-()
+It can be accelerated providing a character identified with the delimiter.
+##### Matrices (M-), M-C-)):
+###### Equation system ( M-{, M-C-{)
+A digit modifies the number of equations.
+###### Brace-like (C-{, M-}, M-C-})
+###### Arrows (C-~)
+###### Hat-like decorators of fixed size (M-\_, M-C-\_)
+###### Hat-like decorators of variable size (M-\~, M-C-\~)
+###### Small operators (C--)
+###### Font colors (M-&, M-C-&)
+###### Background colors (C-!, M-!)
+###### Special text (C-., M-., M-C-.)
+It is a symbol-like key biding because a windowed dialog will always appear 
+and modification of the text will require a special dialog.
+However, options M-. and M-C-. may be considered with care.
+
+### Advanced operations
 
 The intention of these command is to imitate Readline default keybindings as
 much as possible. We will use Readline's command names with the following
@@ -1225,28 +1337,3 @@ emacs-editing-mode (C-e)
 vi-editing-mode (M-C-j)
       When  in  emacs editing mode, this causes a switch to vi editing
       mode.
-
-
-
-There are two modes:
-
-    *   Normal.
-    *   Overwrite.
-They modify behaviour to remove and insert subequations.
-
-In normal mode:
-
-    *   Insertion is done to the right of the cursor.
-    *   DEL remove the subeq to the right of the cursor.
-    *   BACKSPACE remove subeq to the left of the cursor.
-
-Note: The cursor is the parenthesis of the selection, which is the right limit
-when dir is 1 and the left limit when dir is -1.
-
-In overwrite mode:
-
-    *   Insertion substitute current selection.
-    *   DEL is equivalent than in normal mode. (???)
-    *   BACKSPACE substitute subeq to the left by a NEWARG.
-
-Key combinations do not have a different behavior in overwrite mode.
