@@ -737,6 +737,8 @@ usupeq of lower lever in the case that it is not a selsubeq.
 *   If LDIR, set RDIR.
 *   Navigate equation forward, selecting selsubeqs before entering them and
     before exiting them.
+*   In addition, if ODIR, insert a temporal VOID after a subeq before exiting
+    it so the user can insert a juxted there.
 
 #### Longer movements
 
@@ -744,9 +746,13 @@ usupeq of lower lever in the case that it is not a selsubeq.
 > commands because they are commonly used by desktop applications.
 
 ##### C-LEFT and C-RIGHT
+This key bindings are used to navigate between mates.
 
 > **Note**: The behavior does more honor to gedit and equivalent readline
-> key combination than to kwrite. 
+> key combination than to kwrite if considering that mates are words. 
+>
+> **Note**: Advanced movements will consider that mates are characters and
+> their supeqs are words.
 
 When using C-RIGHT/C-LEFT:
 *   If LDIR/RDIR, direction will change to RDIR/LDIR.
@@ -779,8 +785,14 @@ When using SHIFT-LEFT/SHIFT-RIGHT:
 *   If an extension is not possible (no more juxteds in the direction of
     expansion or a non-juxted is selected, select the supeq of selection and
     set LDIR/RDIR.
+    
+##### SHIFT-UP
+Select superequation if it exists. In addition, set RDIR if dir is not ODIR.
 
-#### Manipulations
+##### SHIFT-DOWN
+Select last 1-ulevel usubeq of selection if it exists and is selectable.
+
+#### Manipulation of subequations
 
 ##### Cut (C-x)
  
@@ -802,25 +814,26 @@ Undo last manipulation, if it exists.
 
 Redo last manipulation, if it exists.
 
-##### Transpose forward (TAB)
+##### Transpose forward (M-RIGHT)
 
 Swap positions of current selection and its mate to the right, leaving original
-selection selected. Exception: If LDIR, swap position with the mate the left 
-instead, leaving original selection selected.
+selection selected.
 
 No direction is changed.
 
-Marginal case: If there is no mate, perform a transpose backwards.
+Marginal case: If there is no mate to the right, do nothing.
 
-##### Transpose backward (SHIFT-TAB)
+##### Transpose backward (M-LEFT)
 
 Swap positions of current selection and mate the left, leaving original
-selection selected. Exception: If LDIR, swap position with the mate the right 
-instead, leaving original selection selected.
+selection selected.
 
 No direction is changed.
 
-Marginal case: If there is no mate, perform a transpose forward.
+Marginal cases:
+*   If selection is an artificial VOID due to overwrite mode, swap the
+    closest two mates to the left if they exist. Else, do nothing.
+*   If there is no mate to the left, do nothing.
 
 ##### C-DEL
 
@@ -870,13 +883,25 @@ selection is a symbol.
 >*  Several keystrokes of the same key binding produce different
 >   symbols/operators of common characteristics.
 
+##### Separate subeqs (TAB)
+Insert or increase a region "without" subequations.
+##### Bring subeqs closer (SHIFT-TAB)
+Reduce a region "without" subequations or delete it.
+> **Temporal note**: Which function should be left to SPACE? Smaller tabs?
+##### Subscripts and superscripts (DOWN and UP)
+Include an empty sub/super-script or go to it if it already script. The
+sub/super-script will be placed to the left if LDIR or to the right in any
+other case.
+##### Undersets and oversets (C-DOWN and C-UP)
+Add an under/over-set (a subequation just under/over another subequation).
 ##### Functions (C-,, M-,, M-C-,)
 First time is cosinus, then sinus then... The symbol version matches every 
 function and the operator versions match functions which can have arguments.
 ##### Roots (M-%, M-C-%)
 First time is a square root, next time is generic.
 ##### Modify subequation with a variant (M-@)
-Full details to be defined.
+Full details to be defined. In Advanced operations it is possible to find more
+ info.
 ##### Sumatory (C-+, M-+, M-C-+)
 Sucesive keystrokes of the operator versions modify the number and position of
 the args.
@@ -908,217 +933,233 @@ However, options M-. and M-C-. may be considered with care.
 
 ### Advanced operations
 
-The intention of these command is to imitate Readline default keybindings as
-much as possible. We will use Readline's command names with the following
-equivalence:
+The intention of advance operations is to imitate Readline default
+keybindings as much as possible. We will use Readline's command names with
+the following equivalence:
 
 *   characters -> selection and its mates
 *   words -> 1-ulevel usupeq US of selection and mates of US
 
-Main difference with equivalent clever commands is that these ones do not
-consider so much direction of selection. It is recommended to avoid LDIR
-when using this commands to avoid confusion.
+In addition, mates are nested in an equation, contrary to words in a
+line. That is indicated with the ulevel of the mate. Following the
+symbolism of words, 1-ulevel mates would be words of the same
+line, 2-ulevel mates would be, for example, lines of the same page,
+3-ulevel mates pages of the same book, and so on.
+
+Main difference with respect to equivalent basic commands is that these ones do
+not consider so much direction of selection. It is recommended to avoid LDIR 
+when using advanced commands to avoid confusion.
 
 VOID is a special character which is understood in different ways by
 different commands.
 
-If not specified, references (like mates) always refer to selection.
+If not specified, any reference to a mate always refer to current selection.
 
-Old details for character <-> symbol (not sure if they are useful):
+#### Numeric arguments (M-0, M-1, ..., M--)
+Add this digit to the argument already being prepared, or start a
+new argument. M-- starts a negative argument. If no number is added, -1 is
+used.
 
-*   Symbols are unaware of equation structure, just as characters for
-    Readline.
-*   Mates have bounds, as words have. A word bound in Readline is a
-    non-alphanumeric character. In visual equation, we consider as "word"
-    bounds:
+> **Note**: Numeric arguments can be used in basic operations too.
 
-    *   The natural limits of a supeq, and
-    *   VOIDs.
+#### Movements
+##### beginning-of-line (C-a)
+Select the first mate.
+##### end-of-line (C-e)
+Select the last mate.
+##### forward-char (C-f)
+Select mate to the right if it is not the last one. Else, do not move.
+##### backward-char (C-b)
+Select mate to the left if it is not the first one. Else, do not move.
+##### forward-word (M-f)
+Consider supeq SUP of selection S:
+*   If S has at least one mate to the right contained in SUP, select the
+    last one satisfying that condition.
+*   Elif SUP has a mate RSUP to the right, select last mate of S contained in
+    RSUP.
+*   Else, do not move.
 
-*   In addition, mates are nested in an equation, contrary to words in a
-    line. That is indicated with ulevel of the mate. Following the
-    symbolism of words, 1-ulevel mates would be words of the same
-    line, 2-ulevel mates would be, for example, lines of the same page,
-    3-ulevel mates pages of the same book, and so on.
+Successive calls to forward-word and backward-word (also inteleaved) must act
+on the mate-ulevel which had seletion before the first call.
+##### backward-word (M-b)
+Counterpart of forward-word.
+##### clear-screen (C-l)
+Undecided, but it should be a nice operation.
 
-Outdated, but left to rethink it if necessary:
-*   If dir is -1, a numerical argument is not passed, the command accept a
-    numerical argument -1 and some consequence is to operate on the opposite
-    direction, then the command is applied in the opposite direction without
-    any other side effect that a -1 argument would have (e.g., adding a subeq
-    to the kill ring).
-*   If dir is -1 and a numerical argument was passed, the effect is equivalent 
-    to pass the same numerical argument multiplied by -1.
+#### Manipulating and accesing the history
 
-beginning-of-line (C-a)
-    Select the first mate.
-end-of-line (C-e)
-    Select the last mate.
-forward-char (C-f)
-    Select mate to the right if it is not the last one. Else, do not move.
-backward-char (C-b)
-    Select mate to the left if it is not the first one. Else, do not move.
-forward-word (M-f)
-    Select last mate in supeq of selection, if it is not the same subeq. Else:
-    Select last mate contained in the mate to the right RSUP of the supeq of
-    selection, if RSUP exists. Else:
-    Do not move.
-    Successive calls to forward-word and backward-word must know the mate-
-    ulevel which was applied in previous call since in general it cannot be
-    deduced from final selection.
-backward-word (M-b)
-    Counterpart of forward-word.
-clear-screen (C-l)
-    Undecided.
+**Saved equations** can be accessed as commands on the history of a shell.
+In addition, saved equations can have a name and categories and subcategories
+(to any nesting level) associated, but it is not mandatory.
 
+Not to confuse "saved equations" with "exported equations". Exported equations
+are equations that can be accessed outside visual equation. Current formats
+to export equations are PNG, EPS, SVG and PDF. It is worth mentioning that
+it is possible to recover equations for further edition from exported PNGs
+and PDFs.
 
-### Advanced editions
+##### save-as (C-SHIFT-s)
+This is not a readline command but it is placed in this section to help the
+reader have a full view.
 
-WIP!! Non-applicable original documentation of readline can be read here until
-it is finished.
+Save with a graphical interface current equation as a new equation at
+the end of the history, possibly specifying a name and categories.
 
-#### Commands for manipulating the history
+##### save (C-s)
+This is not a readline command but it is placed in this section to help the
+reader have a full view.
 
-**Quick-save** means that if equation being edited was previously saved, it is
-overwritten and its position in the history is not moidified. Else, it is saved
-as a new "anonymous" equation as the last equation of the history.
+If equation being edited was never saved, this command is equivalent to
+save-as. Else, it overwrites saved equation.
+##### open-equation (C-o)
+This is not a readline command but it is placed in this section to help the
+reader have a full view.
 
-**Save as (a new equation)** means that equation being edited is saved as a
-different equation. It will be the last one of the history. It can be both
-an a anonymous or named save.
+This command is managed completely with a graphical interface.
+If equation being edited has not saved modifications, the user is asked to
+save it as a new equation or, if applicable, overwriting its previous entry
+in the history list. In detail:
 
-save-as (C-SHIFT-s)
-    Save current equation as a new equation, possibly specifying a name and
-    categories in a window.
-save (C-s)
-    If equation being edited was never saved it is equivalent to save-as.
-    Else, it overwrites saved equation with this one.
-open-equation (C-o)
-    This command is managed completely with a graphical interface.
-    If equation being edited has modifications, it is asked if it want to be
-    saved as a new equation or, if applicable, overwriting its previous entry
-    in the history list. Then, choose an equation from the history with
-    different search facilities and fetch it. Summary:
-
-*   If it currently has already a place in the history:
+*   If equation currently has already a place in the history:
     *   The user is asked whether discarding modifications, overwrite or save
         as a new equation.
 *   Else:
     *   The user is asked whether discarding the equation or save as a new
         equation.
-    
-accept-line (C-j, C-m)
-    This a non-windowed version of "Save as".
-    Specify a name and save current equation as a new equation with that name.
-    It is possible to specify a category by introducing it separated by slashes
-    in the form `[category[/subcategory[/...]]/]name`. To accept the
-    name press again C-j or C-m or RETURN.
-    **Note**: C-j acts differently while searching in the history.
-insert-comment (M-#)
-    Save current equation at the end of the history list (as a new equation)
-    and start editing a new empty equation. This is a fast accept-line such 
-    that it does not ask for an equation name nor categories when saving.
-    However, the equation will be uniquely identified anyway. With a numeric 
-    argument, it is equivalent to accept-line.
-save-no-window (M-C-#)
-    This is a VE extension. It acts like command save (C-s).
-    If equation already form part of the history, overwrite its entry. Else,
-    it is equivalent to insert-comment. With a numeric argument you can specify
-    a name and categories. If you are renaming an existing equation and
-    you want to discard previous categories, just precede the name by a slash.
-previous-history (C-p)
-    save-no-window displayed equation and fetch the previous equation from the
-    history list, moving back in the list. 
-next-history (C-n)
-    save-no-window displayed equation and fetch the next equation from the 
-    history list, moving forward in the list.
-beginning-of-history (M-<)
-    save-no-window displayed equation and fetch to the first equation in the
-    history.
-end-of-history (M->)
-    save-no-window displayed equation and fetch the last equation of the 
-    history.
-reverse-search-history (C-r)
-    save-no-window current equation and search backward starting at the current
-    equation and moving up through the history as necessary. This is an 
-    incremental search. You can introduce part of the name, category or other 
-    fields (TODO: specify). You can fetch the equation with C-j. Any
-    other key combination will fetch the equation and then apply the command
-    to the equation.
-forward-search-history (M-C-R)
-    Counter part of reverse-search-history. C-s is not used because that is a
-    command with a long tradition in desktop applications to save files. If
-    we allow key-bindings to be configurable, this will be one of the first
-    commands supported.
-    **Note**: By default, M-C-R is assigned to revert-line along with M-R in
-    readline.
-non-incremental-reverse-search-history (Not implemented!)
-    Replace current equation by some previous equation of the history and
-    discard any edition information of previous equation (so command undo will 
-    not work). Equation taken is searched backward through the history starting
-    at the current equation, using a non-incremental search for a string 
-    supplied by the user. To accept the input, press RETURN, C-j or C-m. 
-    To abort press BACKSPACE, a backward-delete-char command or an abort 
-    command.
-    No-Implementation note: I cannot find a way to like this command! I do not
-    have any reason to implement it.
-non-incremental-forward-search-history (Not implemented!)
-    The counterpart of non-incremental-reverse-search-history.
-yank-nth-arg (M-C-y)
-    Insert  the  first argument to the previous command (usually the
-    second word on the previous line) at point.  With an argument n,
-    insert  the nth word from the previous command (the words in the
-    previous command begin with word 0).  A  negative  argument  in‐
-    serts  the  nth word from the end of the previous command.  Once
-    the argument n is computed, the argument is extracted as if  the
-    "!n" history expansion had been specified.
-yank-last-arg (M-., M-_)
-    Insert  the last argument to the previous command (the last word
-    of the previous history entry).  With a numeric argument, behave
-    exactly  like  yank-nth-arg.   Successive calls to yank-last-arg
-    move back through the history list, inserting the last word  (or
-    the  word  specified  by the argument to the first call) of each
-    line in turn.  Any numeric argument supplied to these successive
-    calls  determines  the direction to move through the history.  A
-    negative argument switches the  direction  through  the  history
-    (back or forward).  The history expansion facilities are used to
-    extract the last argument, as if the "!$" history expansion  had
-    been specified.
 
+After that, the user can choose an equation from the history
+with different graphical search facilities and fetch it.
 
+##### accept-line (C-j, C-m)
+This a non-windowed version of save-as.
+Specify a name and save current equation as a new equation with that name. 
+After that, a new empty equation is presented for edition.
+It is possible to specify a category in the form
+`[category[/subcategory[/...]]/]name`. To accept the name press again C-j or 
+C-m or RETURN.
+**Note**: C-j acts differently while searching in the history. See below.
+##### insert-comment (M-#)
+Save current equation at the end of the history list (as a new equation)
+and start editing a new empty equation. This is a fast accept-line that does
+not ask the user for an equation name nor categories to include in the save.
+However, the equation will be uniquely identified anyway. With a numeric 
+argument, it is equivalent to accept-line.
+##### save-no-window (M-C-#)
+This is not a readline command but it is placed in this section to help the
+reader have a full view.
 
-#### Commands for changing text
-end-of-file (C-d)
-    Exit VE if equation is a VOID.
-delete-char (C-d)
-    If next mate do not exist, do nothing. Else:
-    Delete juxted to the right if sel is a non-last juxted of a juxt-block.
-    Else:
-    Move next mate, if it is not a VOID, to the right of sel as a juxted. Leave
-    a VOID in the original position of the mate if it was not a juxted. Else:
-    Replace next non-VOID mate, if it exists, to the mate to the left of that 
-    mate, leaving a VOID in the position it was if it was not a juxted. Else:
-    Do nothing.
-    It saves deleted mates on the kill ring (readline do that when a
-    numeric argument is passed, even if that is not documented).
-    Successive calls to delete-char and backward-delete-char must know the
-    mate-ulevel which was applied in previous call since in general it cannot 
-    be deduced from final selection.
-backward-delete-char (C-?, C-h)
-    Counterpart of delete-char.
-quoted-insert (C-q)
-    If next input is a letter, it will introduce an associated Greek letter.
-    Some capital letters have a greek version, but many cases share a latin
-    symbol. To pass a negative numeric argument is equivalent to pass the
-    same numeric argument but positive except for some letters which have
-    a variant. In that case, it is equivalent to pass a positive numeric
-    argument but the variant is used for the insertion instead.
-    Not every greek letter can be inserted with this command. For those
-    special cases you can use quoted-insert-extra (M-q). 
-    If next input is a number, the number is introduced. (That is useful to 
-    introduce several times a number. e.g, to introduce 3 ten times type: 
-    M-1 0 C-q 3).
-    TODO: Include TABs, SPACEs... 
+It acts like command save (C-s) but not allowing the user to add a name or
+categories if equation was not saved before. It is:
+*   If equation is already part of the history, overwrite its entry.
+*   Else, it is equivalent to insert-comment.
+
+In any case, a numeric argument allows the user to specify a name and
+categories. If equation already existed:
+*   If only a name is provided, equation is renamed but old categories, if
+    any, are unmodified.
+*   If at least a main category is provided, any category equation had are
+    discarded.
+
+To discard previous categories without adding a new one, just precede the name
+by a slash as in `/newname`.
+##### previous-history (C-p)
+save-no-window displayed equation and fetch the previous equation from the
+history list, moving back in the list. 
+##### next-history (C-n)
+save-no-window displayed equation and fetch the next equation from the 
+history list, moving forward in the list.
+##### beginning-of-history (M-<)
+save-no-window displayed equation and fetch the first equation in the
+history.
+##### end-of-history (M->)
+save-no-window displayed equation and fetch the last equation of the history.
+##### reverse-search-history (C-r)
+save-no-window current equation and search backward starting at the current
+equation and moving up through the history as necessary. This is an 
+incremental search. You can introduce part of the name, category or other 
+fields (TODO: specify). You can fetch the equation with C-j. Any
+other key combination will fetch the equation and then apply the command
+to the equation.
+##### forward-search-history (M-C-r)
+Counter part of reverse-search-history.
+> **Note**: C-s is not used as key binding because that is a
+> shortcut with a long tradition in desktop applications to save files. If
+> we allow key-bindings to be configurable, this will be one of the first
+> commands supported.
+
+> **Note**: By default, M-C-R is assigned to revert-line along with M-R in
+> readline.
+
+##### non-incremental-reverse-search-history (Not implemented!)
+Replace current equation by some previous equation of the history and
+discard any edition information of previous equation (so command undo will 
+not work). Equation taken is searched backward through the history starting
+at the current equation, using a non-incremental search. To accept the input, 
+press RETURN, C-j or C-m. To abort press BACKSPACE, a backward-delete-char
+command or an abort command.
+> **No-Implementation note**: I cannot find a way to like this command! I do
+> not have any reason to implement it (today).
+##### non-incremental-forward-search-history (Not implemented!)
+The counterpart of non-incremental-reverse-search-history.
+
+#### Manipulating subequations
+##### end-of-file (C-d)
+Exit Visual Equation if equation is a VOID, discarding the kill ring and the
+undo list. 
+##### delete-char (C-d)
+*   If next mate do not exist, do nothing.
+*   Elif selectio is a non-last juxted of a juxt-block, delete juxted to the
+    right.
+*   Elif next mate exists and it is not a VOID, move it to the right of
+    selection as a juxted or several juxteds if it was a juxt-block. Leave a 
+    VOID in the original position of the mate.
+*   Elif there exists a mate to the right which is not a VOID, replace the
+    (VOID) mate to the left of that mate with it and leave a VOID in its
+    original position.
+*   Else, do nothing.
+
+It saves deleted mates on the kill ring (readline do that when a
+numeric argument is passed, even if that is not documented).
+
+> **Note**: C-d executes end-of-file if whole equation is a VOID.
+
+##### backward-delete-char (C-?, C-h)
+Counterpart of delete-char (not exactly reciprocal, but it has the same
+philosophy and is less complex).
+
+##### transpose-chars (C-t)
+Equivalent to Transpose backward (M-LEFT). 
+##### transpose-words (M-t)
+*   If supeq SUP of selection exists and SUP has a mate to the left, transpose
+    them.
+*   Else, do nothing.
+
+##### upcase-word (M-u)
+Uppercase every symbol which has sense (Latin and Greek letters) included in
+selection and every mate to the right contained in the supeq of selection. If
+supeq does not exists, just in selection.
+With a numeric argument, certain mates of the supeq of selection are included.
+##### downcase-word (M-l)
+Counterpart of upcase-word.
+##### capitalize-word (M-c)
+Capitalize the first symbol which has sense of selection.
+##### overwrite-mode (INSERT)
+A similar behavior (as in graphical text editors) is implemented. See above.
+
+##### quoted-insert (C-q)
+If next input is a number, the number is introduced. (That is useful to 
+introduce several times a number. e.g, to introduce 3 ten times type: 
+M-1 0 C-q 3).
+
+If next input is a letter, it will introduce an associated Greek letter.
+Some capital letters have a greek version, but many cases share a latin
+letter. To pass a negative numeric argument is equivalent to pass the
+same numeric argument but positive except for some letters which have
+a variant. In that case, it is equivalent to pass a positive numeric
+argument but the variant is used for the insertion instead.
+
+Not every greek letter can be inserted with this command. For those
+cases quoted-insert-extra (M-q) can be used. 
 
 Code equivalence:
 
@@ -1155,16 +1196,17 @@ Code equivalence:
 *   y, Y -> upsilon, Upsilon (**)
 *   z, Z -> zeta, Z 
 
-quoted-insert-extra (M-C-q):
-      This command supplies the missing greek letters of quoted-insert (C-q). 
-      Assigned key combination is not used in readline by default.
-      If next input is an alphanumeric character not listed in the list below,
-      the character is considered literally. To pass a negative numeric
-      argument is equivalent to pass the same numeric argument but positive 
-      except for some letters which have a variant. In that case, it is
-      equivalent to pass a positive numeric argument but the variant is used
-      for the insertion instead.
-      If next input is a number, the number is introduced.
+##### quoted-insert-extra (M-C-q):
+If next input is a number, the number is introduced.
+
+This command supplies the missing greek letters of quoted-insert (C-q). 
+Assigned key combination is not used in readline by default.
+If next input is an alphanumeric character not listed in the list below,
+the character is considered literally. To pass a negative numeric
+argument is equivalent to pass the same numeric argument but positive 
+except for some letters which have a variant. In that case, it is
+equivalent to pass a positive numeric argument but the variant is used
+for the insertion instead.
 
 Code equivalence:
 
@@ -1178,162 +1220,131 @@ Code equivalence:
 *   t, T , - -> theta, Theta, vartheta
 *   x, X -> xi, Xi
 
-tab-insert
-    See quoted-insert.
-self-insert (a, b, A, 1, !, ...)
-      Insert the character typed. In some cases such as ~ or SPACE, a special
-      character is inserted instead (TODO: be more specific). In some cases,
-      quoted-insert may be needed to insert some special symbols.
-transpose-chars (C-t)
-    Drag the symbol before selection forward over the first symbol of
-    selection, moving selection to the next symbol. If there are no symbols
-    to the right
-      Drag the character before point forward over  the  character  at
-      point,  moving point forward as well.  If point is at the end of
-      the line, then this transposes the two characters before  point.
-      Negative arguments have no effect.
-transpose-words (M-t)
-      Drag  the  word  before  point past the word after point, moving
-      point over that word as well.  If point is at  the  end  of  the
-      line, this transposes the last two words on the line.
-upcase-word (M-u)
-      Uppercase  the current (or following) word.  With a negative ar‐
-      gument, uppercase the previous word, but do not move point.
-downcase-word (M-l)
-      Lowercase the current (or following) word.  With a negative  ar‐
-      gument, lowercase the previous word, but do not move point.
-capitalize-word (M-c)
-      Capitalize the current (or following) word.  With a negative ar‐
-      gument, capitalize the previous word, but do not move point.
-overwrite-mode
-    A similar behavior (gedit-like) can be obtained with INSERT. See above.
+##### tab-insert
+See shortcuts TAB and SHIFT-TAB in basic operations.
+
+##### self-insert (a, b, A, 1, !, ...)
+Insert the character typed. In some cases such as ~ or SPACE, a special
+character is inserted instead (TODO: be more specific). In some cases,
+quoted-insert may be needed to insert some special symbols.
 
 #### Killing and Yanking
-kill-line (C-k)
-      Kill the text from point to the end of the line.
-backward-kill-line (C-x Rubout)
-      Kill backward to the beginning of the line.
-unix-line-discard (C-u)
-      Kill backward from point to the  beginning  of  the  line.   The
-      killed text is saved on the kill-ring.
-kill-word (M-d)
-      Kill from point the end of  the  current  word,  or  if  between
-      words,  to  the  end  of the next word.  Word boundaries are the
-      same as those used by forward-word.
-backward-kill-word (M-Rubout)
-      Kill the word behind point.  Word boundaries  are  the  same  as
-      those used by backward-word.
-unix-word-rubout (C-w)
-      Kill  the  word behind point, using white space as a word bound‐
-      ary.  The killed text is saved on the kill-ring.
-delete-horizontal-space (M-\)
-    If selection is a parameter, remove any juxted which may be
-    a VOID. Else, flat the lop-block.
-kill-region (Maybe we bound it even if it is not a default of readline)
-    Kill the text between the point and  mark  (saved  cursor  posi‐
-    tion).  This text is referred to as the region.
-copy-region-as-kill (Maybe we can reserve a key combination)
-    Copy the text in the region to the kill buffer.
-yank (C-y)
-    Yank the top of the kill ring into the buffer at point.
-yank-pop (M-y)
-    Rotate  the kill ring, and yank the new top.  Only works follow‐
-    ing yank or yank-pop.
-#### Numeric Arguments
-digit-argument (M-0, M-1, ..., M--)
-  Add this digit to the argument already accumulating, or start  a
-  new argument. M-- starts a negative argument.
+Kill subequations can be yanked at any moment (before quiting the program).
+##### kill-line (C-k)
+Kill any subequation after current subeq. Those which cannot be deleted totally
+without flatting their supeqs are left. It is a compromise so the
+"usually desired" command can be executed without selecting exactly the
+subeq of interest.
+With a negative argument kill any subequation before current subeq.
+##### backward-kill-line (C-c C-?, C-c C-h)
+Kill selection and any subequation before current subeq. It is a compromise so
+a variant of kill-line can be used.
+With a negative argument kill selection and any subequation before.
+##### unix-line-discard (C-u)
+Kill any subequation before current subeq. Those which cannot be deleted
+totally without flatting their supeqs are left. It is a compromise so the
+"usually desired" command can be executed without selecting exactly the
+subeq of interest.
+A negative argument has no effect, honoring readline.
+
+WIP !!!
+##### kill-word (M-d)
+Kill from point the end of  the  current  word,  or  if  between
+words,  to  the  end  of the next word.  Word boundaries are the
+same as those used by forward-word.
+##### backward-kill-word (M-C-?, M-C-h)
+Kill the word behind point.  Word boundaries  are  the  same  as
+those used by backward-word.
+##### unix-word-rubout (C-w)
+Kill  the  word behind point, using white space as a word boundary.
+The killed text is saved on the kill-ring.
+##### delete-horizontal-space (M-\)
+If selection is a parameter, remove any juxted which may be
+a VOID. Else, flat the lop-block.
+##### kill-region (Maybe we bound it even if it is not a default of readline)
+Kill the text between the point and  mark  (saved  cursor  posi‐
+tion).  This text is referred to as the region.
+##### copy-region-as-kill (Maybe we can reserve a key combination)
+Copy the text in the region to the kill buffer.
+##### yank (C-y)
+Yank the top of the kill ring into the buffer at point.
+##### yank-pop (M-y)
+Rotate  the kill ring, and yank the new top.  Only works follow‐
+ing yank or yank-pop.
 
 #### Completing
-complete
-    Not used. Using menu-complete instead with its key binding instead.
-possible-completions (M-?)
-    List the possible variations of the selected subequation. You can choose
-    one using the cursor keys and accept it with RETURN, C-j or C-m. To
-    abort, use ESC or a key binding associated to abort.
-insert-completions
-    Not used. M-* used to introduce productories instead.
-menu-complete (C-i)
-    Replace selection with a variation. Repeated execution of the command steps
-    through the list of possible variations, inserting each match in turn. At
-    the end of the list, the original subequation is restored. An argument of
-    n moves n positions forward in the list of possible variations. A negative
-    argument moves backward through the list.
-    Note: C-i is used by default for complete command in readline while this
-    one is unbounded.
+WIP!!!
+##### complete
+Not used. Using menu-complete instead with its key binding instead.
+##### possible-completions (M-?)
+List the possible variations of the selected subequation. You can choose
+one using the cursor keys and accept it with RETURN, C-j or C-m. To
+abort, use ESC or a key binding associated to abort.
+##### insert-completions
+Not used. M-* used to introduce productories instead.
+##### menu-complete (C-i, M-@ ??)
+Replace selection with a variation. Repeated execution of the command steps
+through the list of possible variations, inserting each match in turn. At
+the end of the list, the original subequation is restored. An argument of
+n moves n positions forward in the list of possible variations. A negative
+argument moves backward through the list.
+
+> **Note**: C-i is used by default for complete command in readline while this
+one is unbounded.
 
 #### Keyboard Macros
-start-kbd-macro (C-c ()
-      Begin saving the characters  typed  into  the  current  keyboard
-      macro.
-end-kbd-macro (C-c ))
-      Stop saving the characters typed into the current keyboard macro
-      and store the definition.
-call-last-kbd-macro (C-c e)
-      Re-execute the last keyboard macro defined, by making the  char‐
-      acters  in  the  macro  appear  as  if  typed  at  the keyboard.
-      print-last-kbd-macro () Print the last keyboard macro defined in
-      a format suitable for the inputrc file.
+WIP!!!
+##### start-kbd-macro (C-c ()
+Begin saving the characters  typed  into  the  current  keyboard
+macro.
+##### end-kbd-macro (C-c ))
+Stop saving the characters typed into the current keyboard macro
+and store the definition.
+##### call-last-kbd-macro (C-c e)
+Re-execute the last keyboard macro defined, by making the  char‐
+acters  in  the  macro  appear  as  if  typed  at  the keyboard.
+print-last-kbd-macro () Print the last keyboard macro defined in
+a format suitable for the inputrc file.
 
 #### Miscellaneous
-re-read-init-file (C-c C-r)
-      Read a configuration file.
-abort (C-g, M-C-g, C-c C-g)
-      Abort the current editing command. It does not ring.
-do-uppercase-version (M-a, M-b, M-x, ...)
-      If  the  metafied character x is lowercase, run the command that
-      is bound to the corresponding uppercase character.
-prefix-meta (ESC)
-      Metafy the next character typed.
-undo (C-_, C-c C-u)
-      Incremental undo, separately remembered for each equation.
-revert-line (M-r)
-      Undo all changes made to this equation.  This is like executing
-      the undo command enough times to return the equation to its
-      initial state.
-tilde-expand (M-&)
-    Not used. M-& used to insert a color as described above.
-set-mark (C-@, M-<space>)
-      Set the mark to the point.  If a numeric argument  is  supplied,
-      the mark is set to that position.
-exchange-point-and-mark (C-c C-c)
-      Swap  the  point  with the mark.  The current cursor position is
-      set to the saved position, and the old cursor position is  saved
-      as the mark.
-character-search (C-])
-      A character is read and point is moved to the next occurrence of
-      that character.  A negative count searches for  previous  occur‐
-      rences.
-character-search-backward (M-C-])
-      A  character  is  read and point is moved to the previous occur‐
-      rence of that character.  A negative count searches  for  subse‐
-      quent occurrences.
-skip-csi-sequence
-      Read  enough  characters to consume a multi-key sequence such as
-      those defined for keys like Home and End.  Such sequences  begin
-      with a Control Sequence Indicator (CSI), usually ESC-[.  If this
-      sequence is bound to "\[", keys producing  such  sequences  will
-      have  no  effect  unless explicitly bound to a readline command,
-      instead of inserting stray characters into the  editing  buffer.
-      This is unbound by default, but usually bound to ESC-[.
-dump-functions
-      Print  all  of the functions and their key bindings to the read‐
-      line output stream.  If a numeric argument is supplied, the out‐
-      put  is  formatted  in such a way that it can be made part of an
-      inputrc file.
-dump-variables
-      Print all of the settable variables  and  their  values  to  the
-      readline  output stream.  If a numeric argument is supplied, the
-      output is formatted in such a way that it can be made part of an
-      inputrc file.
-dump-macros
-      Print  all of the readline key sequences bound to macros and the
-      strings they output.  If a numeric  argument  is  supplied,  the
-      output is formatted in such a way that it can be made part of an
-      inputrc file.
-emacs-editing-mode (C-e)
-      When in vi command mode, this causes a switch to  emacs  editing
-      mode.
-vi-editing-mode (M-C-j)
-      When  in  emacs editing mode, this causes a switch to vi editing
-      mode.
+WIP!!!
+##### re-read-init-file (C-c C-r)
+Read a configuration file.
+##### abort (C-g, M-C-g, C-c C-g)
+Abort the current editing command. It does not ring.
+##### do-uppercase-version (M-a, M-b, M-x, ...)
+If  the  metafied character x is lowercase, run the command that
+is bound to the corresponding uppercase character.
+##### prefix-meta (ESC)
+Metafy the next character typed.
+##### undo (C-_, C-c C-u)
+Incremental undo, separately remembered for each equation.
+##### revert-line (M-r)
+Undo all changes made to this equation.  This is like executing
+the undo command enough times to return the equation to its
+initial state.
+##### set-mark (C-@, M-<space>)
+Set the mark to the point.  If a numeric argument  is  supplied,
+the mark is set to that position.
+##### exchange-point-and-mark (C-c C-c)
+Swap  the  point  with the mark.  The current cursor position is
+set to the saved position, and the old cursor position is  saved
+as the mark.
+##### character-search (C-])
+A character is read and point is moved to the next occurrence of
+that character.  A negative count searches for  previous  occur‐
+rences.
+##### character-search-backward (M-C-])
+A  character  is  read and point is moved to the previous occur‐
+rence of that character.  A negative count searches  for  subse‐
+quent occurrences.
+##### emacs-editing-mode
+When in vi command mode, this causes a switch to  emacs  editing
+mode.
+
+vi-mode not supported by the moment.
+##### vi-editing-mode
+When  in  emacs editing mode, this causes a switch to vi editing
+mode.
+
+vi-mode not supported by the moment.
