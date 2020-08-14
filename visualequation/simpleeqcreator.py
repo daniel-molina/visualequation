@@ -50,14 +50,16 @@ class SimpleEqCreator:
             self._init(subeq)
 
     def get_idx(self, subeq_idx, subeq_entry=-1):
-        """Return the index of in composed eq by specifying the index of the
-        element in a inserted subeq and which inserted subeq you refer.
+        """Return the index in composed eq of a subequation previously entered.
+
+        It must be specified the index of the element in a inserted subeq and
+        which inserted subeq you refer.
 
         .. note::
             If inserted subeq was a JUXT-block, you must not pass *subeq_idx*
             in ([], [0]) since the original juxt was probably discarded and
-            only one juxt op is present as the lop of the composed eq (This
-            paragraph does not apply to TJUXT-blocks.)
+            only one juxt op is present as the lop of the composed eq (this
+            paragraph does not apply if insertion was a TJUXT-block.)
         """
         if self.log[subeq_entry].pos < 0:
             return subeq_idx[:]
@@ -103,7 +105,7 @@ class SimpleEqCreator:
 
         Return:
 
-            *   If *include_voids* is False and subeq is a VOID, -1.
+            *   If *include_voids* is False and subeq is a (T)VOID, -1.
             *   Elif *subeq* was not a JUXT-block subeq, the index in eq of
                 *subeq*.
             *   Else, the index of the first juxted of *subeq*.
@@ -127,7 +129,8 @@ class SimpleEqCreator:
             get_idx (with *subeq_entry* equal to 0) to obtain the correct
             value.
         """
-        if not include_voids and subeq == utils.void():
+        if not include_voids \
+                and subeq in (utils.void(), utils.void(temp=True)):
             return -1
 
         if not self.log:
@@ -143,7 +146,7 @@ class SimpleEqCreator:
         """
         n_inserted_subeqs = 0
         for s in subeq_list:
-            if include_voids or s != utils.void():
+            if include_voids or s not in (utils.void(), utils.void(temp=True)):
                 self.append(s)
                 n_inserted_subeqs += 1
         return n_inserted_subeqs

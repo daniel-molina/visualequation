@@ -281,17 +281,30 @@ def nextpar(idx, eq, retsub=False):
     If idx is [], return -2.
     Elif it is a last param or lop, return -1.
     """
-    plop = outlop(idx, eq, True)
-    if not isinstance(plop, utils.Op):
-        # Cases: idx == [] and idx points to lop
-        return plop
-    if idx[-1] == plop.n_args:
-        # Case: last param
+    if not idx:
+        return -2
+
+    block = get(idx, eq)
+    if idx[-1] in (len(block) - 1, 0):
         return -1
+
     ridx = idx[:]
     ridx[-1] += 1
-    return get(ridx, eq) if retsub else ridx
+    return block[ridx[-1]] if retsub else ridx
 
+def relpar(idx, subeq, n=1, retsub=False):
+    """Get a co-parameter ref or its index.
+
+    Return -1 if requested parameter does not exist or -2 if idx is [].
+    """
+    if not idx:
+        return -2
+    sup = supeq(idx, subeq, True)
+    ord = idx[-1] + n
+    if 0 < ord < len(sup):
+        return sup[ord] if retsub else idx[:-1] + [ord]
+    else:
+        return -1
 
 def isjuxtblock(subeq, idx=None):
     """Return whether an element is a juxt-block (included temporal)."""
@@ -307,6 +320,19 @@ def isjuxted(idx, eq):
     if not idx:
         return False
     return isjuxtblock(eq, idx[:-1])
+
+def isgoppar(idx, eq):
+    """Return whether a subeq is a GOP-par.
+
+    .. note::
+        This function says nothing about being selectable. Use selectivity
+        function to check selectivity in a safe way.
+    """
+    if not idx:
+        return False
+    if supeq(idx, eq, True)[0] == utils.GOP:
+        return True
+    return False
 
 def isusubeq(subeq, idx=None):
     """Return whether an element is a usubeq.
@@ -393,6 +419,47 @@ def ulevel(idx, eq):
     return ulev
 
 
+def selectivity(idx, eq):
+    """Give information on selectivity of a subequation.
+
+    Return  2 if subequation is SELECTABLE and is not a GOP-block urepr.
+    Return  1 if subequation is SELECTABLE and is a GOP-block urepr.
+    Return  0 if subequation is NOT SELECTABLE and GOP-block strict SUBEQ.
+    Return -1 if subequation is NOT SELECTABLE and not GOP-block strict SUBEQ.
+
+    .. note::
+        A subequation is selectable if, and only if, return value is positive.
+
+    .. note::
+        To know that return value is 0 is not enough to know if subeq is a
+        usubeq. Since this function informs about selectivity, it is not
+        considered important to inform about the user property itself.
+
+    .. note::
+        If return value is -1, there exists at least one selectable strict
+        subeq of pointed subeq, its urepr.
+
+    .. note::
+        In current implementation of VE, GOP-blocks are the only subeqs which
+        are not usubeqs and GOP-blocks cannot be the parameter of a GOP. As a
+        consequence, if -1 is returned it means (in current implementation)
+        that subeq is a GOP-block and its parameter is selectable.
+    """
+    eqref = eq
+    is_gopblock_strict_subeq = False
+    for lev, par_ord in enumerate(idx):
+        if is_gopblock_strict_subeq and eqref[0] not in utils.NONUOPS:
+            return 0
+        if eqref[0] == utils.GOP:
+            is_gopblock_strict_subeq = True
+        eqref = eqref[par_ord]
+
+    if eqref[0] in utils.NONUOPS:
+        return 0 if is_gopblock_strict_subeq else -1
+    else:
+        return 1 if is_gopblock_strict_subeq else 2
+
+
 def mate(idx, eq, right, ulevel_diff=0, retsub=False):
     """Return the mate to the left and a ulevel difference.
 
@@ -439,11 +506,11 @@ def mate(idx, eq, right, ulevel_diff=0, retsub=False):
         pord = 1 if right else -1
 
 
-def boundary_mate(eq, n, last=False, retsub=False):
-    """Return the first or last *N*-ulevel mate of eq."""
+def boundary_mate(eq, ulevel, last=False, retsub=False):
+    """Return reference to the first or last *N*-ulevel mate of eq, or idx."""
     eqref = eq
     ridx = []
-    ulev = -1
+    ul = -1
     while isinstance(eqref, list):
         if len(eqref) == 1:
             break
@@ -451,10 +518,45 @@ def boundary_mate(eq, n, last=False, retsub=False):
             retval = urepr([], eqref[1], retsub)
             return retval if retsub else ridx + [1] + retval
         if isusubeq(eqref):
-            ulev += 1
-            if ulev == n:
+            ul += 1
+            if ul == ulevel:
                 break
-        ridx.append(npars(eqref) if last else 1)
+        ridx.append(len(eqref) - 1 if last else 1)
         eqref = eqref[ridx[-1]]
 
     return eqref if retsub else ridx
+
+
+def boundary_symbol(subeq, idx=None, last=False, strict=True, retsub=False):
+    """Return reference to the first or last symbol of a subeq, or its index.
+
+    If *strict* is False and the boundary symbol is not selectable, it will
+    return the urepr of the GOP with biggest level.
+
+    If *strict* is False, and pointed subeq has not a selectable urepr, -1 is
+    returned.
+
+    .. note::
+        If *strict* is False, you "want" to pass the full equation as *subeq*
+        to guarantee a meaningful result.
+    """
+    ridx = [] if idx is None else idx[:]
+    flag = selectivity(ridx, subeq)
+    if not strict:
+        if flag == 0:
+            return -1
+        if flag == 1:
+            return get(ridx, subeq) if retsub else ridx
+
+    # From this point we know that sref is not a strict subeq of a GOP-block
+    sref = get(ridx, subeq)
+    while True:
+        if len(sref) == 1:
+            break
+        if not strict and sref[0] == utils.GOP:
+            retval = urepr([], sref[1], retsub)
+            return retval if retsub else ridx + [1] + retval
+        ridx.append(len(sref) - 1 if last else 1)
+        sref = sref[ridx[-1]]
+
+    return sref if retsub else ridx

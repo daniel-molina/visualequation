@@ -429,7 +429,8 @@ def scriptop_pars2nonloscript_pars(pars):
 def do_require_loscript(base):
     """Return whether a loscript operator is needed given its base."""
     # Valid for symbols/0-args ops and blocks.
-    if hasattr(base[0], 'type_') and base[0].type_ in LOSCRIPT_BASE_TYPES:
+    s = base if base[0] != utils.GOP else base[1]
+    if hasattr(s[0], 'type_') and s[0].type_ in LOSCRIPT_BASE_TYPES:
         return True
     else:
         return False
@@ -659,6 +660,9 @@ def _insert_initial_script(baseref, scriptdir, is_superscript, newscript):
 def insert_script(idx, eq, scriptdir, is_superscript, newscript=None):
     """Insert a script and return its index.
 
+    If pointed subeq is a TVOID without a script, it is replaced by VOID
+    before inserting the script.
+
     Rules:
 
         *   If *idx* does not point to a current base, a script operator will
@@ -678,14 +682,10 @@ def insert_script(idx, eq, scriptdir, is_superscript, newscript=None):
 
     :param idx: The index of the subeq which will be the base of the script.
     :param eq: An equation.
-    :param scriptdir: Direction in which to include the script. 0 means
-    vscript.
+    :param scriptdir: Dir in which to include the script. 0 means vscript.
     :param is_superscript: Boolean indicating whether it is a superscript.
-    If False, a subscript is inserted.
-    :param newscript: A subeq with which to initialize the script.
-    If it is None, a VOID is inserted instead.
-    :return: The index of inserted script in *eq*. If it already existed,
-    the last value of the index will be negative.
+    :param newscript: A subeq with which to initialize script. None means VOID.
+    :return: The index of inserted script. If it already existed, a flag.
     """
     if newscript is None:
         newscript = utils.void()
@@ -694,15 +694,19 @@ def insert_script(idx, eq, scriptdir, is_superscript, newscript=None):
     if supeq == -2 or not is_scriptop(supeq[0]):
         # Case: idx does not point to a base
         baseref = eq if supeq == -2 else supeq[idx[-1]]
+        if baseref == utils.void(temp=True):
+            # TVOID -> VOID
+            baseref[:] = utils.void()
         _insert_initial_script(baseref, scriptdir, is_superscript, newscript)
-        return idx + [2]
+        return idx[:] + [2]
 
     pars = scriptblock2pars(supeq)
     script_pos = get_script_pos_in_pars(pars, scriptdir, is_superscript)
     if script_pos == -1:
         # Case: Requested script is not compatible with current operator
-        return _insert_initial_script(eq, idx, scriptdir, is_superscript,
-                                      newscript)
+        baseref = supeq[idx[-1]]
+        _insert_initial_script(baseref, scriptdir, is_superscript, newscript)
+        return idx[:] + [2]
 
     if pars[script_pos] is not None:
         # Case: Requested script already exists

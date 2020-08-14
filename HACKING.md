@@ -250,9 +250,6 @@ superquation of SB in S.
 > `subeq of S <= S`
 > `supeq of S (in P) > S`
 
-
-
-
 > **Properties**:
 >
 >1. At least, one supeq of SB in S exists if SB is not S (that supeq is S).
@@ -470,6 +467,9 @@ The **user nesting level** (**ulevel**) of a N-ulevel usubeq of a subeq is the
 > general, supposing that that usubeq has sense, is different than the N-ulevel
 > usubeq of S.
 
+The **N-ulevel usupeq** USP of a subequation SB in a subequation S and
+other related terms can be defined as expected.
+
 ### Faithful subequations and operators
 
 A **faithful subequation** is a subequation that has one, and only one,
@@ -477,8 +477,8 @@ A **faithful subequation** is a subequation that has one, and only one,
 
 **Rule**: Every symbol is faithful.
 
-The **user representative** (**urepr**) of a faithful subequation FS is the 0
--ulevel usubeq of FS.
+The **user representative** (**urepr**) of a faithful subequation FS is the
+0-ulevel usubeq of FS.
 
 > Properties:
 >

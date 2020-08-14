@@ -67,10 +67,11 @@ VDIR = 2    # overwrite direction in normal mode
 
 SELARG = r'\cdots'
 VOID = r'\begingroup\color{purple}\oblong\endgroup'
+TVOID = r'\begingroup\color{lightgray}\oblong\endgroup'
 
 
-def void():
-    return [VOID]
+def void(temp=False):
+    return [TVOID] if temp else [VOID]
 
 
 REDIT = Op(1, r'\left\lmoustache {0} \right\rgroup')        # right
@@ -80,9 +81,8 @@ SEDIT = Op(1, r'\left\rmoustache {0} \right\lmoustache')    # substitute
 JUXT = Op(-1, r'J')
 TJUXT = Op(-1, r'T')
 GOP = Op(1, r'{0}')
-TEXTFILTER = Op(1, r' \text{{{0}}}')    # Filters start with space
 
-NONUOPS = (GOP, TEXTFILTER)
+NONUOPS = (GOP,)
 
 # It does NOT include ' ', "'", '^', '\\' and '~'
 # so it is valid for both text and math environments
@@ -165,8 +165,6 @@ EXEQGN = [GOP, [EXOP2, ["a"], ["b"]]]
 EXEQNG = [EXOP2, [GOP, ["a"]], ["b"]]
 EXEQGNG = [GOP, [EXOP2, [GOP, ["a"]], ["b"]]]
 EXEQNGN = [EXOP2, [GOP, [EXOP2, ["a"], ["x"]]], ["b"]]
-EXEQGFN = [GOP, [TEXTFILTER, [EXOP2, ["a"], ["b"]]]]
-EXEQNGFN = [EXOP1, [GOP, [TEXTFILTER, [EXOP2, ["a"], ["b"]]]]]
 
 EXEQNJ = [EXOP2, ["3"], [JUXT, ["r"], ["t"]]]
 EXEQJN = [JUXT, [EXOP1, ["x"]], ["s"], ["t"]]
