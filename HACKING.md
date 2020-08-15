@@ -650,6 +650,8 @@ the same input is sent to the program. The are:
 *   Normal operation mode
 *   Overwrite operation mode
 
+They can be switched with INSERT or C-\[.
+
 ### Normal mode
 
 Characteristics:
@@ -766,11 +768,6 @@ When using C-RIGHT/C-LEFT:
 
 #### Increasing and shortening selections
 
-##### RETURN
-
-*   Select supeq of current selection.
-*   Do not change dir unless selection it was VDIR. In that case, use RDIR.
-
 ##### SHIFT-LEFT and SHIFT-RIGHT:
 
 When using SHIFT-LEFT/SHIFT-RIGHT:
@@ -787,10 +784,18 @@ When using SHIFT-LEFT/SHIFT-RIGHT:
     set LDIR/RDIR.
     
 ##### SHIFT-UP
-Select superequation if it exists. In addition, set RDIR if dir is not ODIR.
+Select superequation if it exists. Do not change dir unless selection was VDIR.
+In that case, RDIR is set.
 
 ##### SHIFT-DOWN
 Select last 1-ulevel usubeq of selection if it exists and is selectable.
+
+> **Note**: The first 1-ulevel usubeq can be accessed pressing RIGHT
+> unless it was previously pressed RIGHT to access from the last 1-level usubeq
+> to current selection. If it is desired to go to the first 1-ulevel usubeq
+> some advanced operations can be used. In particular, M-- SHIFT-DOWN will
+> get it. Also, M-b will select the first 1-ulevel usubeq if any 1-ulevel
+> usubeq is selected.
 
 #### Manipulation of subequations
 
@@ -851,15 +856,25 @@ juxteds to the left of selection.
 
 If selection is not a juxted, it is equivalent to press BACKSPACE.
 
-##### Group (SHIFT-RETURN)
+##### Create/Delete groups (C-RETURN)
 
 Make strict usubeqs of selected block not selectable. It has no effect if
 selection is a symbol.
 
-##### Ungroup (C-SHIFT-RETURN)
+> **Note**: A soft group (see below) which is grouped will become again a soft
+> group if it is ungrouped.
 
-Make strict usubeqs of selected block selectable. It has no effect if
-selection is a symbol.
+##### Create/Delete soft groups (RETURN)
+
+Convert a TJUXT-block (several juxteds selected together by using SHIFT-LEFT or
+SHIFT-RIGHT) into a JUXT-block. Inserting sequences of digits automatically
+creates soft groups for them.
+
+> **Note**: RETURN is used for soft groups instead of groups because it does
+> nothing when a typical subequation is selected. That avoids unexpected 
+> behaviors for the user who pressed RETURN unintentionally or experimented
+> with the keyboard. That may be a source of confusion specially because groups
+> cannot be seen with a naked eye (maybe groups could be colored (?)).
 
 #### Shortcuts for inserting symbols and operators
 
@@ -885,23 +900,42 @@ selection is a symbol.
 
 ##### Separate subeqs (TAB)
 Insert or increase a region "without" subequations.
+
+It has a different use when inserting scripts.
 ##### Bring subeqs closer (SHIFT-TAB)
 Reduce a region "without" subequations or delete it.
+
+It has a different use when inserting scripts.
+
 > **Temporal note**: Which function should be left to SPACE? Smaller tabs?
 ##### Subscripts and superscripts (DOWN and UP)
 Include an empty sub/super-script or go to it if it already script. The
 sub/super-script will be placed to the left if LDIR or to the right in any
 other case.
+
+TAB an SHIFT-TAB after DOWN or UP will modify the position of the recently
+created script, including under/over-sets (see below).
 ##### Undersets and oversets (C-DOWN and C-UP)
 Add an under/over-set (a subequation just under/over another subequation).
+
+TAB an SHIFT-TAB after DOWN or UP will modify the position of the recently
+created under/over-set, including scripts.
 ##### Functions (C-,, M-,, M-C-,)
 First time is cosinus, then sinus then... The symbol version matches every 
 function and the operator versions match functions which can have arguments.
+
+> **Mnemonic**: Arguments of functions are separated by commas where they are
+> presented as a list inside parenthesis.
 ##### Roots (M-%, M-C-%)
 First time is a square root, next time is generic.
+
+> **Mnemonic**: '%' looks like a generic root with its arguments, only
+> lacking part of the main glyph.
 ##### Modify subequation with a variant (M-@)
 Full details to be defined. In Advanced operations it is possible to find more
  info.
+ 
+> **Mnemonic**: '@' looks like a modified form of 'a'.
 ##### Sumatory (C-+, M-+, M-C-+)
 Sucesive keystrokes of the operator versions modify the number and position of
 the args.
@@ -909,28 +943,57 @@ the args.
 Equivalent to summatory.
 ##### Integral (C-$, M-$, M-C-$)
 Equivalent to summatory.
-##### Fraction (M-/, M-C-/)
+
+> **Mnemonic**: '$' looks like an integral if the vertical var is not
+> considered.
+>
+##### Fraction (C-/, M-/, M-C-/)
+There are several types of fractions.
+
+The symbol version introduce may introduce a fraction-like symbol.
 ##### Equal-like symbols (C-=)
-##### Multi-line equations (M-=, M-C-=) 
+##### Multi-line equations (M-=, M-C-=)
+Some versions may include equals and other useful things that avoid typing
+and provide a visual idea of the possibilities.
+
+> **Mnemonic**: Usually multiline equations are connected with the = sign.
 ##### "Less than"-like symbol (C-<)
 ##### "Bigger than"-like symbol (C->) 
-##### Pair of delimiters (M-(, M-C-()
+##### Pair of delimiters (C-), M-), M-C-))
+The symbol version introduces a pair of independent delimiters of the same
+size.
+
 It can be accelerated providing a character identified with the delimiter.
-##### Matrices (M-), M-C-)):
-###### Equation system ( M-{, M-C-{)
+##### Matrices (M-(, M-C-():
+###### Equation system (M-{, M-C-{)
 A digit modifies the number of equations.
-###### Brace-like (C-{, M-}, M-C-})
+
+> **Mnemonic**: Glyph enclosing equations in a equation system looks like a
+> '{'.
+###### Brace-like (M-}, M-C-})
+> **Mnemonic**: Usual braces looks like a rotated '{'.
 ###### Arrows (C-~)
+> **Mnemonic**: '~' looks like a curved arrow without head.
 ###### Hat-like decorators of fixed size (M-\_, M-C-\_)
+> **Mnemonic**: '_' is straight, which gives an idea of something constant.
 ###### Hat-like decorators of variable size (M-\~, M-C-\~)
+> **Mnemonic**: '~' is curved, which gives an idea of being adaptable.
 ###### Small operators (C--)
+> **Mnemonic**: '+' and '*' stand for big operators. '-' reduces something,
+> in this case the size of the operators.
 ###### Font colors (M-&, M-C-&)
 ###### Background colors (C-!, M-!)
-###### Special text (C-., M-., M-C-.)
+> **Mnemonic**: '!' indicates something important. Backgroung colors increase
+> importance of an equation. 
+###### Special text (C-., M-C-.)
 It is a symbol-like key biding because a windowed dialog will always appear 
 and modification of the text will require a special dialog.
-However, options M-. and M-C-. may be considered with care.
+However, M-C-. may be considered with care.
 
+> **Mnemonic**: A dot is used to finish a "text" sentence.
+
+> **Note**: M-. is used for an advanced operation not related with special
+> texts.
 ### Advanced operations
 
 The intention of advance operations is to imitate Readline default
@@ -963,6 +1026,16 @@ used.
 > **Note**: Numeric arguments can be used in basic operations too.
 
 #### Movements
+##### change-dir (C-()
+This is not a readline command.
+
+In normal mode, it turns LDIR into RDIR and RDIR into LDIR. If VDIR, it
+remembers previous direction when selection was not a VOID and flip it, which
+will be appreciated in the case that a sequence of movements not altering
+direction selects a non-VOID subeq.
+##### change-mode (C-[)
+This is not a readline command.
+
 ##### beginning-of-line (C-a)
 Select the first mate.
 ##### end-of-line (C-e)
@@ -1143,8 +1216,19 @@ With a numeric argument, certain mates of the supeq of selection are included.
 Counterpart of upcase-word.
 ##### capitalize-word (M-c)
 Capitalize the first symbol which has sense of selection.
-##### overwrite-mode (INSERT)
-A similar behavior (as in graphical text editors) is implemented. See above.
+##### overwrite-mode (INSERT, C-[)
+This command switch from normal mode into overwrite mode and from overwrite
+mode into normal mode.
+
+The exact behavior is intuitive but is cumbersome to explain. It involves
+decisions regarding directions, TVOIDs and selections.
+
+Overwrite mode is more similar to the behavior of graphical editors than the
+one of readline. In particular, backward delete does not create an "empty 
+space" but totally removes the previous "character". One difference with any 
+common overwrite mode is that inserting without a movement never trespass a 
+supeq but in text editors eventually words delimiters are overwritten and
+several words become a single one.
 
 ##### quoted-insert (C-q)
 If next input is a number, the number is introduced. (That is useful to 
@@ -1271,6 +1355,24 @@ Yank the top of the kill ring into the buffer at point.
 ##### yank-pop (M-y)
 Rotate  the kill ring, and yank the new top.  Only works follow‐
 ing yank or yank-pop.
+##### yank-nth-arg (M-C-y)
+Insert the first non-VOID 1-ulevel usubeq of usupeq. With an argument n, insert
+the nth non-VOID 1-ulevel usubeq of usupeq. If it is 0, insert the lop of
+usupeq with empty pars. If it is negative, insert the nth non-VOID 1-ulevel
+usubeq starting from the end and without counting the last non-void 1-ulevel
+usubeq.
+
+> **Note**: To insert the last 1-ulevel usubeq it is possible to use
+> yank-last-arg (see below).
+##### yank-last-arg (M-.)
+Insert the last non-VOID 1-ulevel usubeq of usupeq. With a numeric argument it
+is equivalent to yank-nth-arg. Successive calls to yank-last-arg consider
+usupeqs of higher level. A negative numeric argument provided to successive
+calls invert the nesting direction. It is, first negative argument provided
+will result in using the (N-1)-ulevel usupeq instead of the (N+1)-ulevel
+usupeq. Next time that a numerical argument is passed the (M+1)-ulevel usupeq
+is considered instead of the (M-1)-ulevel usupeq. If no supeqs are available
+in requested direction, previous insertion is not modified.
 
 #### Completing
 WIP!!!
