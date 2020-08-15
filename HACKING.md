@@ -782,20 +782,16 @@ When using SHIFT-LEFT/SHIFT-RIGHT:
 *   If an extension is not possible (no more juxteds in the direction of
     expansion or a non-juxted is selected, select the supeq of selection and
     set LDIR/RDIR.
-    
-##### SHIFT-UP
+
+##### RETURN
+Select first 1-ulevel usubeq of selection if it exists and is selectable.
+   
+##### SHIFT-UP (or M-p)
 Select superequation if it exists. Do not change dir unless selection was VDIR.
 In that case, RDIR is set.
 
-##### SHIFT-DOWN
+##### SHIFT-DOWN (or M-n)
 Select last 1-ulevel usubeq of selection if it exists and is selectable.
-
-> **Note**: The first 1-ulevel usubeq can be accessed pressing RIGHT
-> unless it was previously pressed RIGHT to access from the last 1-level usubeq
-> to current selection. If it is desired to go to the first 1-ulevel usubeq
-> some advanced operations can be used. In particular, M-- SHIFT-DOWN will
-> get it. Also, M-b will select the first 1-ulevel usubeq if any 1-ulevel
-> usubeq is selected.
 
 #### Manipulation of subequations
 
@@ -858,23 +854,21 @@ If selection is not a juxted, it is equivalent to press BACKSPACE.
 
 ##### Create/Delete groups (C-RETURN)
 
-Make strict usubeqs of selected block not selectable. It has no effect if
-selection is a symbol.
+A group makes strict usubeqs of selected block not selectable. It has no
+effect if selection is a symbol.
 
 > **Note**: A soft group (see below) which is grouped will become again a soft
 > group if it is ungrouped.
 
-##### Create/Delete soft groups (RETURN)
+##### Create/Delete soft groups (SHIFT-RETURN)
 
-Convert a TJUXT-block (several juxteds selected together by using SHIFT-LEFT or
-SHIFT-RIGHT) into a JUXT-block. Inserting sequences of digits automatically
-creates soft groups for them.
+Soft groups are juxt-blocks that are juxteds of another juxt-block.
 
-> **Note**: RETURN is used for soft groups instead of groups because it does
-> nothing when a typical subequation is selected. That avoids unexpected 
-> behaviors for the user who pressed RETURN unintentionally or experimented
-> with the keyboard. That may be a source of confusion specially because groups
-> cannot be seen with a naked eye (maybe groups could be colored (?)).
+To create a soft-group, select together the desired juxteds by using
+SHIFT-LEFT or SHIFT-RIGHT before using they key binding.
+
+> **Note**: Inserting sequences of digits automatically creates soft groups for
+> them.
 
 #### Shortcuts for inserting symbols and operators
 
@@ -964,7 +958,7 @@ The symbol version introduces a pair of independent delimiters of the same
 size.
 
 It can be accelerated providing a character identified with the delimiter.
-##### Matrices (M-(, M-C-():
+##### Matrices (M-(, M-C-()
 ###### Equation system (M-{, M-C-{)
 A digit modifies the number of equations.
 
@@ -1172,9 +1166,15 @@ press RETURN, C-j or C-m. To abort press BACKSPACE, a backward-delete-char
 command or an abort command.
 > **No-Implementation note**: I cannot find a way to like this command! I do
 > not have any reason to implement it (today).
+
+The default readline keybinding for this command, M-p, is used as C-UP (see
+ basic
+ movements).
 ##### non-incremental-forward-search-history (Not implemented!)
 The counterpart of non-incremental-reverse-search-history.
 
+The default readline keybinding for this command, M-n, is used as C-DOWN (see 
+basic basic movements).
 #### Manipulating subequations
 ##### end-of-file (C-d)
 Exit Visual Equation if equation is a VOID, discarding the kill ring and the
@@ -1425,7 +1425,7 @@ Incremental undo, separately remembered for each equation.
 Undo all changes made to this equation.  This is like executing
 the undo command enough times to return the equation to its
 initial state.
-##### set-mark (C-@, M-<space>)
+##### set-mark (C-@, M-SPACE)
 Set the mark to the point.  If a numeric argument  is  supplied,
 the mark is set to that position.
 ##### exchange-point-and-mark (C-c C-c)
