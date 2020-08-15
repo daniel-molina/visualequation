@@ -1343,8 +1343,21 @@ those used by backward-word.
 Kill  the  word behind point, using white space as a word boundary.
 The killed text is saved on the kill-ring.
 ##### delete-horizontal-space (M-\)
-If selection is a parameter, remove any juxted which may be
-a VOID. Else, flat the lop-block.
+If selection is a juxt-block, do nothing. Else, flat the leading
+operator of selection. A positive numeric argument n acts on the (n-1)-ulevel
+usubeq of selection. A negative numerical argument -n acts on the n-ulevel 
+usupeq of selection.
+##### massively-delete-horizontal-space (M-C-\)
+It is not a readline command.
+
+It is equivalent to use delete-horizontal-space with every positive numerical
+argument until reaching the last subeq of selection. A numerical argument
+bigger than 1 acts from the 0-ulevel supeq of selection to the (n-1)-ulevel
+subeq of selection. A numerical argument of -1 is equivalent to use 
+delete-horizontal-space with every negative numerical argument until reaching
+the last supeq. A numerical argument -n smaller than -1 acts from the n-ulevel
+usupeq of selection to the 1-ulevel usupeq of selection.
+
 ##### kill-region (Maybe we bound it even if it is not a default of readline)
 Kill the text between the point and  mark  (saved  cursor  posi‐
 tion).  This text is referred to as the region.
