@@ -14,169 +14,230 @@
 import copy
 
 from . import eqqueries
-from .symbols import utils
-from .symbols.utils import Op, VOID
+#from .symbols import utils
+from .symbols.utils import Op, void, GOP
 from .errors import ShowError
 
 # Vertical script operators
-UNDER = Op(2, r'\underset{{{1}}}{{{0}}}', 'setscript')
-OVER = Op(2, r'\overset{{{1}}}{{{0}}}', 'setscript')
-UNDEROVER = Op(2, r'\overset{{{2}}}{{{\underset{{{1}}}{{{0}}}}}}', 'setscript')
+UNDER = Op("under", 2, r'\underset{{{1}}}{{{0}}}', 'setscript')
+OVER = Op("over", 2, r'\overset{{{1}}}{{{0}}}', 'setscript')
+UNDEROVER = Op("underover", 2, r'\overset{{{2}}}{{{\underset{{{1}}}{{{0}}}}}}',
+               'setscript')
 
 # Standard script operators
-LSUB = Op(2, r'\tensor*[_{{{1}}}]{{{0}}}{{}}', 'script')
-SUB = Op(2, r'\tensor*{{{0}}}{{_{{{1}}}}}', 'script')
-LSUP = Op(2, r'\tensor*[^{{{1}}}]{{{0}}}{{}}', 'script')
-SUP = Op(2, r'\tensor*{{{0}}}{{^{{{1}}}}}', 'script')
-LSUBSUB = Op(3, r'\tensor*[_{{{1}}}]{{{0}}}{{_{{{2}}}}}', 'script')
-LSUBLSUP = Op(3, r'\tensor*[_{{{1}}}^{{{2}}}]{{{0}}}{{}}', 'script')
-LSUBSUP = Op(3, r'\tensor*[_{{{1}}}]{{{0}}}{{^{{{2}}}}}', 'script')
-SUBLSUP = Op(3, r'\tensor*[^{{{2}}}]{{{0}}}{{_{{{1}}}}}', 'script')
-SUBSUP = Op(3, r'\tensor*{{{0}}}{{^{{{2}}}_{{{1}}}}}', 'script')
-LSUPSUP = Op(3, r'\tensor*[^{{{1}}}]{{{0}}}{{^{{{2}}}}}', 'script')
-LSUBSUBLSUP = Op(4, r'\tensor*[_{{{1}}}^{{{3}}}]{{{0}}}{{_{{{2}}}}}', 'script')
-LSUBSUBSUP = Op(4, r'\tensor*[_{{{1}}}]{{{0}}}{{^{{{3}}}_{{{2}}}}}', 'script')
-LSUBLSUPSUP = Op(4, r'\tensor*[^{{{2}}}_{{{1}}}]{{{0}}}{{^{{{3}}}}}',
-                 'script')
-SUBLSUPSUP = Op(4, r'\tensor*[^{{{2}}}]{{{0}}}{{^{{{3}}}_{{{1}}}}}', 'script')
-LSUBSUBLSUPSUP = Op(5,
+LSUB = Op("lsub", 2, r'\tensor*[_{{{1}}}]{{{0}}}{{}}', 'script')
+SUB = Op("sub", 2, r'\tensor*{{{0}}}{{_{{{1}}}}}', 'script')
+LSUP = Op("lsup", 2, r'\tensor*[^{{{1}}}]{{{0}}}{{}}', 'script')
+SUP = Op("sup", 2, r'\tensor*{{{0}}}{{^{{{1}}}}}', 'script')
+LSUBSUB = Op("lsubsub", 3, r'\tensor*[_{{{1}}}]{{{0}}}{{_{{{2}}}}}', 'script')
+LSUBLSUP = Op("lsublsup", 3, r'\tensor*[_{{{1}}}^{{{2}}}]{{{0}}}{{}}',
+              'script')
+LSUBSUP = Op("lsubsup", 3, r'\tensor*[_{{{1}}}]{{{0}}}{{^{{{2}}}}}', 'script')
+SUBLSUP = Op("sublsup", 3, r'\tensor*[^{{{2}}}]{{{0}}}{{_{{{1}}}}}', 'script')
+SUBSUP = Op("subsup", 3, r'\tensor*{{{0}}}{{^{{{2}}}_{{{1}}}}}', 'script')
+LSUPSUP = Op("lsupsup", 3, r'\tensor*[^{{{1}}}]{{{0}}}{{^{{{2}}}}}', 'script')
+LSUBSUBLSUP = Op("lsubsublsup", 4,
+                 r'\tensor*[_{{{1}}}^{{{3}}}]{{{0}}}{{_{{{2}}}}}', 'script')
+LSUBSUBSUP = Op("lsubsubsup", 4,
+                r'\tensor*[_{{{1}}}]{{{0}}}{{^{{{3}}}_{{{2}}}}}', 'script')
+LSUBLSUPSUP = Op("lsublsupsup", 4,
+                 r'\tensor*[^{{{2}}}_{{{1}}}]{{{0}}}{{^{{{3}}}}}', 'script')
+SUBLSUPSUP = Op("sublsupsup", 4,
+                r'\tensor*[^{{{2}}}]{{{0}}}{{^{{{3}}}_{{{1}}}}}', 'script')
+LSUBSUBLSUPSUP = Op("lsubsublsupsup", 5,
                     r'\tensor*[_{{{1}}}^{{{3}}}]{{{0}}}{{_{{{2}}}^{{{4}}}}}',
                     'script')
 
 # Script for Large Operators. Valid only for variable-size, fun-args or
 # anything defined with \mathop.
 # It is necessary not to include brackets in the base when no \sideset is used
-LOUNDER = Op(2, r'{0}_{{{1}}}', 'loscript')
-LOOVER = Op(2, r'{0}^{{{1}}}', 'loscript')
-LOUNDEROVER = Op(2, r'{0}_{{{1}}}^{{{2}}}', 'loscript')
+LOUNDER = Op("lounder", 2, r'{0}_{{{1}}}', 'loscript')
+LOOVER = Op("loover", 2, r'{0}^{{{1}}}', 'loscript')
+LOUNDEROVER = Op("lounderover", 2, r'{0}_{{{1}}}^{{{2}}}', 'loscript')
 
-LOLSUB = Op(2, r'\sideset{{_{{{1}}}}}{{}}{{{0}}}', 'loscript')
-LOSUB = Op(2, r'\sideset{{}}{{_{{{1}}}}}{{{0}}}', 'loscript')
-LOLSUP = Op(2, r'\sideset{{^{{{1}}}}}{{}}{{{0}}}', 'loscript')
-LOSUP = Op(2, r'\sideset{{}}{{^{{{1}}}}}{{{0}}}', 'loscript')
-LOLSUBSUB = Op(3, r'\sideset{{_{{{1}}}}}{{_{{{2}}}}}{{{0}}}', 'loscript')
-LOLSUBLSUP = Op(3, r'\sideset{{_{{{1}}}^{{{2}}}}}{{}}{{{0}}}', 'loscript')
-LOLSUBSUP = Op(3, r'\sideset{{_{{{1}}}}}{{^{{{2}}}}}{{{0}}}', 'loscript')
-LOSUBLSUP = Op(3, r'\sideset{{^{{{2}}}}}{{_{{{1}}}}}{{{0}}}', 'loscript')
-LOSUBSUP = Op(3, r'\sideset{{}}{{_{{{1}}}^{{{2}}}}}{{{0}}}', 'loscript')
-LOLSUPSUP = Op(3, r'\sideset{{^{{{1}}}}}{{^{{{2}}}}}{{{0}}}', 'loscript')
-LOLSUBSUBLSUP = Op(4, r'\sideset{{_{{{1}}}^{{{3}}}}}{{_{{{2}}}}}{{{0}}}',
+LOLSUB = Op("lolsub", 2, r'\sideset{{_{{{1}}}}}{{}}{{{0}}}', 'loscript')
+LOSUB = Op("losub", 2, r'\sideset{{}}{{_{{{1}}}}}{{{0}}}', 'loscript')
+LOLSUP = Op("lolsup", 2, r'\sideset{{^{{{1}}}}}{{}}{{{0}}}', 'loscript')
+LOSUP = Op("losup", 2, r'\sideset{{}}{{^{{{1}}}}}{{{0}}}', 'loscript')
+LOLSUBSUB = Op("lolsubsub", 3, r'\sideset{{_{{{1}}}}}{{_{{{2}}}}}{{{0}}}',
+               'loscript')
+LOLSUBLSUP = Op("lolsublsup", 3, r'\sideset{{_{{{1}}}^{{{2}}}}}{{}}{{{0}}}',
+                'loscript')
+LOLSUBSUP = Op("lolsubsup", 3, r'\sideset{{_{{{1}}}}}{{^{{{2}}}}}{{{0}}}',
+               'loscript')
+LOSUBLSUP = Op("losublsup", 3, r'\sideset{{^{{{2}}}}}{{_{{{1}}}}}{{{0}}}',
+               'loscript')
+LOSUBSUP = Op("losubsup", 3, r'\sideset{{}}{{_{{{1}}}^{{{2}}}}}{{{0}}}',
+              'loscript')
+LOLSUPSUP = Op("lolsupsup", 3, r'\sideset{{^{{{1}}}}}{{^{{{2}}}}}{{{0}}}',
+               'loscript')
+LOLSUBSUBLSUP = Op("lolsubsublsup", 4,
+                   r'\sideset{{_{{{1}}}^{{{3}}}}}{{_{{{2}}}}}{{{0}}}',
                    'loscript')
-LOLSUBSUBSUP = Op(4, r'\sideset{{_{{{1}}}}}{{^{{{3}}}_{{{2}}}}}{{{0}}}',
+LOLSUBSUBSUP = Op("lolsubsubsup", 4,
+                  r'\sideset{{_{{{1}}}}}{{^{{{3}}}_{{{2}}}}}{{{0}}}',
                   'loscript')
-LOLSUBLSUPSUP = Op(4, r'\sideset{{^{{{2}}}_{{{1}}}}}{{^{{{3}}}}}{{{0}}}',
+LOLSUBLSUPSUP = Op("lolsublsupsup", 4,
+                   r'\sideset{{^{{{2}}}_{{{1}}}}}{{^{{{3}}}}}{{{0}}}',
                    'loscript')
-LOSUBLSUPSUP = Op(4, r'\sideset{{^{{{2}}}}}{{^{{{3}}}_{{{1}}}}}{{{0}}}',
+LOSUBLSUPSUP = Op("LOSUBLSUPSUP", 4,
+                  r'\sideset{{^{{{2}}}}}{{^{{{3}}}_{{{1}}}}}{{{0}}}',
                   'loscript')
 LOLSUBSUBLSUPSUP \
-    = Op(5, r'\sideset{{_{{{1}}}^{{{3}}}}}{{_{{{2}}}^{{{4}}}}}{{{0}}}',
+    = Op("lolsubsublsupsup", 5,
+         r'\sideset{{_{{{1}}}^{{{3}}}}}{{_{{{2}}}^{{{4}}}}}{{{0}}}',
          'loscript')
 # +Under
-LOLSUBUNDER = Op(3, r'\sideset{{_{{{1}}}}}{{}}{{{0}}}_{{{2}}}', 'loscript')
-LOUNDERSUB = Op(3, r'\sideset{{}}{{_{{{2}}}}}{{{0}}}_{{{1}}}', 'loscript')
-LOUNDERLSUP = Op(3, r'\sideset{{^{{{2}}}}}{{}}{{{0}}}_{{{1}}}', 'loscript')
-LOUNDERSUP = Op(3, r'\sideset{{}}{{^{{{2}}}}}{{{0}}}_{{{1}}}', 'loscript')
-LOLSUBUNDERSUB = Op(4, r'\sideset{{_{{{1}}}}}{{_{{{3}}}}}{{{0}}}_{{{2}}}',
+LOLSUBUNDER = Op("lolsubunder", 3, r'\sideset{{_{{{1}}}}}{{}}{{{0}}}_{{{2}}}',
+                 'loscript')
+LOUNDERSUB = Op("loundersub", 3, r'\sideset{{}}{{_{{{2}}}}}{{{0}}}_{{{1}}}',
+                'loscript')
+LOUNDERLSUP = Op("lounderlsup", 3, r'\sideset{{^{{{2}}}}}{{}}{{{0}}}_{{{1}}}',
+                 'loscript')
+LOUNDERSUP = Op("loundersup", 3, r'\sideset{{}}{{^{{{2}}}}}{{{0}}}_{{{1}}}',
+                'loscript')
+LOLSUBUNDERSUB = Op("lolsubundersub", 4,
+                    r'\sideset{{_{{{1}}}}}{{_{{{3}}}}}{{{0}}}_{{{2}}}',
                     'loscript')
-LOLSUBUNDERLSUP = Op(4, r'\sideset{{_{{{1}}}^{{{3}}}}}{{}}{{{0}}}_{{{2}}}',
+LOLSUBUNDERLSUP = Op("lolsubunderlsup", 4,
+                     r'\sideset{{_{{{1}}}^{{{3}}}}}{{}}{{{0}}}_{{{2}}}',
                      'loscript')
-LOLSUBUNDERSUP = Op(4, r'\sideset{{_{{{1}}}}}{{^{{{3}}}}}{{{0}}}_{{{2}}}',
+LOLSUBUNDERSUP = Op("lolsubundersup", 4,
+                    r'\sideset{{_{{{1}}}}}{{^{{{3}}}}}{{{0}}}_{{{2}}}',
                     'loscript')
-LOUNDERSUBLSUP = Op(4, r'\sideset{{^{{{3}}}}}{{_{{{2}}}}}{{{0}}}_{{{1}}}',
+LOUNDERSUBLSUP = Op("loundersublsup", 4,
+                    r'\sideset{{^{{{3}}}}}{{_{{{2}}}}}{{{0}}}_{{{1}}}',
                     'loscript')
-LOUNDERSUBSUP = Op(4, r'\sideset{{}}{{_{{{2}}}^{{{3}}}}}{{{0}}}_{{{1}}}',
+LOUNDERSUBSUP = Op("loundersubsup", 4,
+                   r'\sideset{{}}{{_{{{2}}}^{{{3}}}}}{{{0}}}_{{{1}}}',
                    'loscript')
-LOUNDERLSUPSUP = Op(4, r'\sideset{{^{{{2}}}}}{{^{{{3}}}}}{{{0}}}_{{{1}}}',
+LOUNDERLSUPSUP = Op("lounderlsupsup", 4,
+                    r'\sideset{{^{{{2}}}}}{{^{{{3}}}}}{{{0}}}_{{{1}}}',
                     'loscript')
 LOLSUBUNDERSUBLSUP \
-    = Op(5, r'\sideset{{_{{{1}}}^{{{4}}}}}{{_{{{3}}}}}{{{0}}}_{{{2}}}',
+    = Op("lolsubundersublsup", 5,
+         r'\sideset{{_{{{1}}}^{{{4}}}}}{{_{{{3}}}}}{{{0}}}_{{{2}}}',
          'loscript')
 LOLSUBUNDERSUBSUP \
-    = Op(5, r'\sideset{{_{{{1}}}}}{{^{{{4}}}_{{{3}}}}}{{{0}}}_{{{2}}}',
+    = Op("lolsubundersubsup", 5,
+         r'\sideset{{_{{{1}}}}}{{^{{{4}}}_{{{3}}}}}{{{0}}}_{{{2}}}',
          'loscript')
 LOLSUBUNDERLSUPSUP \
-    = Op(5, r'\sideset{{^{{{3}}}_{{{1}}}}}{{^{{{4}}}}}{{{0}}}_{{{2}}}',
+    = Op("lolsubunderlsupsup", 5,
+         r'\sideset{{^{{{3}}}_{{{1}}}}}{{^{{{4}}}}}{{{0}}}_{{{2}}}',
          'loscript')
 LOUNDERSUBLSUPSUP \
-    = Op(5, r'\sideset{{^{{{3}}}}}{{^{{{4}}}_{{{2}}}}}{{{0}}}_{{{1}}}',
+    = Op("loundersublsupsup", 5,
+         r'\sideset{{^{{{3}}}}}{{^{{{4}}}_{{{2}}}}}{{{0}}}_{{{1}}}',
          'loscript')
 LOLSUBUNDERSUBLSUPSUP \
-    = Op(6, r'\sideset{{_{{{1}}}^{{{4}}}}}{{_{{{3}}}^{{{5}}}}}{{{0}}}_{{{2}}}',
+    = Op("lolsubundersublsupsup", 6,
+         r'\sideset{{_{{{1}}}^{{{4}}}}}{{_{{{3}}}^{{{5}}}}}{{{0}}}_{{{2}}}',
          'loscript')
 # +Over
-LOLSUBOVER = Op(3, r'\sideset{{_{{{1}}}}}{{}}{{{0}}}^{{{2}}}', 'loscript')
-LOSUBOVER = Op(3, r'\sideset{{}}{{_{{{1}}}}}{{{0}}}^{{{2}}}', 'loscript')
-LOLSUPOVER = Op(3, r'\sideset{{^{{{1}}}}}{{}}{{{0}}}^{{{2}}}', 'loscript')
-LOOVERSUP = Op(3, r'\sideset{{}}{{^{{{2}}}}}{{{0}}}^{{{1}}}', 'loscript')
-LOLSUBSUBOVER = Op(4, r'\sideset{{_{{{1}}}}}{{_{{{2}}}}}{{{0}}}^{{{3}}}',
+LOLSUBOVER = Op("lolsubover", 3, r'\sideset{{_{{{1}}}}}{{}}{{{0}}}^{{{2}}}',
+                'loscript')
+LOSUBOVER = Op("losubover", 3, r'\sideset{{}}{{_{{{1}}}}}{{{0}}}^{{{2}}}',
+               'loscript')
+LOLSUPOVER = Op("lolsupover", 3, r'\sideset{{^{{{1}}}}}{{}}{{{0}}}^{{{2}}}',
+                'loscript')
+LOOVERSUP = Op("looversup", 3, r'\sideset{{}}{{^{{{2}}}}}{{{0}}}^{{{1}}}',
+               'loscript')
+LOLSUBSUBOVER = Op("lolsubsubover", 4,
+                   r'\sideset{{_{{{1}}}}}{{_{{{2}}}}}{{{0}}}^{{{3}}}',
                    'loscript')
-LOLSUBLSUPOVER = Op(4, r'\sideset{{_{{{1}}}^{{{2}}}}}{{}}{{{0}}}^{{{3}}}',
+LOLSUBLSUPOVER = Op("lolsublsupover", 4,
+                    r'\sideset{{_{{{1}}}^{{{2}}}}}{{}}{{{0}}}^{{{3}}}',
                     'loscript')
-LOLSUBOVERSUP = Op(4, r'\sideset{{_{{{1}}}}}{{^{{{3}}}}}{{{0}}}^{{{2}}}',
+LOLSUBOVERSUP = Op("lolsuboversup", 4,
+                   r'\sideset{{_{{{1}}}}}{{^{{{3}}}}}{{{0}}}^{{{2}}}',
                    'loscript')
-LOSUBLSUPOVER = Op(4, r'\sideset{{^{{{2}}}}}{{_{{{1}}}}}{{{0}}}^{{{3}}}',
+LOSUBLSUPOVER = Op("losublsupover", 4,
+                   r'\sideset{{^{{{2}}}}}{{_{{{1}}}}}{{{0}}}^{{{3}}}',
                    'loscript')
-LOSUBOVERSUP = Op(4, r'\sideset{{}}{{_{{{1}}}^{{{3}}}}}{{{0}}}^{{{2}}}',
+LOSUBOVERSUP = Op("losuboversup", 4,
+                  r'\sideset{{}}{{_{{{1}}}^{{{3}}}}}{{{0}}}^{{{2}}}',
                   'loscript')
-LOLSUPOVERSUP = Op(4, r'\sideset{{^{{{1}}}}}{{^{{{3}}}}}{{{0}}}^{{{2}}}',
+LOLSUPOVERSUP = Op("lolsupoversup", 4,
+                   r'\sideset{{^{{{1}}}}}{{^{{{3}}}}}{{{0}}}^{{{2}}}',
                    'loscript')
 LOLSUBSUBLSUPOVER \
-    = Op(5, r'\sideset{{_{{{1}}}^{{{3}}}}}{{_{{{2}}}}}{{{0}}}^{{{4}}}',
+    = Op("lolsubsublsupover", 5,
+         r'\sideset{{_{{{1}}}^{{{3}}}}}{{_{{{2}}}}}{{{0}}}^{{{4}}}',
          'loscript')
 LOLSUBSUBOVERSUP \
-    = Op(5, r'\sideset{{_{{{1}}}}}{{^{{{4}}}_{{{2}}}}}{{{0}}}^{{{3}}}',
+    = Op("lolsubsuboversup", 5,
+         r'\sideset{{_{{{1}}}}}{{^{{{4}}}_{{{2}}}}}{{{0}}}^{{{3}}}',
          'loscript')
 LOLSUBLSUPOVERSUP \
-    = Op(5, r'\sideset{{^{{{2}}}_{{{1}}}}}{{^{{{4}}}}}{{{0}}}^{{{3}}}',
+    = Op("lolsublsupoversup", 5,
+         r'\sideset{{^{{{2}}}_{{{1}}}}}{{^{{{4}}}}}{{{0}}}^{{{3}}}',
          'loscript')
 LOSUBLSUPOVERSUP \
-    = Op(5, r'\sideset{{^{{{2}}}}}{{^{{{4}}}_{{{1}}}}}{{{0}}}^{{{3}}}',
+    = Op("losublsupoversup", 5,
+         r'\sideset{{^{{{2}}}}}{{^{{{4}}}_{{{1}}}}}{{{0}}}^{{{3}}}',
          'loscript')
 LOLSUBSUBLSUPOVERSUP \
-    = Op(6, r'\sideset{{_{{{1}}}^{{{3}}}}}{{_{{{2}}}^{{{5}}}}}{{{0}}}^{{{4}}}',
+    = Op("lolsubsublsupoversup", 6,
+         r'\sideset{{_{{{1}}}^{{{3}}}}}{{_{{{2}}}^{{{5}}}}}{{{0}}}^{{{4}}}',
          'loscript')
 # +UnderOver
-LOLSUBUNDEROVER = Op(4, r'\sideset{{_{{{1}}}}}{{}}{{{0}}}_{{{2}}}^{{{3}}}',
+LOLSUBUNDEROVER = Op("lolsubunderover", 4,
+                     r'\sideset{{_{{{1}}}}}{{}}{{{0}}}_{{{2}}}^{{{3}}}',
                      'loscript')
-LOUNDERSUBOVER = Op(4, r'\sideset{{}}{{_{{{2}}}}}{{{0}}}_{{{1}}}^{{{3}}}',
+LOUNDERSUBOVER = Op("loundersubover", 4,
+                    r'\sideset{{}}{{_{{{2}}}}}{{{0}}}_{{{1}}}^{{{3}}}',
                     'loscript')
-LOUNDERLSUPOVER = Op(4, r'\sideset{{^{{{2}}}}}{{}}{{{0}}}_{{{1}}}^{{{3}}}',
+LOUNDERLSUPOVER = Op("lounderlsupover", 4,
+                     r'\sideset{{^{{{2}}}}}{{}}{{{0}}}_{{{1}}}^{{{3}}}',
                      'loscript')
-LOUNDEROVERSUP = Op(4, r'\sideset{{}}{{^{{{3}}}}}{{{0}}}_{{{1}}}^{{{2}}}',
+LOUNDEROVERSUP = Op("lounderoversup", 4,
+                    r'\sideset{{}}{{^{{{3}}}}}{{{0}}}_{{{1}}}^{{{2}}}',
                     'loscript')
 LOLSUBUNDERSUBOVER \
-    = Op(5, r'\sideset{{_{{{1}}}}}{{_{{{3}}}}}{{{0}}}_{{{2}}}^{{{4}}}',
+    = Op("lolsubundersubover", 5,
+         r'\sideset{{_{{{1}}}}}{{_{{{3}}}}}{{{0}}}_{{{2}}}^{{{4}}}',
          'loscript')
 LOLSUBUNDERLSUPOVER \
-    = Op(5, r'\sideset{{_{{{1}}}^{{{3}}}}}{{}}{{{0}}}_{{{2}}}^{{{4}}}',
+    = Op("lolsubunderlsupover", 5,
+         r'\sideset{{_{{{1}}}^{{{3}}}}}{{}}{{{0}}}_{{{2}}}^{{{4}}}',
          'loscript')
 LOLSUBUNDEROVERSUP \
-    = Op(5, r'\sideset{{_{{{1}}}}}{{^{{{4}}}}}{{{0}}}_{{{2}}}^{{{3}}}',
+    = Op("lolsubunderoversup", 5,
+         r'\sideset{{_{{{1}}}}}{{^{{{4}}}}}{{{0}}}_{{{2}}}^{{{3}}}',
          'loscript')
 LOUNDERSUBLSUPOVER \
-    = Op(5, r'\sideset{{^{{{3}}}}}{{_{{{2}}}}}{{{0}}}_{{{1}}}^{{{4}}}',
+    = Op("loundersublsupover", 5,
+         r'\sideset{{^{{{3}}}}}{{_{{{2}}}}}{{{0}}}_{{{1}}}^{{{4}}}',
          'loscript')
 LOUNDERSUBOVERSUP \
-    = Op(5, r'\sideset{{}}{{_{{{2}}}^{{{4}}}}}{{{0}}}_{{{1}}}^{{{3}}}',
+    = Op("loundersuboversup", 5,
+         r'\sideset{{}}{{_{{{2}}}^{{{4}}}}}{{{0}}}_{{{1}}}^{{{3}}}',
          'loscript')
 LOUNDERLSUPOVERSUP \
-    = Op(5, r'\sideset{{^{{{2}}}}}{{^{{{4}}}}}{{{0}}}_{{{1}}}^{{{3}}}',
+    = Op("lounderlsupoversup", 5,
+         r'\sideset{{^{{{2}}}}}{{^{{{4}}}}}{{{0}}}_{{{1}}}^{{{3}}}',
          'loscript')
 LOLSUBUNDERSUBLSUPOVER \
-    = Op(6, r'\sideset{{_{{{1}}}^{{{4}}}}}{{_{{{3}}}}}{{{0}}}_{{{2}}}^{{{5}}}',
+    = Op("lolsubundersublsupover", 6,
+         r'\sideset{{_{{{1}}}^{{{4}}}}}{{_{{{3}}}}}{{{0}}}_{{{2}}}^{{{5}}}',
          'loscript')
 LOLSUBUNDERSUBOVERSUP \
-    = Op(6, r'\sideset{{_{{{1}}}}}{{^{{{5}}}_{{{3}}}}}{{{0}}}_{{{2}}}^{{{4}}}',
+    = Op("lolsubundersuboversup", 6,
+         r'\sideset{{_{{{1}}}}}{{^{{{5}}}_{{{3}}}}}{{{0}}}_{{{2}}}^{{{4}}}',
          'loscript')
 LOLSUBUNDERLSUPOVERSUP \
-    = Op(6, r'\sideset{{^{{{3}}}_{{{1}}}}}{{^{{{5}}}}}{{{0}}}_{{{2}}}^{{{4}}}',
+    = Op("lolsubunderlsupoversup", 6,
+         r'\sideset{{^{{{3}}}_{{{1}}}}}{{^{{{5}}}}}{{{0}}}_{{{2}}}^{{{4}}}',
          'loscript')
 LOUNDERSUBLSUPOVERSUP \
-    = Op(6, r'\sideset{{^{{{3}}}}}{{^{{{5}}}_{{{2}}}}}{{{0}}}_{{{1}}}^{{{4}}}',
+    = Op("loundersublsupoversup", 6,
+         r'\sideset{{^{{{3}}}}}{{^{{{5}}}_{{{2}}}}}{{{0}}}_{{{1}}}^{{{4}}}',
          'loscript')
 LOLSUBUNDERSUBLSUPOVERSUP \
-    = Op(7, r'\sideset{{_{{{1}}}^{{{4}}}}}{{_{{{3}}}^{{{6}}}}}{{{0}}}'
-            r'_{{{2}}}^{{{5}}}', 'loscript')
+    = Op("lolsubundersublsupoversup", 7,
+         r'\sideset{{_{{{1}}}^{{{4}}}}}{{_{{{3}}}^{{{6}}}}}{{{0}}}'
+         r'_{{{2}}}^{{{5}}}', 'loscript')
 
 SCRIPT_OP_TYPES = ('setscript', 'script', 'loscript')
 
@@ -429,7 +490,7 @@ def scriptop_pars2nonloscript_pars(pars):
 def do_require_loscript(base):
     """Return whether a loscript operator is needed given its base."""
     # Valid for symbols/0-args ops and blocks.
-    s = base if base[0] != utils.GOP else base[1]
+    s = base if base[0] != GOP else base[1]
     if hasattr(s[0], 'type_') and s[0].type_ in LOSCRIPT_BASE_TYPES:
         return True
     else:
@@ -688,15 +749,15 @@ def insert_script(idx, eq, scriptdir, is_superscript, newscript=None):
     :return: The index of inserted script. If it already existed, a flag.
     """
     if newscript is None:
-        newscript = utils.void()
+        newscript = void()
 
     supeq = eqqueries.supeq(idx, eq, True)
     if supeq == -2 or not is_scriptop(supeq[0]):
         # Case: idx does not point to a base
         baseref = eq if supeq == -2 else supeq[idx[-1]]
-        if baseref == utils.void(temp=True):
+        if baseref == void(temp=True):
             # TVOID -> VOID
-            baseref[:] = utils.void()
+            baseref[:] = void()
         _insert_initial_script(baseref, scriptdir, is_superscript, newscript)
         return idx[:] + [2]
 

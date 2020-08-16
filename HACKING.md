@@ -325,10 +325,6 @@ The **class** of the object of an operator has the following properties:
 >
 > In the future an operator may include a list of tags.
 
-## Building rules
-
-Any subequation can be the parameter of any operator.
-
 ## Selection rules
 
 There are reasons to avoid the user to select some subequations:
@@ -557,6 +553,32 @@ A **juxted** is a parameter of a juxt.
 > the ublock `(FRAC, A, (JUXT2, B, C))`, and the second juxted is the symbol
 > `X`. Second argument of the first juxted is itself another juxt-ublock with 
 > two juxteds `(JUXT2, B, C)`.
+
+Current implementation of a juxt in Visual Equation uses the same operator for
+every juxt with the same characteristics except the number of arguments it
+uses.
+
+**JUXT** is the common name of the juxt for general use in visual equation.
+
+A **soft group** is a JUXT-block which is a juxted of anther JUXT-block.
+
+**TJUXT** is the common name of a special juxt that is used to get selected
+several subequations which were, or are going to be, juxteds of some
+JUXT-block. This operator join them in a temporal juxt-block which is a single
+juxted of the external JUXT-block.
+
+A TJUXT-block must be always the current selection and when selection changes,
+the TJUXT-block must be dissolved, typically integrating its juxteds as juxteds
+of the JUXT-block where the TJUXT-block belonged.
+
+## Building rules
+
+1.  A GOP-block cannot be the GOP-par of another GOP-block.
+1.  The special symbol **TVOID** must always be used as a last juxted and must
+    be the current selection (=> There can be only one TVOID at the same time).
+1.  A TJUXT-block is always a juxted of a JUXT-block and must always be
+    selected (=> There can be only one TJUXT-block at the same time).
+1.  A VOID cannot be a juxted.
 
 ## Equation metrics
 
@@ -1357,6 +1379,15 @@ subeq of selection. A numerical argument of -1 is equivalent to use
 delete-horizontal-space with every negative numerical argument until reaching
 the last supeq. A numerical argument -n smaller than -1 acts from the n-ulevel
 usupeq of selection to the 1-ulevel usupeq of selection.
+
+##### create-horizontal-space (C-\)
+It is not a readline command.
+
+If selection is a block, replace every symbol of selected block by a VOID
+(it acts recursively on subeqs of selection).
+
+With a negative argument -n, n-ulevel subeqs of selection are replaced by VOIDs
+before applying the default command.
 
 ##### kill-region (Maybe we bound it even if it is not a default of readline)
 Kill the text between the point and  mark  (saved  cursor  posi‐

@@ -28,97 +28,6 @@ Example: [JUXT, ["2"], ["x"], [FRAC, ["c"], ["d"]]]
 """
 from .symbols import utils
 
-
-def checkeq(eq):
-    valid_msg = "OK!"
-    if not isinstance(eq, list):
-        return repr(eq) + " is not a list."
-
-    if len(eq) == 1:
-        if not (isinstance(eq[0], str) or isinstance(eq[0], utils.Op)):
-            return repr(eq) \
-                    + " has length 1 and content is not a str or op."
-
-        if isinstance(eq[0], utils.Op) and eq[0].n_args:
-            return repr(eq) + " has length 1 and content is Op with n_args " \
-                              "== " + repr(eq[0].n_args) + " != 0."
-
-    if len(eq) > 1:
-        if not isinstance(eq[0], utils.Op):
-            return repr(eq) + " has len " + repr(len(eq)) \
-                   + " > 1 and first element is not an Op."
-        if eq[0].n_args == 0 or eq[0].n_args < -1:
-            return repr(eq[0]) + " is a lop with n_args == " \
-                   + repr(eq[0].n_args) + " instead of -1 or N > 0."
-        if eq[0].n_args > 0 and eq[0].n_args != len(eq) - 1:
-            return repr(eq) + " has a lop which expects " \
-                   + repr(eq[0].n_args) + " != " + repr(len(eq) - 1) \
-                   + " parameters."
-        if eq[0] in utils.NONUOPS and eq[0].n_args != 1:
-            return repr(eq[0]) + " is a non-user Op with with " \
-                   + repr(eq[0].n_args) + " args."
-        if eq[0] in (utils.JUXT, utils.TJUXT) and len(eq) < 3:
-            return repr(eq) + " is a juxt-block and it has only 1 juxted."
-
-        for par in eq[1:]:
-            msg = checkeq(par)
-            if valid_msg != msg:
-                return msg
-
-    return valid_msg
-
-
-def checkidx(idx):
-    if not isinstance(idx, list):
-        return "Index must be a list."
-    if not all(isinstance(ele, int) for ele in idx):
-        return "Not every element is an integer."
-    if not all(ele >= 0 for ele in idx):
-        return "Not every element is non-negative."
-    try:
-        first0pos = idx.index(0)
-        if first0pos != len(idx) - 1:
-            return "Non-last element is 0."
-    except ValueError:
-        pass
-    return "OK!"
-
-
-def check(idx, eq, onlysubeqs=True):
-    """Check of integrity of a pair index-equation.
-
-    If *onlysubeqs* is True, an index pointing to a lop is an error.
-    That is the last condition checked: if that is reported, the rest is OK.
-    """
-    valid_message = "OK!"
-    msg = checkidx(idx)
-    if msg != valid_message:
-        return "Wrong index: " + msg
-    msg = checkeq(eq)
-    if msg != valid_message:
-        return "Wrong eq: " + msg
-
-    if not idx:
-        return valid_message
-
-    eqref = eq
-    for lev, pos in enumerate(idx):
-        if len(eqref) == 1:
-            return "Subeq in " + repr(idx[:lev]) \
-                   + " is a symbol/0-args Op. It cannot be indexed."
-        if pos > len(eqref) - 1:
-            return "Subeq in " + repr(idx[:lev]) \
-                   + " has no position " + repr(pos) + "."
-
-        eqref = eqref[pos]
-
-    # This must be the last condition
-    if onlysubeqs and idx and not idx[-1]:
-        return "Pointed element is a lop."
-
-    return valid_message
-
-
 def subeq2latex(subeq):
     """Return latex code of a subeq."""
     if len(subeq) > 1:
@@ -242,7 +151,7 @@ def nthpar(n, idx, eq, retsub=False):
 
 
 def npars(subeq, idx=None):
-    """Return the number of actual number of parameters.
+    """Return the actual number of parameters.
 
     This function matters specially for juxts-blocks. Else, it must be equal to
     lop-subeq.n_args.
@@ -424,7 +333,8 @@ def selectivity(idx, eq):
 
     Return  2 if subequation is SELECTABLE and is not a GOP-block urepr.
     Return  1 if subequation is SELECTABLE and is a GOP-block urepr.
-    Return  0 if subequation is NOT SELECTABLE and GOP-block strict SUBEQ.
+    Return  0 if subequation is NOT SELECTABLE, GOP-block strict SUBEQ
+                            and it is not the GOP-block urepr.
     Return -1 if subequation is NOT SELECTABLE and not GOP-block strict SUBEQ.
 
     .. note::

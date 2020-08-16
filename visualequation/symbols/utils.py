@@ -27,7 +27,8 @@ from .. import commons
 class Op(object):
     """Class for an equation operator"""
 
-    def __init__(self, n_args, latex_code, type_=None):
+    def __init__(self, name, n_args, latex_code, type_=None):
+        self.name = name
         self.n_args = n_args
         self.latex_code = latex_code
         self.type_ = type_ if type_ is not None else ""
@@ -48,8 +49,11 @@ class Op(object):
         return not self == other
 
     def __repr__(self):
-        return "Op(" + repr(self.n_args) + ", " + repr(self.latex_code) \
-               + ", " + repr(self.type_) + ")"
+        return "Op(" + repr(self.name) + ", " + repr(self.n_args) \
+               + ", " + repr(self.latex_code) + ", " + repr(self.type_) + ")"
+
+    def __str__(self):
+        return self.name
 
     def __hash__(self):
         return hash(repr(self))
@@ -65,22 +69,29 @@ RDIR = 1    # rigth direction
 ODIR = 0    # overwrite mode
 VDIR = 2    # overwrite direction in normal mode
 
-SELARG = r'\cdots'
-VOID = r'\begingroup\color{purple}\oblong\endgroup'
-TVOID = r'\begingroup\color{lightgray}\oblong\endgroup'
+DIR2NAME = {
+    -1: "LDIR",
+    1:  "RDIR",
+    0:  "ODIR",
+    2:  "VDIR",
+}
+
+SELARG = Op("selarg", 0, r'\cdots')
+_VOID = Op("void", 0, r'\begingroup\color{purple}\oblong\endgroup')
+_TVOID = Op("tvoid", 0, r'\begingroup\color{lightgray}\oblong\endgroup')
 
 
 def void(temp=False):
-    return [TVOID] if temp else [VOID]
+    return [_TVOID] if temp else [_VOID]
 
 
-REDIT = Op(1, r'\left\lmoustache {0} \right\rgroup')        # right
-LEDIT = Op(1, r'\left\lgroup {0} \right\rmoustache')        # left
-NEDIT = Op(1, r'\left\lmoustache {0} \right\rmoustache')    # new
-SEDIT = Op(1, r'\left\rmoustache {0} \right\lmoustache')    # substitute
-JUXT = Op(-1, r'J')
-TJUXT = Op(-1, r'T')
-GOP = Op(1, r'{0}')
+REDIT = Op("redit", 1, r'\left\lmoustache {0} \right\rgroup')  # right
+LEDIT = Op("ledit", 1, r'\left\lgroup {0} \right\rmoustache')  # left
+NEDIT = Op("nedit", 1, r'\left\lmoustache {0} \right\rmoustache')  # new
+SEDIT = Op("sedit", 1, r'\left\rmoustache {0} \right\lmoustache')  # substitute
+JUXT = Op("juxt", -1, r'J')
+TJUXT = Op("tjuxt", -1, r'T')
+GOP = Op("gop", 1, r'{0}')
 
 NONUOPS = (GOP,)
 
@@ -149,10 +160,10 @@ class ChooseElemDialog(QDialog):
 
 
 # Some useful stuff for testing
-EXOP0 = Op(0, "Op0 ")
-EXOP1 = Op(1, r"\sqrt{{0}} ")
-EXOP2 = Op(2, r"\frac{{0}}{{1}} ")
-EXOP3 = Op(3, r"{{0}}_{{1}}^{{2}} ")
+EXOP0 = Op("exop0", 0, "Op0 ")
+EXOP1 = Op("exop1", 1, r"\sqrt{{0}} ")
+EXOP2 = Op("exop2", 2, r"\frac{{0}}{{1}} ")
+EXOP3 = Op("exop3", 3, r"{{0}}_{{1}}^{{2}} ")
 
 EXEQ0 = [EXOP0]
 EXEQ1 = [EXOP1, ["2"]]

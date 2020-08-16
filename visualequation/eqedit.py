@@ -11,59 +11,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from copy import deepcopy
-import functools
 
+"""An interface to safely edit an equation."""
+
+from copy import deepcopy
+
+from . import eqdebug
 from . import eqqueries
 from . import scriptops
 from . import simpleeqcreator
 from .symbols import utils
-
-
-"""
-An interface to safely edit an equation.
-"""
-
-
-def debuginit(fun):
-    """Test a method."""
-
-    @functools.wraps(fun)
-    def wrapper(self, *args, **kwargs):
-        print("**** START DEBUGGING (Initial object) ****")
-
-        fun(self, *args, **kwargs)
-        print("\nself.eq: " + repr(self.eq))
-        print("\nself.idx: " + repr(self.idx) + "\tdir: " + repr(self.dir))
-        print("**** END DEBUGGING ****")
-
-    return wrapper
-
-
-def debug(fun):
-    """Test a method."""
-
-    @functools.wraps(fun)
-    def wrapper(self, *args, **kwargs):
-        print("**** START DEBUGGING ****")
-        print("Method: " + repr(fun))
-        # Debugging eq and idx
-        msg = eqqueries.check(self.idx, self.eq, False)
-        if msg != "OK!":
-            print("------>", msg)
-            return -99
-        else:
-            print("Note: self.eq and self.idx were valid before function "
-                  "call. Calling now...")
-
-        retval = fun(self, *args, **kwargs)
-        print("\nself.eq: " + repr(self.eq))
-        print("\nself.idx: " + repr(self.idx) + "\tdir: " + repr(self.dir))
-        print("\nReturn: " + repr(retval))
-        print("**** END DEBUGGING ****")
-        return retval
-
-    return wrapper
 
 
 class EditableEq:
@@ -112,7 +69,7 @@ class EditableEq:
                 without correcting the correspondent script op is known as a
                 'base-checker'.
     """
-    @debuginit
+    @eqdebug.debuginit
     def __init__(self, eq0=None, sel_idx0=None, dir0=None):
         # Equation. It must be assured that any reference to self.eq will be
         # always valid.
@@ -159,11 +116,13 @@ class EditableEq:
         # Replace
         eqref[idx[-1]][:] = deepcopy(elem)
 
-    def set_ovrwrt(self, newval=True):
-        if (newval and self.odir()) or (not newval and not self.odir()):
+    @eqdebug.debug
+    def set_ovrwrt(self, new_ovrwrt_val=True):
+        if (new_ovrwrt_val and self.odir()) \
+                or (not new_ovrwrt_val and not self.odir()):
             return
 
-        if newval:
+        if new_ovrwrt_val:
             if not self.rdir():
                 self.dir = utils.ODIR
                 return
@@ -179,7 +138,7 @@ class EditableEq:
                 self.idx = eqqueries.urepr(eff_idx, self.eq)
             return
 
-        # From here, newval is False and current dir is ODIR
+        # From here, new_ovrwrt_val is False and current dir is ODIR
         eff_idx = self._get_biggest_subeq_same_urepr()
         sup = eqqueries.supeq(eff_idx, self.eq, True)
         if sup == -2:
@@ -187,23 +146,24 @@ class EditableEq:
         else:
             s = sup[eff_idx[-1]]
 
-        if s == utils.void():
-            self.dir = utils.VDIR
-            return
+        # Set a dummy non-ODIR value to dir
+        self.dir = utils.VDIR
 
         if s == utils.void(temp=True):
+            # Final TVOID juxted -> previous juxted with RDIR
             self.idx = self._vanish_juxted(0, eff_idx)[0]
             self.dir = self._get_safe_dir(1)
             return
 
         if sup == -2 or sup[0] != utils.JUXT or eff_idx[-1] == 1:
-            self.dir = utils.LDIR
+            # Non-juxteds and first juxteds -> LDIR
+            self.dir = self._get_safe_dir(-1)
         else:
+            # Other cases -> Select juxted to the left with RDIR
             self.idx = eqqueries.urepr(eff_idx[:-1] - [eff_idx[-1] - 1],
                                        self.eq)
             self.dir = self._get_safe_dir(-1)
         return
-
 
     def odir(self):
         return self.dir == utils.ODIR
@@ -419,26 +379,6 @@ class EditableEq:
         sup[:] = sup[:repl_idx[-1]] + s_repl[1:] + sup[repl_idx[-1] + 1:]
         return repl_idx
 
-    def _dissolve_subjb(self, idx=None, supref=None):
-        """Integrate juxteds of a juxt-block JB in the juxt-block in which
-        JB is juxted.
-
-        *   Not a supeq-checker
-        *   Not a final idx-checker
-        *   base-checker (never checked because no base can be involved)
-
-        If you have a reference to the external juxt-block, you can pass it.
-
-        .. note::
-            It is assumed that the requirement has foundation!
-        """
-        juxted_jb_idx = self.idx if idx is None else idx
-        ext_jb = eqqueries.supeq(juxted_jb_idx, self.eq, True) \
-            if supref is None else supref
-        juxted_ord = juxted_jb_idx[-1]
-        juxted_jb = ext_jb[juxted_ord]
-        ext_jb[juxted_ord:juxted_ord+1] = juxted_jb[1:]
-
     #@debug
     def _replace(self, subeq, idx=None):
         """Replace pointed subeq or supeq if *idx* points to a GOP-param.
@@ -477,14 +417,12 @@ class EditableEq:
         """
         return self._replace(utils.void(), idx)
 
-    #@debug
     def remove_eq(self):
         """Replace the whole eq by a VOID."""
         self.idx[:] = []
         self._set(utils.void())
         self.dir = self._get_safe_dir(0, 0)
 
-    #@debug
     def _vanish_juxted(self, reljuxted=0, idx=None):
         """Vanish pointed juxted or a cojuxted. It removes the juxt op if only
         one juxted is left in the juxt-block.
@@ -579,7 +517,6 @@ class EditableEq:
         return (eqqueries.urepr(retidx, self.eq),
                 self._get_safe_dir(5, None, retidx))
 
-    #@debug
     def _flat(self, idx=None):
         """Remove lop of block pointed by index while leaving its non-VOID args
         (joined by a juxt-block if necessary).
@@ -621,7 +558,6 @@ class EditableEq:
         self._condtly_correct_scriptop(s, flat_idx)
         return True
 
-    @debug
     def _flat_lopblock(self, idx=None, supref=None):
         """Remove leading operator and leave params, joined in a juxt-block
         if necessary.
@@ -646,9 +582,11 @@ class EditableEq:
         Return -2 if par_idx is []. Equation is not edited in that case
         Return -5 if par_idx is not [] and equation is not edited. That happens
         if par_idx points to a juxted and no juxted of its juxt-block is VOID.
+
         Note: There should not be VOIDs in JUXT-blocks.
-        Return expected selection and direction supposing that current
-        selection is *idx* in any other case.
+
+        In any other case, return expected selection and direction supposing
+        that current selection is *idx*.
 
         Rules:
 
@@ -729,7 +667,7 @@ class EditableEq:
         new_idx = eqqueries.urepr(new_idx, self.eq)
         return new_idx, self._get_safe_dir(5, None, new_idx)
 
-    @debug
+    @eqdebug.debug
     def delete_clever(self, forward, n=1):
         """Forward/Backward clever delete accepting a numeric argument.
 
@@ -738,8 +676,7 @@ class EditableEq:
         *   base-checker
 
         .. note::
-            Since it is a "clever" function, deletion in overwrite mode is
-            more gedit-like than readline-like.
+            Deletion in overwrite mode is more gedit-like than readline-like.
 
         Return the (positive) number of arguments not applied.
         """
@@ -817,7 +754,7 @@ class EditableEq:
                 self.idx = self._vanish_juxted(-1)[0]
                 continue
 
-            supsup = eqqueries.supeq(sup_idx)
+            supsup = eqqueries.supeq(sup_idx, self.eq, True)
 
             if supsup == -2:
                 # Subcase: First or last juxted of the whole eq (no edit)
@@ -865,7 +802,7 @@ class EditableEq:
 
         return block_idx
 
-    @debug
+    @eqdebug.debug
     def group(self):
         """Group pointed subeq, if needed.
 
@@ -875,7 +812,7 @@ class EditableEq:
         """
         self.idx[:] = self._group()
 
-    @debug
+    @eqdebug.debug
     def insert_clever(self, pseudoe, substitute_1st_free_arg=False, n=1):
         """Insert/replace a subequation from a primitive or part of a
         subequation.
@@ -911,6 +848,8 @@ class EditableEq:
 
         # Create subeq to insert
         eff_pointed_s = self._get_biggest_subeq_same_urepr(None, True)
+        if eff_pointed_s == utils.void(temp=True):
+            eff_pointed_s = utils.void()
         pe_cp = deepcopy(pseudoe)
         free_args = 0
         if isinstance(pe_cp, str) \
@@ -950,7 +889,7 @@ class EditableEq:
             if self.odir() or self.vdir() or substitute_1st_free_arg:
                 # A replacement regardless of whether replacement contains
                 # current selection
-                self.idx = self._replace(subeq, eff_pointed_idx)
+                self._replace(subeq, eff_pointed_idx)
             elif self.rdir():
                 ret_idx = self._rinsert(subeq, eff_pointed_idx)
                 self.idx = eqqueries.urepr(ret_idx, self.eq)
@@ -959,10 +898,20 @@ class EditableEq:
                 self.idx = eqqueries.urepr(ret_idx, self.eq)
 
             if free_args:
+                # Select first free arg if it exists in any case
                 sel = eqqueries.get(self.idx, self.eq)
                 self.idx.append(len(sel) - free_args)
+            elif self.odir():
+                # Select next juxted or create a TVOID if ODIR
+                npars_sup = eqqueries.npars(self.eq, self.idx[:-1])
+                if eqqueries.isjuxted(self.idx, self.eq) \
+                        and npars_sup != self.idx[-1]:
+                    self.idx[-1] += 1
+                else:
+                    self.idx = self._rinsert(utils.void(temp=True))
             self.dir = self._get_safe_dir(5)
 
+    @eqdebug.debug
     def insert_script(self, scriptdir, is_superscript, script=None):
         """Insert a script and select it.
 
