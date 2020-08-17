@@ -26,162 +26,163 @@ Example: [JUXT, ["2"], ["x"], [FRAC, ["c"], ["d"]]]
     You could drop support for them in the future at this module-level.
     Note that there can be still GOP-blocks inside GOP-blocks.
 """
-from .symbols import utils
+from copy import deepcopy
 
-def subeq2latex(subeq):
-    """Return latex code of a subeq."""
-    if len(subeq) > 1:
-        return subeq[0](map(subeq2latex, subeq[1:]))
-    elif isinstance(subeq[0], str):
-        return subeq[0]
-    else:
-        return subeq[0].latex_code
+from . import ops
 
 
-def get(idx, eq):
-    """Get a reference to eq element given its index.
+class Idx(list):
+    def __init__(self, *args):
+        list.__init__(self, *args)
 
-    (If you modify the return value, *eq* is modified.)
-    """
-    req = eq
-    for pos in idx:
-        req = req[pos]
-    return req
+    def __add__(self, other):
+        return Idx(list.__add__(self, other))
 
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            return Idx(list.__getitem__(self, key))
+        return list.__getitem__(self, key)
 
-def isb(subeq, idx=None):
-    """Return if an equation element is a block."""
-    elem = subeq if idx is None else get(idx, subeq)
-    return isinstance(elem, list) and len(elem) > 1
+    def parord(self):
+        """Return the ordinal of pointed parameter or -2 if does not exist."""
+        return self[-1] if self else -2
 
+    def supeq(self):
+        """Return the index of the 1-lev supeq or -2 if that does not exist."""
+        return self[:-1] if self else -2
 
-def parord(idx):
-    """Return the ordinal (starting from 1) of the parameter of an operator.
+    def outlop(self):
+        return self[:-1] + [0] if self else -2
 
-    If *idx* is [], return -2.
-    Elif *idx* points to a lop, return -1.
-    """
-    if not idx:
-        return -2
-    if not idx[-1]:
-        return -1
-    return idx[-1]
+    def prepar(self):
+        pass
 
+class Subeq(list):
+    def __init__(self, *args):
+        """Better do not transform [] into [VOID] to keep compatibility
+        with list slicing, etc."""
+        list.__init__(self, *args)
+        for pos, e in enumerate(self):
+            if isinstance(e, list):
+                self[pos] = Subeq(e)
 
-def supeq(idx, eq=None, retsub=False):
-    """Return supeq ref or its index.
+    def __add__(self, other):
+        return Subeq(list.__add__(self, other))
 
-    If *idx* is [], -2 is returned.
-    If *idx* is a lop, -1 is returned.
-    """
-    if not idx:
-        return -2
-    if not idx[-1]:
-        return -1
-    return get(idx[:-1], eq) if retsub else idx[:-1]
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            return Subeq(list.__getitem__(self, key))
+        return list.__getitem__(self, key)
 
+    def __str__(self):
+        s_str = "[" + str(self[0])
+        for e in self[1:]:
+            s_str += ", " + str(e)
+        return s_str + "]"
 
-def islop(idx):
-    """Return if an index points to a lop."""
-    return idx != [] and idx[-1] == 0
+    def __bool__(self):
+        return self != [ops.VOID]
 
+    @classmethod
+    def subeq2latex(cls, s):
+        """Return latex code of a subeq."""
+        if len(s) == 1:
+            return s[0] if isinstance(s[0], str) else s[0].latex_code
+        elif s[0].n_args == -1:
+            return " ".join(map(cls.subeq2latex, s[1:]))
+        else:
+            return s[0].latex_code.format(*map(cls.subeq2latex, s[1:]))
 
-def outlop(idx, eq=None, retsub=False):
-    """Return a leading operator ref (or its index) by specifying one of its
-    parameters.
+    def latex(self):
+        return self.subeq2latex(self)
 
-    If *idx* is [], return -2.
-    Elif *idx* points to a lop, return -1.
-    """
-    if not idx:
-        return -2
-    if not idx[-1]:
-        return -1
-    ridx = list(idx)
-    ridx[-1] = 0
-    return get(ridx, eq) if retsub else ridx
+    def ispvoid(self):
+        return not self
 
+    def istvoid(self):
+        return self == [ops.TVOID]
 
-def inlop(idx, eq, retsub=False):
-    """Return a leading operator ref (or its index) given the lop-block.
+    def isvoid(self):
+        return not self or self == [ops.TVOID]
 
-    If *idx* points to a symbol, return -3.
-    Elif *idx* points to a lop, return -1.
-    """
-    if islop(idx):
-        return -1
+    def isb(self):
+        return len(self) > 1
 
-    lopblock = get(idx, eq)
-    if len(lopblock) == 1:
-        return -3
+    def isusubeq(self):
+        return self[0] not in ops.NONUOPS
 
-    return lopblock[0] if retsub else idx + [0]
+    def ispjuxtb(self):
+        return self[0] == ops.JUXT
 
+    def istjuxtb(self):
+        return self[0] == ops.TJUXT
 
-def nthpar(n, idx, eq, retsub=False):
-    """Return the n-th parameter of a block/op or its index.
+    def isjuxtb(self):
+        return self[0] == ops.JUXT or self[0] == ops.TJUXT
 
-    If you want the last parameter, pass n == -1.
+    def __call__(self, idx):
+        """Get a reference to eq element given its index.
 
-    Value *idx* must point to a op or block.
-    In the second case, lop-block will be considered as the parameter's op.
+        (If you modify the return value, subeq is modified.)
+        """
+        s = self
+        for pos in idx:
+            s = s[pos]
+        return s
 
-    If *idx* points to a symbol, -3 is returned.
-    Elif the operator does not have enough args, -1 is returned.
-    Elif *n* is 0, -5 is returned.
-    """
-    if not n:
-        return -5
+    def supeq(self, idx):
+        """Get the supeq of subeq of self pointed by idx or -2."""
+        return self(idx[:-1]) if idx else -2
 
-    if islop(idx):
-        sup_idx = idx[:-1]
-    else:
-        sup_idx = idx[:]
-    sup = get(sup_idx, eq)
-    op = sup[0]
+    def outlop(self, idx):
+        """Get the lop of parameter pointed by idx or -2 if idx is []."""
+        return self(idx[:-1] + [0]) if idx else -2
 
-    last_par_ord = len(sup) - 1
-    if n > last_par_ord:
-        return -1
+    def inlop(self, idx, retidx=False):
+        """Get lop of subeq S of self pointed by idx or -3 if S is a symbol."""
+        s = self(idx)
+        if len(s) == 1:
+            return -3
+        else:
+            return idx + [0] if retidx else s[0]
 
-    if n == -1:
-        n = last_par_ord
+    def nthpar(self, idx, n, retidx=False):
+        """Return the n-th parameter of an op given the index of its op-block.
 
-    return get(sup_idx + [n], eq) if retsub else sup_idx + [n]
+        If you want the last parameter, pass n == -1.
 
+        If *idx* points to a symbol, -3 is returned.
+        Elif the operator does not have enough args, -1 is returned.
+        Elif *n* is 0, -5 is returned.
+        """
+        if not n:
+            return -5
 
-def npars(subeq, idx=None):
-    """Return the actual number of parameters.
+        block = self(idx)
+        last_ord = len(block) - 1
+        if not last_ord:
+            return -3
+        elif n > last_ord:
+            return -1
 
-    This function matters specially for juxts-blocks. Else, it must be equal to
-    lop-subeq.n_args.
+        if n == -1:
+            n = last_ord
+        return idx + [n] if retidx else block[n]
 
-    If an operator is passed or referred, -3 is returned (an operator is not
-    enough to know the actual number of parameters of a juxt).
+    def prevpar(self, idx):
+        """Return prev co-parameter ref or its index.
 
-    If a symbol is passed or referred, -1 is returned.
-    """
-    s = subeq if idx is None else get(idx, subeq)
-    if not isinstance(s, list):
-        return -3
-    nelems = len(s)
-    return nelems - 1 if nelems > 1 else -1
-
-
-def prevpar(idx, eq=None, retsub=False):
-    """Return prev co-parameter ref or its index.
-
-    If idx is [], return -2.
-    Elif idx points to first param or lop, return -1.
-    """
-    if not idx:
-        return -2
-    if idx[-1] <= 1:
-        # Cases: lop or first param
-        return -1
-    ridx = idx[:]
-    ridx[-1] -= 1
-    return get(ridx, eq) if retsub else ridx
+        If idx is [], return -2.
+        Elif idx points to first param or lop, return -1.
+        """
+        if not idx:
+            return -2
+        if idx[-1] <= 1:
+            # Cases: lop or first param
+            return -1
+        ridx = idx[:]
+        ridx[-1] -= 1
+        return get(ridx, eq) if retsub else ridx
 
 
 def nextpar(idx, eq, retsub=False):
