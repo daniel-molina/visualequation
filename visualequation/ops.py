@@ -24,10 +24,13 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from typing import List, Union, Iterable, Optional
+
 class Op:
     """Class for primitive elements of an equation."""
 
-    def __init__(self, name, latex_code, n_args = 0, type_=None):
+    def __init__(self, name: str, latex_code: str, n_args = 0,
+                 type_: Optional[str] = None):
         self.name = name
         self.latex_code = latex_code
         self.n_args = n_args
@@ -43,26 +46,30 @@ class Op:
         return not self == other
 
     def __repr__(self):
-        return "Op(" + repr(self.name) + ", " + repr(self.n_args) \
-               + ", " + repr(self.latex_code) + ", " + repr(self.type_) + ")"
+        if self.type_ == '' and not self.n_args:
+            return "Op(" + repr(self.name) + ", " + repr(self.latex_code) + ")"
+        if self.type_ == '':
+            return "Op(" + repr(self.name) + ", " + repr(self.latex_code) \
+                   + ", " + repr(self.n_args) + ")"
+        return "Op(" + repr(self.name) + ", " + repr(self.latex_code) \
+               + ", " + repr(self.n_args) + ", " + repr(self.type_) + ")"
 
     def __str__(self):
         return self.name
 
     def __hash__(self):
+        # str(self) would be enough
         return hash(repr(self))
 
 
 SELARG = Op("selarg", r'\cdots')
-VOID = Op("void", r'\begingroup\color{purple}\oblong\endgroup')
+PVOID = Op("pvoid", r'\begingroup\color{purple}\oblong\endgroup')
 TVOID = Op("tvoid", r'\begingroup\color{lightgray}\oblong\endgroup')
 
 REDIT = Op("redit", r'\left\lmoustache {0} \right\rgroup', 1)  # right
 LEDIT = Op("ledit", r'\left\lgroup {0} \right\rmoustache', 1)  # left
 NEDIT = Op("nedit", r'\left\lmoustache {0} \right\rmoustache', 1)  # new
 SEDIT = Op("sedit", r'\left\rmoustache {0} \right\lmoustache', 1)  # substitute
-JUXT = Op("juxt", r'J', -1)
-TJUXT = Op("tjuxt", r'T', -1)
+PJUXT = Op("pjuxt", r'', -1)
+TJUXT = Op("tjuxt", r'', -1)
 GOP = Op("gop", r'{0}', 1)
-
-NONUOPS = (GOP,)
