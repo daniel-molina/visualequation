@@ -13,8 +13,9 @@
 
 import unittest
 
+from visualequation.idx import *
 from visualequation import ops
-from visualequation.subeqs import *
+from visualequation.subeqs import Subeq
 
 
 class IdxCore(unittest.TestCase):
@@ -31,9 +32,9 @@ class IdxCore(unittest.TestCase):
     def test_ctor(self):
         idx1 = Idx([1, 3, 4])
         idx2 = Idx((1, 3, 4))
+        idx3 = Idx(1, 3, 4)
         self.assertEqual(idx1, idx2)
-        with self.assertRaises(TypeError):
-            Idx([2, 3], [2, 4])
+        self.assertEqual(idx1, idx3)
 
     def test_type_error_idx(self):
         with self.assertRaises(TypeError) as cm:
@@ -54,12 +55,24 @@ class IdxCore(unittest.TestCase):
         with self.assertRaises(TypeError) as cm:
             Idx([Idx([1, 3])])
         self.assertEqual(cm.exception.args[0], IDX_TYPE_ERROR_MSG)
+        with self.assertRaises(TypeError) as cm:
+            Idx([2, 4], 3)
+        self.assertEqual(cm.exception.args[0], IDX_TYPE_ERROR_MSG)
+        with self.assertRaises(TypeError) as cm:
+            Idx(3, [2, 4])
+        self.assertEqual(cm.exception.args[0], IDX_TYPE_ERROR_MSG)
+        with self.assertRaises(TypeError) as cm:
+            Idx(3, "3")
+        self.assertEqual(cm.exception.args[0], IDX_TYPE_ERROR_MSG)
         Idx(Idx([]))
         Idx(Idx([1, 2]))
 
     def test_value_error_idx(self):
         with self.assertRaises(ValueError) as cm:
             Idx([-1])
+        self.assertEqual(cm.exception.args[0], IDX_VALUE_ERROR_MSG)
+        with self.assertRaises(ValueError) as cm:
+            Idx(3, -1)
         self.assertEqual(cm.exception.args[0], IDX_VALUE_ERROR_MSG)
         with self.assertRaises(ValueError) as cm:
             Idx([1, -1])
@@ -259,6 +272,7 @@ class IdxCore(unittest.TestCase):
             self.assertEqual(len(b), 0)
             idx[-34242:31313] = [4]
             self.assertEqual(len(idx), 1)
+            idx_bkp = idx[:]
             with self.assertRaises(TypeError):
                 idx[1:2] = 6
             with self.assertRaises(TypeError) as cm:
@@ -273,6 +287,7 @@ class IdxCore(unittest.TestCase):
             with self.assertRaises(ValueError) as cm:
                 idx[1:2] = [-1, -4]
             self.assertEqual(cm.exception.args[0], IDX_VALUE_ERROR_MSG)
+            self.assertEqual(idx, idx_bkp)
 
         NOIDX_BKP = NOIDX[:]
         # Do not do this in real code!

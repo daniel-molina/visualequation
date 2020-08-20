@@ -159,6 +159,7 @@ class SubeqTests(unittest.TestCase):
 
         s_sum = deepcopy(s) + [["f"]]
         self.assertIsNot(s_sum, s)
+        print(s, deepcopy(s))
         self.assertIsNot(s_sum[1], s[1])
 
     def test_getitem(self):
@@ -273,14 +274,147 @@ class SubeqTests(unittest.TestCase):
 
 
     def test_subeq_bool(self):
-        self.assertTrue(Subeq())
-        self.assertFalse(Subeq([ops.PVOID]))
+        # __bool__ is not finally overridden
+        self.assertFalse(Subeq())
+        self.assertFalse(Subeq([]))
+        self.assertFalse(Subeq(()))
+        self.assertTrue(Subeq([ops.PVOID]))
         self.assertTrue(Subeq([ops.TVOID]))
         self.assertTrue(Subeq([""]))
         self.assertTrue(Subeq(["x"]))
         self.assertTrue(Subeq([ops.Op("x", "x")]))
         self.assertTrue(Subeq([ops.PJUXT, ["d"], [ops.Op("x", "x")]]))
 
+    def test_append(self):
+        s = Subeq()
+        s.append(ops.PJUXT)
+        s.append(Subeq(["a"]))
+        s.append(Subeq([ops.TVOID]))
+        self.assertEqual(s, Subeq([ops.PJUXT, ["a"], [ops.TVOID]]))
+        s.append(Subeq([ops.PJUXT, ["a"], [ops.TVOID]]))
+        # Unintended use
+        for i in range(5):
+            s.append(ops.GOP)
+
+        # This test is crucial to deepcopy correctly
+        s = Subeq()
+        s.append("a")
+        s = Subeq()
+        s.append(ops.PVOID)
+
+        s = Subeq()
+        with self.assertRaises(TypeError) as cm:
+            s.append(["d"])
+        self.assertEqual(cm.exception.args[0], SUBEQ_APPEND_TYPE_ERROR_MSG)
+        with self.assertRaises(TypeError) as cm:
+            s.append(["d", "e"])
+        self.assertEqual(cm.exception.args[0], SUBEQ_APPEND_TYPE_ERROR_MSG)
+        for value in (1, [2], Idx([3, 4]), 9.6):
+            with self.assertRaises(TypeError) as cm:
+                s.append(value)
+            self.assertEqual(cm.exception.args[0], SUBEQ_APPEND_TYPE_ERROR_MSG)
+        self.assertEqual(s, Subeq())
+        s = Subeq(["3"])
+        for value in ("4", ops.PVOID, ops.TVOID):
+            with self.assertRaises(ValueError) as cm:
+                s.append(value)
+            self.assertEqual(cm.exception.args[0], SUBEQ_VALUE_ERROR_MSG)
+        self.assertEqual(s, Subeq(["3"]))
+
+    def test_extend(self):
+        for value in ([], (), Subeq()):
+            s = Subeq()
+            s.extend(value)
+            s.extend(value)
+            self.assertEqual(s, Subeq())
+
+        for value in ([Subeq(["a"])], (Subeq(["a"]),), Subeq([Subeq(["a"])])):
+            s = Subeq()
+            s.extend(value)
+            s.extend(value)
+            self.assertEqual(s, Subeq([["a"], ["a"]]))
+            self.assertEqual(s, Subeq(2*[["a"]]))
+
+        for value in ([Subeq([ops.PJUXT, ["a"], [ops.TVOID]])],
+                      (Subeq([ops.PJUXT, ["a"], [ops.TVOID]]),),
+                      Subeq([Subeq([ops.PJUXT, ["a"], [ops.TVOID]])])):
+            s = Subeq()
+            s.extend(value)
+            s.extend(value)
+            self.assertEqual(s, Subeq(2*[[ops.PJUXT, ["a"], [ops.TVOID]]]))
+
+        for value in ([Subeq([ops.GOP]),
+                       Subeq([ops.PJUXT, ["a"], [ops.TVOID]])],
+                      (Subeq([ops.GOP]),
+                       Subeq([ops.PJUXT, ["a"], [ops.TVOID]])),
+                      Subeq([Subeq([ops.GOP]),
+                             Subeq([ops.PJUXT, ["a"], [ops.TVOID]])])):
+            s = Subeq()
+            s.extend(value)
+            s.extend(value)
+            self.assertEqual(s, Subeq(2*[[ops.GOP], [ops.PJUXT, ["a"],
+                                        [ops.TVOID]]]))
+
+            # Operators with n_args != 0 can be used to extend a subeq
+            s.extend([ops.GOP, Subeq(["d"])])
+            # Unintended use
+            s.extend([ops.GOP, ops.PJUXT, ops.TJUXT])
+
+            # Unintended use
+            for value in ([Subeq()], (Subeq(),), Subeq([Subeq()])):
+                s = Subeq()
+                s.extend(value)
+                self.assertEqual(s, Subeq([[]]))
+                s.extend(value)
+                self.assertEqual(s, Subeq([[], []]))
+
+            for i in range(5):
+                s.extend([Subeq(), Subeq(), Subeq()])
+
+        s = Subeq()
+        with self.assertRaises(TypeError) as cm:
+            s.extend('f')
+        self.assertEqual(cm.exception.args[0], SUBEQ_CONTAINER_TYPE_ERROR_MSG)
+        with self.assertRaises(TypeError) as cm:
+            s.extend(7)
+        self.assertEqual(cm.exception.args[0], SUBEQ_CONTAINER_TYPE_ERROR_MSG)
+        with self.assertRaises(TypeError) as cm:
+            s.extend(ops.PVOID)
+        self.assertEqual(cm.exception.args[0], SUBEQ_CONTAINER_TYPE_ERROR_MSG)
+
+        with self.assertRaises(TypeError) as cm:
+            s.extend(["f"])
+        self.assertEqual(cm.exception.args[0], SUBEQ_EXTEND_TYPE_ERROR_MSG)
+        with self.assertRaises(TypeError) as cm:
+            s.extend([ops.PVOID])
+        self.assertEqual(cm.exception.args[0], SUBEQ_EXTEND_TYPE_ERROR_MSG)
+
+    def test_insert(self):
+        for pos in range(1, 5):
+            s = Subeq([ops.GOP])
+            s.insert(pos, Subeq(["d"]))
+            self.assertEqual(s, Subeq([ops.GOP, ["d"]]))
+
+        s = Subeq([["d"], ["f"]])
+        s.insert(0, ops.PJUXT)
+        self.assertEqual(s, Subeq([ops.PJUXT, ["d"], ["f"]]))
+        s.insert(2, Subeq(["e"]))
+        self.assertEqual(s, Subeq([ops.PJUXT, ["d"], ["e"], ["f"]]))
+
+        # Unintended use
+        s = Subeq()
+        s.insert(0, Subeq())
+        s.insert(0, Subeq())
+        self.assertEqual(s, Subeq([[], []]))
+
+        s = Subeq()
+        for pos in range(-4, 4):
+            for value in (1, [2], Idx([3, 4]), ["a"], [ops.PVOID],
+                          [ops.PJUXT]):
+                with self.assertRaises(TypeError) as cm:
+                    s.insert(pos, value)
+                self.assertEqual(cm.exception.args[0],
+                                 SUBEQ_INSERT_TYPE_ERROR_MSG)
 
 if __name__ == "__main__":
     unittest.main()

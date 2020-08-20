@@ -33,142 +33,27 @@ Example: [PJUXT, ["2"], ["x"], [FRAC, ["c"], ["d"]]]
         *   Whenever a Idx is returned, it must be not a reference to
             another Idx.
 """
-from copy import deepcopy
+
 from typing import List, Tuple, Union, Iterable, Optional
 
-from . import ops
-SUPEQ_ERROR_MSG = "Pointed subeq does not have a supeq"
-SupeqError = IndexError(SUPEQ_ERROR_MSG)
-STRICT_SUBEQ_ERROR_MSG = "Pointed subeq does have a strict subeq"
-StrictSubeqError = IndexError(STRICT_SUBEQ_ERROR_MSG)
-LOP_ERROR_MSG = "Pointed elem is a lop, not a subeq"
-LopError = IndexError(LOP_ERROR_MSG)
-NO_CO_PAR_ERROR_MSG = "Pointed subeq does not have a co-par in specified dir"
-NoCoParError = IndexError(NO_CO_PAR_ERROR_MSG)
-IDX_TYPE_ERROR_MSG = "Idx values must be integers"
-IdxTypeError = TypeError(IDX_TYPE_ERROR_MSG)
-IDX_VALUE_ERROR_MSG = "Idx values must be non-negative"
-IdxValueError = ValueError(IDX_VALUE_ERROR_MSG)
-
-class Idx(list):
-    """A class to manage indices referring a subeq of another subeq.
-
-    .. note::
-        To simplify operations, 0's are allowed to be used in middle positions.
-        Use the debug module to verify that they are not finally there.
-
-    When using the provided methods, results will be strictly correct only if
-    self is used to refer a subeq of an equation.
-    """
-    @classmethod
-    def check_value(cls, value):
-        if not isinstance(value, int):
-            raise IdxTypeError
-        if value < 0:
-            raise IdxValueError
-
-    @classmethod
-    def check_iterable(cls, value):
-        for c in value:
-            cls.check_value(c)
-
-    def __init__(self, *args: Iterable):
-        # If the number of arguments is correct, check values.
-        # Else, let list.__init__ blame.
-        if len(args) == 1:
-            self.check_iterable(*args)
-        list.__init__(self, *args)
-
-    def __str__(self):
-        return list.__repr__(self)
-
-    def __repr__(self):
-        return "Idx(" + list.__repr__(self) + ")"
-
-    def __add__(self, other: List[int]):
-        return Idx(list.__add__(self, other))
-
-    def __getitem__(self, key: Union[slice, int]):
-        if isinstance(key, slice):
-            return Idx(list.__getitem__(self, key))
-        return list.__getitem__(self, key)
-
-    def __setitem__(self, key: Union[slice, int], value: Union[List, int]):
-        if isinstance(key, int):
-            self.check_value(value)
-            list.__setitem__(self, key, value)
-        else:
-            list.__setitem__(self, key, Idx(value))
-
-    def append(self, value: int):
-        self.check_value(value)
-        list.append(self, value)
-
-    def extend(self, iterable: Iterable):
-        self.check_iterable(iterable)
-        list.extend(self, iterable)
-
-    def insert(self, pos: int, value: int):
-        self.check_value(value)
-        list.insert(self, pos, value)
-
-    def parord(self):
-        """Return the ordinal of pointed parameter or -2 if it points to the
-        whole eq.
-
-        Index must not point to a lop.
-        """
-        return self[-1] if self else -2
-
-    def supeq(self, set=False):
-        """Return the index of the 1-lev supeq of pointed subeq or -2 if that
-        does not exist.
-        """
-        if not set:
-            return self[:-1] if self else -2
-        if not self:
-            raise SupeqError
-        del self[-1]
-
-    def outlop(self, set=False):
-        """Return index of lop of pointed subeq.
-
-        If pointed subeq is the whole eq (block or symbol), -2 is returned.
-
-        If *set* is True, a exception is be raised in the mentioned case.
-        """
-        if not set:
-            return self[:-1] + [0] if self else -2
-        if not self:
-            raise SupeqError
-        self[-1] = 0
-
-    def prevpar(self, set=False):
-        """Return index of left par of a subeq, -2 if pointed subeq is not a
-        par or -1 if pointed subeq is a 1st par or lop."""
-        if not set:
-            if not self:
-                return -2
-            return self[:-1] + [self[-1] - 1] if self[-1] > 1 else -1
-        if not self:
-            raise SupeqError
-        if self[-1] == 1:
-            raise NoCoParError
-        self[-1] -= 1
-
-    def level(self):
-        """Return the nesting level of pointed subeq."""
-        return len(self)
-
-
-NOIDX = Idx([])
+from visualequation.idx import Idx, NOIDX
+from visualequation import ops
 
 SUBEQ_CONTAINER_TYPE_ERROR_MSG = "Allowed iterables to provide Subeq " \
                                  "elements are lists and tuples"
 SubeqContainerTypeError = TypeError(SUBEQ_CONTAINER_TYPE_ERROR_MSG)
-SUBEQ_ELEM_TYPE_ERROR_MSG = "Elements used to build a Subeq must be lists, " \
-                            "tuples, str and/or Ops"
+SUBEQ_ELEM_TYPE_ERROR_MSG = "Elements allowed to build a Subeq must be " \
+                            "lists, tuples, strings and/or Ops"
 SubeqElemTypeError = TypeError(SUBEQ_ELEM_TYPE_ERROR_MSG)
+SUBEQ_APPEND_TYPE_ERROR_MSG = "Elements allowed to be appended to a Subeq " \
+                              "are Subeqs, strings and Ops"
+SubeqAppendTypeError = TypeError(SUBEQ_APPEND_TYPE_ERROR_MSG)
+SUBEQ_EXTEND_TYPE_ERROR_MSG = "Elements allowed to extend a Subeq are " \
+                              "Subeqs and Ops with n_args != 0"
+SubeqExtendTypeError = TypeError(SUBEQ_EXTEND_TYPE_ERROR_MSG)
+SUBEQ_INSERT_TYPE_ERROR_MSG = "Elements allowed to be inserted in a Subeq " \
+                              "are Subeqs and Ops with n_args != 0"
+SubeqInsertTypeError = TypeError(SUBEQ_INSERT_TYPE_ERROR_MSG)
 SUBEQ_VALUE_ERROR_MSG = "Strings and 0-args ops must always be the single " \
                         "element of a list or tuple."
 SubeqValueError = ValueError(SUBEQ_VALUE_ERROR_MSG)
@@ -188,21 +73,20 @@ class Subeq(list):
     a whole equation and not a strict subeq.
     """
     @classmethod
-    def check_value(cls, value, container_len):
+    def check_noncontainer_value(cls, value, container_len):
         if not isinstance(value, str) and not isinstance(value, ops.Op):
             raise SubeqElemTypeError
         if container_len > 1 \
                 and (isinstance(value, str) or not value.n_args):
             raise SubeqValueError
 
-    def __init__(self, *args: Iterable):
+    def __init__(self, *args: Union[List, Tuple]):
         # Better allow [] to be a Subeq even if that is not a valid subeq than
         # reject it or transform it into [VOID].
         # This way, we keep compatibility with list slicing, etc.
         # Equivalently, do not force a correct structure or geometry of
         # elements here, better use the debug module for that task.
-        if len(args) == 1 and \
-                not (isinstance(args[0], list) or isinstance(args[0], tuple)):
+        if len(args) == 1 and not (isinstance(args[0], (list, tuple))):
             # Subeqs are derived from lists, so they pass the check
             raise SubeqContainerTypeError
         list.__init__(self, *args)
@@ -210,10 +94,10 @@ class Subeq(list):
             if isinstance(e, Subeq):
                 # Trust in any Subeq previously built
                 pass
-            elif isinstance(e, list) or isinstance(e, tuple):
+            elif isinstance(e, (list, tuple)):
                 self[pos] = Subeq(e)
             else:
-                self.check_value(e, len(self))
+                self.check_noncontainer_value(e, len(self))
 
     def __add__(self, other: List):
         return Subeq(list.__add__(self, other))
@@ -273,8 +157,35 @@ class Subeq(list):
             return "Subeq()"
         return "Subeq(" + self._repr_aux(self) + ")"
 
-    def __bool__(self):
-        return self != [ops.PVOID]
+    def append(self, value: Union['Subeq', str, ops.Op]):
+        if not isinstance(value, (Subeq, ops.Op, str)):
+            raise SubeqAppendTypeError
+        if len(self) and ((isinstance(value, ops.Op) and not value.n_args)
+                          or isinstance(value, str)):
+            # Allowing a str/(0-arg Op) to be appended to empty Subeqs is
+            # crucial to deepcopy smoothly
+            raise SubeqValueError
+        list.append(self, value)
+
+    def extend(self, collect: Iterable[Union['Subeq', ops.Op]]):
+        # Because extend is used to support insertion of several elements
+        # there are no reasons to allow its use to an append use of single
+        # strings and 0-args ops in empty Subeqs.
+        if not (isinstance(collect, (list, tuple))):
+            # Subeqs are derived from lists, so they pass the check
+            raise SubeqContainerTypeError
+        for s in collect:
+            if not (isinstance(s, Subeq) or
+                    (isinstance(s, ops.Op) and s.n_args)):
+                raise SubeqExtendTypeError
+        list.extend(self, collect)
+
+    def insert(self, pos: int, value: Union['Subeq', ops.Op]):
+        # Not supporting insertion of strings or 0-args Ops in empty subeqs.
+        if not (isinstance(value, Subeq) or
+                (isinstance(value, ops.Op) and value.n_args)):
+            raise SubeqInsertTypeError
+        list.insert(self, pos, value)
 
     @classmethod
     def subeq2latex(cls, s):
@@ -301,7 +212,7 @@ class Subeq(list):
 
     def is_pvoid(self, idx: Optional[Idx] = None):
         idx = NOIDX if idx is None else idx
-        return not self(idx)
+        return self(idx) == [ops.PVOID]
 
     def is_tvoid(self, idx: Optional[Idx] = None):
         idx = NOIDX if idx is None else idx
@@ -309,7 +220,7 @@ class Subeq(list):
 
     def is_void(self, idx: Optional[Idx] = None):
         idx = NOIDX if idx is None else idx
-        return not self(idx) or self(idx) == [ops.TVOID]
+        return self(idx) in ([ops.PVOID], [ops.TVOID])
 
     def isb(self, idx: Optional[Idx] = None):
         idx = NOIDX if idx is None else idx
@@ -369,7 +280,7 @@ class Subeq(list):
         else:
             return idx + [0] if retidx else s[0]
 
-    def nthpar(self, idx: Optional[Idx] = None, n = -1, retidx = False):
+    def nthpar(self, idx: Optional[Idx] = None, n=-1, retidx=False):
         """Return the n-th parameter of an op given the index of its op-block.
 
         If you want the last parameter, pass n == -1.
@@ -511,7 +422,7 @@ class Subeq(list):
             return 0
         return 2
 
-    def mate(self, idx: Idx, right: bool, ulevel_diff = 0, retidx = False):
+    def mate(self, idx: Idx, right: bool, ulevel_diff=0, retidx=False):
         """Return the mate to the left and a ulevel difference.
 
         self must be an equation.
@@ -558,7 +469,7 @@ class Subeq(list):
             # -1 is a flag value accepted by nthpar
             pord = 1 if right else -1
 
-    def boundary_mate(self, ulevel: int, last = False, retidx = False):
+    def boundary_mate(self, ulevel: int, last=False, retidx=False):
         """Return the first or last *N*-ulevel mate of eq.
 
         self must be an equation.
@@ -577,8 +488,8 @@ class Subeq(list):
             bmate_idx.append(len(s) - 1 if last else 1)
             s = s[bmate_idx[-1]]
 
-    def boundary_symbol(self, idx: Optional[Idx] = None, last = False,
-                        strict = True, retidx = False):
+    def boundary_symbol(self, idx: Optional[Idx] = None, last=False,
+                        strict=True, retidx=False):
         """Return the first or last symbol of a subeq.
 
         self must be an equation if *strict* is False.

@@ -13,8 +13,7 @@
 
 import unittest
 
-from visualequation import ops
-from visualequation.subeqs import *
+from visualequation.idx import *
 
 
 class IdxUtils(unittest.TestCase):
@@ -131,6 +130,7 @@ class IdxUtils(unittest.TestCase):
         self.assertEqual(Idx([1, 5]).level(), 2)
         idx = Idx([1, 5, 1, 2, 5, 5, 1, 2])
         self.assertEqual(idx.level(), len(idx))
+
 
 if __name__ == "__main__":
     unittest.main()
