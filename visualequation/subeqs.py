@@ -62,6 +62,8 @@ SUBEQ_ORDINARY_INDEXING_ERROR_MSG = "Accessing Subeq elements with a key ([" \
 SubeqOrdinaryIndexingError = TypeError(SUBEQ_ORDINARY_INDEXING_ERROR_MSG)
 NOT_SUBEQ_ERROR_MSG = "Pointed element is not a Subeq"
 NotSubeqError = TypeError(NOT_SUBEQ_ERROR_MSG)
+NON_EXISTENT_SUBEQ_ERROR_MSG = "Requested subeq does not exist"
+NonExistentSubeqError = IndexError(NON_EXISTENT_SUBEQ_ERROR_MSG)
 EMPTY_SUBEQ_ERROR_MSG = "Pointed subeq is empty"
 EmptySubeqError = ValueError(EMPTY_SUBEQ_ERROR_MSG)
 
@@ -75,6 +77,12 @@ class Subeq(list):
 
     Some methods will provide only correct results for every input if self is
     a whole equation and not a strict subeq.
+
+    Implementation note:
+
+        *   It will be supposed that a referred subequation is correctly built.
+        *   It will not be supposed (in most of cases) that the user call the
+            methods knowing that what is being asked is legitimate.
     """
     @classmethod
     def check_noncontainer_value(cls, value, container_len):
@@ -318,35 +326,44 @@ class Subeq(list):
         If you want the last parameter, pass n == -1.
 
         If *idx* points to a symbol, -3 is returned.
-        Elif the operator does not have enough args, -1 is returned.
-        Elif *n* is 0, -5 is returned.
+        If the operator does not have enough args, -1 is returned.
         """
-        idx = NOIDX if idx is None else id
-        if not n:
-            return -5
-
         block = self(idx)
+        if not isinstance(block, Subeq):
+            raise NotSubeqError
         last_ord = len(block) - 1
         if not last_ord:
             return -3
-        elif n > last_ord:
-            return -1
-
         if n == -1:
             n = last_ord
-        return idx + [n] if retidx else block[n]
+        if n > last_ord:
+            return -1
+        if n < 1:
+            raise NonExistentSubeqError
+
+        return Idx(idx) + [n] if retidx else block[n]
 
     def relpar(self, idx, n=1, retidx=False):
-        """Get a co-parameter ref or its index.
+        """Get the nth co-parameter to the left/right, depending on the sign of
+         n.
 
         Return -1 if requested parameter does not exist or -2 if idx is [].
+
+        Since this method is intended to be used with relative position, it
+        can be useful to call this method without actually knowing the passed
+        value of *idx and/or *n*. => No error is raised if requested parameter
+        does not exist in any direction.
         """
-        if not idx:
+        index = Idx(idx)
+        if not index:
             return -2
-        sup = self.supeq(idx)
-        ord = idx[-1] + n
+        # Do not suppose that pointed elem is a subeq
+        sup = self(index[:-1])
+        if not isinstance(sup[index[-1]], Subeq):
+            raise NotSubeqError
+        ord = index[-1] + n
         if 0 < ord < len(sup):
-            return idx[:-1] + [ord] if retidx else sup[ord]
+            return index[:-1] + [ord] if retidx else sup[ord]
         return -1
 
     def prevpar(self, idx, retidx=False):
@@ -368,40 +385,51 @@ class Subeq(list):
     def urepr(self, idx=None, retidx=False):
         """Return the urepr of a subeq.
 
-        A more general approach based on "VE ops are faithful" was previously
+        A more general approach based on "VE's ops are faithful" was previously
         coded and can be recovered from the DVCS.
-        """
-        idx = NOIDX if idx is None else idx
-        s = self(idx)
-        if s.is_gopb():
-            return idx + [1] if retidx else s[1]
-        return idx[:] if retidx else s
 
-    def biggest_supeq_with_urepr(self, idx, retidx=False):
+        It assumes that no GOP-block can be GOP-par and only GOPs are
+        non-user ops.
+        """
+        index = Idx(idx)
+        s = self(index)
+        if not isinstance(s, Subeq):
+            raise NotSubeqError
+        if s.is_gopb():
+            return index + [1] if retidx else s[1]
+        return index if retidx else s
+
+    def biggest_supeq_with_urepr(self, idx=None, retidx=False):
         """Get biggest subeq which has pointed usubeq as urepr.
 
         self is recommended to be an equation (see note below).
 
         If pointed subeq is a non-usubeq, -1 is returned.
 
-        A more general approach based on "VE ops are faithful" was previously
+        A more general approach based on "VE's ops are faithful" was previously
         coded and can be recovered from the DVCS.
 
         .. note::
             If idx is [] and self is a usubeq, result is only guaranteed to be
             valid if self is the whole equation.
         """
-        if not idx:
-            if self[0] == ops.GOP:
+        index = Idx(idx)
+        # It is supposed that self is a valid (sub)eq
+        if not index:
+            if self.is_gopb():
                 return -1
-            return idx[:] if retidx else self
+            return index if retidx else self
 
-        sup = self(idx[:-1])
-        if sup[0] == ops.GOP:
-            return idx[:-1] if retidx else sup
-        if sup[idx[-1]][0] == ops.GOP:
+        # Do not suppose pointed elem is a subeq
+        sup = self(index[:-1])
+        parord = index[-1]
+        if not isinstance(sup[parord], Subeq):
+            raise NotSubeqError
+        if sup.is_gopb():
+            return index[:-1] if retidx else sup
+        if sup[parord].is_gopb():
             return -1
-        return idx[:] if retidx else sup[idx[-1]]
+        return index if retidx else sup[parord]
 
     def ulevel(self, idx):
         """Return the nesting ulevel of pointed usubeq.

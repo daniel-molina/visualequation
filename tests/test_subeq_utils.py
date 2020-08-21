@@ -403,5 +403,175 @@ class SubeqTests(unittest.TestCase):
                 s.inlop([2, 0], cond)
             self.assertEqual(cm.exception.args[0], NOT_SUBEQ_ERROR_MSG)
 
+    def test_nthpar(self):
+        for s in (Subeq(["a"]), Subeq(None)):
+            for n in range(-4, 4):
+                for cond in (False, True):
+                    self.assertEqual(s.nthpar(), -3)
+                    self.assertEqual(s.nthpar([], n, cond), -3)
+                    with self.assertRaises(TypeError) as cm:
+                        s.nthpar([0], n, cond)
+                    self.assertEqual(cm.exception.args[0], NOT_SUBEQ_ERROR_MSG)
+                    with self.assertRaises(IndexError):
+                        s.nthpar([5], n, cond)
+                    with self.assertRaises(ValueError) as cm:
+                        s.nthpar([-5], n, cond)
+                    self.assertEqual(cm.exception.args[0], IDX_VALUE_ERROR_MSG)
+
+        s = Subeq([ops.PJUXT, ["a"], [ops.GOP, ["f"]], [ops.TVOID]])
+        for n in range(1, 4):
+            for cond in (False, True):
+                self.assertEqual(s.nthpar(), s[-1])
+                self.assertIs(s.nthpar([], n), s[n])
+                self.assertEqual(s.nthpar([], n, True), Idx([n]))
+                self.assertEqual(s.nthpar([], -1), s[3])
+                self.assertEqual(s.nthpar([], -1, True), Idx(3))
+                self.assertEqual(s.nthpar([], 3+n, cond), -1)
+                with self.assertRaises(IndexError) as cm:
+                    s.nthpar([], 0, cond)
+                self.assertEqual(cm.exception.args[0],
+                                 NON_EXISTENT_SUBEQ_ERROR_MSG)
+                with self.assertRaises(IndexError) as cm:
+                    s.nthpar([], -1-n, cond)
+                self.assertEqual(cm.exception.args[0],
+                                 NON_EXISTENT_SUBEQ_ERROR_MSG)
+                self.assertEqual(s.nthpar([2], 1), s([2, 1]))
+                self.assertEqual(s.nthpar([2], -1), s(2, 1))
+                self.assertEqual(s.nthpar([2], 1, True), [2, 1])
+                self.assertEqual(s.nthpar([2], -1, True), Idx([2, 1]))
+                with self.assertRaises(TypeError) as cm:
+                    s.nthpar([1, 0], n, cond)
+                self.assertEqual(cm.exception.args[0], NOT_SUBEQ_ERROR_MSG)
+
+    def test_relpar(self):
+        for s in (Subeq(["a"]), Subeq(None),
+                  Subeq([ops.PJUXT, ["d"], [ops.TVOID]])):
+            for n in range(-4, 4):
+                for cond in (False, True):
+                    self.assertEqual(s.relpar([], n, cond), -2)
+                    with self.assertRaises(TypeError) as cm:
+                        s.relpar([0], n, cond)
+                    self.assertEqual(cm.exception.args[0], NOT_SUBEQ_ERROR_MSG)
+                    with self.assertRaises(IndexError):
+                        s.relpar([5], n, cond)
+                    with self.assertRaises(ValueError) as cm:
+                        s.relpar([-5], n, cond)
+                    self.assertEqual(cm.exception.args[0], IDX_VALUE_ERROR_MSG)
+
+        s = Subeq([ops.PJUXT, ["a"], [ops.GOP, ["f"]], [ops.TVOID]])
+        for n in range(0, 3):
+            for cond in (False, True):
+                self.assertEqual(s.relpar([], n, cond), -2)
+                self.assertEqual(s.relpar([], -n, cond), -2)
+                self.assertEqual(s.relpar([1], n), s[1+n])
+                self.assertEqual(s.relpar([1], n, True), Idx([1+n]))
+                self.assertEqual(s.relpar([2], -1), s[2-1])
+                self.assertEqual(s.relpar([2], -1, True), Idx(2-1))
+                self.assertEqual(s.relpar([2], +1), s[2+1])
+                self.assertEqual(s.relpar([2], +1, True), Idx(2+1))
+                self.assertEqual(s.relpar([3], n-2), s[1+n])
+                self.assertEqual(s.relpar([3], n-2, True), [1+n])
+                self.assertEqual(s.relpar([1], -1-n, cond), -1)
+                self.assertEqual(s.relpar([2], -2-n, cond), -1)
+                self.assertEqual(s.relpar([3], -3-n, cond), -1)
+                self.assertEqual(s.relpar([1], 3+n, cond), -1)
+                self.assertEqual(s.relpar([2], 2+n, cond), -1)
+                self.assertEqual(s.relpar([3], 1+n, cond), -1)
+                self.assertEqual(s.relpar([2, 1], 0), s(2, 1))
+                self.assertEqual(s.relpar([2, 1], 0, True), [2, 1])
+                self.assertEqual(s.relpar([2, 1], 1+n, cond), -1)
+                self.assertEqual(s.relpar([2, 1], -1-n, cond), -1)
+                with self.assertRaises(TypeError) as cm:
+                    s.relpar([1, 0], n, cond)
+                self.assertEqual(cm.exception.args[0], NOT_SUBEQ_ERROR_MSG)
+                with self.assertRaises(IndexError) :
+                    s.relpar([80], n, cond)
+
+    def test_urepr(self):
+        for s in (Subeq(["a"]), Subeq(None),
+                  Subeq([ops.PJUXT, ["d"], [ops.TVOID]])):
+            self.assertIs(s.urepr(), s)
+            self.assertEqual(s.urepr([], True), Idx())
+            with self.assertRaises(TypeError) as cm:
+                s.urepr(0)
+            self.assertEqual(cm.exception.args[0], NOT_SUBEQ_ERROR_MSG)
+            with self.assertRaises(TypeError) as cm:
+                s.urepr([0], True)
+            self.assertEqual(cm.exception.args[0], NOT_SUBEQ_ERROR_MSG)
+
+        # Let us use valid gop-blocks in this test
+        for s in (Subeq([ops.GOP, [ops.PJUXT, ["a"], [ops.TVOID]]]),
+                  Subeq([ops.GOP, [ops.Op("d", "d", 1), ["a"]]]),
+                  Subeq([ops.GOP, [ops.Op("f", "f", 3), ["a"],
+                                   [ops.Op("e", "e", 0)], ["f"]]])):
+            for cond in (False, True):
+                self.assertIs(s.urepr(), s[1])
+                self.assertEqual(s.urepr([], True), Idx(1))
+                self.assertIs(s.urepr(1), s[1])
+                self.assertEqual(s.urepr(1, True), [1])
+                with self.assertRaises(TypeError) as cm:
+                    s.urepr(0, cond)
+                self.assertEqual(cm.exception.args[0], NOT_SUBEQ_ERROR_MSG)
+                with self.assertRaises(TypeError) as cm:
+                    s.urepr([1, 0], cond)
+                self.assertEqual(cm.exception.args[0], NOT_SUBEQ_ERROR_MSG)
+
+        for pos, s in enumerate(
+                (Subeq([ops.PJUXT,
+                        [ops.GOP, [ops.PJUXT, ["3"], [ops.TVOID]]], ["d"]]),
+                 Subeq([ops.PJUXT, [ops.Op("w", "w", 1), ["t"]],
+                        [ops.GOP, [ops.PJUXT, ["3"], [ops.TVOID]]]]),
+                 Subeq([ops.PJUXT, ["d"], [ops.Op("e", "e")],
+                        [ops.GOP, [ops.PJUXT, ["3"], [ops.TVOID]]]]))):
+            self.assertIs(s.urepr(), s)
+            self.assertEqual(s.urepr([], True), Idx())
+            self.assertIs(s.urepr(1+pos), s(1+pos, 1))
+            self.assertEqual(s.urepr(1+pos, True), [1+pos, 1])
+            self.assertIs(s.urepr([1+pos, 1]), s(1+pos, 1))
+            self.assertEqual(s.urepr([1+pos, 1], True), [1+pos, 1])
+
+    def test_biggest_supeq_with_urepr(self):
+        for s in (Subeq(["a"]), Subeq(None),
+                  Subeq([ops.PJUXT, ["d"], [ops.TVOID]])):
+            self.assertIs(s.biggest_supeq_with_urepr(), s)
+            self.assertEqual(s.biggest_supeq_with_urepr([], True), Idx())
+            with self.assertRaises(TypeError) as cm:
+                s.biggest_supeq_with_urepr(0)
+            self.assertEqual(cm.exception.args[0], NOT_SUBEQ_ERROR_MSG)
+            with self.assertRaises(TypeError) as cm:
+                s.biggest_supeq_with_urepr([0], True)
+            self.assertEqual(cm.exception.args[0], NOT_SUBEQ_ERROR_MSG)
+
+        # Let us use valid gop-blocks in this test
+        for s in (Subeq([ops.GOP, [ops.PJUXT, ["a"], [ops.TVOID]]]),
+                  Subeq([ops.GOP, [ops.Op("d", "d", 1), ["a"]]]),
+                  Subeq([ops.GOP, [ops.Op("f", "f", 3), ["a"],
+                                   [ops.Op("e", "e", 0)], ["f"]]])):
+            for cond in (False, True):
+                self.assertIs(s.biggest_supeq_with_urepr([], cond), -1)
+                self.assertIs(s.biggest_supeq_with_urepr(1), s)
+                self.assertEqual(s.biggest_supeq_with_urepr(1, True), NOIDX)
+                with self.assertRaises(TypeError) as cm:
+                    s.biggest_supeq_with_urepr(0, cond)
+                self.assertEqual(cm.exception.args[0], NOT_SUBEQ_ERROR_MSG)
+                with self.assertRaises(TypeError) as cm:
+                    s.biggest_supeq_with_urepr([1, 0], cond)
+                self.assertEqual(cm.exception.args[0], NOT_SUBEQ_ERROR_MSG)
+
+        for pos, s in enumerate(
+                (Subeq([ops.PJUXT,
+                        [ops.GOP, [ops.PJUXT, ["3"], [ops.TVOID]]], ["d"]]),
+                 Subeq([ops.PJUXT, [ops.Op("w", "w", 1), ["t"]],
+                        [ops.GOP, [ops.PJUXT, ["3"], [ops.TVOID]]]]),
+                 Subeq([ops.PJUXT, ["d"], [ops.Op("e", "e")],
+                        [ops.GOP, [ops.PJUXT, ["3"], [ops.TVOID]]]]))):
+            self.assertIs(s.biggest_supeq_with_urepr(), s)
+            self.assertEqual(s.biggest_supeq_with_urepr([], True), Idx())
+            self.assertIs(s.biggest_supeq_with_urepr(1+pos), -1)
+            self.assertEqual(s.biggest_supeq_with_urepr(1+pos, True), -1)
+            self.assertIs(s.biggest_supeq_with_urepr([1+pos, 1]), s[1+pos])
+            self.assertEqual(s.biggest_supeq_with_urepr([1+pos, 1], True),
+                             [1+pos])
+
 if __name__ == "__main__":
     unittest.main()
