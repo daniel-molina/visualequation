@@ -60,6 +60,10 @@ SubeqValueError = ValueError(SUBEQ_VALUE_ERROR_MSG)
 SUBEQ_ORDINARY_INDEXING_ERROR_MSG = "Accessing Subeq elements with a key ([" \
                                     "]) requires key being an integer or slice"
 SubeqOrdinaryIndexingError = TypeError(SUBEQ_ORDINARY_INDEXING_ERROR_MSG)
+NOT_SUBEQ_ERROR_MSG = "Pointed element is not a Subeq"
+NotSubeqError = TypeError(NOT_SUBEQ_ERROR_MSG)
+EMPTY_SUBEQ_ERROR_MSG = "Pointed subeq is empty"
+EmptySubeqError = ValueError(EMPTY_SUBEQ_ERROR_MSG)
 
 
 class Subeq(list):
@@ -80,16 +84,21 @@ class Subeq(list):
                 and (isinstance(value, str) or not value.n_args):
             raise SubeqValueError
 
-    def __init__(self, *args: Union[List, Tuple]):
+    def __init__(self, *args):
         # Better allow [] to be a Subeq even if that is not a valid subeq than
         # reject it or transform it into [VOID].
         # This way, we keep compatibility with list slicing, etc.
         # Equivalently, do not force a correct structure or geometry of
         # elements here, better use the debug module for that task.
-        if len(args) == 1 and not (isinstance(args[0], (list, tuple))):
+        if len(args) == 1 and args[0] is None:
+            list.__init__(self, [ops.PVOID])
+        elif len(args) == 1 and not (isinstance(args[0], (list, tuple))):
             # Subeqs are derived from lists, so they pass the check
             raise SubeqContainerTypeError
-        list.__init__(self, *args)
+        else:
+            # Let list.__init__ manage any len( args) > 1 issue
+            list.__init__(self, *args)
+
         for pos, e in enumerate(self):
             if isinstance(e, Subeq):
                 # Trust in any Subeq previously built
@@ -163,7 +172,7 @@ class Subeq(list):
         if len(self) and ((isinstance(value, ops.Op) and not value.n_args)
                           or isinstance(value, str)):
             # Allowing a str/(0-arg Op) to be appended to empty Subeqs is
-            # crucial to deepcopy smoothly
+            # crucial to copy.deepcopy
             raise SubeqValueError
         list.append(self, value)
 
@@ -189,7 +198,7 @@ class Subeq(list):
 
     @classmethod
     def subeq2latex(cls, s):
-        """Return latex code of a subeq."""
+        """Return latex code of a valid subeq."""
         if len(s) == 1:
             return s[0] if isinstance(s[0], str) else s[0].latex_code
         elif s[0].n_args == -1:
@@ -200,87 +209,110 @@ class Subeq(list):
     def latex(self):
         return self.subeq2latex(self)
 
-    def __call__(self, idx: Idx):
-        """Get a reference to eq element given its index.
+    def __call__(self, *args):
+        """Get a reference to eq element given its index or specifying the
+        indices as separated arguments.
 
-        (If you modify the return value, subeq is modified.)
+        If you modify the return value, subeq is modified.
         """
+        # Transforming into Idx has the advantage of checking for some errors
+        # automatically
         s = self
-        for pos in idx:
+        # Using an Idx has the advantage of checking for most of errors
+        # automatically
+        for pos in Idx(*args):
             s = s[pos]
         return s
 
-    def is_pvoid(self, idx: Optional[Idx] = None):
-        idx = NOIDX if idx is None else idx
+    def supeq(self, idx):
+        """Return the supeq of subeq pointed by idx or -2."""
+        index = Idx(idx)
+        if not index:
+            return -2
+        sup = self(index[:-1])
+        if not isinstance(sup[index[-1]], Subeq):
+            raise NotSubeqError
+        return sup
+
+    def is_pvoid(self, idx=None):
         return self(idx) == [ops.PVOID]
 
-    def is_tvoid(self, idx: Optional[Idx] = None):
-        idx = NOIDX if idx is None else idx
+    def is_tvoid(self, idx=None):
         return self(idx) == [ops.TVOID]
 
-    def is_void(self, idx: Optional[Idx] = None):
-        idx = NOIDX if idx is None else idx
+    def is_void(self, idx=None):
         return self(idx) in ([ops.PVOID], [ops.TVOID])
 
-    def isb(self, idx: Optional[Idx] = None):
-        idx = NOIDX if idx is None else idx
-        return len(self(idx)) > 1
+    def isb(self, idx=None):
+        s = self(idx)
+        return isinstance(s, Subeq) and len(s) > 1
 
-    def isusubeq(self, idx: Optional[Idx] = None):
+    def isusubeq(self, idx=None):
         """Return if a subeq element is an usubeq, including lops."""
-        idx = NOIDX if idx is None else idx
-        # A lop is not an usubeq
-        if idx and not idx[-1]:
-            return False
-        return self(idx)[0] != ops.GOP
+        s = self(idx)
+        return isinstance(s, Subeq) and s[0] != ops.GOP
 
-    def is_perm_jb(self, idx: Optional[Idx] = None):
-        idx = NOIDX if idx is None else idx
-        return self(idx)[0] == ops.PJUXT
+    def is_perm_jb(self, idx=None):
+        s = self(idx)
+        return isinstance(s, Subeq) and s[0] == ops.PJUXT
 
-    def is_temp_jb(self, idx: Optional[Idx] = None):
-        idx = NOIDX if idx is None else idx
-        return self(idx)[0] == ops.TJUXT
+    def is_temp_jb(self, idx=None):
+        s = self(idx)
+        return isinstance(s, Subeq) and s[0] == ops.TJUXT
 
-    def is_jb(self, idx: Optional[Idx] = None):
-        idx = NOIDX if idx is None else idx
-        return self(idx)[0] == ops.PJUXT or self(idx)[0] == ops.TJUXT
+    def is_jb(self, idx=None):
+        s = self(idx)
+        return isinstance(s, Subeq) and s[0] in (ops.PJUXT, ops.TJUXT)
 
     def is_juxted(self, idx):
-        return idx != NOIDX and self.supeq(idx).is_jb()
-
-    def is_gopb(self, idx: Optional[Idx] = None):
-        idx = NOIDX if idx is None else idx
-        return self(idx)[0] == ops.GOP
-
-    def is_goppar(self, idx: Idx):
-        if not idx:
+        index = Idx(idx)
+        # Do not assume that pointed elem is a subeq
+        if not index:
             return False
-        return self.supeq(idx)[0] == ops.GOP
+        sup = self(index[:-1])
+        return isinstance(sup[index[-1]], Subeq) and sup.is_jb()
 
-    def supeq(self, idx: Idx):
-        """Get the supeq of subeq of self pointed by idx or -2."""
-        return self(idx[:-1]) if idx else -2
+    def is_gopb(self, idx=None):
+        s = self(idx)
+        return isinstance(s, Subeq) and s[0] == ops.GOP
 
-    def outlop(self, idx: Idx):
+    def is_goppar(self, idx):
+        index = Idx(idx)
+        # Do not assume that pointed elem is a subeq
+        if not index:
+            return False
+        sup = self(index[:-1])
+        return isinstance(sup[index[-1]], Subeq) and sup[0] == ops.GOP
+
+    def outlop(self, idx, retidx=False):
         """Get the lop of parameter pointed by idx.
 
         self must be a whole equation to have reliable results for every *idx*.
 
         If the whole subeq is pointed, -2 is returned.
         """
-        return self(idx[:-1] + [0]) if idx else -2
+        index = Idx(idx)
+        if not isinstance(self(index), Subeq):
+            raise NotSubeqError
+        if not index:
+            return -2
+        index.outlop(set=True)
+        # This index is different!! (Do not reuse previous self(index))
+        return index if retidx else self(index)
 
-    def inlop(self, idx: Optional[Idx] = None, retidx=False):
+    def inlop(self, idx=None, retidx=False):
         """Get lop of subeq S of self pointed by idx or -3 if S is a symbol."""
-        idx = NOIDX if idx is None else idx
-        s = self(idx)
+        index = Idx(idx)
+        s = self(index)
+        if not isinstance(s, Subeq):
+            raise NotSubeqError
+        if not s:
+            raise EmptySubeqError
         if len(s) == 1:
             return -3
-        else:
-            return idx + [0] if retidx else s[0]
+        return index + [0] if retidx else s[0]
 
-    def nthpar(self, idx: Optional[Idx] = None, n=-1, retidx=False):
+    def nthpar(self, idx=None, n=-1, retidx=False):
         """Return the n-th parameter of an op given the index of its op-block.
 
         If you want the last parameter, pass n == -1.
@@ -304,7 +336,7 @@ class Subeq(list):
             n = last_ord
         return idx + [n] if retidx else block[n]
 
-    def relpar(self, idx: Idx, n=1, retidx=False):
+    def relpar(self, idx, n=1, retidx=False):
         """Get a co-parameter ref or its index.
 
         Return -1 if requested parameter does not exist or -2 if idx is [].
@@ -317,7 +349,7 @@ class Subeq(list):
             return idx[:-1] + [ord] if retidx else sup[ord]
         return -1
 
-    def prevpar(self, idx: Idx, retidx=False):
+    def prevpar(self, idx, retidx=False):
         """Return prev co-parameter.
 
         If idx is [], return -2.
@@ -325,7 +357,7 @@ class Subeq(list):
         """
         return self.relpar(idx, -1, retidx)
 
-    def nextpar(self, idx: Idx, retidx=False):
+    def nextpar(self, idx, retidx=False):
         """Return parameter to the right.
 
         If idx is [], return -2.
@@ -333,7 +365,7 @@ class Subeq(list):
         """
         return self.relpar(idx, 1, retidx)
 
-    def urepr(self, idx: Optional[Idx] = None, retidx=False):
+    def urepr(self, idx=None, retidx=False):
         """Return the urepr of a subeq.
 
         A more general approach based on "VE ops are faithful" was previously
@@ -345,7 +377,7 @@ class Subeq(list):
             return idx + [1] if retidx else s[1]
         return idx[:] if retidx else s
 
-    def biggest_supeq_with_urepr(self, idx: Optional[Idx], retidx=False):
+    def biggest_supeq_with_urepr(self, idx, retidx=False):
         """Get biggest subeq which has pointed usubeq as urepr.
 
         self is recommended to be an equation (see note below).
@@ -359,7 +391,6 @@ class Subeq(list):
             If idx is [] and self is a usubeq, result is only guaranteed to be
             valid if self is the whole equation.
         """
-        idx = NOIDX if idx is None else idx
         if not idx:
             if self[0] == ops.GOP:
                 return -1
@@ -388,7 +419,7 @@ class Subeq(list):
             return -ulev
         return ulev
 
-    def selectivity(self, idx: Idx):
+    def selectivity(self, idx):
         """Give information on selectivity of a subequation.
 
         self must be an equation.
@@ -422,7 +453,7 @@ class Subeq(list):
             return 0
         return 2
 
-    def mate(self, idx: Idx, right: bool, ulevel_diff=0, retidx=False):
+    def mate(self, idx, right: bool, ulevel_diff=0, retidx=False):
         """Return the mate to the left and a ulevel difference.
 
         self must be an equation.
@@ -488,8 +519,7 @@ class Subeq(list):
             bmate_idx.append(len(s) - 1 if last else 1)
             s = s[bmate_idx[-1]]
 
-    def boundary_symbol(self, idx: Optional[Idx] = None, last=False,
-                        strict=True, retidx=False):
+    def boundary_symbol(self, idx=None, last=False, strict=True, retidx=False):
         """Return the first or last symbol of a subeq.
 
         self must be an equation if *strict* is False.

@@ -21,7 +21,9 @@ LOP_ERROR_MSG = "Pointed elem is a lop, not a subeq"
 LopError = IndexError(LOP_ERROR_MSG)
 NO_CO_PAR_ERROR_MSG = "Pointed subeq does not have a co-par in specified dir"
 NoCoParError = IndexError(NO_CO_PAR_ERROR_MSG)
-IDX_TYPE_ERROR_MSG = "Idx values must be integers"
+
+IDX_TYPE_ERROR_MSG = "Building values for Idx must be integers, possibly " \
+                     "in a list or tuple"
 IdxTypeError = TypeError(IDX_TYPE_ERROR_MSG)
 IDX_VALUE_ERROR_MSG = "Idx values must be non-negative"
 IdxValueError = ValueError(IDX_VALUE_ERROR_MSG)
@@ -48,16 +50,18 @@ class Idx(list):
         for c in value:
             cls.check_value(c)
 
-    def __init__(self, *args: Iterable):
-        # If the number of arguments is correct, check values.
-        # Else, let list.__init__ blame.
-        if len(args) > 1 or (len(args) == 1 and isinstance(args[0], int)) \
+    def __init__(self, *args):
+        if not len(args) or (len(args) == 1 and args[0] is None):
+            list.__init__(self)
+        elif len(args) > 1 or (len(args) == 1 and isinstance(args[0], int)) \
                 or not len(args):
             self.check_iterable(args)
             list.__init__(self, args)
+        elif isinstance(args[0], (list, tuple)):
+            self.check_iterable(args[0])
+            list.__init__(self, args[0])
         else:
-            self.check_iterable(*args)
-            list.__init__(self, *args)
+            raise IdxTypeError
 
     def __str__(self):
         return list.__repr__(self)
@@ -116,7 +120,7 @@ class Idx(list):
 
         If pointed subeq is the whole eq (block or symbol), -2 is returned.
 
-        If *set* is True, a exception is be raised in the mentioned case.
+        If *set* is True, an exception is raised in the previous case.
         """
         if not set:
             return self[:-1] + [0] if self else -2

@@ -21,24 +21,43 @@ from visualequation.subeqs import Subeq
 class IdxCore(unittest.TestCase):
 
     def test_empty(self):
-        idx1 = Idx()
+        idx0 = Idx()
+        idx1 = Idx(None)
         idx2 = Idx([])
-        self.assertEqual(idx1, idx2)
-        self.assertEqual(idx1, NOIDX)
-        self.assertEqual(len(NOIDX), 0)
-        self.assertIsNot(idx1, idx2)
-        self.assertIsNot(idx1, NOIDX)
+        idx3 = Idx(Idx())
+        self.assertEqual(idx0, idx1)
+        self.assertEqual(idx0, idx2)
+        self.assertEqual(idx0, idx3)
+        self.assertEqual(idx0, NOIDX)
+        self.assertEqual(idx0, [])
+        self.assertEqual(len(idx0), 0)
+        self.assertIsNot(idx0, idx1)
+        self.assertIsNot(idx0, NOIDX)
 
     def test_ctor(self):
         idx1 = Idx([1, 3, 4])
         idx2 = Idx((1, 3, 4))
         idx3 = Idx(1, 3, 4)
+        idx4 = Idx(Idx(1, 3, 4))
         self.assertEqual(idx1, idx2)
         self.assertEqual(idx1, idx3)
+        self.assertEqual(idx1, idx4)
 
     def test_type_error_idx(self):
         with self.assertRaises(TypeError) as cm:
+            Idx([None])
+        self.assertEqual(cm.exception.args[0], IDX_TYPE_ERROR_MSG)
+        with self.assertRaises(TypeError) as cm:
+            Idx([3, None])
+        self.assertEqual(cm.exception.args[0], IDX_TYPE_ERROR_MSG)
+        with self.assertRaises(TypeError) as cm:
             Idx([[1]])
+        self.assertEqual(cm.exception.args[0], IDX_TYPE_ERROR_MSG)
+        with self.assertRaises(TypeError) as cm:
+            Idx(9.2)
+        self.assertEqual(cm.exception.args[0], IDX_TYPE_ERROR_MSG)
+        with self.assertRaises(TypeError) as cm:
+            Idx(9.2, 3.2)
         self.assertEqual(cm.exception.args[0], IDX_TYPE_ERROR_MSG)
         with self.assertRaises(TypeError) as cm:
             Idx([""])

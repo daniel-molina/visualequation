@@ -14,7 +14,6 @@
 from copy import deepcopy, copy
 import unittest
 
-from visualequation import ops
 from visualequation.subeqs import *
 
 
@@ -25,6 +24,9 @@ class SubeqTests(unittest.TestCase):
         s2 = Subeq([])
         self.assertEqual(s1, s2)
         self.assertEqual(len(s1), 0)
+
+        self.assertEqual(Subeq(None), Subeq([ops.PVOID]))
+
 
     def test_ctor_containers(self):
         s0 = Subeq([ops.PJUXT, ["3"], [ops.TJUXT, ["g"], ["t"]]])
@@ -159,7 +161,6 @@ class SubeqTests(unittest.TestCase):
 
         s_sum = deepcopy(s) + [["f"]]
         self.assertIsNot(s_sum, s)
-        print(s, deepcopy(s))
         self.assertIsNot(s_sum[1], s[1])
 
     def test_getitem(self):
@@ -179,6 +180,11 @@ class SubeqTests(unittest.TestCase):
         self.assertIsInstance(s[1][2][0], ops.Op)
         self.assertIs(s[1][2][0], ops.TVOID)
 
+        with self.assertRaises(IndexError):
+            s[233]
+        with self.assertRaises(IndexError):
+            s[-233]
+
         for start, end in zip(range(-10, -10 + 15), range(6, 6 - 15, -1)):
             self.assertIsInstance(s[start:end], Subeq)
             self.assertIsInstance(s[1][start:end], Subeq)
@@ -197,6 +203,10 @@ class SubeqTests(unittest.TestCase):
             self.assertEqual(len(s[n:n]), 0)
         self.assertEqual(len(s[0:1]), 1)
         self.assertEqual(len(s[-32:33]), 2)
+
+        self.assertEqual(Subeq(["a"]), ["a"])
+        self.assertEqual(Subeq([ops.PVOID]), [ops.PVOID])
+        self.assertEqual(Subeq([ops.GOP, ["a"]]), [ops.GOP, ["a"]])
 
         with self.assertRaises(TypeError) as cm:
             s["d"]
