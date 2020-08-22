@@ -932,6 +932,12 @@ class SubeqTests(unittest.TestCase):
         self.assertEqual(s.boundary_symbol([], True, True, retidx=True), [2])
         self.assertEqual(s.boundary_symbol([], True, False, retidx=True), [2])
 
+        self.assertEqual(s.boundary_symbol([1], False, False), s(1, 1))
+        self.assertEqual(s.boundary_symbol([1], False, True), s(1, 1, 1))
+        self.assertEqual(s.boundary_symbol([1, 1], False, False), s(1, 1))
+        self.assertEqual(s.boundary_symbol([1, 1], False, True), s(1, 1, 1))
+        self.assertEqual(s.boundary_symbol([1, 1, 1], False, False), -1)
+        self.assertEqual(s.boundary_symbol([1, 1, 1], False, True), s(1, 1, 1))
 
 if __name__ == "__main__":
     unittest.main()
