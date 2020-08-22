@@ -594,20 +594,31 @@ P of US such that:
 A **N-ulevel aide** of an equation E, N being a non-negative number, is a subeq
 AI of US such that:
 
-*   AI is a M-ulevel peer of E, 0 < M < N, and
+*   AI is a M-ulevel peer of E for some 0 < M < N, and
 *   AI has no strict subeqs which are selectable.
 
 A **N-ulevel mate** of an equation E, N being a non-negative number, is a subeq
 MA of S such that:
 
 *   MA is a N-ulevel peer of E, or
-*   MA is a M-ulevel aide of E.
+*   MA is a N-ulevel aide of E.
 
 Two subeqs are **peers of each other** if they are not the same subeq and they
 are N-ulevel peers of the same equation for some N.
 
 Two subeqs are **N-mates of each other** if they are not the same subeq and
 they are N-ulevel mates of the same equation.
+
+The **ulevel diff** of two N-mates of each other of an equation E is a 
+non-negative number uld defined as:
+ 
+*   Let one of the mates be a M1-ulevel peer of E, and
+*   Let the other mate be a M2-ulevel peer of E.
+
+Then, uld is the absolute value of M1 minus M2 (uld=abs(M1-M2)).
+
+The **implication level** (**ilevel**) of a N-mate of E which is a M-peer of E,
+is a non-negative number equal to N minus M.
 
 > **Remark**:
 >
@@ -618,8 +629,14 @@ they are N-ulevel mates of the same equation.
 >
 >1. A N-ulevel peer is not a M-ulevel peer for M different than N.
 >1. A N-ulevel aide is a M-ulevel aide for M bigger than N.
+>1. The ilevel of an aide is always positive.
 >1. A N-ulevel peer P is a M-ulevel mate for M bigger than N if P is a symbol
 >   or the representative of the parameter of a non-user arg.
+>1. The ulevel-diff of two N-mates does not depend on N.
+>1. Two N-mates of E are peers of each other if, and only if, their ulevel diff
+>   is 0.
+>1. Two N-mates of each other will be M-mates of each other for every M such
+>   that M >= N - min{il1, il2}, being il1 and il2 the ilevel of the N-mates.
 
 The **mate to the left** of another mate MA is a subeq LMA that results of the
 following algorithm (it supposes that the only operator with a non-user arg is
@@ -837,6 +854,12 @@ Undo last manipulation, if it exists.
 
 Redo last manipulation, if it exists.
 
+#### Complete (TAB, C-i)
+#### Possible Completions (SHIFT-TAB, M-?)
+
+Allow to specify graphically a new form for current selection. More details
+on advanced operations sections.
+
 ##### Transpose forward (M-RIGHT)
 
 Swap positions of current selection and its mate to the right, leaving original
@@ -914,16 +937,15 @@ SHIFT-LEFT or SHIFT-RIGHT before using they key binding.
 >*  Several keystrokes of the same key binding produce different
 >   symbols/operators of common characteristics.
 
-##### Separate subeqs (TAB)
+##### Separate subeqs (SPACE)
 Insert or increase a region "without" subequations.
+A numeric argument fix the width with precision.
 
-It has a different use when inserting scripts.
-##### Bring subeqs closer (SHIFT-TAB)
+##### Bring subeqs closer (SHIFT-SPACE)
 Reduce a region "without" subequations or delete it.
 
-It has a different use when inserting scripts.
-
-> **Temporal note**: Which function should be left to SPACE? Smaller tabs?
+> **Temporal note**: They will be implemented as characters, not operators.
+> That way there is no need of a non-user op.
 ##### Subscripts and superscripts (DOWN and UP)
 Include an empty sub/super-script or go to it if it already script. The
 sub/super-script will be placed to the left if LDIR or to the right in any
@@ -1420,15 +1442,18 @@ in requested direction, previous insertion is not modified.
 
 #### Completing
 WIP!!!
-##### complete
-Not used. Using menu-complete instead with its key binding instead.
-##### possible-completions (M-?)
-List the possible variations of the selected subequation. You can choose
-one using the cursor keys and accept it with RETURN, C-j or C-m. To
-abort, use ESC or a key binding associated to abort.
+##### complete (TAB, C-i)
+Display a a graphical window equivalent to the one for building the selected
+subequation when pressing a button in the pannel. If it is not available,
+use possible-completions instead.
+##### possible-completions (SHIFT-TAB, M-?)
+List in a graphical window the possible variations of the selected subequation.
+You can choose one using the cursor keys and accept it with RETURN, C-j or C-m.
+To abort, use ESC or a key binding associated to abort. There will be window
+buttons too.
 ##### insert-completions
 Not used. M-* used to introduce productories instead.
-##### menu-complete (C-i, M-@ ??)
+##### menu-complete (M-@)
 Replace selection with a variation. Repeated execution of the command steps
 through the list of possible variations, inserting each match in turn. At
 the end of the list, the original subequation is restored. An argument of

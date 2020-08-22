@@ -66,7 +66,14 @@ NON_EXISTENT_SUBEQ_ERROR_MSG = "Requested subeq does not exist"
 NonExistentSubeqError = IndexError(NON_EXISTENT_SUBEQ_ERROR_MSG)
 EMPTY_SUBEQ_ERROR_MSG = "Pointed subeq is empty"
 EmptySubeqError = ValueError(EMPTY_SUBEQ_ERROR_MSG)
-
+NOT_USUBEQ_ERROR_MSG = "Pointed element is not an usubeq"
+NotUsubeqError = ValueError(NOT_USUBEQ_ERROR_MSG)
+NEGATIVE_ULD_ERROR_MSG = "Ulevel diff cannot be negative"
+NegativeUldError = ValueError(NEGATIVE_ULD_ERROR_MSG)
+NOT_MATE_ERROR_MSG = "Pointed subeq is not a mate"
+NotMateError = ValueError(NOT_MATE_ERROR_MSG)
+NOT_AIDE_ERROR_MSG = "Pointed subeq is not an aide"
+NotAideError = ValueError(NOT_AIDE_ERROR_MSG)
 
 class Subeq(list):
     """A class to manage subequations.
@@ -436,63 +443,91 @@ class Subeq(list):
 
         If *idx* does not point to a usubeq, minus the ulevel of its urepr is
         returned.
+
+        .. note::
+            "-0" is not an issue:
+
+            Passing idx == NOIDX returns always 0. Because of that *idx* has no
+            default value.
+            If idx points to a 1-level subeq S and 0 is returned, it means that
+            S is an usubeq which is a GOP-par.
+            In any other case a non-zero value is returned so it can be deduced
+            if pointed subeq is usubeq or not according to the sign.
+
+            Concluding:
+
+                *   If *idx* is not NOIDX and return value is non-negative,
+                    pointed subeq is an usubeq.
+                *   If *idx* is not NOIDX and return value is negative, pointed
+                    subeq is a GOP-block.
+                *   If *idx* is NOIDX, return value is always 0 and no
+                    information about self is provided.
+
+
         """
+        index = Idx(idx)
         s = self
         ulev = 0
-        for pos in idx:
+        for pos in index:
             if not s.is_gopb():
                 ulev += 1
             s = s[pos]
+        if not isinstance(s, Subeq):
+            raise NotSubeqError
         if s.is_gopb():
             return -ulev
         return ulev
 
-    def selectivity(self, idx):
+    def selectivity(self, idx=None):
         """Give information on selectivity of a subequation.
 
-        self must be an equation.
+        self must be a whole equation.
 
         Return  2 if subequation is SELECTABLE and is not a GOP-par.
         Return  1 if subequation is SELECTABLE and is a GOP-par.
         Return  0 if subequation is a GOP-block which par is selectable.
-        Return -1 if subequation is a GOP-par strict subeq.
+        Return -1 if subequation is a GOP-par strict subeq and GOP-block.
+        Return -2 if subequation is a GOP-par strict subeq and usubeq.
 
         .. note::
             A subequation is selectable if, and only if, return value is
             positive.
-
-        .. note::
-            To know that return value is -1 is not enough to know if subeq is a
-            usubeq. Since this function informs about selectivity, it is not
-            considered important to inform about the user property itself.
         """
+        index = Idx(idx)
+        s_target = self(index)
+        if not isinstance(s_target, Subeq):
+            raise NotSubeqError
+
+        # It is cheap to check if target is an usubeq if raising NotSubeqError
+        # in every appropriate case is a must
+        is_target_usubeq = not s_target.is_gopb()
+
         s = self
         gopb_reached = False
-        for parord in idx:
+        for parord in index:
             if gopb_reached:
-                return -1
+                return -2 if is_target_usubeq else -1
             if s.is_gopb():
                 gopb_reached = True
             s = s[parord]
 
         if gopb_reached:
             return 1
-        if s.is_gopb():
-            return 0
-        return 2
+        return 0 if s.is_gopb() else 2
 
     def mate(self, idx, right: bool, ulevel_diff=0, retidx=False):
-        """Return the mate to the left and a ulevel difference.
+        """If idx points to a N-level mate, return a (N+ulevel_diff)-mate
+        and the ulevel difference of returned mate and a (N+ulevel_diff)-peer.
 
-        self must be an equation.
+        self must be a whole equation.
 
-        If it is a last mate and right is True or it is a first mate and right
-        is, False, -1 is returned.
+        It is required for pointed mate to be an N-level aide if *ulevel_diff**
+        is positive (it has no sense to use this function the other way).
 
-        Parameter *ulevel_diff* indicate the ulevel of the mates as an offset:
-        Supposing that subeq pointed by *idx* is a N-ulevel peer and the
-        intention is to find its M-ulevel mate to the right or left for M > N,
-        *ulevel_diff* must be M - N.
+        If pointed mate is a last mate and right is True or it is a first mate
+        and right is, False, -1 is returned.
+
+        Parameter *ulevel_diff* must be a non-negative number.
 
         .. note::
             If first call to this function is done with *ulevel_diff* equal to
@@ -501,17 +536,28 @@ class Subeq(list):
             call.
 
         .. note::
-            The algorithm described in HACKING.md.
+            The algorithm is described in HACKING.md.
         """
-        sidx = idx[:]
-        uld = ulevel_diff
+        s = self(idx)
+        if ulevel_diff < 0:
+            raise NegativeUldError
+        # Note: Selectivity already checks if pointed elem is a subeq
+        ret_sel = self.selectivity(idx)
+        if ret_sel in (-1, 0):
+            raise NotUsubeqError
+        if ret_sel == -2:
+            raise NotMateError
+        if ulevel_diff and ret_sel == 2 and len(s) > 1:
+            raise NotAideError
 
         # Find common usupeq
+        sidx = Idx(idx)
+        uld = ulevel_diff
         while True:
             pord = sidx.parord()
             if pord == -2:
                 return -1, None
-            sidx = sidx[:-1]
+            sidx.supeq(set=True)
             s = self(sidx)
             uld += 0 if s.is_gopb() else 1
             if (right and pord != len(s) - 1) or (not right and pord != 1):
@@ -531,7 +577,7 @@ class Subeq(list):
     def boundary_mate(self, ulevel: int, last=False, retidx=False):
         """Return the first or last *N*-ulevel mate of eq.
 
-        self must be an equation.
+        self must be a whole equation.
         """
         s = self
         bmate_idx = NOIDX
