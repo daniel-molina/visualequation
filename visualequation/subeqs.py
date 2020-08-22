@@ -74,6 +74,8 @@ NOT_MATE_ERROR_MSG = "Pointed subeq is not a mate"
 NotMateError = ValueError(NOT_MATE_ERROR_MSG)
 NOT_AIDE_ERROR_MSG = "Pointed subeq is not an aide"
 NotAideError = ValueError(NOT_AIDE_ERROR_MSG)
+NEGATIVE_UL_ERROR_MSG = "An Ulevel cannot be negative"
+NegativeUlError = ValueError(NEGATIVE_UL_ERROR_MSG)
 
 class Subeq(list):
     """A class to manage subequations.
@@ -575,12 +577,14 @@ class Subeq(list):
             pord = 1 if right else -1
 
     def boundary_mate(self, ulevel: int, last=False, retidx=False):
-        """Return the first or last *N*-ulevel mate of eq.
+        """Return the first or last N-ulevel mate of eq.
 
         self must be a whole equation.
         """
+        if ulevel < 0:
+            raise NegativeUlError
         s = self
-        bmate_idx = NOIDX
+        bmate_idx = Idx()
         ul = -1
         while True:
             if len(s) == 1:
@@ -598,26 +602,28 @@ class Subeq(list):
 
         self must be an equation if *strict* is False.
 
-        If *strict* is False and the boundary symbol is not selectable, it will
-        return the GOP-par with biggest usupeq nesting level.
+        If *strict* is False:
 
-        If *strict* is False, and pointed subeq has not a selectable urepr, -1
-        is returned.
+        *   If the boundary symbol is not selectable, it will be returned the
+            GOP-par which is its N-ulevel usupeq of biggest N.
+        *   If pointed subeq has not a selectable urepr, -1 is returned.
         """
-        new_idx = NOIDX[:] if idx is None else idx[:]
-        s = self(new_idx)
-        flag = self.selectivity(new_idx)
+        index = Idx(idx)
+        s = self(index)
+        flag = self.selectivity(index)
         if not strict:
-            if flag == -1:
+            if flag < 0:
                 return -1
+            if not flag:
+                return index + [1] if retidx else s[1]
             if flag == 1:
-                return new_idx if retidx else s
+                return index if retidx else s
 
-        # From this point we know that s is not a subeq of a GOP-par
+        # From this point we know strict is True or s is not subeq of a GOP-par
         while True:
             if len(s) == 1:
-                return new_idx if retidx else s
+                return index if retidx else s
             if not strict and s.is_gopb():
-                return new_idx + [1] if retidx else s[1]
-            new_idx.append(len(s) - 1 if last else 1)
-            s = s[new_idx[-1]]
+                return index + [1] if retidx else s[1]
+            index.append(len(s) - 1 if last else 1)
+            s = s[index[-1]]

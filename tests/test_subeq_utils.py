@@ -101,7 +101,7 @@ class SubeqTests(unittest.TestCase):
         self.assertEqual(Subeq().supeq(None), -2)
         s = Subeq()
 
-        with self.assertRaises(IndexError) as cm:
+        with self.assertRaises(IndexError):
             s.supeq(42)
 
         s = Subeq(["d"])
@@ -851,6 +851,87 @@ class SubeqTests(unittest.TestCase):
         self.assertEqual(s.mate([2, 2, 1], True), (s(2, 3), 0))
         self.assertEqual(s.mate([2, 3], True), (s(3, 1), 0))
         self.assertEqual(s.mate([3, 1], True), (s(3, 2), 0))
+
+    def test_boundary_mate(self):
+        for s in (Subeq(["s"]), Subeq(None), Subeq([Op("e", "e")])):
+            for ul in range(0, 3):
+                self.assertIs(s.boundary_mate(ul, last=False), s)
+                self.assertEqual(
+                    s.boundary_mate(ul, last=False, retidx=True), [])
+                self.assertIs(s.boundary_mate(ul, last=True), s)
+                self.assertEqual(
+                    s.boundary_mate(ul, last=True, retidx=True), [])
+                with self.assertRaises(ValueError) as cm:
+                    s.boundary_mate(-1-ul)
+                self.assertEqual(cm.exception.args[0], NEGATIVE_UL_ERROR_MSG)
+                with self.assertRaises(ValueError) as cm:
+                    s.boundary_mate(-1-ul, False, True)
+                self.assertEqual(cm.exception.args[0], NEGATIVE_UL_ERROR_MSG)
+
+        s = Subeq([PJUXT, [GOP, [PJUXT, ["3"], [TVOID]]], ["d"]])
+        self.assertIs(s.boundary_mate(0, last=False), s)
+        self.assertIs(s.boundary_mate(0, last=True), s)
+        self.assertIs(s.boundary_mate(1, last=False), s(1, 1))
+        self.assertIs(s.boundary_mate(1, last=True), s(2))
+        self.assertIs(s.boundary_mate(2, last=False), s(1, 1))
+        self.assertIs(s.boundary_mate(2, last=True), s(2))
+
+        self.assertEqual(s.boundary_mate(0, False, True), [])
+        self.assertEqual(s.boundary_mate(0, True, True), [])
+        self.assertEqual(s.boundary_mate(1, False, True), [1, 1])
+        self.assertEqual(s.boundary_mate(1, True, True), [2])
+        self.assertEqual(s.boundary_mate(2, False, True), [1, 1])
+        self.assertEqual(s.boundary_mate(2, True, True), [2])
+
+        s = Subeq([PJUXT, [Op("w", "w", 1), ["t"]], [GOP, [PJUXT, ["3"],
+                                                           [TVOID]]]])
+        self.assertIs(s.boundary_mate(0, last=False), s)
+        self.assertIs(s.boundary_mate(0, last=True), s)
+        self.assertIs(s.boundary_mate(1, last=False), s(1))
+        self.assertIs(s.boundary_mate(1, last=True), s(2, 1))
+        self.assertIs(s.boundary_mate(2, last=False), s(1, 1))
+        self.assertIs(s.boundary_mate(2, last=True), s(2, 1))
+        self.assertIs(s.boundary_mate(3, last=False), s(1, 1))
+        self.assertIs(s.boundary_mate(3, last=True), s(2, 1))
+
+        s = Subeq([PJUXT, ["d"], [Op("e", "e")], [GOP, [PJUXT, ["3"],
+                                                            [TVOID]]]])
+        self.assertIs(s.boundary_mate(0, last=False), s)
+        self.assertIs(s.boundary_mate(0, last=True), s)
+        self.assertIs(s.boundary_mate(1, last=False), s(1))
+        self.assertIs(s.boundary_mate(1, last=True), s(3, 1))
+        self.assertIs(s.boundary_mate(2, last=False), s(1))
+        self.assertIs(s.boundary_mate(2, last=True), s(3, 1))
+
+        s = Subeq([GOP, [PJUXT, [GOP, [TJUXT, ["d"], [PVOID]]], ["h"]]])
+        self.assertIs(s.boundary_mate(0, last=False), s(1))
+        self.assertIs(s.boundary_mate(0, last=True), s(1))
+        self.assertIs(s.boundary_mate(1, last=False), s(1))
+        self.assertIs(s.boundary_mate(1, last=True), s(1))
+
+    def test_boundary_symbol(self):
+        for s in (Subeq(["s"]), Subeq(None), Subeq([Op("e", "e")])):
+            for strict in (True, False):
+                for last in (True, False):
+                    self.assertIs(s.boundary_symbol([], last, strict), s)
+                    self.assertEqual(
+                        s.boundary_symbol([], last, strict, retidx=True), [])
+
+        s = Subeq([PJUXT, [GOP, [PJUXT, ["3"], [TVOID]]], ["d"]])
+        self.assertIs(s.boundary_symbol([], last=False, strict=True),
+                      s(1, 1, 1))
+        self.assertIs(s.boundary_symbol([], last=False, strict=False),
+                      s(1, 1))
+        self.assertIs(s.boundary_symbol([], last=True, strict=True), s(2))
+        self.assertIs(s.boundary_symbol([], last=True, strict=False), s(2))
+
+        self.assertEqual(s.boundary_symbol([], False, True, retidx=True),
+                      [1, 1, 1])
+        self.assertEqual(s.boundary_symbol([], False, False, retidx=True),
+                      [1, 1])
+        self.assertEqual(s.boundary_symbol([], True, True, retidx=True), [2])
+        self.assertEqual(s.boundary_symbol([], True, False, retidx=True), [2])
+
 
 if __name__ == "__main__":
     unittest.main()
