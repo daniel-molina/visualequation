@@ -425,10 +425,12 @@ class Subeq(list):
         index = Idx(idx)
         # It is supposed that self is a valid (sub)eq
         if not index:
+            # Case: whole eq is pointed
             if self.is_gopb():
                 return -1
             return index if retidx else self
 
+        # Case: Not a whole eq is pointed
         # Do not suppose pointed elem is a subeq
         sup = self(index[:-1])
         parord = index[-1]
@@ -486,9 +488,13 @@ class Subeq(list):
         self must be a whole equation.
 
         Return  2 if subequation is SELECTABLE and is not a GOP-par.
+
         Return  1 if subequation is SELECTABLE and is a GOP-par.
+
         Return  0 if subequation is a GOP-block which par is selectable.
+
         Return -1 if subequation is a GOP-par strict subeq and GOP-block.
+
         Return -2 if subequation is a GOP-par strict subeq and usubeq.
 
         .. note::

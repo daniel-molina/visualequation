@@ -17,13 +17,16 @@
 from copy import deepcopy
 
 from . import eqdebug
-from . import eqqueries
+from .subeqs import Subeq
+from .dirsel import Dir
+from .idx import Idx
+from .ops import *
 from . import scriptops
-from . import simpleeqcreator
-from .symbols import utils
+#from . import simpleeqcreator
+#from .symbols import utils
 
 
-class EditableEq:
+class EditableEq(Subeq):
     """Class to edit an equation.
 
     .. note::
@@ -47,13 +50,23 @@ class EditableEq:
             *   Methods starting with underscore (_), apart from being used
                 only by other methods of this class, they should not modify
                 other attributes than self.eq. Instead, they can return
-                useful information or the self.idx and self.dir that should be
-                set under a typical use of that method.
+                useful information as the self.idx and self.dir that should be
+                set under a typical use of the method.
 
             *   Methods not starting with underscore are intended to be safe
                 to call independently of the input. They should set any
-                property of the class so the method performs an operation
+                property of this class so the method performs an operation
                 completely.
+
+            *   Indices argument names will be similar to the string 'index'.
+                Indices used in the code will be similar to the string 'idx',
+                unless code does a trivial use of an index argument so it is
+                considerer simpler to reuse the unmodified index parameter.
+                An index parameter with value of -1 means 'use self.idx'.
+                In any other case, it will be understood as a valid argument of
+                Idx-ctor.
+
+        Definitions:
 
             *   A method which acts on the indicated index if:
 
@@ -70,23 +83,43 @@ class EditableEq:
                 'base-checker'.
     """
     @eqdebug.debuginit
-    def __init__(self, eq0=None, sel_idx0=None, dir0=None):
+    def __init__(self, eq0=None, sel_index0=None, dir0=None, debug=True):
         # Equation. It must be assured that any reference to self.eq will be
         # always valid.
-        self.eq = deepcopy(eq0) if eq0 is not None else utils.void()
-        # The index of the *user subeq* (usubeq) where public methods will
-        # act. It is typically the selected subeq.
-        self.idx = sel_idx0[:] if sel_idx0 is not None else []
-        # Typically the direction of the selection. It modifies methods
-        # behavior.
+        super().__init__(deepcopy(eq0))
+        # The index of current subeq being selected.
+        self.idx = Idx(sel_index0)
+        # The direction of the selection.
         if dir0 is not None:
             self.dir = dir0
-        elif eqqueries.get(self.idx, self.eq) == utils.void():
-            self.dir = utils.VDIR
+        elif self(self.idx).is_pvoid():
+            self.dir = Dir.V
         else:
-            self.dir = utils.RDIR
+            self.dir = Dir.R
+        self.debug = debug
 
-    def _set(self, elem, idx=None):
+    def _safe_idx_arg(self, index):
+        """Return a copy of self.idx if index is -1. Else, a new index build
+         as Idx(index)."""
+        return self.idx[:] if index == -1 else Idx(index)
+
+    def _safe_subeq_arg(self, subeq=0, index=-1):
+        """Return a deepcopy of a subequation.
+
+        If *subeq* is not 0, return a Subeq constructed with a deepcopy of
+        *subeq*.
+
+        Elif *index* is not -1, return a deepcopy of self(index).
+
+        Else, return a deepcopy of self(self.idx).
+        """
+        if subeq != 0:
+            return Subeq(deepcopy(subeq))
+        if index != -1:
+            return deepcopy(self(index))
+        return deepcopy(self(self.idx))
+
+    def _set(self, elem, index=-1):
         """A 'hard' replacement. If replacement is a JUXT-block, it will be
         replaced as a whole.
 
@@ -94,173 +127,108 @@ class EditableEq:
             *   Not a final-idx-checker
             *   Not a base-checker
 
-        If *idx* is not specified, it is equivalent to pass self.idx.
-
-        It does not return because replacement is always done in *idx*.
+        Replacement is always done in pointed subeq.
         """
-        if idx is None:
-            idx = self.idx
-
-        # Replace whole eq
-        if not idx:
-            self.eq[:] = deepcopy(elem)
-            return
-
-        # Find strict subeq of eq to replace (not that easy in python)
-        eqref = self.eq
-        for lev, pos in enumerate(idx):
-            if lev == len(idx) - 1:
-                break
-            eqref = eqref[pos]
-
-        # Replace
-        eqref[idx[-1]][:] = deepcopy(elem)
-
-    @eqdebug.debug
-    def set_ovrwrt(self, new_ovrwrt_val=True):
-        if (new_ovrwrt_val and self.odir()) \
-                or (not new_ovrwrt_val and not self.odir()):
-            return
-
-        if new_ovrwrt_val:
-            if not self.rdir():
-                self.dir = utils.ODIR
-                return
-
-            self.dir = utils.ODIR
-            eff_idx = self._get_biggest_subeq_same_urepr()
-            sup = eqqueries.supeq(eff_idx, self.eq, True)
-            if sup == -2 or sup[0] != utils.JUXT \
-                    or eff_idx[-1] == len(sup) - 1:
-                self.idx = self._rinsert(utils.void(temp=True), eff_idx)
-            else:
-                eff_idx[-1] += 1
-                self.idx = eqqueries.urepr(eff_idx, self.eq)
-            return
-
-        # From here, new_ovrwrt_val is False and current dir is ODIR
-        eff_idx = self._get_biggest_subeq_same_urepr()
-        sup = eqqueries.supeq(eff_idx, self.eq, True)
-        if sup == -2:
-            s = eqqueries.get(eff_idx, self.eq)
-        else:
-            s = sup[eff_idx[-1]]
-
-        # Set a dummy non-ODIR value to dir
-        self.dir = utils.VDIR
-
-        if s == utils.void(temp=True):
-            # Final TVOID juxted -> previous juxted with RDIR
-            self.idx = self._vanish_juxted(0, eff_idx)[0]
-            self.dir = self._get_safe_dir(1)
-            return
-
-        if sup == -2 or sup[0] != utils.JUXT or eff_idx[-1] == 1:
-            # Non-juxteds and first juxteds -> LDIR
-            self.dir = self._get_safe_dir(-1)
-        else:
-            # Other cases -> Select juxted to the left with RDIR
-            self.idx = eqqueries.urepr(eff_idx[:-1] - [eff_idx[-1] - 1],
-                                       self.eq)
-            self.dir = self._get_safe_dir(-1)
-        return
+        idx = self._safe_idx_arg(index)
+        self(idx)[:] = deepcopy(elem)
 
     def odir(self):
-        return self.dir == utils.ODIR
+        return self.dir is Dir.O
 
     def rdir(self):
-        return self.dir == utils.RDIR
+        return self.dir is Dir.R
 
     def ldir(self):
-        return self.dir == utils.LDIR
+        return self.dir is Dir.L
 
     def vdir(self):
-        return self.dir == utils.VDIR
+        return self.dir is Dir.V
 
-    def _get_safe_dir(self, dirflag=0, subeq=None, idx=None):
-        """Set direction respecting overwrite mode and subeq being selected.
+    def _safe_dir(self, dirflag=0, subeq=0, index=-1):
+        """Set direction respecting overwrite mode and a subeq that is
+        supposed to be selected before or after the call to this method.
 
             *   Not a supeq-checker
             *   Not final-idx-checker
             *   base-checker not applicable.
 
+        wp ~ "when possible" ~ self.dir is not O and referred subeq is not
+        PVOID.
+
         If *dirflag* is:
 
-            *    1, right.
-            *   -1, left.
-            *    5, self.dir unless that is utils.VDIR; in that case, right.
-            *   -5, self.dir unless that is utils.VDIR; in that case, left.
-            *    0, you trust that dir is utils.ODIR or *subeq* is VOID-like.
+            *    1, use R wp.
+            *   -1, use L wp.
+            *    5, use self.dir unless it was V; in that case, R wp.
+            *   -5, use self.dir unless it was V; in that case, L wp.
+            *    0, do not do anything wp.
 
         If *subeq* is:
 
-            *   None, it uses subeq pointed by idx to check whether it is a
-                VOID.
-            *   0, it is equivalent to pass utils.void().
-            *   ow., it uses passed subequation to consider returned direction.
+            *   0, it uses subeq referred by *index*.
+            *   None, it is equivalent to pass [ops.PVOID].
+            *   ow., it uses passed subequation.
 
-        If *idx* is:
+        If *index* is:
 
-            *   None, self.idx is used instead.
-            *   ow., subeq pointed by *idx is considered instead of *subeq*. To
-                use this parameter, *subeq* must be None.
+            *   -1, equivalent to pass self.idx.
+            *   ow., self(*index*) is considered. For this parameter to take
+                effect, *subeq* must be 0. Else, it is ignored.
         """
         if self.odir():
+            return Dir.O
+        if subeq is None:
+            return Dir.V
+        if subeq != 0:
+            s = Subeq(subeq)
+        else:
+            s = self(self.idx) if index == -1 else self(index)
+        if s.is_pvoid():
+            return Dir.V
+        # From this point, subeq to be selected is not PVOID and self.dir != O
+        if dirflag == 0:
             return self.dir
-        if subeq == 0:
-            return utils.VDIR
-        s_idx = self.idx if idx is None else idx
-        s = eqqueries.get(s_idx, self.eq) if subeq is None else subeq
-        if s == utils.void():
-            return utils.VDIR
-        if dirflag == 1:
-            return utils.RDIR
-        if dirflag == -1:
-            return utils.LDIR
+        if dirflag in (1, Dir.R):
+            return Dir.R
+        if dirflag in (-1, Dir.L):
+            return Dir.L
         if dirflag == 5:
-            return self.dir if self.dir != utils.VDIR else utils.RDIR
+            return self.dir if self.dir != Dir.V else Dir.R
         if dirflag == -5:
-            return self.dir if self.dir != utils.VDIR else utils.LDIR
+            return self.dir if self.dir != Dir.V else Dir.L
+        raise ValueError("Incorrect input parameters")
 
-    def _get_biggest_subeq_same_urepr(self, idx=None, retsub=False):
-        """If *idx* points to a usubeq U and it has supeq which urepr is US,
-        return the index of the biggest supeq with that property. If *idx*
-        points to non-usubeq subeq or mentioned supeq does not exist, *idx*
-        is returned.
-
-        This function is used by those methods with the tag: supeq-checker.
-
-        Case *idx* being None is equivalent to pass self.idx.
-        """
-        usubeq_idx = self.idx[:] if idx is None else idx[:]
-        retval = eqqueries.biggest_supeq_with_urepr(usubeq_idx, self.eq,
-                                                    retsub)
-        if not isinstance(retval, list):
-            return eqqueries.get(usubeq_idx, self.eq) if retsub else usubeq_idx
-        return retval
-
-    def _condtly_correct_scriptop(self, newbase, idx=None, supeq=None):
-        """Correct a script operator if idx points to a base and it is needed.
+    def _condtly_correct_scriptop(self, newbase, index=-1):
+        """Correct a script-block if index points to a base and it is needed.
 
         .. note::
             Calling this function never harms. It only acts if necessary.
 
         This function is used by those methods with the tag: base-checker.
 
-
         It does no return because replacement, if it is done, does not change
         eq structure.
 
-        :param newbase: The new block which will be used in *idx*.
-        :param idx: Index of the element which may be a base. None -> self.idx.
-        :param supeq: (Optional) If you know the supeq of *idx*, you can pass
-        it.
+        :param newbase: The new block which will be used in pointed subeq.
+        :param index: Index of the element which may be a base. -1 -> self.idx.
         """
-        base_idx = self.idx if idx is None else idx
-        sup = eqqueries.supeq(base_idx, self.eq, True) \
-            if supeq is None else supeq
-        if sup != -2 and base_idx[-1] == 1 and scriptops.is_scriptop(sup[0]):
+        idx_base = self._safe_idx_arg(index)
+        sup = self.supeq(idx_base)
+        if sup != -2 and idx_base[-1] == 1 and scriptops.is_scriptop(sup[0]):
             scriptops.update_scriptblock(newbase, sup)
+
+    def _biggest_subeq_same_urepr(self, index=-1, retidx=False):
+        """If pointed subeq is a GOP-par, return the GOP-block.
+        Else, return pointing subeq.
+
+        This function is used by methods with the tag: supeq-checker.
+        """
+        idx = self._safe_idx_arg(index)
+        retval = self.biggest_supeq_with_urepr(idx, retidx)
+        if retval == -1:
+            return idx if retidx else self(idx)
+        return retval
+
 
     #@debug
     def _rinsert(self, subeq, idx=None):
@@ -335,6 +303,55 @@ class EditableEq:
                 scriptops.update_scriptblock(sel, sup)
             return pointed_idx + [1]
 
+
+    @eqdebug.debug
+    def set_ovrwrt(self, new_ovrwrt_val=True):
+        if (new_ovrwrt_val and self.odir()) \
+                or (not new_ovrwrt_val and not self.odir()):
+            return
+
+        if new_ovrwrt_val:
+            if not self.rdir():
+                self.dir = Dir.O
+                return
+
+            self.dir = Dir.O
+            eff_idx = self._biggest_subeq_same_urepr()
+            sup = self.supeq(eff_idx)
+            if sup == -2 or not sup.is_perm_jb() \
+                    or eff_idx[-1] == len(sup) - 1:
+                self.idx = self._rinsert([TVOID], eff_idx)
+            else:
+                eff_idx[-1] += 1
+                self.idx = self.urepr(eff_idx, True)
+            return
+
+        # From here, new_ovrwrt_val is False and current dir is ODIR
+        eff_idx = self._biggest_subeq_same_urepr()
+        sup = self.supeq(eff_idx)
+        if sup == -2:
+            s = self(eff_idx)
+        else:
+            s = sup[eff_idx[-1]]
+
+        # Set a dummy non-ODIR value to dir
+        self.dir = Dir.V
+
+        if s.is_tvoid():
+            # Final TVOID juxted -> previous juxted with RDIR
+            self.idx = self._vanish_juxted(0, eff_idx)[0]
+            self.dir = self._safe_dir(1)
+            return
+
+        if sup == -2 or sup[0] != PJUXT or eff_idx[-1] == 1:
+            # Non-juxteds and first juxteds -> LDIR
+            self.dir = self._safe_dir(-1)
+        else:
+            # Other cases -> Select juxted to the left with RDIR
+            self.idx = self.urepr(eff_idx[:-1] - [eff_idx[-1] - 1], True)
+            self.dir = self._safe_dir(-1)
+        return
+
     #@debug
     def _replace_integrating(self, s_repl, idx=None):
         """Replace a subequation integrating juxteds if appropriated.
@@ -360,7 +377,7 @@ class EditableEq:
         """
         # Choose correct subeq to replace
         repl_idx = self.idx if idx is None else idx
-        repl_idx = self._get_biggest_subeq_same_urepr(repl_idx)
+        repl_idx = self._biggest_subeq_same_urepr(repl_idx)
 
         sup = eqqueries.supeq(repl_idx, self.eq, True)
         if sup != -2:
@@ -394,7 +411,7 @@ class EditableEq:
         It should be called in overwrite mode or when inserting if selection
         is a VOID.
         """
-        repl_idx = self._get_biggest_subeq_same_urepr(idx)
+        repl_idx = self._biggest_subeq_same_urepr(idx)
 
         # Correct script op if needed in the case that repl_idx points to a
         # base
@@ -421,7 +438,7 @@ class EditableEq:
         """Replace the whole eq by a VOID."""
         self.idx[:] = []
         self._set(utils.void())
-        self.dir = self._get_safe_dir(0, 0)
+        self.dir = self._safe_dir(0, 0)
 
     def _vanish_juxted(self, reljuxted=0, idx=None):
         """Vanish pointed juxted or a cojuxted. It removes the juxt op if only
@@ -478,7 +495,7 @@ class EditableEq:
 
             # prefer RDIR
             return (eqqueries.urepr(retidx, self.eq),
-                    self._get_safe_dir(1, None, retidx))
+                    self._safe_dir(1, None, retidx))
 
         if del_idx[-1] == 1:
             # Case: Vanish first juxted
@@ -494,7 +511,7 @@ class EditableEq:
                 self._condtly_correct_scriptop(juxtblock, retidx)
             # Prefer LDIR
             return (eqqueries.urepr(retidx, self.eq),
-                    self._get_safe_dir(-1, None, retidx))
+                    self._safe_dir(-1, None, retidx))
 
         # Case: Intermediate juxted
         #
@@ -515,7 +532,7 @@ class EditableEq:
             retidx[-1] -= 1
 
         return (eqqueries.urepr(retidx, self.eq),
-                self._get_safe_dir(5, None, retidx))
+                self._safe_dir(5, None, retidx))
 
     def _flat(self, idx=None):
         """Remove lop of block pointed by index while leaving its non-VOID args
@@ -600,7 +617,7 @@ class EditableEq:
                 necessary.
         """
         par_idx = self.idx if idx is None else idx
-        par_idx = self._get_biggest_subeq_same_urepr(par_idx)
+        par_idx = self._biggest_subeq_same_urepr(par_idx)
         if not par_idx:
             return -2
 
@@ -614,14 +631,14 @@ class EditableEq:
 
         if not n_non_void_pars:
             # Case: Every param is a VOID
-            eff_sup_idx = self._get_biggest_subeq_same_urepr(sup_idx)
+            eff_sup_idx = self._biggest_subeq_same_urepr(sup_idx)
             if eqqueries.isjuxted(eff_sup_idx, self.eq):
                 # Subcase: supeq is the urepr of a juxted
                 return self._vanish_juxted(0, eff_sup_idx)
 
             sup[:] = utils.void()
             self._condtly_correct_scriptop(sup, sup_idx)
-            return sup_idx, self._get_safe_dir(0, 0)
+            return sup_idx, self._safe_dir(0, 0)
 
         # Build replacement
         par_ord = par_idx[-1]
@@ -665,7 +682,7 @@ class EditableEq:
             new_idx = sup_idx
 
         new_idx = eqqueries.urepr(new_idx, self.eq)
-        return new_idx, self._get_safe_dir(5, None, new_idx)
+        return new_idx, self._safe_dir(5, None, new_idx)
 
     @eqdebug.debug
     def delete_clever(self, forward, n=1):
@@ -686,12 +703,12 @@ class EditableEq:
             n = -n
 
         for n in range(n, 0, -1):
-            del_idx = self._get_biggest_subeq_same_urepr()
+            del_idx = self._biggest_subeq_same_urepr()
             sup = eqqueries.supeq(del_idx, self.eq, True)
             # Whole eq is pointed
             if sup == -2:
-                if self.vdir() or (forward and self.rdir()) \
-                        or (not forward and (self.ldir() or self.odir())):
+                if self.vdir() or (self.rdir() and forward ) \
+                        or ((self.ldir() or self.odir()) and not forward):
                     return n
 
                 self.remove_eq()
@@ -709,11 +726,11 @@ class EditableEq:
             # => No need to update self.dir.
 
             if sup[0] != utils.JUXT:
-                if (not forward and self.rdir()) \
-                        or (forward and (self.ldir() or self.odir())):
-                    # Subcase: Delete a non-juxted subeq
+                if (self.rdir() and not forward) or (self.ldir() and forward) \
+                        or (self.odir() and sup[par_ord]  and forward):
+                    # Subcase: Delete a non-VOID non-juxted subeq
                     self.idx = self._empty()
-                    self.dir = self._get_safe_dir(0, 0)
+                    self.dir = self._safe_dir(0, 0)
                     continue
 
                 # Subacase: Flat non-juxt lop (includes VOID and non-VOID par)
@@ -728,7 +745,7 @@ class EditableEq:
                 continue
 
             if (not forward and self.rdir()) or (forward and self.ldir()) \
-                    or par_ord != len(sup) - 1:
+                    or (self.odir() and par_ord != len(sup) - 1):
                 # Subcase: Vanish pointed juxted
                 self.idx, self.dir = self._vanish_juxted()
                 continue
@@ -847,7 +864,7 @@ class EditableEq:
             return [utils.void() for i in range(n)]
 
         # Create subeq to insert
-        eff_pointed_s = self._get_biggest_subeq_same_urepr(None, True)
+        eff_pointed_s = self._biggest_subeq_same_urepr(None, True)
         if eff_pointed_s == utils.void(temp=True):
             eff_pointed_s = utils.void()
         pe_cp = deepcopy(pseudoe)
@@ -885,7 +902,7 @@ class EditableEq:
 
         # Insert subeq
         for n in range(n, 0, -1):
-            eff_pointed_idx = self._get_biggest_subeq_same_urepr()
+            eff_pointed_idx = self._biggest_subeq_same_urepr()
             if self.odir() or self.vdir() or substitute_1st_free_arg:
                 # A replacement regardless of whether replacement contains
                 # current selection
@@ -909,7 +926,7 @@ class EditableEq:
                     self.idx[-1] += 1
                 else:
                     self.idx = self._rinsert(utils.void(temp=True))
-            self.dir = self._get_safe_dir(5)
+            self.dir = self._safe_dir(5)
 
     @eqdebug.debug
     def insert_script(self, scriptdir, is_superscript, script=None):
@@ -924,7 +941,7 @@ class EditableEq:
         Return True or False depending on whether the script was already
         present.
         """
-        base_idx = self._get_biggest_subeq_same_urepr()
+        base_idx = self._biggest_subeq_same_urepr()
         # scriptops.insert_script manages correctly a TVOID
         script_idx = scriptops.insert_script(base_idx, self.eq, scriptdir,
                                              is_superscript, script)
@@ -934,7 +951,7 @@ class EditableEq:
             retval = False
 
         self.idx = eqqueries.urepr(script_idx, self.eq)
-        self.dir = self._get_safe_dir(1)
+        self.dir = self._safe_dir(1)
         return retval
 
 

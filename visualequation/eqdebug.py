@@ -18,43 +18,36 @@ Functions to debug an equation.
 import functools
 import re
 
-from . import eqqueries
-from .symbols import utils
+from .dirsel import Dir
+from .idx import Idx
+from .ops import *
+from.subeqs import Subeq
 
 
-DEBUG_PASSED_MESSAGE = "OK!"
+PASSED_MSG = "OK!"
 
 
-def eqstr(elem):
-    if not isinstance(elem, list):
-        return str(elem)
-    s_str = "[" + eqstr(elem[0])
-    for e in elem[1:]:
-        s_str += ", " + eqstr(e)
-    return s_str + "]"
-
-
-def checkeqstructure(eq):
+def checkeqstructure(bare_eq):
     """Check validity of an eq according strictly to the formalism of an
     equation."""
 
-    def helper(s, aux_idx=None):
-        idx = aux_idx[:] if aux_idx is not None else []
+    def helper(s, index=None):
+        idx = [] if index is None else index[:]
 
         if not isinstance(s, list):
             return "Subeq in " + str(idx) + " is not a list."
 
         if len(s) == 1:
-            if not (isinstance(s[0], str) or isinstance(s[0], utils.Op)):
+            if not (isinstance(s[0], str) or isinstance(s[0], Op)):
                 return "Subeq in " + str(idx) \
-                        + " has length 1 and content is not a str or op."
+                        + " has length 1 and content is not a str or Op."
 
-            if isinstance(s[0], utils.Op) and s[0].n_args:
+            if isinstance(s[0], Op) and s[0].n_args:
                 return "Subeq in " + str(idx) + " has length 1 and content " \
-                    + "is Op with n_args == " + str(s[0].n_args) + " != 0."
+                    + "is a Op with n_args == " + str(s[0].n_args) + " != 0."
 
         if len(s) > 1:
-            if not isinstance(s[0], utils.Op):
+            if not isinstance(s[0], Op):
                 return "Subeq in " + str(idx) + " has len " + str(len(s)) \
                        + " > 1 and first element is not an Op."
 
@@ -68,23 +61,24 @@ def checkeqstructure(eq):
                        + str(s[0].n_args) + " != " + str(len(s) - 1) \
                        + " parameters."
 
-            if s[0] in utils.NONUOPS and s[0].n_args != 1:
-                return "Op in " + str(idx + [0]) + " is a non-user Op with " \
-                       + str(s[0].n_args) + " args."
+            # Non-applicable since GOP is the only non-user op.
+            # if s[0] in NONUOPS and s[0].n_args != 1:
+            #     return "Op in " + str(idx + [0]) + " is a non-user Op with " \
+            #            + str(s[0].n_args) + " args."
 
-            if s[0] in (utils.JUXT, utils.TJUXT) and len(s) < 3:
+            if s[0] in (PJUXT, TJUXT) and len(s) < 3:
                 return "Subeq in " + str(idx) + " is a juxt-block which " \
                        + "only 1 juxted."
 
             # Recursive check.
             for ord in range(1, len(s)):
                 msg = helper(s[ord], idx + [ord])
-                if DEBUG_PASSED_MESSAGE != msg:
+                if PASSED_MSG != msg:
                     return msg
 
-        return DEBUG_PASSED_MESSAGE
+        return PASSED_MSG
 
-    return helper(eq)
+    return helper(bare_eq)
 
 
 def checkidxstructure(idx):
@@ -100,19 +94,22 @@ def checkidxstructure(idx):
             return "Non-last element is 0."
     except ValueError:
         pass
-    return DEBUG_PASSED_MESSAGE
+    return PASSED_MSG
 
 
-def checksubeqexistence(idx, eq, onlysubeqs=True):
+def checksubeqexistence(idx, bare_eq, onlysubeqs=True):
     """Check that pointed subequation exists.
 
     If *onlysubeqs* is True, an index pointing to a lop is an error.
-    That is the last condition checked: if that is reported, the rest is OK.
+
+    .. note::
+        Pointing to a lop is the last condition checked: if that is reported,
+        the rest is OK.
     """
     if not idx:
-        return DEBUG_PASSED_MESSAGE
+        return PASSED_MSG
 
-    eqref = eq
+    eqref = bare_eq
     for lev, pos in enumerate(idx):
         if len(eqref) == 1:
             return "Subeq in " + str(idx[:lev]) \
@@ -127,36 +124,34 @@ def checksubeqexistence(idx, eq, onlysubeqs=True):
     if onlysubeqs and idx and not idx[-1]:
         return "Pointed element is a lop."
 
-    return DEBUG_PASSED_MESSAGE
+    return PASSED_MSG
 
 
-def checkstructure(idx, eq):
-    """Check of integrity of a pair index-equation.
-
-    """
+def checkstructure(idx, bare_eq):
+    """Check of integrity of a pair index-equation."""
 
     msg = checkidxstructure(idx)
-    if msg != DEBUG_PASSED_MESSAGE:
+    if msg != PASSED_MSG:
         return "Wrong index format: " + msg
 
-    msg = checkeqstructure(eq)
-    if msg != DEBUG_PASSED_MESSAGE:
+    msg = checkeqstructure(bare_eq)
+    if msg != PASSED_MSG:
         return "Wrong eq format: " + msg
 
-    msg = checksubeqexistence(idx, eq, onlysubeqs=True)
-    if msg != DEBUG_PASSED_MESSAGE:
+    msg = checksubeqexistence(idx, bare_eq, onlysubeqs=True)
+    if msg != PASSED_MSG:
         return "Wrong pointed subeq: " + msg
 
-    return DEBUG_PASSED_MESSAGE
+    return PASSED_MSG
 
 
-def checkeqrules(eq, sel_idx=None, dir=None):
+def checkeqrules(eq: Subeq, sel_idx: Idx, dir: Dir):
     """Check that an equation satisfy the conditions of current implementation
     of an equation in Visual Equation.
 
-    If *sel_idx* is not None, it is checked that a valid subeq is selected.
+    *sel_idx* must point to selected subeq.
 
-    If *dir* is not None, it is checked that a valid direction is being used.
+    *dir* must be the current direction.
 
     It checks:
 
@@ -167,41 +162,37 @@ def checkeqrules(eq, sel_idx=None, dir=None):
 
     .. note::
         This function intentionally does not check *sel_idx* nor *eq*
-        structures. checkstructure function should be called before calling
+        structures: checkstructure function should be called before calling
         this function.
     """
-    if utils.NONUOPS != (utils.GOP,):
-        return "Current implementation considers GOP, and only GOP, as " \
-               "non-user op."
 
-    if dir is not None:
-        s_sel = eqqueries.get(sel_idx, eq)
-        if s_sel == utils.void(temp=True) and dir != utils.ODIR:
-            return "A TVOID is selected and direction is not ODIR."
-        if s_sel == utils.void() and dir not in (utils.ODIR, utils.VDIR):
-            return "A VOID is selected and direction is not ODIR nor VDIR."
-        if s_sel != utils.void() and dir == utils.VDIR:
-            return "A non-VOID is selected and direction is VDIR."
+    # Non-applicable
+    # if NONUOPS != (utils.GOP,):
+    #     return "Current implementation considers GOP, and only GOP, as " \
+    #            "non-user op."
+
+    s_sel = eq(sel_idx)
+    if s_sel.is_tvoid() and dir is not Dir.O:
+        return "A TVOID is selected and direction is not O."
+    if s_sel.is_pvoid() and dir not in (Dir.O, Dir.V):
+        return "A PVOID is selected and direction is not O nor V."
+    if not s_sel.is_pvoid() and dir is Dir.V:
+        return "A non-PVOID subeq is selected and direction is V."
 
     # Selectivity
-    sel_flag = eqqueries.selectivity(sel_idx, eq)
-    if sel_flag == 0:
+    flag = eq.selectivity(sel_idx)
+    if flag == 0:
         return "Selected subequation is not allowed to be selected. " \
-               "In particular, it is a GOP-block strict subeq which is not " \
-               "its urepr."
-    if sel_flag == -1:
+               "In particular, it is a GOP-block which urepr is selectable."
+    if flag == -1:
         return "Selected subequation is not allowed to be selected. " \
-               "In particular, it is not an usubeq."
+               "In particular, it is a GOP-block and GOP-par strict subeq."
+    if flag == -2:
+        return "Selected subequation is not allowed to be selected. " \
+               "In particular, it is a usubeq and GOP-par strict subeq."
 
-    # It is interesting to count TVOIDs and TJUXT-blocks in case that no
-    # sel_idx is passed.
-    # (If sel_idx is passed an error would be reported even without counting
-    # them)
-    n_tjuxts = 0
-    n_tvoids = 0
-
-    def helper(idx_aux=None):
-        idx = [] if idx_aux is None else idx_aux[:]
+    def helper(index=None):
+        idx = Idx(index)
 
         if len(idx) == 0:
             supsup = -2
@@ -212,69 +203,61 @@ def checkeqrules(eq, sel_idx=None, dir=None):
             sup = eq
             s = sup[idx[-1]]
         else:
-            supsup = eqqueries.get(idx[:-2], eq)
+            supsup = eq(idx[:-2])
             sup = supsup[idx[-2]]
             s = sup[idx[-1]]
 
+        # Non-applicable
         # Rules of faithful operators
-        if len(s) > 1 and s[0] in utils.NONUOPS and s[0].n_args != 1:
-            return "Lop in " + str(idx + [0]) \
-                   + "is a non-user op and accepts "\
-                   + str(s[0].n_args) + " != 1 parameters."
+        # if len(s) > 1 and not s.is_usubeq() and s[0].n_args != 1:
+        #     return "Lop in " + str(idx + [0]) \
+        #            + "is a non-user op and accepts "\
+        #            + str(s[0].n_args) + " != 1 parameters."
 
         # GOP-nesting
-        if supsup != -2 and supsup[0] == utils.GOP and sup[0] == utils.GOP:
+        if supsup != -2 and supsup[0] == GOP and sup[0] == GOP:
             return "Subeq in " + str(idx) + " is a GOP-par which lop-block " \
                    + "is itself a GOP-par."
 
         # TJUXTs
-        nonlocal n_tjuxts
-        if len(s) > 1 and s[0] == utils.TJUXT:
-            n_tjuxts += 1
-            if n_tjuxts > 1:
-                return "There is more than 1 TJUXT."
-            if sel_idx is not None and sel_idx != idx:
+        if len(s) > 1 and s[0] == TJUXT:
+            if sel_idx != idx:
                 return "There exists a TJUXT-block which is not selected."
 
         # TVOIDs
-        nonlocal n_tvoids
-        if s == utils.void(temp=True):
-            n_tvoids += 1
-            if n_tvoids > 1:
-                return "There is more than 1 TVOID."
-            if sup == -2 or sup[0] != utils.JUXT or idx[-1] != len(sup) - 1:
+        if s.is_tvoid():
+            if sup == -2 or sup[0] != PJUXT or idx[-1] != len(sup) - 1:
                 return "TVOID in " + str(idx) + " is not a last juxted " \
                        + "of a JUXT-block."
-            if sel_idx is not None and sel_idx != idx:
+            if sel_idx != idx:
                 return "There exists a TVOID which is not selected."
 
-        # VOIDs
-        if s == utils.void() and sup != -2 \
-                and sup[0] in (utils.TJUXT, utils.JUXT):
+        # pVOIDs
+        if s.is_void() and sup != -2 and sup.is_jb():
             return "VOID in " + str(idx) + " is a juxted."
 
         # End part of helper which recursively checks parameters
         if len(s) > 1:
             for ord in range(1, len(s)):
                 msg = helper(idx + [ord])
-                if DEBUG_PASSED_MESSAGE != msg:
+                if PASSED_MSG != msg:
                     return msg
 
-        return DEBUG_PASSED_MESSAGE
+        return PASSED_MSG
 
     return helper(None)
 
 
 def checkall(eq, sel_idx, dir):
     msg = checkstructure(sel_idx, eq)
-    if msg != DEBUG_PASSED_MESSAGE:
+    if msg != PASSED_MSG:
         return msg
 
     msg = checkeqrules(eq, sel_idx, dir)
-    if msg != DEBUG_PASSED_MESSAGE:
+    if msg != PASSED_MSG:
         return "Wrong implementation: " + msg
 
-    return DEBUG_PASSED_MESSAGE
+    return PASSED_MSG
 
 
 HEADER = '\033[95m'
@@ -292,27 +275,24 @@ def debuginit(fun):
 
     @functools.wraps(fun)
     def wrapper(self, *args, **kwargs):
-        print("**** START DEBUGGING (Initial object) ****")
-
         fun(self, *args, **kwargs)
-        print(OKBLUE + "\neq: "  + ENDC + BOLD + eqstr(self.eq)  + ENDC)
+        if not self.debug:
+            return
+
+        print(">>>>> Debugging started <<<<<")
+        print(OKBLUE + "\neq: "  + ENDC + BOLD + str(self) + ENDC)
         print(OKBLUE + "\nidx: " + ENDC + BOLD + str(self.idx) + ENDC
               + OKBLUE + "\tdir: " + ENDC
-              + BOLD + utils.DIR2NAME[self.dir] + ENDC)
+              + BOLD + self.dir.name + ENDC)
 
-        msg = checkall(self.eq, self.idx, self.dir)
-        if msg != DEBUG_PASSED_MESSAGE:
+        msg = checkall(self, self.idx, self.dir)
+        if msg != PASSED_MSG:
             print(FAIL + "ERROR." + ENDC + "=======> " + BOLD + msg + ENDC)
             return -99
         else:
-            print("\nOK. Tests passed.")
-        #print("**** END DEBUGGING ****")
+            print("\nNo errors found in initial equation. OK")
 
     return wrapper
-
-
-PATTERN_START = re.compile(r"^.*\.")
-PATTERN_END = re.compile(r"\sat.*$")
 
 
 def debug(fun):
@@ -320,35 +300,33 @@ def debug(fun):
 
     @functools.wraps(fun)
     def wrapper(self, *args, **kwargs):
-        #print("**** START DEBUGGING ****")
-        fun_str = str(fun)
-        fun_str = PATTERN_START.sub("", fun_str)
-        fun_str = PATTERN_END.sub("", fun_str)
+        if not self.debug:
+            return fun(self, *args, **kwargs)
+
         # Debugging eq and idx
         msg = checkall(self.eq, self.idx, self.dir)
-        if msg != DEBUG_PASSED_MESSAGE:
+        if msg != PASSED_MSG:
             print("======>", msg)
             return -99
         else:
-            print("OK. Tests passed before call to "
-                  + BOLD + fun_str + ENDC + ". Executing now...")
+            print("Tests passed before call to "
+                  + BOLD + fun.__name__ + ENDC + ". Executing now...")
 
         retval = fun(self, *args, **kwargs)
-        print(OKBLUE + "\neq: "  + ENDC + BOLD + eqstr(self.eq)  + ENDC)
+        print(OKBLUE + "\neq: "  + ENDC + BOLD + str(self) + ENDC)
         print(OKBLUE + "\nidx: " + ENDC + BOLD + str(self.idx) + ENDC
               + OKBLUE + "\tdir: " + ENDC
-              + BOLD + utils.DIR2NAME[self.dir] + ENDC
-              + ".\tReturn of " + BOLD + fun_str + ENDC + ": "
+              + BOLD + self.dir.name + ENDC
+              + ".\tReturn of " + BOLD + fun.__name__ + ENDC + ": "
               + WARNING + str(retval) + ENDC)
 
-        msg = checkall(self.eq, self.idx, self.dir)
-        if msg != DEBUG_PASSED_MESSAGE:
+        msg = checkall(self, self.idx, self.dir)
+        if msg != PASSED_MSG:
             print(FAIL + "ERROR. " + ENDC + "------> " + BOLD + msg + ENDC)
             return -99
         else:
-            print("\nOK. Tests passed after call.")
+            print("\nTests passed after call. OK")
 
-        #print("**** END DEBUGGING ****")
         return retval
 
     return wrapper
