@@ -163,6 +163,30 @@ class SubeqTests(unittest.TestCase):
         self.assertIsNot(s_sum, s)
         self.assertIsNot(s_sum[1], s[1])
 
+    def test_mul(self):
+        s = Subeq(["x"])
+        with self.assertRaises(ValueError) as cm:
+            s * 2
+        self.assertEqual(cm.exception.args[0], SUBEQ_VALUE_ERROR_MSG)
+
+        s = Subeq([ops.PJUXT, ["x"]])
+        p = s[1:] * 3
+        for idx in ([], [0], [1], [2]):
+            self.assertIsInstance(p(idx), Subeq)
+        self.assertEqual(p, [["x"], ["x"], ["x"]])
+
+    def test_rmul(self):
+        s = Subeq(["x"])
+        with self.assertRaises(ValueError) as cm:
+            2 * s
+        self.assertEqual(cm.exception.args[0], SUBEQ_VALUE_ERROR_MSG)
+
+        s = Subeq([ops.PJUXT, ["x"]])
+        p = 3 * s[1:]
+        for idx in ([], [0], [1], [2]):
+            self.assertIsInstance(p(idx), Subeq)
+        self.assertEqual(p, [["x"], ["x"], ["x"]])
+
     def test_getitem(self):
         s = Subeq([ops.GOP, [ops.PJUXT, ["d"], [ops.TVOID]]])
         self.assertIsInstance(s[0], ops.Op)
@@ -259,12 +283,53 @@ class SubeqTests(unittest.TestCase):
             self.assertEqual(cm.exception.args[0],
                              SUBEQ_CONTAINER_TYPE_ERROR_MSG)
 
+    def test_iadd(self):
+        l = [ops.PJUXT, ["d"], ["e"]]
+
+        r = deepcopy(l)
+        r += Subeq([["f"]])
+        self.assertNotIsInstance(r, Subeq)
+        self.assertIsInstance(r[3], Subeq)
+
+        r = Subeq([ops.PJUXT, ["a"], ["b"], ["c"]])
+        with self.assertRaises(TypeError) as cm:
+            r += l[1:]
+        self.assertEqual(cm.exception.args[0], SUBEQ_IADD_TYPE_ERROR_MSG)
+        self.assertEqual(r, [ops.PJUXT, ["a"], ["b"], ["c"]])
+
+        r = Subeq([ops.PJUXT, ["a"], ["b"], ["c"]])
+        r += Subeq(l[1:])
+        self.assertEqual(r, [ops.PJUXT, ["a"], ["b"], ["c"], ["d"], ["e"]])
+        self.assertIsInstance(r, Subeq)
+        self.assertIsInstance(r[4], Subeq)
+        self.assertIsInstance(r[5], Subeq)
+
+        s = Subeq(l)
+        s1 = s[1]
+        s += [Subeq(["f"])]
+        self.assertEqual(s, [ops.PJUXT, ["d"], ["e"], ["f"]])
+        self.assertIsInstance(s, Subeq)
+        self.assertIsInstance(s[3], Subeq)
+        self.assertIs(s[1], s1)
+
+    def test_imul(self):
+        s = Subeq(["x"])
+        with self.assertRaises(ValueError) as cm:
+            s *= 2
+        self.assertEqual(cm.exception.args[0], SUBEQ_VALUE_ERROR_MSG)
+
+        s = Subeq([ops.PJUXT, ["x"]])
+        s[1:] *= 3
+        for idx in ([], [1], [2], [3]):
+            self.assertIsInstance(s(idx), Subeq)
+        self.assertEqual(s, [ops.PJUXT, ["x"], ["x"], ["x"]])
+
     def test_str(self):
         self.assertEqual(str(Subeq()), "[]")
         self.assertEqual(str(Subeq(["2"])), "[2]")
-        self.assertEqual(str(Subeq([ops.PVOID])), "[pvoid]")
+        self.assertEqual(str(Subeq([ops.PVOID])), "[PVOID]")
         self.assertEqual(str(Subeq([ops.PJUXT, ["d"], [ops.TVOID]])),
-                         "[pjuxt, [d], [tvoid]]")
+                         "[PJUXT, [d], [TVOID]]")
 
     def test_repr(self):
         self.assertEqual(repr(Subeq()), "Subeq()")
@@ -282,6 +347,21 @@ class SubeqTests(unittest.TestCase):
         self.assertEqual(repr(Subeq([ops.PJUXT, ["d"], ()])),
                          "Subeq([" + repr(ops.PJUXT) + ", ['d'], []])")
 
+    def test_srepr(self):
+        self.assertEqual(Subeq().srepr(), "Subeq()")
+        self.assertEqual(Subeq([]).srepr(), "Subeq()")
+        self.assertEqual(Subeq(()).srepr(), "Subeq()")
+        self.assertEqual(Subeq(["2"]).srepr(), "Subeq(['2'])")
+        self.assertEqual(Subeq([ops.PVOID]).srepr(),
+                         "Subeq([PVOID])")
+        self.assertEqual(Subeq([ops.PJUXT, ["d"], [ops.TVOID]]).srepr(),
+                         "Subeq([PJUXT, ['d'], "
+                         + "[TVOID]])")
+        # Unintended use
+        self.assertEqual(Subeq([ops.PJUXT, ["d"], []]).srepr(),
+                         "Subeq([PJUXT, ['d'], []])")
+        self.assertEqual(Subeq([ops.PJUXT, ["d"], ()]).srepr(),
+                         "Subeq([PJUXT, ['d'], []])")
 
     def test_subeq_bool(self):
         # __bool__ is not finally overridden

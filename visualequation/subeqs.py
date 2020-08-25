@@ -45,6 +45,9 @@ SubeqContainerTypeError = TypeError(SUBEQ_CONTAINER_TYPE_ERROR_MSG)
 SUBEQ_ELEM_TYPE_ERROR_MSG = "Elements allowed to build a Subeq must be " \
                             "lists, tuples, strings and/or Ops"
 SubeqElemTypeError = TypeError(SUBEQ_ELEM_TYPE_ERROR_MSG)
+SUBEQ_IADD_TYPE_ERROR_MSG = "Elements allowed to iadd (+=) to a Subeq are " \
+                              "Subeqs and Ops with n_args != 0"
+SubeqIaddTypeError = TypeError(SUBEQ_IADD_TYPE_ERROR_MSG)
 SUBEQ_APPEND_TYPE_ERROR_MSG = "Elements allowed to be appended to a Subeq " \
                               "are Subeqs, strings and Ops"
 SubeqAppendTypeError = TypeError(SUBEQ_APPEND_TYPE_ERROR_MSG)
@@ -119,14 +122,20 @@ class Subeq(list):
         for pos, e in enumerate(self):
             if isinstance(e, Subeq):
                 # Trust in any Subeq previously built
-                pass
+                continue
             elif isinstance(e, (list, tuple)):
                 self[pos] = Subeq(e)
             else:
                 self.check_noncontainer_value(e, len(self))
 
-    def __add__(self, other: List):
+    def __add__(self, other):
         return Subeq(list.__add__(self, other))
+
+    def __mul__(self, n: int):
+        return Subeq(list.__mul__(self, n))
+
+    def __rmul__(self, n: int):
+        return Subeq(list.__rmul__(self, n))
 
     def __getitem__(self, key: Union[slice, int]):
         if isinstance(key, slice):
@@ -158,6 +167,19 @@ class Subeq(list):
         else:
             list.__setitem__(self, key, Subeq(value))
 
+    def __iadd__(self, collect):
+        if not (isinstance(collect, (list, tuple))):
+            # Subeqs are derived from lists, so they pass the check
+            raise SubeqContainerTypeError
+        for s in collect:
+            if not (isinstance(s, Subeq) or
+                    (isinstance(s, ops.Op) and s.n_args)):
+                raise SubeqIaddTypeError
+        return list.__iadd__(self, collect)
+
+    def __imul__(self, n):
+        return Subeq(list.__imul__(self, n))
+
     def __str__(self):
         if len(self) == 0:
             return "[]"
@@ -170,18 +192,35 @@ class Subeq(list):
     def _repr_aux(cls, elem):
         if not isinstance(elem, Subeq):
             return repr(elem)
-        elif not len(elem):
+        if not len(elem):
             return "[]"
-        else:
-            s_str = "[" + cls._repr_aux(elem[0])
-            for e in elem[1:]:
-                s_str += ", " + cls._repr_aux(e)
-            return s_str + "]"
+        s_str = "[" + cls._repr_aux(elem[0])
+        for e in elem[1:]:
+            s_str += ", " + cls._repr_aux(e)
+        return s_str + "]"
+
+    @classmethod
+    def _srepr_aux(cls, elem):
+        if isinstance(elem, ops.Op):
+            return elem.name.upper()
+        if isinstance(elem, str):
+            return repr(elem)
+        if not len(elem):
+            return "[]"
+        s_str = "[" + cls._srepr_aux(elem[0])
+        for e in elem[1:]:
+            s_str += ", " + cls._srepr_aux(e)
+        return s_str + "]"
 
     def __repr__(self):
         if len(self) == 0:
             return "Subeq()"
         return "Subeq(" + self._repr_aux(self) + ")"
+
+    def srepr(self):
+        if len(self) == 0:
+            return "Subeq()"
+        return "Subeq(" + self._srepr_aux(self) + ")"
 
     def append(self, value: Union['Subeq', str, ops.Op]):
         if not isinstance(value, (Subeq, ops.Op, str)):

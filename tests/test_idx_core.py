@@ -317,6 +317,22 @@ class IdxCore(unittest.TestCase):
         self.assertTrue(not NOIDX)
         self.assertEqual(len(NOIDX), 0)
 
+    def test_iadd(self):
+        idx = Idx([2])
+        idx += Idx(4, 5)
+        self.assertEqual(idx, [2, 4, 5])
+        self.assertIsInstance(idx, Idx)
+
+        idx = Idx([2])
+        idx += [4, 5]
+        self.assertEqual(idx, [2, 4, 5])
+        self.assertIsInstance(idx, Idx)
+
+        idx = Idx([2])
+        idx += (4, 5)
+        self.assertEqual(idx, [2, 4, 5])
+        self.assertIsInstance(idx, Idx)
+
     def test_append(self):
         idx = Idx([])
         idx.append(3)

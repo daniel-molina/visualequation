@@ -72,6 +72,12 @@ class Idx(list):
     def __add__(self, other: List[int]):
         return Idx(list.__add__(self, other))
 
+    def __mul__(self, n: int):
+        return Idx(list.__mul__(self, n))
+
+    def __rmul__(self, n: int):
+        return Idx(list.__rmul__(self, n))
+
     def __getitem__(self, key: Union[slice, int]):
         if isinstance(key, slice):
             return Idx(list.__getitem__(self, key))
@@ -84,6 +90,15 @@ class Idx(list):
         else:
             self.check_iterable(value)
             list.__setitem__(self, key, value)
+
+    def __iadd__(self, collect):
+        if not isinstance(collect, (list, tuple)):
+            raise IdxTypeError
+        self.check_iterable(collect)
+        return list.__iadd__(self, collect)
+
+    def __imul__(self, n):
+        return Idx(list.__imul__(self, n))
 
     def append(self, value: int):
         self.check_value(value)

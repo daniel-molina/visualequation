@@ -55,7 +55,7 @@ class Op:
                + ", " + repr(self.n_args) + ", " + repr(self.type_) + ")"
 
     def __str__(self):
-        return self.name
+        return self.name.upper()
 
     def __hash__(self):
         # str(self) would be enough
