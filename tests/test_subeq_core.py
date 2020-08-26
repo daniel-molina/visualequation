@@ -355,8 +355,7 @@ class SubeqTests(unittest.TestCase):
         self.assertEqual(Subeq([ops.PVOID]).srepr(),
                          "Subeq([PVOID])")
         self.assertEqual(Subeq([ops.PJUXT, ["d"], [ops.TVOID]]).srepr(),
-                         "Subeq([PJUXT, ['d'], "
-                         + "[TVOID]])")
+                         "Subeq([PJUXT, ['d'], " + "[TVOID]])")
         # Unintended use
         self.assertEqual(Subeq([ops.PJUXT, ["d"], []]).srepr(),
                          "Subeq([PJUXT, ['d'], []])")
