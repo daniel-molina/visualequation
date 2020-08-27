@@ -12,6 +12,7 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import unittest
+from copy import deepcopy
 
 from visualequation.ops import *
 from visualequation.dirsel import Dir
@@ -19,22 +20,16 @@ from visualequation.idx import Idx
 from visualequation.subeqs import Subeq
 from visualequation.scriptops import *
 from visualequation.eqedit import EditableEq
+from tests.test_utils import *
 
 
-class Eq(EditableEq):
-    """Dummy class to avoid debugging messages."""
-    def __init__(self, eq0=None, sel_index0=None, dir0=None):
-        super().__init__(eq0, sel_index0, dir0, debug=False)
+class EqEditTests(unittest.TestCase):
+    """Tests for EditableEq methods.
 
-
-SCRIPT_OPS_LIST = [op for op in SCRIPT_OP2ID_DICT.keys() if op is not None]
-SETSCRIPT_OPS_LIST \
-    = [op for op in SETSCRIPT_OP2ID_DICT.keys() if op is not None]
-LOSCRIPT_OPS_LIST \
-    = [op for op in LOSCRIPT_OP2ID_DICT.keys() if op is not None]
-
-
-class EqEdit(unittest.TestCase):
+    .. note::
+        EditableEq manages well-built equations. Do not use shorter
+        invalid equations in these tests as [GOP, ["a"]].
+    """
     def test_init(self):
         eq = Eq()
         self.assertEqual(eq, Subeq(None))
@@ -64,6 +59,13 @@ class EqEdit(unittest.TestCase):
         eq.idx = [1]
         self.assertNotIsInstance(eq.idx, Idx)
         eq.idx = idx_cp[:]
+
+        eq = Eq([GOP, [PJUXT, ["e"], [Op("o", "o")]]])
+        self.assertEqual(eq.idx, [1])
+        self.assertEqual(eq.dir, Dir.R)
+        eq = Eq([GOP, [PJUXT, ["e"], [Op("o", "o")]]], None, Dir.O)
+        self.assertEqual(eq.idx, [1])
+        self.assertEqual(eq.dir, Dir.O)
 
     def test_safe_idx_arg(self):
         eq = Eq([PJUXT, ["e"], ["r"]], [1])
@@ -301,6 +303,448 @@ class EqEdit(unittest.TestCase):
             eq.idx[:] = idx
             self.assertEqual(eq._biggest_subeq_same_urepr(), eq(idx))
             self.assertEqual(eq._biggest_subeq_same_urepr(-1, True), idx)
+
+    def test_rinsert(self):
+
+        for s in (["2"], [Op("2", "2")], [SUP, ["x"], ["a"]],
+                  [GOP,  [SUP, ["x"], ["a"]]], [GOP,  [PJUXT, ["1"], ["2"]]]):
+            eq = Eq(["C"])
+            self.assertEqual(eq._rinsert(s, []), [2])
+            self.assertEqual(eq, [PJUXT, ["C"], s])
+            # Testing index == -1
+            eq.idx[:] = [1]
+            self.assertEqual(eq._rinsert(["D"], -1), [2])
+            self.assertEqual(eq, [PJUXT, ["C"], ["D"], s])
+            eq.idx[:] = [3]
+            self.assertEqual(eq._rinsert(["F"]), [4])
+            self.assertEqual(eq, [PJUXT, ["C"], ["D"], s, ["F"]])
+
+        eq = Eq([PJUXT, ["1"], ["2"]])
+        self.assertEqual(eq._rinsert(["3"], []), [3])
+        self.assertEqual(eq, [PJUXT, ["1"], ["2"], ["3"]])
+
+        eq = Eq([PJUXT, ["1"], ["2"]])
+        self.assertEqual(eq._rinsert(["3"], [2]), [3])
+        self.assertEqual(eq, [PJUXT, ["1"], ["2"], ["3"]])
+        self.assertEqual(eq._rinsert(["4"], [3]), [4])
+        self.assertEqual(eq, [PJUXT, ["1"], ["2"], ["3"], ["4"]])
+        self.assertEqual(eq._rinsert(["1.5"], [1]), [2])
+        self.assertEqual(eq, [PJUXT, ["1"], ["1.5"], ["2"], ["3"], ["4"]])
+        self.assertEqual(eq._rinsert(["1.7"], [2]), [3])
+        self.assertEqual(eq,
+                         [PJUXT, ["1"], ["1.5"], ["1.7"], ["2"], ["3"], ["4"]])
+        eq = Eq([PJUXT, ["1"], ["2"]])
+        with self.assertRaises(IndexError):
+            eq._rinsert(["e"], [3])
+
+        eq = Eq([PJUXT, ["1"], ["2"]])
+        self.assertEqual(eq._rinsert([SUP, ["x"], ["a"]], []), [3])
+        self.assertEqual(eq, [PJUXT, ["1"], ["2"], [SUP, ["x"], ["a"]]])
+
+        eq = Eq([PJUXT, ["1"], ["2"]])
+        self.assertEqual(eq._rinsert([SUP, ["x"], ["a"]], [1]), [2])
+        self.assertEqual(eq, [PJUXT, ["1"], [SUP, ["x"], ["a"]], ["2"]])
+        self.assertEqual(eq._rinsert([SUB, ["y"], ["0"]], [3]), [4])
+        self.assertEqual(eq, [PJUXT, ["1"], [SUP, ["x"], ["a"]], ["2"],
+                              [SUB, ["y"], ["0"]]])
+
+        for s in (["2"], [Op("2", "2")], [SUP, ["x"], ["a"]],
+                  [GOP, [SUP, ["x"], ["a"]]], [GOP, [PJUXT, ["1"], ["2"]]]):
+            eq = Eq(s)
+            self.assertEqual(eq._rinsert([PJUXT, ["g"], ["h"]], []), [2])
+            self.assertEqual(eq, [PJUXT, s, [TJUXT, ["g"], ["h"]]])
+
+        eq = Eq([PJUXT, ["1"], ["2"]])
+        self.assertEqual(eq._rinsert([PJUXT, ["g"], ["h"]], []), [3])
+        self.assertEqual(eq, [PJUXT, ["1"], ["2"], [TJUXT, ["g"], ["h"]]])
+
+        eq = Eq([PJUXT, ["1"], ["2"]])
+        self.assertEqual(eq._rinsert([PJUXT, ["g"], ["h"]], [1]), [2])
+        self.assertEqual(eq, [PJUXT, ["1"], [TJUXT, ["g"], ["h"]], ["2"]])
+        eq = Eq([PJUXT, ["1"], ["2"]])
+        self.assertEqual(eq._rinsert([PJUXT, ["g"], ["h"]], [2]), [3])
+        self.assertEqual(eq, [PJUXT, ["1"], ["2"], [TJUXT, ["g"], ["h"]]])
+
+        eq = Eq([PJUXT, ["1"], ["2"], [PJUXT, ["3,1"], ["3,2"]]])
+        # If pointed subeq is a juxted, it does not matter if it is also a
+        # juxt-block
+        self.assertEqual(eq._rinsert([PJUXT, ["g"], ["h"]], [3]), [4])
+        self.assertEqual(eq, [PJUXT, ["1"], ["2"], [PJUXT, ["3,1"], ["3,2"]],
+                              [TJUXT, ["g"], ["h"]]])
+
+        eq = Eq([PJUXT, ["1"], ["2"], [PJUXT, ["3,1"], ["3,2"]]])
+        self.assertEqual(eq._rinsert([PJUXT, ["g"], ["h"]], [3, 1]), [3, 2])
+        self.assertEqual(eq, [PJUXT, ["1"], ["2"], [PJUXT, ["3,1"],
+                              [TJUXT, ["g"], ["h"]], ["3,2"]]])
+
+        eq = Eq([PJUXT, ["1"], ["2"], [PJUXT, ["3,1"], ["3,2"]]])
+        self.assertEqual(eq._rinsert([PJUXT, ["g"], ["h"]], [3, 2]), [3, 3])
+        self.assertEqual(eq, [PJUXT, ["1"], ["2"], [PJUXT, ["3,1"], ["3,2"],
+                              [TJUXT, ["g"], ["h"]]]])
+
+    def test_linsert(self):
+
+        for s in (["2"], [Op("2", "2")], [SUP, ["x"], ["a"]],
+                  [GOP,  [SUP, ["x"], ["a"]]], [GOP,  [PJUXT, ["1"], ["2"]]]):
+            eq = Eq(["C"])
+            self.assertEqual(eq._linsert(s, []), [1])
+            self.assertEqual(eq, [PJUXT, s, ["C"]])
+            # Testing index == -1
+            eq.idx[:] = [1]
+            self.assertEqual(eq._linsert(["A"], -1), [1])
+            self.assertEqual(eq, [PJUXT, ["A"], s, ["C"]])
+            eq.idx[:] = [3]
+            self.assertEqual(eq._linsert(["B"]), [3])
+            self.assertEqual(eq, [PJUXT, ["A"], s, ["B"], ["C"]])
+
+        eq = Eq([PJUXT, ["1"], ["2"]])
+        self.assertEqual(eq._linsert(["0"], []), [1])
+        self.assertEqual(eq, [PJUXT, ["0"], ["1"], ["2"]])
+
+        eq = Eq([PJUXT, ["1"], ["2"]])
+        self.assertEqual(eq._linsert(["1.5"], [2]), [2])
+        self.assertEqual(eq, [PJUXT, ["1"], ["1.5"], ["2"]])
+        self.assertEqual(eq._linsert(["1.7"], [3]), [3])
+        self.assertEqual(eq, [PJUXT, ["1"], ["1.5"], ["1.7"], ["2"]])
+        self.assertEqual(eq._linsert(["0.5"], [1]), [1])
+        self.assertEqual(eq, [PJUXT, ["0.5"], ["1"], ["1.5"], ["1.7"], ["2"]])
+        self.assertEqual(eq._linsert(["0.7"], [2]), [2])
+        self.assertEqual(eq, [PJUXT, ["0.5"], ["0.7"], ["1"],
+                             ["1.5"], ["1.7"], ["2"]])
+        eq = Eq([PJUXT, ["1"], ["2"]])
+        with self.assertRaises(IndexError):
+            eq._linsert(["e"], [3])
+
+        eq = Eq([PJUXT, ["1"], ["2"]])
+        self.assertEqual(eq._linsert([SUP, ["x"], ["a"]], []), [1])
+        self.assertEqual(eq, [PJUXT, [SUP, ["x"], ["a"]], ["1"], ["2"]])
+
+        eq = Eq([PJUXT, ["1"], ["2"]])
+        self.assertEqual(eq._linsert([SUP, ["x"], ["a"]], [1]), [1])
+        self.assertEqual(eq, [PJUXT, [SUP, ["x"], ["a"]], ["1"], ["2"]])
+        self.assertEqual(eq._linsert([SUB, ["y"], ["0"]], [3]), [3])
+        self.assertEqual(eq, [PJUXT, [SUP, ["x"], ["a"]], ["1"],
+                              [SUB, ["y"], ["0"]], ["2"]])
+
+        for s in (["2"], [Op("2", "2")], [SUP, ["x"], ["a"]],
+                  [GOP, [SUP, ["x"], ["a"]]], [GOP, [PJUXT, ["1"], ["2"]]]):
+            eq = Eq(s)
+            self.assertEqual(eq._linsert([PJUXT, ["g"], ["h"]], []), [1])
+            self.assertEqual(eq, [PJUXT, [TJUXT, ["g"], ["h"]], s])
+
+        eq = Eq([PJUXT, ["1"], ["2"]])
+        self.assertEqual(eq._linsert([PJUXT, ["g"], ["h"]], []), [1])
+        self.assertEqual(eq, [PJUXT, [TJUXT, ["g"], ["h"]], ["1"], ["2"]])
+
+        eq = Eq([PJUXT, ["1"], ["2"]])
+        self.assertEqual(eq._linsert([PJUXT, ["g"], ["h"]], [1]), [1])
+        self.assertEqual(eq, [PJUXT, [TJUXT, ["g"], ["h"]], ["1"], ["2"]])
+        eq = Eq([PJUXT, ["1"], ["2"]])
+        self.assertEqual(eq._linsert([PJUXT, ["g"], ["h"]], [2]), [2])
+        self.assertEqual(eq, [PJUXT, ["1"], [TJUXT, ["g"], ["h"]], ["2"]])
+
+        eq = Eq([PJUXT, ["1"], ["2"], [PJUXT, ["3,1"], ["3,2"]]])
+        # If pointed subeq is a juxted, it does not matter if it is also a
+        # juxt-block
+        self.assertEqual(eq._linsert([PJUXT, ["g"], ["h"]], [3]), [3])
+        self.assertEqual(eq, [PJUXT, ["1"], ["2"], [TJUXT, ["g"], ["h"]],
+                              [PJUXT, ["3,1"], ["3,2"]]])
+
+        eq = Eq([PJUXT, ["1"], ["2"], [PJUXT, ["3,1"], ["3,2"]]])
+        self.assertEqual(eq._linsert([PJUXT, ["g"], ["h"]], [3, 1]), [3, 1])
+        self.assertEqual(eq, [PJUXT, ["1"], ["2"], [PJUXT,
+                              [TJUXT, ["g"], ["h"]], ["3,1"], ["3,2"]]])
+
+        eq = Eq([PJUXT, ["1"], ["2"], [PJUXT, ["3,1"], ["3,2"]]])
+        self.assertEqual(eq._linsert([PJUXT, ["g"], ["h"]], [3, 2]), [3, 2])
+        self.assertEqual(eq, [PJUXT, ["1"], ["2"], [PJUXT, ["3,1"],
+                              [TJUXT, ["g"], ["h"]], ["3,2"]]])
+
+    def test_replace_integrating(self):
+        # _replace_integrating only modifies eq, nor the index nor dir
+
+        # Replace a non-PJUXT block
+        for repl in (["r"], [Op("O", "O")], [GOP, [SUP, ["x"], ["b"]]],
+                     [TJUXT, ["x"], ["y"], ["z"]]):
+            # This equation is invalid in some cases, preparing it here
+            r1 = Eq(repl)
+            r1.idx = [1]
+            db = (
+                (Eq(["a"]), Eq(repl, []), []),
+                (Eq([PVOID], [], Dir.V), Eq(repl, [], Dir.V), []),
+                (Eq([Op("O", "O")]), Eq(repl, []), []),
+                (Eq([PJUXT, ["f"], ["s"]]), Eq(repl, []), []),
+                (Eq([PJUXT, ["f"], ["s"]], [1]),
+                    Eq([PJUXT, repl, ["s"]], [1]), [1]),
+                (Eq([GOP, [PJUXT, ["a"], ["b"]]], [1]), r1, []),
+                (Eq([PJUXT, [PJUXT, ["a"], ["b"]], ["c"]], [1]),
+                    Eq([PJUXT, repl, ["c"]], [1]), [1]),
+                (Eq([PJUXT, [PJUXT, ["a"], ["b"]], ["c"]], [1, 1]),
+                    Eq([PJUXT, [PJUXT, repl, ["b"]], ["c"]], [1, 1]), [1, 1]),
+                (Eq([PJUXT, [PJUXT, ["a"], ["b"]], ["c"]], [1, 2]),
+                    Eq([PJUXT, [PJUXT, ["a"], repl], ["c"]], [1, 2]), [1, 2]),
+                (Eq([PJUXT, [PJUXT, ["a"], ["b"]], ["c"]], [2]),
+                    Eq([PJUXT, [PJUXT, ["a"], ["b"]], repl], [2]), [2]),
+            )
+            ce = CompareEqs(db)
+            f = lambda eq: Eq._replace_integrating(eq, repl)
+            ce.assert_equality(f)
+
+        # Replacing a PJUXT-block
+        db = (
+            (Eq(["a"]), Eq([PJUXT, ["x"], ["y"]]), []),
+            (Eq([PVOID], [], Dir.V), Eq([PJUXT, ["x"], ["y"]], [], Dir.V), []),
+            (Eq([Op("O", "O")]), Eq([PJUXT, ["x"], ["y"]]), []),
+            (Eq([PJUXT, ["f"], ["s"]]), Eq([PJUXT, ["x"], ["y"]]), []),
+            (Eq([PJUXT, ["f"], ["s"]], [1]),
+                Eq([PJUXT, ["x"], ["y"], ["s"]], [1]), [1]),
+            (Eq([GOP, [PJUXT, ["a"], ["b"]]], [1]),
+                Eq([PJUXT, ["x"], ["y"]], [1]), []),
+            (Eq([PJUXT, [PJUXT, ["a"], ["b"]], ["c"]], [1]),
+                Eq([PJUXT, ["x"], ["y"], ["c"]], [1]), [1]),
+            (Eq([PJUXT, [PJUXT, ["a"], ["b"]], ["c"]], [1, 1]),
+                Eq([PJUXT, [PJUXT, ["x"], ["y"], ["b"]], ["c"]], [1, 1]),
+                [1, 1]),
+            (Eq([PJUXT, [PJUXT, ["a"], ["b"]], ["c"]], [1, 2]),
+                Eq([PJUXT, [PJUXT, ["a"], ["x"], ["y"]], ["c"]], [1, 2]),
+                [1, 2]),
+            (Eq([PJUXT, [PJUXT, ["a"], ["b"]], ["c"]], [2]),
+                Eq([PJUXT, [PJUXT, ["a"], ["b"]], ["x"], ["y"]], [2]), [2]),
+        )
+        ce = CompareEqs(db)
+        f = lambda eq: Eq._replace_integrating(eq, [PJUXT, ["x"], ["y"]])
+        ce.assert_equality(f)
+
+    def test_replace(self):
+        # Replace a non-GOP block
+        for repl in (["r"], [Op("O", "O")], [PJUXT, ["x"], ["y"]],
+                     [TJUXT, ["x"], ["y"], ["z"]], [SUP, ["x"], ["y"]]):
+            # This equation is invalid in some cases, preparing it here
+            r1 = Eq(repl)
+            r1.idx = [1]
+            db = (
+                (Eq(["a"]), Eq(repl), []),
+                (Eq([PVOID], [], Dir.V), Eq(repl, [], Dir.V), []),
+                (Eq([Op("O", "O")]), Eq(repl), []),
+                (Eq([PJUXT, ["f"], ["s"]]), Eq(repl), []),
+                (Eq([PJUXT, ["f"], ["s"]], [1]),
+                    Eq([PJUXT, repl, ["s"]], [1]), [1]),
+                (Eq([GOP, [PJUXT, ["a"], ["b"]]], [1]), r1, []),
+                (Eq([PJUXT, [PJUXT, ["a"], ["b"]], ["c"]], [1]),
+                    Eq([PJUXT, repl, ["c"]], [1]), [1]),
+                (Eq([PJUXT, [PJUXT, ["a"], ["b"]], ["c"]], [1, 1]),
+                    Eq([PJUXT, [PJUXT, repl, ["b"]], ["c"]], [1, 1]), [1, 1]),
+                (Eq([PJUXT, [PJUXT, ["a"], ["b"]], ["c"]], [1, 2]),
+                    Eq([PJUXT, [PJUXT, ["a"], repl], ["c"]], [1, 2]), [1, 2]),
+                (Eq([PJUXT, [PJUXT, ["a"], ["b"]], ["c"]], [2]),
+                    Eq([PJUXT, [PJUXT, ["a"], ["b"]], repl], [2]), [2]),
+            )
+            ce = CompareEqs(db)
+            f = lambda eq: Eq._replace(eq, repl)
+            ce.assert_equality(f)
+
+        # Replace a non-GOP block
+        for repl in ([GOP, [PJUXT, ["x"], ["y"]]], [GOP, [SUP, ["x"], ["y"]]],
+                     [GOP, [PJUXT, [GOP, [SUP, ["x"], ["y"]]], ["y"]]]):
+            db = (
+                (Eq(["a"]), Eq(repl, []), [1]),
+                (Eq([PVOID], [], Dir.V), Eq(repl, [], Dir.V), [1]),
+                (Eq([Op("O", "O")]), Eq(repl, []), [1]),
+                (Eq([PJUXT, ["f"], ["s"]]), Eq(repl, []), [1]),
+                (Eq([PJUXT, ["f"], ["s"]], [1]),
+                    Eq([PJUXT, repl, ["s"]], [1]), [1, 1]),
+                (Eq([GOP, [PJUXT, ["a"], ["b"]]], [1]), Eq(repl), [1]),
+                (Eq([PJUXT, [PJUXT, ["a"], ["b"]], ["c"]], [1]),
+                    Eq([PJUXT, repl, ["c"]], [1]), [1, 1]),
+                (Eq([PJUXT, [PJUXT, ["a"], ["b"]], ["c"]], [1, 1]),
+                    Eq([PJUXT, [PJUXT, repl, ["b"]], ["c"]], [1, 1]), [1, 1, 1]),
+                (Eq([PJUXT, [PJUXT, ["a"], ["b"]], ["c"]], [1, 2]),
+                    Eq([PJUXT, [PJUXT, ["a"], repl], ["c"]], [1, 2]), [1, 2, 1]),
+                (Eq([PJUXT, [PJUXT, ["a"], ["b"]], ["c"]], [2]),
+                    Eq([PJUXT, [PJUXT, ["a"], ["b"]], repl], [2]), [2, 1]),
+            )
+        ce = CompareEqs(db)
+        f = lambda eq: Eq._replace(eq, repl)
+        ce.assert_equality(f, debug=True)
+
+    def test_empty(self):
+        # Replace a non-GOP block
+        # Invalid eqs
+        ipvoid = Eq([PVOID], [], Dir.R)
+        ipvoid1 = Eq([PVOID], [], Dir.R)
+        ipvoid1.idx[:] = [1]
+        # Many cases are not intended to be used
+        db = (
+            (Eq(["a"]), ipvoid, []),
+            (Eq([PVOID]), Eq([PVOID]), []),
+            (Eq([Op("O", "O")]), ipvoid, []),
+            (Eq([PJUXT, ["f"], ["s"]]), ipvoid, []),
+            (Eq([PJUXT, ["f"], ["s"]], [1]),
+                Eq([PJUXT, [PVOID], ["s"]], [1], Dir.R), [1]),
+            (Eq([GOP, [PJUXT, ["a"], ["b"]]], [1]), ipvoid1, []),
+            (Eq([PJUXT, [PJUXT, ["a"], ["b"]], ["c"]], [1]),
+                Eq([PJUXT, [PVOID], ["c"]], [1], Dir.R), [1]),
+            (Eq([PJUXT, [PJUXT, ["a"], ["b"]], ["c"]], [1, 1]),
+                Eq([PJUXT, [PJUXT, [PVOID], ["b"]], ["c"]], [1, 1], Dir.R),
+                [1, 1]),
+            (Eq([PJUXT, [PJUXT, ["a"], ["b"]], ["c"]], [1, 2]),
+                Eq([PJUXT, [PJUXT, ["a"], [PVOID]], ["c"]], [1, 2], Dir.R),
+                [1, 2]),
+            (Eq([PJUXT, [PJUXT, ["a"], ["b"]], ["c"]], [2]),
+                Eq([PJUXT, [PJUXT, ["a"], ["b"]], [PVOID]], [2], Dir.R), [2]),
+        )
+        ce = CompareEqs(db)
+        ce.assert_equality(Eq._empty, debug=True)
+
+    def test_remove_eq(self):
+        # Replace a non-GOP block
+        db = (
+            (Eq(["a"]), Eq()),
+            (Eq([PVOID]), Eq()),
+            (Eq([Op("O", "O")]), Eq()),
+            (Eq([PJUXT, ["f"], ["s"]]), Eq()),
+            (Eq([PJUXT, ["f"], ["s"]], [1]), Eq()),
+            (Eq([GOP, [PJUXT, ["a"], ["b"]]], [1]), Eq()),
+            (Eq([PJUXT, [PJUXT, ["a"], ["b"]], ["c"]], [1]), Eq()),
+            (Eq([PJUXT, [PJUXT, ["a"], ["b"]], ["c"]], [1, 1]), Eq()),
+            (Eq([PJUXT, [PJUXT, ["a"], ["b"]], ["c"]], [1, 2]), Eq()),
+            (Eq([PJUXT, [PJUXT, ["a"], ["b"]], ["c"]], [2]), Eq()),
+        )
+        ce = CompareEqs(db)
+        ce.assert_equality(Eq.remove_eq, debug=True)
+
+    def test_set_ovrwrt_pvoid(self):
+        for args in (([PVOID], []), ([SUP, ["x"], [PVOID]], [2])):
+            eq = Eq(*args, Dir.O)
+            eq_cp = deepcopy(eq)
+            eq_cp.ovrwrt(True)
+            self.assertEqual(eq, eq_cp)
+            self.assertEqual(eq.idx, eq_cp.idx)
+            self.assertEqual(eq.dir, eq_cp.dir)
+
+            eq = Eq(*args, Dir.O)
+            eq_cp = deepcopy(eq)
+            eq_cp.ovrwrt(False)
+            self.assertEqual(eq, eq_cp)
+            self.assertEqual(eq.idx, eq_cp.idx)
+            self.assertNotEqual(eq.dir, eq_cp.dir)
+            self.assertEqual(eq_cp.dir, Dir.V)
+
+            eq = Eq(*args, Dir.V)
+            eq_cp = deepcopy(eq)
+            eq_cp.ovrwrt(True)
+            self.assertEqual(eq, eq_cp)
+            self.assertEqual(eq.idx, eq_cp.idx)
+            self.assertNotEqual(eq.dir, eq_cp.dir)
+            self.assertEqual(eq_cp.dir, Dir.O)
+
+            eq = Eq(*args, Dir.V)
+            eq_cp = deepcopy(eq)
+            eq_cp.ovrwrt(False)
+            self.assertEqual(eq, eq_cp)
+            self.assertEqual(eq.idx, eq_cp.idx)
+            self.assertEqual(eq.dir, eq_cp.dir)
+
+    def test_set_ovrwrt_L2O(self):
+        for args in ((["2"], []), ([Op("2", "2")], []),
+                     ([SUP, ["x"], ["a"]], []),
+                     ([SUP, ["x"], ["a"]], [1]), ([SUP, ["x"], ["a"]], [2]),
+                     ([PJUXT, ["d"], ["d"]], []), ([PJUXT, ["d"], ["d"]], [1]),
+                     ([PJUXT, ["d"], ["d"]], [2]),
+                     ([GOP,  [SUP, ["x"], ["a"]]], [1]),
+                     ([Op("O", "O", 1), [SUP, ["x"], ["a"]]], []),
+                     ([Op("O", "O", 1), [SUP, ["x"], ["a"]]], [1]),
+                     ([Op("O", "O", 1), [SUP, ["x"], ["a"]]], [1, 1]),
+                     ([Op("O", "O", 1), [SUP, ["x"], ["a"]]], [1, 2]),
+                     ([Op("O", "O", 1), [PJUXT, ["1"], ["2"]]], [1]),
+                     ([Op("O", "O", 1), [PJUXT, ["1"], ["2"]]], [1, 1]),
+                     ([Op("O", "O", 1), [PJUXT, ["1"], ["2"]]], [1, 2])):
+            eq = Eq(*args, Dir.L)
+            eq_cp = deepcopy(eq)
+            eq_cp.ovrwrt(True)
+            self.assertEqual(eq, eq_cp)
+            self.assertEqual(eq.idx, eq_cp.idx)
+            self.assertNotEqual(eq.dir, eq_cp.dir)
+            self.assertEqual(eq_cp.dir, Dir.O)
+
+    def test_set_ovrwrt_R2O(self):
+        for args in (([PJUXT, ["d"], ["d"]], [1]),
+                     ([PJUXT, ["d"], ["d"], ["d"]], [1]),
+                     ([PJUXT, ["d"], ["d"], ["d"]], [2]),
+                     ([Op("O", "O", 1), [PJUXT, ["1"], ["2"]]], [1, 1])):
+            eq = Eq(*args, Dir.R)
+            eq_cp = deepcopy(eq)
+            eq_cp.ovrwrt(True)
+            self.assertEqual(eq, eq_cp)
+            self.assertEqual(eq_cp.idx, eq.idx[:-1] + [eq.idx[-1] + 1])
+            self.assertEqual(eq_cp.dir, Dir.O)
+
+            db = (
+                ((["x"], []),
+                 ([PJUXT, ["x"], [TVOID]], [2])),
+
+                ((["x"], []),
+                 ([PJUXT, ["x"], [TVOID]], [2])),
+
+                (([SUP, ["x"], ["a"]], []),
+                 ([PJUXT, [SUP, ["x"], ["a"]], [TVOID]], [2])),
+
+                (([SUP, ["x"], ["a"]], [1]),
+                 ([SUP, [PJUXT, ["x"], [TVOID]], ["a"]], [1, 2])),
+
+                (([SUP, ["x"], ["a"]], [2]),
+                 ([SUP, ["x"], [PJUXT, ["a"], [TVOID]]], [2, 2])),
+
+                (([PJUXT, ["d"], ["d"]], []),
+                 ([PJUXT, ["d"], ["d"], [TVOID]], [3])),
+
+                (([PJUXT, ["d"], ["d"]], [2]),
+                 ([PJUXT, ["d"], ["d"], [TVOID]], [3])),
+
+                (([GOP, [SUP, ["x"], ["a"]]], [1]),
+                 ([PJUXT, [GOP, [SUP, ["x"], ["a"]]], [TVOID]], [2])),
+
+                (([Op("O", "O", 1), [SUP, ["x"], ["a"]]], []),
+                 ([PJUXT, [Op("O", "O", 1), [SUP, ["x"], ["a"]]],
+                          [TVOID]], [2])),
+
+                (([Op("O", "O", 1), [SUP, ["x"], ["a"]]], [1]),
+                 ([Op("O", "O", 1), [PJUXT, [SUP, ["x"], ["a"]],
+                                            [TVOID]]], [1, 2])),
+
+                (([Op("O", "O", 1), [SUP, ["x"], ["a"]]], [1, 1]),
+                 ([Op("O", "O", 1), [SUP, [PJUXT, ["x"], [TVOID]],
+                                          ["a"]]], [1, 1, 2])),
+
+                (([Op("O", "O", 1), [SUP, ["x"], ["a"]]], [1, 2]),
+                 ([Op("O", "O", 1), [SUP, ["x"],
+                                    [PJUXT, ["a"], [TVOID]]]], [1, 2, 2])),
+
+                (([Op("O", "O", 1), [PJUXT, ["x"], ["y"]]], [1]),
+                 ([Op("O", "O", 1), [PJUXT, ["x"], ["y"], [TVOID]]], [1, 3])),
+
+                (([Op("O", "O", 1), [PJUXT, ["x"], ["y"]]], [1, 2]),
+                 ([Op("O", "O", 1), [PJUXT, ["x"], ["y"], [TVOID]]], [1, 3]))
+            )
+
+            for args_in, args_out in db:
+                eq1 = Eq(*args_in, Dir.R)
+                eq2 = Eq(*args_out, Dir.O)
+                self.assertNotEqual(eq1, eq2)
+                self.assertNotEqual(eq1.idx, eq2.idx)
+
+                eq_test = deepcopy(eq1)
+                eq_test.ovrwrt(True)
+                self.assertEqual(eq_test, eq2)
+                self.assertEqual(eq_test.idx, eq2.idx)
+                self.assertEqual(eq_test.dir, Dir.O)
+
+                eq_test = deepcopy(eq2)
+                eq_test.ovrwrt(False)
+                self.assertEqual(eq_test, eq1)
+                self.assertEqual(eq_test.idx, eq1.idx)
+                self.assertEqual(eq_test.dir, Dir.R)
+
 
 
 if __name__ == '__main__':

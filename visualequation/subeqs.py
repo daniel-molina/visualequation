@@ -217,7 +217,9 @@ class Subeq(list):
             return "Subeq()"
         return "Subeq(" + self._repr_aux(self) + ")"
 
-    def srepr(self):
+    def srepr(self, listonly=False):
+        if listonly:
+            return self._srepr_aux(self)
         if len(self) == 0:
             return "Subeq()"
         return "Subeq(" + self._srepr_aux(self) + ")"
