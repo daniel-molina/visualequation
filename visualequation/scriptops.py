@@ -346,17 +346,17 @@ LOSCRIPT_OP2ID_DICT = {
 ID2LOSCRIPT_OP_DICT = {v: k for k, v in LOSCRIPT_OP2ID_DICT.items()}
 
 
-def init_script_pars(base: Subeq, type_):
+def _init_script_pars(base, type_):
     """Return a pars list with certain base and no scripts."""
     basepar = [copy.deepcopy(base)]
     if type_ == "setscript":
-        return basepar + [None]*2
+        return basepar + [None] * 2
     if type_ == "script":
-        return basepar + [None]*4
-    return basepar + [None]*6
+        return basepar + [None] * 4
+    return basepar + [None] * 6
 
 
-def get_script_pos_in_pars(pars, scriptdir, is_superscript):
+def _get_script_pos_in_pars(pars, scriptdir, is_superscript):
     """Return script position in a pars list. If script parameters are not
     compatible with pars, return -1.
 
@@ -367,9 +367,9 @@ def get_script_pos_in_pars(pars, scriptdir, is_superscript):
 
     Combinations which do not return -1:
 
-        *   len(args) == 3 and dir == 0
-        *   len(args) == 5 and dir in (-1, 1)
-        *   len(args) == 7 and dir in (-1, 0, 1)
+        *   len(args) == 3 (setscript) and scriptdir == 0
+        *   len(args) == 5 (script)    and scriptdir in (-1, 1)
+        *   len(args) == 7 (loscript)  and scriptdir in (-1, 0, 1)
 
     :param pars: A pars list of a script operator.
     :param scriptdir: 0 for under/over, -1 for lsub/lsup and 1 for sub/sup.
@@ -399,20 +399,20 @@ def get_script_pos_in_pars(pars, scriptdir, is_superscript):
             return -1
 
 
-def set_script_in_pars(pars, scriptdir, is_superscript, pspar):
-    pars[get_script_pos_in_pars(pars, scriptdir, is_superscript)] = pspar
+def _set_script_in_pars(pars, scriptdir, is_superscript, pspar):
+    pars[_get_script_pos_in_pars(pars, scriptdir, is_superscript)] = pspar
 
 
-def get_script_in_pars(pars, scriptdir, is_superscript):
+def _get_script_in_pars(pars, scriptdir, is_superscript):
     """Get current script in pars according to parameters.
 
     If script is not compatible with passed pars, -1 is returned.
     """
-    pos = get_script_pos_in_pars(pars, scriptdir, is_superscript)
+    pos = _get_script_pos_in_pars(pars, scriptdir, is_superscript)
     return pars[pos] if pos > 0 else -1
 
 
-def scriptop_pars2loscript_pars(pars):
+def _scriptop_pars2loscript_pars(pars):
     """Transform, if needed, pars to match the best loscript op.
 
     .. note::
@@ -428,7 +428,7 @@ def scriptop_pars2loscript_pars(pars):
         return pars
 
 
-def scriptop_pars2script_pars(pars):
+def _scriptop_pars2script_pars(pars):
     """Transform, if needed, pars to match the best script op.
 
     .. note::
@@ -449,7 +449,7 @@ def scriptop_pars2script_pars(pars):
         return [pars[0], None, pars[2], None, pars[5]]
 
 
-def scriptop_pars2setscript_pars(pars):
+def _scriptop_pars2setscript_pars(pars):
     """Transform, if needed, pars to match the best setscript op.
 
     .. note::
@@ -470,14 +470,13 @@ def scriptop_pars2setscript_pars(pars):
         return [pars[0], pars[2], pars[5]]
 
 
-def scriptop_pars2nonloscript_pars(pars):
+def _scriptop_pars2nonloscript_pars(pars):
     """Decide if setscript or script fit better certain pars and return the
     correspondent pars.
 
     .. note::
         This function only changes script positions being used, it does NOT
-        check whether the base is valid for certain type_. It does not care
-        about valid bases.
+        check whether the base is valid at all.
     """
     if len(pars) != 7:
         return pars
@@ -493,13 +492,20 @@ def do_require_loscript(base: Subeq):
     """Return whether a loscript operator is needed given its base."""
     # Valid for symbols/0-args ops and blocks.
     s = base[1] if base.is_gopb() else base
-    if hasattr(s[0], 'type_') and s[0].type_ in LOSCRIPT_BASE_TYPES:
-        return True
-    else:
-        return False
+    return hasattr(s[0], 'type_') and s[0].type_ in LOSCRIPT_BASE_TYPES
 
 
-def scriptblock2pars(subeq, index=None):
+def scriptop_type(op):
+    """Return the type_ of a script operator.
+
+    If it is not one of them, -1 is returned.
+    """
+    if hasattr(op, "type_") and op.type_ in SCRIPT_OP_TYPES:
+        return op.type_
+    return -1
+
+
+def _scriptblock2pars(subeq, index=None):
     """Return a list of arguments of the passed script-block.
 
     The list will have the format [base, lsub_arg, ..., sup_arg].
@@ -518,19 +524,19 @@ def scriptblock2pars(subeq, index=None):
         dictionary.
 
         .. note::
-            It is supposed that first argument of *s* (the base) is not
+            It is supposed that first parameter of *s* (the base) is not
             included in *opid*.
 
         :param opid: A tuple specifying the arguments used by the script
         operator, not considering the base.
         :param sub: A script-block (mandatory for this nested function).
-        :return: The args list of the script operator.
+        :return: The pars list of the script operator.
         """
         retv = [copy.deepcopy(sub[1])] + [None] * len(opid)
         par_pos = 2
         for i, valid in enumerate(opid):
             if valid:
-                retv[i+1] = copy.deepcopy(sub[par_pos])
+                retv[i + 1] = copy.deepcopy(sub[par_pos])
                 par_pos += 1
         return retv
 
@@ -548,8 +554,13 @@ def scriptblock2pars(subeq, index=None):
         return pars(LOSCRIPT_OP2ID_DICT[op], s)
 
 
-def valid_pars_pos(pars, flat_pos):
-    """Return the position of the n-th non-None par in pars."""
+def _valid_pars_pos(pars, flat_pos):
+    """Return the position of the n-th non-None par in pars.
+
+    .. note::
+
+        flat_pos == 0 would mean the base in the pars of a script-block.
+    """
     valid_pars_found = 0
     for pars_pos, pars_arg in enumerate(pars):
         if pars_arg is not None:
@@ -560,22 +571,29 @@ def valid_pars_pos(pars, flat_pos):
 
 
 def par_ord_from_pars_pos(pars, par_pos):
-    """Return the ordinal of a parameter of a operator given the pars
+    """Return the ordinal of a parameter of an operator given the pars
     representation of its block and the position in pars of the parameter.
+
+    .. note::
+
+        A *par_pos* refers to the base of a script-block it will be returned
+        value 1.
 
     :param pars: A pars list.
     :param par_pos: The position of the par in *pars* (first par pos is 0).
     :return: The parameter ordinal associted to *par_pos*.
     """
-    # Take into account the the leading op, which is not included in args
+    # Take into account the leading op, which is not included in args
     ordinal = 1
+    if pars[par_pos] is None:
+        raise ValueError("Asked parameter is None in the pars representation")
     for i in range(par_pos):
         if pars[i] is not None:
             ordinal += 1
     return ordinal
 
 
-def pars2scriptop(pars):
+def _pars2scriptop(pars):
     """Return the operator associated to a pars list.
 
     .. note::
@@ -596,28 +614,28 @@ def pars2scriptop(pars):
         ShowError('Wrong pars list in pars2scriptop: ' + repr(pars), True)
 
 
-def pars2scriptblock(pars):
+def _pars2scriptblock(pars):
     """Return a script block associated to certain pars list of any script op.
 
     .. note::
         If every argument, except possibly the base, is None, -1 is returned.
     """
-    op = pars2scriptop(pars)
+    op = _pars2scriptop(pars)
     if op is None:
         return -1
     else:
-        return [op] + [item for item in pars if item is not None]
+        return Subeq([op] + [item for item in pars if item is not None])
 
 
 def is_scriptop(elem, index=None):
     """Return whether an operator is an script op."""
     op = elem if index is None else elem(index)
-    return op.type_ in SCRIPT_OP_TYPES
+    return hasattr(op, "type_") and op.type_ in SCRIPT_OP_TYPES
 
 
-def remove_script(index, eq: Subeq):
-    """Remove pointed script from equation. Intentionally not accepting subeqs
-    because its supeq may need to be modified.
+def remove_script(index, eq):
+    """Remove pointed script from equation. Intentionally not accepting
+    stricts subeqs of an equation because its supeq may need to be modified.
 
      Downgrade script op or remove it, depending on whether other scripts
      remain. It may modify a script-supeq of the script-block.
@@ -650,11 +668,11 @@ def remove_script(index, eq: Subeq):
     """
     idx = Idx(index)
     supeq = eq.supeq(idx)
-    pars = scriptblock2pars(supeq)
+    pars = _scriptblock2pars(supeq)
     # Remove script.
     # Note: Subtracting 1 since indexing starts from 0 and real pars from 1
-    pars[valid_pars_pos(pars, idx[-1] - 1)] = None
-    new_block = pars2scriptblock(pars)
+    pars[_valid_pars_pos(pars, idx[-1] - 1)] = None
+    new_block = _pars2scriptblock(pars)
 
     old_scriptop_type = supeq[0].type_
     if new_block != -1:
@@ -676,30 +694,306 @@ def remove_script(index, eq: Subeq):
     ext_op_idx = supeqsupeq[0]
     # It is OK to call the following function even if the base would require
     # an operator of type_ loscript.
-    temp_ext_op_args = scriptblock2pars(supeqsupeq)
-    new_ext_op_args = scriptop_pars2loscript_pars(temp_ext_op_args)
-    supeqsupeq[:] = pars2scriptblock(new_ext_op_args)
+    temp_ext_op_args = _scriptblock2pars(supeqsupeq)
+    new_ext_op_args = _scriptop_pars2loscript_pars(temp_ext_op_args)
+    supeqsupeq[:] = _pars2scriptblock(new_ext_op_args)
 
     return idx[:-2]
 
 
-def update_scriptblock(nextbase, subeq, index=None):
-    """Update a script op if needed by providing the next base it will have.
+# Dictionaries providing a map between positions of pars before a change of
+# script-block and after it. SET_SCR means that the setscript is more external.
+SCR2SET_DICT = {0: 0, 2: 1, 4: 2}
+SCR2LO_DICT = {0: 0, 1: 1, 2: 3, 3: 4, 4: 6}
+SCR2SCR_SET_DICT = {0: (0, 0), 1: (1,), 2: (2,), 3: (3,), 4: (4,)}
+SCR2SET_SCR_DICT = {0: (0, 0), 1: (0, 1), 2: (0, 2), 3: (0, 3), 4: (0, 4)}
+SCR_SET2SET_SCR_DICT = {(0, 0): (0, 0),
+                   (1,): (0, 1), (0, 1): (1,), (2,): (0, 2),
+                   (3,): (0, 3), (0, 2): (2,), (4,): (0, 4)}
+SET2LO_DICT = {0: 0, 1: 2, 2: 5}
+SET2SCR_SET_DICT = {0: (0, 0), 1: (0, 1), 2: (0, 2)}
+SET2SET_SCR_DICT = {0: (0, 0), 1: (1, ), 2: (2, )}
+SCR_SET2LO_DICT = {
+    (0, 0): 0, (1,): 1, (0, 1): 2, (2,): 3, (3,): 4, (0, 2): 5, (4,): 6}
+SET_SCR2LO_DICT = {
+    (0, 0): 0, (0, 1): 1, (1,): 2, (0, 2): 3, (0, 3): 4, (2,): 5, (0, 4): 6}
 
-    It must be passed the script block or its index.
+SET2SCR_DICT = {v: k for k, v in SCR2SET_DICT.items()}
+LO2SCR_DICT = {v: k for k, v in SCR2LO_DICT.items()}
+SCR_SET2SCR_DICT = {v: k for k, v in SCR2SCR_SET_DICT.items()}
+SET_SCR2SCR_DICT = {v: k for k, v in SCR2SET_SCR_DICT.items()}
+SET_SCR2SCR_SET_DICT = {v: k for k, v in SCR_SET2SET_SCR_DICT.items()}
+LO2SET_DICT = {v: k for k, v in SET2LO_DICT.items()}
+SCR_SET2SET_DICT = {v: k for k, v in SET2SCR_SET_DICT.items()}
+SET_SCR2SET_DICT = {v: k for k, v in SET2SET_SCR_DICT.items()}
+LO2SCR_SET_DICT = {v: k for k, v in SCR_SET2LO_DICT.items()}
+LO2SET_SCR_DICT = {v: k for k, v in SET_SCR2LO_DICT.items()}
+
+
+def _map_refindex(sb_index, ref_index, ext_prev_pars, prev_pars, ext_next_pars,
+                  next_pars):
+    """Return the equivalent index of a subequation after a modification of a
+    script-block or a external-internal script-block.
+
+    Requirements:
+
+        This function is very flexible. The only requirement is that
+        *ref_index* must point to a real subeq before the operation.
+
+    In case that *ref_index* points to a script involved in the operation and
+    it does not exist after it, -1 is returned.
+
+    *sb_index* must be the index od the script-block that was effectively
+    updated. In the case of being two of them, the most external one.
+
+    *ext_\*_pars* and/or *ext_\*_pars* must be set to None if there are
+    external script block.
+    """
+    sbidx = Idx(sb_index)
+    refidx = Idx(ref_index)
+    start = refidx[:len(sbidx)]
+    tail = refidx[len(sbidx):]
+    if start != sbidx or not tail:
+        # It always includes the case ref_index == []
+        return refidx
+
+    # Note: tail has at least one element at this point
+    if ext_prev_pars is None:
+        prev_pos_key = _valid_pars_pos(prev_pars, tail.pop(0) - 1)
+    elif tail == [1] and ext_next_pars is None:
+        return start
+    elif tail == [1]:
+        return start + [1]
+    elif tail[0] == 1:
+        prev_pos_key = (0, _valid_pars_pos(prev_pars, tail[1] - 1))
+        del tail[0:2]
+    else:
+        prev_pos_key = (_valid_pars_pos(ext_prev_pars, tail.pop(0) - 1),)
+
+    def next_pos_value2l(next_pos_val):
+        # It can raise ValueError, which will be handled by the caller (below)
+        if ext_next_pars is None:
+            # This case assures that value is not a tuple
+            return [par_ord_from_pars_pos(next_pars, next_pos_val)]
+        elif len(next_pos_val) == 1:
+            return [par_ord_from_pars_pos(ext_next_pars, next_pos_val[0])]
+        else:
+            return [1, par_ord_from_pars_pos(next_pars, next_pos_val[1])]
+
+    def prev_pos_key2idx(key_dict=None):
+        """If argument is None it is understood that the mapping is the
+        identity function: pos -> pos"""
+        try:
+            if key_dict is None:
+                return start + next_pos_value2l(prev_pos_key) + tail
+            else:
+                return start + next_pos_value2l(key_dict[prev_pos_key]) + tail
+        except ValueError:
+            return -1
+
+    if ext_prev_pars is None and ext_next_pars is None:
+        if len(prev_pars) == len(next_pars):
+            return prev_pos_key2idx()
+        if len(prev_pars) == 3 and len(next_pars) == 5:
+            return prev_pos_key2idx(SET2SCR_DICT)
+        if len(prev_pars) == 3 and len(next_pars) == 7:
+            return prev_pos_key2idx(SET2LO_DICT)
+        if len(prev_pars) == 5 and len(next_pars) == 3:
+            return prev_pos_key2idx(SCR2SET_DICT)
+        if len(prev_pars) == 5 and len(next_pars) == 7:
+            return prev_pos_key2idx(SCR2LO_DICT)
+        if len(prev_pars) == 7 and len(next_pars) == 3:
+            return prev_pos_key2idx(LO2SET_DICT)
+        if len(prev_pars) == 7 and len(next_pars) == 5:
+            return prev_pos_key2idx(LO2SCR_DICT)
+
+    if ext_prev_pars and ext_next_pars is None:
+        if len(ext_prev_pars) == 3 and len(next_pars) == 3:
+            return prev_pos_key2idx(SET_SCR2SET_DICT)
+        if len(ext_prev_pars) == 3 and len(next_pars) == 5:
+            return prev_pos_key2idx(SET_SCR2SCR_DICT)
+        if len(ext_prev_pars) == 3 and len(next_pars) == 7:
+            return prev_pos_key2idx(SET_SCR2LO_DICT)
+        if len(ext_prev_pars) == 5 and len(next_pars) == 3:
+            return prev_pos_key2idx(SCR_SET2SET_DICT)
+        if len(ext_prev_pars) == 5 and len(next_pars) == 5:
+            return prev_pos_key2idx(SCR_SET2SCR_DICT)
+        if len(ext_prev_pars) == 5 and len(next_pars) == 7:
+            return prev_pos_key2idx(SCR_SET2LO_DICT)
+
+    if ext_prev_pars is None and ext_next_pars:
+        if len(prev_pars) == 3 and len(ext_next_pars) == 3:
+            return prev_pos_key2idx(SET2SET_SCR_DICT)
+        if len(prev_pars) == 3 and len(ext_next_pars) == 5:
+            return prev_pos_key2idx(SET2SCR_SET_DICT)
+        if len(prev_pars) == 5 and len(ext_next_pars) == 3:
+            return prev_pos_key2idx(SCR2SET_SCR_DICT)
+        if len(prev_pars) == 5 and len(ext_next_pars) == 5:
+            return prev_pos_key2idx(SCR2SCR_SET_DICT)
+        if len(prev_pars) == 7 and len(ext_next_pars) == 3:
+            return prev_pos_key2idx(LO2SET_SCR_DICT)
+        if len(prev_pars) == 7 and len(ext_next_pars) == 5:
+            return prev_pos_key2idx(LO2SCR_SET_DICT)
+
+    if len(ext_prev_pars) == len(ext_next_pars):
+        return prev_pos_key2idx()
+    if len(ext_prev_pars) == 3 and len(ext_next_pars) == 5:
+        return prev_pos_key2idx(SET_SCR2SCR_SET_DICT)
+    return prev_pos_key2idx(SCR_SET2SET_SCR_DICT)
+
+
+def _change2loscriptblock(eq: Subeq, index, refindex=None):
+    """Internal function.
+
+    eq(index) must be a real \*script-block.
+
+    If pointed subeq is a script/setscript-block, it checks whether the 1-level
+    supeq is a setscript/script-block so their scripts can be included in
+    the new loscriptblock.
+    """
+    idx = Idx(index)
+    refidx = Idx(refindex)
+    sb = eq(idx)
+    op_type = scriptop_type(sb[0])
+    if op_type == "loscript":
+        return refidx
+
+    inner_pars = _scriptblock2pars(sb)
+    sup = eq.supeq(index)
+    ext_pars = None
+    if sup != -2:
+        # Not including loscript type: it cannot have a \*script-block as base
+        if scriptop_type(sup[0]) not in (-1, op_type):
+            ext_pars = _scriptblock2pars(sup)
+            del idx[-1]
+
+    if op_type == "script":
+        # Subcases:
+        #   [script, ...] -> [loscript, ...]
+        #   [setscript, [script, ...], ...] -> [loscript, ...]
+        new_pars = [inner_pars[0], inner_pars[1], None, inner_pars[2],
+                    inner_pars[3], None, inner_pars[4]]
+        if ext_pars:
+            new_pars[2] = ext_pars[1]
+            new_pars[5] = ext_pars[2]
+    elif not ext_pars:
+        # Subcase: [setscript, ...] -> [loscript, ...]
+        new_pars = [inner_pars[0], None, inner_pars[1], None, None,
+                    inner_pars[2], None]
+    else:
+        # Subcase: [script, [setscript, ...], ...] -> [loscript, ...]
+        new_pars = [inner_pars[0], ext_pars[1], inner_pars[1], ext_pars[2],
+                    ext_pars[3], inner_pars[2], ext_pars[4]]
+
+    # Note: idx has previously been corrected if needed
+    eq(idx)[:] = _pars2scriptblock(new_pars)
+    return _map_refindex(idx, refidx, ext_pars, inner_pars, None, new_pars)
+
+
+def _change2nonloscriptblock(eq: Subeq, index, refindex=None):
+    """Internal function.
+
+    It does not check any supeq, so they are never combined with the new
+    scriptop. However, to avoid loosing scripts a loscript-block will be
+    converted in a script-block which base is a setscript-block if necesary.
+
+    Implementation note:
+
+        [loscript, ...] -> [script, [setscript, ...], ....]
+    """
+    idx = Idx(index)
+    refidx = Idx(refindex)
+    sb = eq(idx)
+    op_type = scriptop_type(sb[0])
+    if op_type != "loscript":
+        return refidx
+
+    pars = _scriptblock2pars(sb)
+    new_ext_pars = None
+    if pars[2] is None and pars[5] is None:
+        new_inner_pars = [pars[0], pars[1], pars[3], pars[4], pars[6]]
+        new_pars = new_inner_pars
+    elif [pars[1], pars[3], pars[4], pars[6]].count(None) == 4:
+        new_inner_pars = [pars[0], pars[2], pars[5]]
+        new_pars = new_inner_pars
+    else:
+        # Two script ops are needed to avoid missing any script
+        # -> Use the setscript op externally and script op internally
+        new_inner_pars = [pars[0], pars[2], pars[5]]
+        inner_sb = _pars2scriptblock(new_inner_pars)
+        new_ext_pars = [inner_sb, pars[1], pars[3], pars[4], pars[6]]
+        new_pars = new_ext_pars
+
+    sb[:] = _pars2scriptblock(new_pars)
+    return _map_refindex(idx, refidx, None, pars, new_ext_pars, new_inner_pars)
+
+
+def equivalent_op(op: Op, ext_op: Op = None):
+    """Return equivalent op, or op-pair, which is equivalent to passed
+    script op but of different script type: lo <-> nonlo.
+
+    A pair is returned. If only one script op is needed for the equivalence,
+    the second element is set to to None. Else, the first one is the internal
+    script op.
+
+    By the moment this function is used only for testing.
+
+    .. note::
+        The order is unusual for the arguments and output: firstly internal op,
+        secondly external op.
+    """
+    s = Subeq([op] + [["x"]] * op.n_args)
+    if op.type_ == "loscript":
+        _change2nonloscriptblock(s, [])
+        if is_scriptop(s[1][0]):
+            return s[1][0], s[0]
+        return s[0], None
+
+    if ext_op is None:
+        _change2loscriptblock(s, [])
+        return s[0], None
+
+    s = Subeq([ext_op] + [s] + [["x"]] * ext_op.n_args)
+    # Refer to the internal script-block, not the external
+    _change2loscriptblock(s, [1])
+    return s[0], None
+
+
+def update_scriptblock(nextbase, eq: Subeq, index=None, refindex=None):
+    """Update a script op if needed by providing the next base it will have.
+    Pointed subeq must be the script block which base is being modified.
+
+    A 1-level supeq which is a script-block will be collapsed if reasonable
+    when updating from nonlo to lo script-block. Similarly, a lo script-block
+    may be extended into a combination of script-block and setscript-block,
+    being the first one the most external.
 
     .. note::
         The script operator is updated independently of which is its current
-        base. That means that you are free to set the new base before or after
-        calling this function.
+        base, only value *nextbase* is considered.
+
+    Implementation note:
+
+        The main reasoning for the previous behaviour is to facilitate not
+        loose any information in simple operations, like navigating through
+        the equation. If that behavior results disturbing, it may be considered
+        to force the loss of scripts for this general function. Maybe writing
+        two versions is the best idea if both are useful.
     """
-    scriptblock = subeq(index)
-    args = scriptblock2pars(scriptblock)
-    if do_require_loscript(nextbase):
-        new_args = scriptop_pars2loscript_pars(args)
-    else:
-        new_args = scriptop_pars2nonloscript_pars(args)
-    scriptblock[:] = pars2scriptblock(new_args)
+    scriptblock = eq(index)
+    refidx = Idx(refindex)
+    op_type = scriptop_type(scriptblock[0])
+    if op_type == -1:
+        return refidx
+    if op_type == "loscript":
+        if do_require_loscript(Subeq(nextbase)):
+            return refidx
+        else:
+            # setscript/script (or a combination of both) -> loscript
+            return _change2nonloscriptblock(eq, index, refindex)
+    elif not do_require_loscript(Subeq(nextbase)):
+        return refidx
+    return _change2loscriptblock(eq, index, refindex)
 
 
 def _insert_initial_script(baseref, scriptdir, is_superscript, newscript):
@@ -714,11 +1008,11 @@ def _insert_initial_script(baseref, scriptdir, is_superscript, newscript):
         type_ = "setscript"
     else:
         type_ = "script"
-    pars = init_script_pars(baseref, type_)
+    pars = _init_script_pars(baseref, type_)
     # referred script is guaranteed to be valid in pars list because we
     # constructed pars with the correct type_
-    set_script_in_pars(pars, scriptdir, is_superscript, newscript)
-    baseref[:] = pars2scriptblock(pars)
+    _set_script_in_pars(pars, scriptdir, is_superscript, newscript)
+    baseref[:] = _pars2scriptblock(pars)
 
 
 def insert_script(index, eq: Subeq, scriptdir, is_superscript, newscript=None):
@@ -765,8 +1059,8 @@ def insert_script(index, eq: Subeq, scriptdir, is_superscript, newscript=None):
         _insert_initial_script(baseref, scriptdir, is_superscript, newscript)
         return idx[:] + [2]
 
-    pars = scriptblock2pars(supeq)
-    script_pos = get_script_pos_in_pars(pars, scriptdir, is_superscript)
+    pars = _scriptblock2pars(supeq)
+    script_pos = _get_script_pos_in_pars(pars, scriptdir, is_superscript)
     if script_pos == -1:
         # Case: Requested script is not compatible with current operator
         baseref = supeq[idx[-1]]
@@ -780,5 +1074,5 @@ def insert_script(index, eq: Subeq, scriptdir, is_superscript, newscript=None):
     # Case: Requested script is compatible with current script op type_ and
     # script is not present
     pars[script_pos] = newscript
-    supeq[:] = pars2scriptblock(pars)
+    supeq[:] = _pars2scriptblock(pars)
     return idx[:-1] + [par_ord_from_pars_pos(pars, script_pos)]
