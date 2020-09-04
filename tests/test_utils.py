@@ -128,10 +128,25 @@ class CompareEqs:
             self.add_many(*args, **kwargs)
 
     @staticmethod
-    def print_debug_message(l_pos, l_val, l_correct):
+    def print_debug_message(l_pos, l_val, l_correct, eqs1=None, eqs2=None,
+                            inversely=False):
+        def eq2text(eq):
+            eq_srepr = str(eq)
+            if len(eq_srepr) <= 72:
+                return "\n\033[93m>>>>>>>\033[0m " + "\033[1m" \
+                       + eq_srepr + "\033[0m"
+
+            return "\n\033[93m>>>>>>>\033[0m " + "\033[1m" \
+                   + eq_srepr[:32] + "..." + eq_srepr[-32:]+ "\033[0m"
+
+        if inversely:
+            eqs1, eqs2 = eqs2, eqs1
+
         print("\n\033[93m>>>>>>>\033[0m",
               "Position of offending equation:\033[93m", l_pos,
               "\033[0m(positions start at 0, not 1)"
+              "" if eqs1 is None else eq2text(eqs1[l_pos]),
+              "" if eqs2 is None else eq2text(eqs2[l_pos]),
               "\n\033[91m>>>>>>>\033[0m Offending value:\033[91m", l_val,
               "\n\033[92m>>>>>>>\033[0m Expected value: \033[92m",
               l_correct, "\033[0m")
@@ -146,46 +161,56 @@ class CompareEqs:
         # A function or method can modify an equation: do not allow that to
         # modify self.eq_in nor self.eq_out.
         if fun is None:
-            lhs = self.eq_in
-            rhs = self.eq_out
+            other_eqs = self.eq_in      # eqs not being compared
+            correct_eqs = self.eq_in    # eqs used as reference
+            calc_eqs = self.eq_out      # eqs being compared
         elif inversely:
-            lhs = self.eq_in
+            other_eqs = self.eq_out
+            correct_eqs = self.eq_in
             if is_method:
-                rhs = deepcopy(self.eq_out)
-                for eq in rhs:
+                calc_eqs = deepcopy(self.eq_out)
+                for eq in calc_eqs:
                     retvals.append(fun(eq))
             else:
-                rhs = list(map(fun, deepcopy(self.eq_out)))
+                calc_eqs = list(map(fun, deepcopy(self.eq_out)))
         else:
-            lhs = self.eq_out
+            other_eqs = self.eq_in
+            correct_eqs = self.eq_out
             if is_method:
-                rhs = deepcopy(self.eq_in)
-                for eq in rhs:
+                calc_eqs = deepcopy(self.eq_in)
+                for eq in calc_eqs:
                     retvals.append(fun(eq))
             else:
-                rhs = list(map(fun, deepcopy(self.eq_in)))
+                calc_eqs = list(map(fun, deepcopy(self.eq_in)))
 
         if not exclude_eq:
-            if lhs != rhs:
+            if correct_eqs != calc_eqs:
                 if debug:
-                    e = next((i, s) for i, s in enumerate(rhs) if s != lhs[i])
-                    self.print_debug_message(e[0], e[1], lhs[e[0]])
+                    e = next((i, s) for i, s in enumerate(calc_eqs)
+                             if s != correct_eqs[i])
+                    self.print_debug_message(e[0], e[1], correct_eqs[e[0]])
                 raise NonEqualEqError
 
-        if isinstance(lhs[0], EditableEq) and not exclude_idx:
-            if not all(map(lambda s, p: s.idx == p.idx, lhs, rhs)):
+        if isinstance(correct_eqs[0], EditableEq) and not exclude_idx:
+            if not all(map(lambda s, p: s.idx == p.idx,
+                           correct_eqs, calc_eqs)):
                 if debug:
-                    e = next((i, s) for i, s in enumerate(rhs) \
-                          if s.idx != lhs[i].idx)
-                    self.print_debug_message(e[0], e[1].idx, lhs[e[0]].idx)
+                    e = next((i, s) for i, s in enumerate(calc_eqs) \
+                          if s.idx != correct_eqs[i].idx)
+                    self.print_debug_message(e[0], e[1].idx,
+                                             correct_eqs[e[0]].idx,
+                                             other_eqs, correct_eqs, inversely)
                 raise NonEqualIdxError
 
-        if isinstance(lhs[0], EditableEq) and not exclude_dir:
-            if not all(map(lambda s, p: s.dir is p.dir, lhs, rhs)):
+        if isinstance(correct_eqs[0], EditableEq) and not exclude_dir:
+            if not all(map(lambda s, p: s.dir is p.dir,
+                           correct_eqs, calc_eqs)):
                 if debug:
-                    e = next((i, s) for i, s in enumerate(rhs) \
-                         if s.dir != lhs[i].dir)
-                    self.print_debug_message(e[0], e[1].dir, lhs[e[0]].dir)
+                    e = next((i, s) for i, s in enumerate(calc_eqs) \
+                         if s.dir != correct_eqs[i].dir)
+                    self.print_debug_message(e[0], e[1].dir,
+                                             correct_eqs[e[0]].dir,
+                                             other_eqs, correct_eqs, inversely)
                 raise NonEqualDirError
 
         if is_method and not exclude_retvals and self.expected_retvals:
@@ -194,7 +219,8 @@ class CompareEqs:
                     a = self.expected_retvals
                     b = retvals
                     e = next((i, v) for i, v in enumerate(b) if v != a[i])
-                    self.print_debug_message(e[0], e[1], a[e[0]])
+                    self.print_debug_message(e[0], e[1], a[e[0]],
+                                             other_eqs, correct_eqs, inversely)
                 raise NoneEqualReturnError
 
 
