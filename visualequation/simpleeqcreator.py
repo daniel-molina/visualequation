@@ -14,10 +14,14 @@
 from collections import namedtuple
 from copy import deepcopy
 
-from . import eqqueries
-from .symbols import utils
+from .subeqs import Subeq
+from .ops import *
+from .idx import Idx
 
-"""Module to create raw equations by adding new citizens."""
+
+"""Module to create equations by adding new subeqs as juxteds of a top-level
+juxt-block.
+"""
 
 
 class SimpleEqCreator:
@@ -26,12 +30,12 @@ class SimpleEqCreator:
     It is possible to initialize the equation during construction. Else,
     it will be initialized with the first call to extend.
 
-    If equation is not initialized, it is equal to VOID.
+    If equation is not initialized, it is equal to PVOID.
 
     If equation is only initialized, it is equal to initial eq.
 
-    Else, it is a JUXT-block including any inserted subeq which is not a
-    JUXT-block as a juxted. Juxteds of an inserted JUXT-block are integrated
+    Else, it is a PJUXT-block including any inserted subeq which is not a
+    JUXT-block as a juxted. Juxteds of an inserted PJUXT-block are integrated
     as juxteds of the whole eq.
 
     .. note::
@@ -43,9 +47,20 @@ class SimpleEqCreator:
 
     LogEntry = namedtuple('LogEntry', 'was_jb pos')
 
+    def _init(self, subeq):
+        self.eq[:] = deepcopy(subeq)
+        if len(subeq) > 1 and subeq.is_perm_jb():
+            self.log[:] = [self.LogEntry(True, 1)]
+            return [1]
+        else:
+            # Let us use a special value for position in this case
+            # It will be overwritten in the first call to extend, if any
+            self.log[:] = [self.LogEntry(False, -1)]
+            return []
+
     def __init__(self, subeq=None):
         self.log = []
-        self.eq = utils.void()
+        self.eq = Subeq(None)
         if subeq is not None:
             self._init(subeq)
 
@@ -56,27 +71,19 @@ class SimpleEqCreator:
         which inserted subeq you refer.
 
         .. note::
-            If inserted subeq was a JUXT-block, you must not pass *subeq_idx*
-            in ([], [0]) since the original juxt was probably discarded and
+            If inserted subeq was a PJUXT-block, you must not pass *subeq_idx*
+            in ([], [0]) since the original PJUXT was probably discarded and
             only one juxt op is present as the lop of the composed eq (this
             paragraph does not apply if insertion was a TJUXT-block.)
         """
         if self.log[subeq_entry].pos < 0:
-            return subeq_idx[:]
-        if not self.log[subeq_entry].was_jb:
-            return [self.log[subeq_entry].pos] + subeq_idx
-        return [self.log[subeq_entry].pos + subeq_idx[0] - 1] + subeq_idx[1:]
+            return Idx(subeq_idx[:])
 
-    def _init(self, subeq):
-        self.eq[:] = deepcopy(subeq)
-        if len(subeq) > 1 and subeq[0] == utils.JUXT:
-            self.log[:] = [self.LogEntry(True, 1)]
-            return [1]
-        else:
-            # Let us use a special value for position in this case
-            # It will be overwritten in next call to extend
-            self.log[:] = [self.LogEntry(False, -1)]
-            return []
+        if not self.log[subeq_entry].was_jb:
+            return Idx([self.log[subeq_entry].pos] + subeq_idx)
+
+        retidx = Idx([self.log[subeq_entry].pos + subeq_idx[0] - 1])
+        return retidx + subeq_idx[1:]
 
     def _update(self, subeq):
         """Extend current equation with subeq and update the log.
@@ -86,21 +93,21 @@ class SimpleEqCreator:
         # Marginal case: Set initial eq as a juxted if it was not a JUXT-block
         # self.eq will have only one juxted after this block, but it will have
         # at least 2 when this function returns
-        if self.eq[0] != utils.JUXT:
-            self.eq[:] = [utils.JUXT, deepcopy(self.eq)]
+        if not self.eq.is_perm_jb():
+            self.eq[:] = [PJUXT, deepcopy(self.eq)]
             self.log[:] = [self.LogEntry(False, 1)]
 
         # Add new subeq
         next_juxted_pos = len(self.eq)
-        if len(subeq) > 1 and subeq[0] == utils.JUXT:
+        if len(subeq) > 1 and subeq.is_perm_jb():
             self.log.append(self.LogEntry(True, next_juxted_pos))
             self.eq[:] += deepcopy(subeq[1:])
         else:
             self.log.append(self.LogEntry(False, next_juxted_pos))
             self.eq.append(deepcopy(subeq))
-        return [next_juxted_pos]
+        return Idx(next_juxted_pos)
 
-    def append(self, subeq, include_voids=True):
+    def append(self, subeq, accept_voids=True):
         """Extend current equation, or initialize it.
 
         Return:
@@ -129,8 +136,7 @@ class SimpleEqCreator:
             get_idx (with *subeq_entry* equal to 0) to obtain the correct
             value.
         """
-        if not include_voids \
-                and subeq in (utils.void(), utils.void(temp=True)):
+        if not accept_voids and subeq.is_void():
             return -1
 
         if not self.log:
@@ -139,14 +145,14 @@ class SimpleEqCreator:
         else:
             return self._update(subeq)
 
-    def extend(self, subeq_list, include_voids=True):
+    def extend(self, subeq_list, accept_voids=True):
         """Given a list of subeqs, append all of them.
 
         Return the number of inserted subeqs.
         """
         n_inserted_subeqs = 0
         for s in subeq_list:
-            if include_voids or s not in (utils.void(), utils.void(temp=True)):
+            if accept_voids or not s.is_void():
                 self.append(s)
                 n_inserted_subeqs += 1
         return n_inserted_subeqs
@@ -168,6 +174,6 @@ class SimpleEqCreator:
         """
         if not self.log:
             return 0
-        if self.eq[0] != utils.JUXT:
+        if not self.eq.is_perm_jb():
             return 1
         return len(self.eq) - 1

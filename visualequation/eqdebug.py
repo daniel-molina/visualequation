@@ -37,6 +37,9 @@ def checkeqstructure(bare_eq):
         if not isinstance(s, list):
             return "Subeq in " + str(idx) + " is not a list."
 
+        if len(s) == 0:
+            return "Subeq in " + str(idx) + " has no length."
+
         if len(s) == 1:
             if not (isinstance(s[0], str) or isinstance(s[0], Op)):
                 return "Subeq in " + str(idx) \
@@ -219,6 +222,10 @@ def checkeqrules(eq: Subeq, sel_idx: Idx, dir: Dir):
             return "Subeq in " + str(idx) + " is a GOP-par which lop-block " \
                    + "is itself a GOP-par."
 
+        # GOP-params
+        if not s.isb() and sup != -2 and sup[0] == GOP:
+            return "Subeq in " + str(idx) + " is a GOP-par and is a symbol."
+
         # TJUXTs
         if len(s) > 1 and s[0] == TJUXT:
             if sel_idx != idx:
@@ -232,9 +239,9 @@ def checkeqrules(eq: Subeq, sel_idx: Idx, dir: Dir):
             if sel_idx != idx:
                 return "There exists a TVOID which is not selected."
 
-        # pVOIDs
-        if s.is_void() and sup != -2 and sup.is_jb():
-            return "VOID in " + str(idx) + " is a juxted."
+        # PVOIDs
+        if s.is_pvoid() and sup != -2 and sup.is_jb():
+            return "PVOID in " + str(idx) + " is a juxted."
 
         # End part of helper which recursively checks parameters
         if len(s) > 1:
@@ -287,8 +294,8 @@ def debuginit(fun):
 
         msg = checkall(self, self.idx, self.dir)
         if msg != PASSED_MSG:
-            print(FAIL + "ERROR." + ENDC + "=======> " + BOLD + msg + ENDC)
-            return -99
+            print(FAIL + "ERROR " + ENDC + "=======> " + BOLD + msg + ENDC)
+            # A __init__ must not return something that is not None
         else:
             print("\nNo errors found in initial equation. OK")
 
@@ -322,7 +329,7 @@ def debug(fun):
 
         msg = checkall(self, self.idx, self.dir)
         if msg != PASSED_MSG:
-            print(FAIL + "ERROR. " + ENDC + "------> " + BOLD + msg + ENDC)
+            print(FAIL + "ERROR " + ENDC + "------> " + BOLD + msg + ENDC)
             return -99
         else:
             print("\nTests passed after call. OK")

@@ -633,6 +633,11 @@ def is_scriptop(elem, index=None):
     return hasattr(op, "type_") and op.type_ in SCRIPT_OP_TYPES
 
 
+def is_base(eq: Subeq, index):
+    """Returns whether pounted subeq is a base."""
+    return index != [] and index[-1] == 1 and is_scriptop(eq, index[:-1] + [0])
+
+
 def remove_script(index, eq):
     """Remove pointed script from equation. Intentionally not accepting
     stricts subeqs of an equation because its supeq may need to be modified.
@@ -961,7 +966,7 @@ def equivalent_op(op: Op, ext_op: Op = None):
 
 def update_scriptblock(nextbase, eq: Subeq, index=None, refindex=None):
     """Update a script op if needed by providing the next base it will have.
-    Pointed subeq must be the script block which base is being modified.
+    Pointed subeq must be the SCRIPT BLOCK which base is being modified.
 
     A 1-level supeq which is a script-block will be collapsed if reasonable
     when updating from nonlo to lo script-block. Similarly, a lo script-block

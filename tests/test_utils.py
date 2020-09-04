@@ -128,20 +128,23 @@ class CompareEqs:
             self.add_many(*args, **kwargs)
 
     @staticmethod
-    def print_debug_message(l_pos, l_val):
-        print("\n\033[91m>>>>>>>\033[0m",
-              "Position of offending equation:\033[91m", l_pos,
+    def print_debug_message(l_pos, l_val, l_correct):
+        print("\n\033[93m>>>>>>>\033[0m",
+              "Position of offending equation:\033[93m", l_pos,
               "\033[0m(positions start at 0, not 1)"
-              "\n\033[91m>>>>>>>\033[0m",
-              "Offending value:\033[93m", l_val, "\033[0m")
+              "\n\033[91m>>>>>>>\033[0m Offending value:\033[91m", l_val,
+              "\n\033[92m>>>>>>>\033[0m Expected value: \033[92m",
+              l_correct, "\033[0m")
 
     def assert_equality(self, fun=None, is_method=True, inversely=False,
                         exclude_eq=False, exclude_idx=False, exclude_dir=False,
-                        exclude_retvals=False, debug=False):
+                        exclude_retvals=False, debug=True):
         if not self.eq_in or not self.eq_out:
             raise NoEqError
 
         retvals = []
+        # A function or method can modify an equation: do not allow that to
+        # modify self.eq_in nor self.eq_out.
         if fun is None:
             lhs = self.eq_in
             rhs = self.eq_out
@@ -152,7 +155,7 @@ class CompareEqs:
                 for eq in rhs:
                     retvals.append(fun(eq))
             else:
-                rhs = list(map(fun, self.eq_out))
+                rhs = list(map(fun, deepcopy(self.eq_out)))
         else:
             lhs = self.eq_out
             if is_method:
@@ -160,13 +163,13 @@ class CompareEqs:
                 for eq in rhs:
                     retvals.append(fun(eq))
             else:
-                rhs = list(map(fun, self.eq_in))
+                rhs = list(map(fun, deepcopy(self.eq_in)))
 
         if not exclude_eq:
             if lhs != rhs:
                 if debug:
                     e = next((i, s) for i, s in enumerate(rhs) if s != lhs[i])
-                    self.print_debug_message(e[0], e[1])
+                    self.print_debug_message(e[0], e[1], lhs[e[0]])
                 raise NonEqualEqError
 
         if isinstance(lhs[0], EditableEq) and not exclude_idx:
@@ -174,7 +177,7 @@ class CompareEqs:
                 if debug:
                     e = next((i, s) for i, s in enumerate(rhs) \
                           if s.idx != lhs[i].idx)
-                    self.print_debug_message(e[0], e[1].idx)
+                    self.print_debug_message(e[0], e[1].idx, lhs[e[0]].idx)
                 raise NonEqualIdxError
 
         if isinstance(lhs[0], EditableEq) and not exclude_dir:
@@ -182,7 +185,7 @@ class CompareEqs:
                 if debug:
                     e = next((i, s) for i, s in enumerate(rhs) \
                          if s.dir != lhs[i].dir)
-                    self.print_debug_message(e[0], e[1].dir)
+                    self.print_debug_message(e[0], e[1].dir, lhs[e[0]].dir)
                 raise NonEqualDirError
 
         if is_method and not exclude_retvals and self.expected_retvals:
@@ -191,7 +194,7 @@ class CompareEqs:
                     a = self.expected_retvals
                     b = retvals
                     e = next((i, v) for i, v in enumerate(b) if v != a[i])
-                    self.print_debug_message(e[0], e[1])
+                    self.print_debug_message(e[0], e[1], a[e[0]])
                 raise NoneEqualReturnError
 
 
@@ -306,68 +309,68 @@ class CompareEqsTests(unittest.TestCase):
     def test_assert_equality(self):
         l1 = ([PJUXT, ["a"], ["f"], ["r"]], [PJUXT, ["a"], ["b"]])
         ce = CompareEqs(l1, l1)
-        ce.assert_equality(is_method=False)
+        ce.assert_equality(debug=False, is_method=False)
 
         l2 = ([PJUXT, ["a"], ["f"], ["r"]], [TJUXT, ["x"], ["y"]])
         ce = CompareEqs(l1, l2)
         with self.assertRaises(ValueError) as cm:
-            ce.assert_equality(is_method=False)
+            ce.assert_equality(debug=False, is_method=False)
         self.assertEqual(cm.exception.args[0], NON_EQUAL_EQ_MSG)
 
         f = lambda s: [PJUXT, s, ["o"]]
         ce = CompareEqs(l1, l2, force_subeq=True)
         with self.assertRaises(ValueError) as cm:
-            ce.assert_equality(f, is_method=False)
+            ce.assert_equality(f, debug=False, is_method=False)
         self.assertEqual(cm.exception.args[0], NON_EQUAL_EQ_MSG)
 
         ce = CompareEqs(l1, l1)
-        ce.assert_equality(is_method=False)
+        ce.assert_equality(debug=False, is_method=False)
 
         f = lambda eq: Eq(eq, [1])
-        ce.assert_equality(f, is_method=False, exclude_idx=True)
+        ce.assert_equality(f, debug=False, is_method=False, exclude_idx=True)
         with self.assertRaises(ValueError) as cm:
-            ce.assert_equality(f, is_method=False)
+            ce.assert_equality(f, debug=False, is_method=False)
         self.assertEqual(cm.exception.args[0], NON_EQUAL_IDX_MSG)
 
         f = lambda eq: Eq(eq, eq.idx, Dir.O)
-        ce.assert_equality(f, is_method=False, exclude_dir=True)
+        ce.assert_equality(f, debug=False, is_method=False, exclude_dir=True)
         with self.assertRaises(ValueError) as cm:
-            ce.assert_equality(f, is_method=False)
+            ce.assert_equality(f, debug=False, is_method=False)
         self.assertEqual(cm.exception.args[0], NON_EQUAL_DIR_MSG)
 
         # Inverses
         ce = CompareEqs(list(map(lambda s: Eq(s, None, Dir.R), l1)),
                         list(map(lambda s: Eq(s, None, Dir.L), l1)))
         f = lambda eq: Eq(eq, eq.idx, Dir.L)
-        ce.assert_equality(f, is_method=False)
-        ce.assert_equality(f, inversely=True, is_method=False,
+        ce.assert_equality(f, debug=False, is_method=False)
+        ce.assert_equality(f, debug=False, inversely=True, is_method=False,
                            exclude_dir=True)
         with self.assertRaises(ValueError) as cm:
-            ce.assert_equality(f, inversely=True, is_method=False)
+            ce.assert_equality(f, debug=False, inversely=True, is_method=False)
         self.assertEqual(cm.exception.args[0], NON_EQUAL_DIR_MSG)
 
         f = lambda eq: Eq(eq, eq.idx, Dir.R)
-        ce.assert_equality(f, inversely=True, is_method=False)
+        ce.assert_equality(f, debug=False, inversely=True, is_method=False)
         with self.assertRaises(ValueError) as cm:
-            ce.assert_equality(f, is_method=False)
+            ce.assert_equality(f, debug=False, is_method=False)
         self.assertEqual(cm.exception.args[0], NON_EQUAL_DIR_MSG)
 
     def test_assert_equality_methods(self):
         l1 = ([PJUXT, ["a"], ["f"], ["r"]], [PJUXT, ["a"], ["b"]])
         ce = CompareEqs([Eq(s, None, Dir.R) for s in l1],
                         [Eq()]*len(l1))
-        ce.assert_equality(Eq.default_eq)
+        ce.assert_equality(Eq.default_eq, debug=False)
 
         ce = CompareEqs([Eq(s, None, Dir.R) for s in l1],
                         [Eq()]*len(l1), [12]*len(l1))
-        ce.assert_equality(Eq.default_eq, exclude_retvals=True)
+        ce.assert_equality(Eq.default_eq, debug=False, exclude_retvals=True)
         with self.assertRaises(ValueError) as cm:
-            ce.assert_equality(Eq.default_eq)
+            ce.assert_equality(Eq.default_eq, debug=False)
         self.assertEqual(cm.exception.args[0], NON_EQUAL_RETURN_MSG)
 
         ce = CompareEqs([Eq(s, None, Dir.R) for s in l1],
                         [Eq()]*len(l1), [Eq.DEFAULT_METHOD_RETVAL]*len(l1))
-        ce.assert_equality(Eq.default_eq)
+        ce.assert_equality(Eq.default_eq, debug=False)
 
         db = (
             [[PJUXT, ["a"], ["f"], ["r"]], [PVOID], 1],
@@ -375,10 +378,10 @@ class CompareEqsTests(unittest.TestCase):
         )
         ce = CompareEqs(db)
         with self.assertRaises(ValueError) as cm:
-            ce.assert_equality(Eq.default_eq)
+            ce.assert_equality(Eq.default_eq, debug=False)
         self.assertEqual(cm.exception.args[0], NON_EQUAL_RETURN_MSG)
 
         for e in db:
             e[2] = Eq.DEFAULT_METHOD_RETVAL
         ce = CompareEqs(db)
-        ce.assert_equality(Eq.default_eq)
+        ce.assert_equality(Eq.default_eq, debug=False)
