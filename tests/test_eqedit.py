@@ -710,9 +710,11 @@ class EqEditTests(unittest.TestCase):
             (Eq([PJUXT, ["f"], ["s"]], [1], Dir.L), Eq(["s"], [], Dir.L)),
             (Eq([PJUXT, ["f"], ["s"]], [1], Dir.R), Eq(["s"], [], Dir.L)),
             (Eq([PJUXT, ["f"], ["s"]], [1], Dir.O), Eq(["s"], [], Dir.O)),
+            (Eq([PJUXT, [PVOID], ["s"]], [1], Dir.V), Eq(["s"], [], Dir.L)),
             (Eq([PJUXT, ["f"], ["s"]], [2], Dir.L), Eq(["f"], [], Dir.R)),
             (Eq([PJUXT, ["f"], ["s"]], [2], Dir.R), Eq(["f"], [], Dir.R)),
             (Eq([PJUXT, ["f"], ["s"]], [2], Dir.O), Eq(["f"], [], Dir.O)),
+            (Eq([PJUXT, ["f"], [PVOID]], [2], Dir.V), Eq(["f"], [], Dir.R)),
 
             (Eq([PJUXT, ["f"], ["s"], ["g"]], [1], Dir.L),
                 Eq([PJUXT, ["s"], ["g"]], [1], Dir.L)),
@@ -720,6 +722,8 @@ class EqEditTests(unittest.TestCase):
                 Eq([PJUXT, ["s"], ["g"]], [1], Dir.L)),
             (Eq([PJUXT, ["f"], ["s"], ["g"]], [1], Dir.O),
                 Eq([PJUXT, ["s"], ["g"]], [1], Dir.O)),
+            (Eq([PJUXT, [PVOID], ["s"], ["g"]], [1], Dir.V),
+                Eq([PJUXT, ["s"], ["g"]], [1], Dir.L)),
 
             (Eq([PJUXT, ["f"], ["s"], ["g"]], [2], Dir.L),
                 Eq([PJUXT, ["f"], ["g"]], [2], Dir.L)),
@@ -727,6 +731,8 @@ class EqEditTests(unittest.TestCase):
                 Eq([PJUXT, ["f"], ["g"]], [1], Dir.R)),
             (Eq([PJUXT, ["f"], ["s"], ["g"]], [2], Dir.O),
                 Eq([PJUXT, ["f"], ["g"]], [2], Dir.O)),
+            (Eq([PJUXT, ["f"], [PVOID], ["g"]], [2], Dir.V),
+                Eq([PJUXT, ["f"], ["g"]], [1], Dir.R)),
 
             (Eq([PJUXT, ["f"], ["s"], ["g"]], [3], Dir.L),
                 Eq([PJUXT, ["f"], ["s"]], [2], Dir.R)),
@@ -734,6 +740,8 @@ class EqEditTests(unittest.TestCase):
                 Eq([PJUXT, ["f"], ["s"]], [2], Dir.R)),
             (Eq([PJUXT, ["f"], ["s"], ["g"]], [3], Dir.O),
                 Eq([PJUXT, ["f"], ["s"]], [2], Dir.O)),
+            (Eq([PJUXT, ["f"], ["s"], [PVOID]], [3], Dir.V),
+                Eq([PJUXT, ["f"], ["s"]], [2], Dir.R)),
         )
 
         def f(eq):
@@ -1051,146 +1059,165 @@ class EqEditTests(unittest.TestCase):
         ce.assert_equality(f)
 
     def test_flat_lopblock(self):
-        # Method modifying equality will set index and dir of resulting to
-        # output value to facilitate the comparison (if output is not a flag)
+        # Method modifying equality will set index and dir of resulting eq to
+        # output value. Third value will be returned
         db = (
-            (Eq([PVOID]), Eq([PVOID]), -2),
-            (Eq(["a"]), Eq(["a"]), -2),
+            (Eq([PVOID]), Eq([PVOID]), False),
+            (Eq(["a"]), Eq(["a"]), False),
+            (Eq(["a"], [], Dir.L), Eq(["a"], [], Dir.L), False),
 
-            (Eq([SUP, ["x"], ["y"]]), Eq([SUP, ["x"], ["y"]]), -2),
+            (Eq([SUP, ["x"], ["y"]]), Eq([SUP, ["x"], ["y"]]), False),
             (Eq([SUP, ["x"], ["y"]], [1]), Eq([PJUXT, ["x"], ["y"]], [1]),
-                ([1], Dir.R)),
+                True),
+            (Eq([SUP, ["x"], ["y"]], [1], Dir.L),
+                Eq([PJUXT, ["x"], ["y"]], [1], Dir.L),
+                True),
             (Eq([SUP, ["x"], ["y"]], [2]), Eq([PJUXT, ["x"], ["y"]], [2]),
-                    ([2], Dir.R)),
+                True),
+            (Eq([SUP, ["x"], ["y"]], [2], Dir.L),
+                Eq([PJUXT, ["x"], ["y"]], [2], Dir.L),
+                True),
 
-            (Eq([PJUXT, ["x"], ["y"]]), Eq([PJUXT, ["x"], ["y"]]), -2),
+            (Eq([PJUXT, ["x"], ["y"]]), Eq([PJUXT, ["x"], ["y"]]), False),
             (Eq([PJUXT, ["x"], ["y"]], [1]), Eq([PJUXT, ["x"], ["y"]], [1]),
-                    -5),
+                    False),
             (Eq([PJUXT, ["x"], ["y"]], [2]), Eq([PJUXT, ["x"], ["y"]], [2]),
-                    -5),
+                    False),
 
-            (Eq([PJUXT, [PVOID], ["y"]]), Eq([PJUXT, [PVOID], ["y"]]), -2),
+            (Eq([PJUXT, [PVOID], ["y"]]), Eq([PJUXT, [PVOID], ["y"]]), False),
 
             (Eq([PJUXT, [PVOID], ["y"]], [1], Dir.V),
-                Eq(["y"], [], Dir.R),
-                ([], Dir.R)),
+                Eq(["y"], [], Dir.L),
+                True),
             (Eq([PJUXT, [PVOID], ["y"]], [2], Dir.R),
                 Eq(["y"], [], Dir.R),
-                ([], Dir.R)),
+                True),
             (Eq([PJUXT, [PVOID], ["y"]], [2], Dir.L),
                 Eq(["y"], [], Dir.L),
-                ([], Dir.L)),
+                True),
             (Eq([PJUXT, [PVOID], ["y"]], [1], Dir.O),
                 Eq(["y"], [], Dir.O),
-                ([], Dir.O)),
+                True),
 
             (Eq([PJUXT, ["x"], [PVOID]], [1], Dir.R),
                 Eq(["x"], [], Dir.R),
-                ([], Dir.R)),
+                True),
             (Eq([PJUXT, ["x"], [PVOID]], [1], Dir.L),
                 Eq(["x"], [], Dir.L),
-                ([], Dir.L)),
+                True),
             (Eq([PJUXT, ["x"], [PVOID]], [1], Dir.O),
                 Eq(["x"], [], Dir.O),
-                ([], Dir.O)),
+                True),
             (Eq([PJUXT, ["x"], [PVOID]], [2], Dir.V),
                 Eq(["x"], [], Dir.R),
-                ([], Dir.R)),
+                True),
 
-            (Eq([PJUXT, [PVOID], [PVOID]]), Eq([PJUXT, [PVOID], [PVOID]]), -2),
+            (Eq([PJUXT, [PVOID], [PVOID]]), Eq([PJUXT, [PVOID], [PVOID]]),
+                False),
 
             (Eq([PJUXT, [PVOID], [PVOID]], [1], Dir.V),
                 Eq([PVOID], [], Dir.V),
-                ([], Dir.V)),
+                True),
             (Eq([PJUXT, [PVOID], [PVOID]], [1], Dir.O),
                 Eq([PVOID], [], Dir.O),
-                ([], Dir.O)),
+                True),
             (Eq([PJUXT, [PVOID], [PVOID]], [2], Dir.V),
                 Eq([PVOID], [], Dir.V),
-                ([], Dir.V)),
+                True),
             (Eq([PJUXT, [PVOID], [PVOID]], [2], Dir.O),
                 Eq([PVOID], [], Dir.O),
-                ([], Dir.O)),
+                True),
 
             (Eq([PJUXT, ["x"], [TVOID]], [2], Dir.O),
                 Eq([PJUXT, ["x"], [TVOID]], [2], Dir.O),
-                ([2], Dir.O)),
+                False),
+
+             (Eq([PJUXT, ["x"], [PVOID], [TVOID]], [2], Dir.O),
+                Eq([PJUXT, ["x"], [TVOID]], [2], Dir.O),
+                True),
 
             (Eq([PJUXT, [SUP, ["x"], ["y"]], ["a"]], [1]),
-                Eq([PJUXT, [SUP, ["x"], ["y"]], ["a"]]), -2),
+                Eq([PJUXT, [SUP, ["x"], ["y"]], ["a"]], [1]),
+                False),
 
             (Eq([PJUXT, [SUP, ["x"], ["y"]], ["a"]], [1, 1]),
                 Eq([PJUXT, ["x"], ["y"], ["a"]], [1]),
-                ([1], Dir.R)),
+                True),
             (Eq([PJUXT, [SUP, ["x"], ["y"]], ["a"]], [1, 2]),
                 Eq([PJUXT, ["x"], ["y"], ["a"]], [2]),
-                ([2], Dir.R)),
+                True),
             (Eq([PJUXT, [SUP, ["x"], ["y"]], ["a"]], [1, 1], Dir.L),
                 Eq([PJUXT, ["x"], ["y"], ["a"]], [1], Dir.L),
-                ([1], Dir.L)),
+                True),
             (Eq([PJUXT, [SUP, ["x"], ["y"]], ["a"]], [1, 2], Dir.L),
                 Eq([PJUXT, ["x"], ["y"], ["a"]], [2], Dir.L),
-                ([2], Dir.L)),
+                True),
 
             (Eq([PJUXT, [SUP, [PVOID], ["y"]], ["a"]], [1, 1], Dir.V),
                 Eq([PJUXT, ["y"], ["a"]], [1], Dir.L),
-                ([1], Dir.L)),
+                True),
             (Eq([PJUXT, [SUP, [PVOID], ["y"]], ["a"]], [1, 2], Dir.R),
                 Eq([PJUXT, ["y"], ["a"]], [1], Dir.R),
-                ([1], Dir.R)),
+                True),
             (Eq([PJUXT, [SUP, [PVOID], ["y"]], ["a"]], [1, 2], Dir.L),
                 Eq([PJUXT, ["y"], ["a"]], [1], Dir.L),
-                ([1], Dir.L)),
+                True),
             (Eq([PJUXT, [SUP, [PVOID], ["y"]], ["a"]], [1, 2], Dir.O),
                 Eq([PJUXT, ["y"], ["a"]], [1], Dir.O),
-                ([1], Dir.O)),
+                True),
 
             (Eq([PJUXT, [SUP, ["x"], [PVOID]], ["a"]], [1, 1], Dir.R),
                 Eq([PJUXT, ["x"], ["a"]], [1], Dir.R),
-                ([1], Dir.R)),
+                True),
             (Eq([PJUXT, [SUP, ["x"], [PVOID]], ["a"]], [1, 1], Dir.L),
                 Eq([PJUXT, ["x"], ["a"]], [1], Dir.L),
-                ([1], Dir.L)),
+                True),
             (Eq([PJUXT, [SUP, ["x"], [PVOID]], ["a"]], [1, 1], Dir.O),
                 Eq([PJUXT, ["x"], ["a"]], [1], Dir.O),
-                ([1], Dir.O)),
+                True),
             (Eq([PJUXT, [SUP, ["x"], [PVOID]], ["a"]], [1, 2], Dir.V),
                 Eq([PJUXT, ["x"], ["a"]], [1]),
-                ([1], Dir.R)),
+                True),
 
             (Eq([PJUXT, [SUBSUP, ["x"], ["y"], ["z"]], ["a"]], [1, 1]),
                 Eq([PJUXT, ["x"], ["y"], ["z"], ["a"]], [1]),
-                ([1], Dir.R)),
+                True),
             (Eq([PJUXT, [SUBSUP, ["x"], ["y"], ["z"]], ["a"]], [1, 2]),
-                Eq([PJUXT, ["x"], ["y"], ["z"], ["a"]], [1]),
-                ([2], Dir.R)),
+                Eq([PJUXT, ["x"], ["y"], ["z"], ["a"]], [2]),
+                True),
             (Eq([PJUXT, [SUBSUP, ["x"], ["y"], ["z"]], ["a"]], [1, 3]),
-                Eq([PJUXT, ["x"], ["y"], ["z"], ["a"]], [1]),
-                ([3], Dir.R)),
+                Eq([PJUXT, ["x"], ["y"], ["z"], ["a"]], [3]),
+                True),
 
-            (Eq([LOSUP, [Op("O", "O", 1, "vs"), ["x"]], ["a"]], [1]),
-                Eq([PJUXT, [Op("O", "O", 1, "vs"), ["x"]], ["a"]], [1]),
-                ([1], Dir.R)),
-            (Eq([LOSUP, [Op("O", "O", 1, "vs"), ["x"]], ["a"]], [2]),
-                Eq([PJUXT, [Op("O", "O", 1, "vs"), ["x"]], ["a"]], [2]),
-                ([2], Dir.R)),
-            (Eq([LOSUP, [Op("O", "O", 1, "vs"), ["x"]], ["a"]], [1, 1]),
+            (Eq([LOSUP, [Op("O", "O", 1, "opconstruct"), ["x"]], ["a"]], [1]),
+                Eq([PJUXT, [Op("O", "O", 1, "opconstruct"), ["x"]], ["a"]],
+                    [1]),
+                True),
+            (Eq([LOSUP, [Op("O", "O", 1, "opconstruct"), ["x"]], ["a"]], [2]),
+                Eq([PJUXT, [Op("O", "O", 1, "opconstruct"), ["x"]], ["a"]],
+                    [2]),
+                True),
+            (Eq([LOSUP, [Op("O", "O", 1, "opconstruct"), ["x"]], ["a"]],
+                    [1, 1]),
                 Eq([SUP, ["x"], ["a"]], [1]),
-                ([1], Dir.R)),
+                True),
+            (Eq([SUP, [Op("f", "f", 1), [Op("O", "O", 1, "opconstruct"),
+                                          ["x"]]], ["a"]], [1, 1]),
+                Eq([LOSUP, [Op("O", "O", 1, "opconstruct"), ["x"]], ["a"]],
+                    [1]),
+                True),
+            (Eq([SUP, [OVER, [Op("f", "f", 1), [Op("O", "O", 1, "opconstruct"),
+                                          ["x"]]], ["g"]], ["a"]], [1, 1, 1]),
+                Eq([LOOVERSUP, [Op("O", "O", 1, "opconstruct"), ["x"]],
+                    ["g"], ["a"]], [1]),
+                True),
         )
-        #ce = CompareEqs(db)
-        ce = CompareEqs(
-            (
-                (Eq([LOSUP, [Op("O", "O", 1, "vs"), ["x"]], ["a"]], [1, 1]),
-                    Eq([SUP, ["x"], ["a"]], [1]),
-                    ([1], Dir.R)),
-            )
-        )
+
         def f(eq):
-            retval = eq._flat_lopblock()
-            if retval not in (-2, -5):
-                eq.idx[:], eq.dir = retval
-            return retval
+            retval = eq._flat_out()
+            eq.idx[:], eq.dir, cond = retval
+            return cond
+        ce = CompareEqs(db)
         ce.assert_equality(f)
 
 

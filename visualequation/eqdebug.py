@@ -168,6 +168,9 @@ def checkeqrules(eq: Subeq, sel_idx: Idx, dir: Dir):
         structures: checkstructure function should be called before calling
         this function.
     """
+    # Correct index type
+    if not isinstance(sel_idx, Idx):
+        return "Equation index has type different than Idx."
 
     # Non-applicable
     # if NONUOPS != (utils.GOP,):
@@ -216,6 +219,10 @@ def checkeqrules(eq: Subeq, sel_idx: Idx, dir: Dir):
         #     return "Lop in " + str(idx + [0]) \
         #            + "is a non-user op and accepts "\
         #            + str(s[0].n_args) + " != 1 parameters."
+
+        # Correct types
+        if not isinstance(s, (Subeq, Op, str)):
+            return "Element " + str(idx) + " is not of type Subeq, Op or str."
 
         # GOP-nesting
         if supsup != -2 and supsup[0] == GOP and sup[0] == GOP:
