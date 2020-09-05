@@ -128,26 +128,43 @@ class CompareEqs:
             self.add_many(*args, **kwargs)
 
     @staticmethod
-    def print_debug_message(l_pos, l_val, l_correct, eqs1=None, eqs2=None,
-                            inversely=False):
+    def print_debug_message(l_pos, l_val, l_correct, eqs1, eqs2, inversely):
+        terminal_cols = 79
+        arrow_len = 8
+
         def eq2text(eq):
             eq_srepr = str(eq)
-            if len(eq_srepr) <= 72:
-                return "\n\033[93m>>>>>>>\033[0m " + "\033[1m" \
-                       + eq_srepr + "\033[0m"
+            if isinstance(eq, EditableEq):
+                tail_str = str(eq.idx) + ", " + eq.dir.name
+            else:
+                tail_str = ""
 
-            return "\n\033[93m>>>>>>>\033[0m " + "\033[1m" \
-                   + eq_srepr[:32] + "..." + eq_srepr[-32:]+ "\033[0m"
+            others_len = 1  # ","
+            data_len = len(eq_srepr + tail_str)
+
+            free_space = terminal_cols - arrow_len - others_len - data_len
+            if free_space > 1:
+                retval = "\n\033[93m" + (arrow_len - 1) * ">" + "\033[0m "
+                retval += "\033[1m" + eq_srepr + "\033[0m"
+                if tail_str:
+                    retval += "," + free_space * " " + tail_str
+                return retval
+
+            retval = "\n\033[93m" + (arrow_len - 1) * ">" + "\033[0m "
+            retval += "\033[1m" + eq_srepr + "\033[0m\n"
+            if tail_str:
+                retval += (terminal_cols - len(tail_str)) * " " + tail_str
+            return retval
 
         if inversely:
             eqs1, eqs2 = eqs2, eqs1
 
         print("\n\033[93m>>>>>>>\033[0m",
               "Position of offending equation:\033[93m", l_pos,
-              "\033[0m(positions start at 0, not 1)"
-              "" if eqs1 is None else eq2text(eqs1[l_pos]),
-              "" if eqs2 is None else eq2text(eqs2[l_pos]),
-              "\n\033[91m>>>>>>>\033[0m Offending value:\033[91m", l_val,
+              "\033[0m(positions start at 0, not 1)",
+              eq2text(eqs1[l_pos]), eq2text(eqs2[l_pos]),
+              "\n\033[91m" + (arrow_len - 1) * ">" \
+              + "\033[0m Offending value:\033[91m", l_val,
               "\n\033[92m>>>>>>>\033[0m Expected value: \033[92m",
               l_correct, "\033[0m")
 
@@ -188,7 +205,8 @@ class CompareEqs:
                 if debug:
                     e = next((i, s) for i, s in enumerate(calc_eqs)
                              if s != correct_eqs[i])
-                    self.print_debug_message(e[0], e[1], correct_eqs[e[0]])
+                    self.print_debug_message(e[0], e[1], correct_eqs[e[0]],
+                                             other_eqs, correct_eqs, inversely)
                 raise NonEqualEqError
 
         if isinstance(correct_eqs[0], EditableEq) and not exclude_idx:

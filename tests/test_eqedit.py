@@ -148,21 +148,26 @@ class EqEditTests(unittest.TestCase):
 
         eq.idx[:] = []
         eq.dir = Dir.R
+        # Act on non-PVOID subeq when dir is R
         for args in ((), (["h"], -43), (0, -1), (0, [1]), (0, 1), (0, Idx(1))):
-            self.assertEqual(eq._safe_dir(0, *args), Dir.R)
             self.assertEqual(eq._safe_dir(1, *args), Dir.R)
             self.assertEqual(eq._safe_dir(-1, *args), Dir.L)
             self.assertEqual(eq._safe_dir(5, *args), Dir.R)
             self.assertEqual(eq._safe_dir(-5, *args), Dir.R)
+            with self.assertRaises(ValueError):
+                eq._safe_dir(0, *args)
 
         eq.dir = Dir.L
+        # Act on non-PVOID subeq when dir is L
         for args in ((), (["h"], -43), (0, -1), (0, [1]), (0, 1), (0, Idx(1))):
-            self.assertEqual(eq._safe_dir(0, *args), Dir.L)
             self.assertEqual(eq._safe_dir(1, *args), Dir.R)
             self.assertEqual(eq._safe_dir(-1, *args), Dir.L)
             self.assertEqual(eq._safe_dir(5, *args), Dir.L)
             self.assertEqual(eq._safe_dir(-5, *args), Dir.L)
+            with self.assertRaises(ValueError):
+                eq._safe_dir(0, *args)
 
+        # Act on PVOID in orimode
         for dir in (Dir.R, Dir.L, Dir.V):
             for args in((None, -1), (None, -88), (0, [2]), (0, -1)):
                 eq.dir = dir
@@ -174,6 +179,7 @@ class EqEditTests(unittest.TestCase):
                 self.assertEqual(eq._safe_dir(5, *args), Dir.V)
                 self.assertEqual(eq._safe_dir(-5, *args), Dir.V)
 
+        # ovmode
         eq.dir = Dir.O
         for idx in ([], [1], [2]):
             eq.idx[:] = idx
@@ -182,6 +188,16 @@ class EqEditTests(unittest.TestCase):
             self.assertEqual(eq._safe_dir(-1), Dir.O)
             self.assertEqual(eq._safe_dir(5), Dir.O)
             self.assertEqual(eq._safe_dir(-5), Dir.O)
+
+        # imode
+        eq.dir = Dir.I
+        for idx in ([], [1], [2]):
+            eq.idx[:] = idx
+            self.assertEqual(eq._safe_dir(0), Dir.I)
+            self.assertEqual(eq._safe_dir(1), Dir.I)
+            self.assertEqual(eq._safe_dir(-1), Dir.I)
+            self.assertEqual(eq._safe_dir(5), Dir.I)
+            self.assertEqual(eq._safe_dir(-5), Dir.I)
 
     def test_condtly_correct_scriptop(self):
         for eq in (Eq(["a"]), Eq(None)):
@@ -271,7 +287,7 @@ class EqEditTests(unittest.TestCase):
             n_ops = 0
 
     def test_condtly_correct_scriptop_refs(self):
-        """This test just evidences a limitation of the method."""
+        # This test just evidences the need of using refindex when calling it
         eq = Eq([SUP, ["x"], ["y"]])
         eq2 = deepcopy(eq)
         ref1 = eq[1]
@@ -709,39 +725,54 @@ class EqEditTests(unittest.TestCase):
         db = (
             (Eq([PJUXT, ["f"], ["s"]], [1], Dir.L), Eq(["s"], [], Dir.L)),
             (Eq([PJUXT, ["f"], ["s"]], [1], Dir.R), Eq(["s"], [], Dir.L)),
-            (Eq([PJUXT, ["f"], ["s"]], [1], Dir.O), Eq(["s"], [], Dir.O)),
             (Eq([PJUXT, [PVOID], ["s"]], [1], Dir.V), Eq(["s"], [], Dir.L)),
+            # Unintended use (TVOIDs should be used)
+            (Eq([PJUXT, ["f"], ["s"]], [1], Dir.O), Eq(["s"], [], Dir.O)),
+            (Eq([PJUXT, ["f"], ["s"]], [1], Dir.I), Eq(["s"], [], Dir.I)),
+
             (Eq([PJUXT, ["f"], ["s"]], [2], Dir.L), Eq(["f"], [], Dir.R)),
             (Eq([PJUXT, ["f"], ["s"]], [2], Dir.R), Eq(["f"], [], Dir.R)),
-            (Eq([PJUXT, ["f"], ["s"]], [2], Dir.O), Eq(["f"], [], Dir.O)),
             (Eq([PJUXT, ["f"], [PVOID]], [2], Dir.V), Eq(["f"], [], Dir.R)),
+            # Unintended use (TVOIDs should be used)
+            (Eq([PJUXT, ["f"], ["s"]], [2], Dir.O), Eq(["f"], [], Dir.O)),
+            (Eq([PJUXT, ["f"], ["s"]], [2], Dir.I), Eq(["f"], [], Dir.I)),
 
             (Eq([PJUXT, ["f"], ["s"], ["g"]], [1], Dir.L),
                 Eq([PJUXT, ["s"], ["g"]], [1], Dir.L)),
             (Eq([PJUXT, ["f"], ["s"], ["g"]], [1], Dir.R),
                 Eq([PJUXT, ["s"], ["g"]], [1], Dir.L)),
-            (Eq([PJUXT, ["f"], ["s"], ["g"]], [1], Dir.O),
-                Eq([PJUXT, ["s"], ["g"]], [1], Dir.O)),
             (Eq([PJUXT, [PVOID], ["s"], ["g"]], [1], Dir.V),
                 Eq([PJUXT, ["s"], ["g"]], [1], Dir.L)),
+            (Eq([PJUXT, ["f"], ["s"], ["g"]], [1], Dir.O),
+                Eq([PJUXT, ["s"], ["g"]], [1], Dir.O)),
+            (Eq([PJUXT, ["f"], ["s"], ["g"]], [1], Dir.I),
+                Eq([PJUXT, ["s"], ["g"]], [1], Dir.I)),
+
 
             (Eq([PJUXT, ["f"], ["s"], ["g"]], [2], Dir.L),
                 Eq([PJUXT, ["f"], ["g"]], [2], Dir.L)),
             (Eq([PJUXT, ["f"], ["s"], ["g"]], [2], Dir.R),
                 Eq([PJUXT, ["f"], ["g"]], [1], Dir.R)),
+            (Eq([PJUXT, ["f"], [PVOID], ["g"]], [2], Dir.V),
+             Eq([PJUXT, ["f"], ["g"]], [1], Dir.R)),
             (Eq([PJUXT, ["f"], ["s"], ["g"]], [2], Dir.O),
                 Eq([PJUXT, ["f"], ["g"]], [2], Dir.O)),
-            (Eq([PJUXT, ["f"], [PVOID], ["g"]], [2], Dir.V),
-                Eq([PJUXT, ["f"], ["g"]], [1], Dir.R)),
+            (Eq([PJUXT, ["f"], [PVOID], ["g"]], [2], Dir.I),
+                Eq([PJUXT, ["f"], ["g"]], [2], Dir.I)),
+
 
             (Eq([PJUXT, ["f"], ["s"], ["g"]], [3], Dir.L),
                 Eq([PJUXT, ["f"], ["s"]], [2], Dir.R)),
             (Eq([PJUXT, ["f"], ["s"], ["g"]], [3], Dir.R),
                 Eq([PJUXT, ["f"], ["s"]], [2], Dir.R)),
-            (Eq([PJUXT, ["f"], ["s"], ["g"]], [3], Dir.O),
-                Eq([PJUXT, ["f"], ["s"]], [2], Dir.O)),
             (Eq([PJUXT, ["f"], ["s"], [PVOID]], [3], Dir.V),
                 Eq([PJUXT, ["f"], ["s"]], [2], Dir.R)),
+            # Unintended use
+            (Eq([PJUXT, ["f"], ["s"], ["g"]], [3], Dir.O),
+                Eq([PJUXT, ["f"], ["s"]], [2], Dir.O)),
+            (Eq([PJUXT, ["f"], ["s"], [PVOID]], [3], Dir.I),
+                Eq([PJUXT, ["f"], ["s"]], [2], Dir.I)),
+
         )
 
         def f(eq):
@@ -752,6 +783,7 @@ class EqEditTests(unittest.TestCase):
         ce.assert_equality(f)
 
     def test_vanish_juxted_gopb(self):
+        # README!!
         # Passed function will:
         #   1. Set self.idx to self.idx[:-1] before the call
         #   2. Set self.idx and self.dir according to return value.
@@ -762,6 +794,8 @@ class EqEditTests(unittest.TestCase):
                 Eq(["s"], [], Dir.L)),
             (Eq([PJUXT, [GOP, [SUP, ["x"], ["y"]]], ["s"]], [1, 1], Dir.O),
                 Eq(["s"], [], Dir.O)),
+            (Eq([PJUXT, [GOP, [SUP, ["x"], ["y"]]], ["s"]], [1, 1], Dir.I),
+                Eq(["s"], [], Dir.I)),
 
             (Eq([PJUXT, [GOP, [SUP, ["x"], ["y"]]], ["2"], ["3"]],
                     [1, 1], Dir.L),
@@ -772,6 +806,9 @@ class EqEditTests(unittest.TestCase):
             (Eq([PJUXT, [GOP, [SUP, ["x"], ["y"]]], ["2"], ["3"]],
                     [1, 1], Dir.O),
                 Eq([PJUXT, ["2"], ["3"]], [1], Dir.O)),
+            (Eq([PJUXT, [GOP, [SUP, ["x"], ["y"]]], ["2"], ["3"]],
+                    [1, 1], Dir.I),
+                Eq([PJUXT, ["2"], ["3"]], [1], Dir.I)),
 
             (Eq([PJUXT, ["1"], [GOP, [SUP, ["x"], ["y"]]], ["3"]],
                     [2, 1], Dir.L),
@@ -782,6 +819,9 @@ class EqEditTests(unittest.TestCase):
             (Eq([PJUXT, ["1"], [GOP, [SUP, ["x"], ["y"]]], ["3"]],
                     [2, 1], Dir.O),
                 Eq([PJUXT, ["1"], ["3"]], [2], Dir.O)),
+            (Eq([PJUXT, ["1"], [GOP, [SUP, ["x"], ["y"]]], ["3"]],
+                    [2, 1], Dir.I),
+                Eq([PJUXT, ["1"], ["3"]], [2], Dir.I)),
 
             (Eq([PJUXT, ["1"], ["2"], [GOP, [SUP, ["x"], ["y"]]]],
                     [3, 1], Dir.L),
@@ -789,9 +829,13 @@ class EqEditTests(unittest.TestCase):
             (Eq([PJUXT, ["1"], ["2"], [GOP, [SUP, ["x"], ["y"]]]],
                     [3, 1], Dir.R),
                 Eq([PJUXT, ["1"], ["2"]], [2], Dir.R)),
+            # Unintended use
             (Eq([PJUXT, ["1"], ["2"], [GOP, [SUP, ["x"], ["y"]]]],
                     [3, 1], Dir.O),
                 Eq([PJUXT, ["1"], ["2"]], [2], Dir.O)),
+            (Eq([PJUXT, ["1"], ["2"], [GOP, [SUP, ["x"], ["y"]]]],
+                    [3, 1], Dir.I),
+                Eq([PJUXT, ["1"], ["2"]], [2], Dir.I)),
         )
 
         def f(eq):
@@ -801,6 +845,26 @@ class EqEditTests(unittest.TestCase):
             return retval
         ce = CompareEqs(db)
         ce.assert_equality(f)
+
+        # final-idx-checker
+        db = (
+            (Eq([PJUXT, ["1"], [GOP, [SUP, ["a"], ["b"]]]], [1]),
+                Eq([GOP, [SUP, ["a"], ["b"]]], [1], Dir.L)),
+            (Eq([PJUXT, [GOP, [SUP, ["a"], ["b"]]], ["2"]], [2]),
+                Eq([GOP, [SUP, ["a"], ["b"]]], [1])),
+            (Eq([PJUXT, ["1"], [GOP, [SUP, ["a"], ["b"]]], ["3"]], [1]),
+                Eq([PJUXT, [GOP, [SUP, ["a"], ["b"]]], ["3"]], [1, 1], Dir.L)),
+            (Eq([PJUXT, ["1"], [GOP, [SUP, ["a"], ["b"]]], ["3"]], [3]),
+             Eq([PJUXT, ["1"], [GOP, [SUP, ["a"], ["b"]]]], [2, 1])),
+        )
+        def f(eq):
+            retval = eq._vanish_juxted()
+            eq.idx[:], eq.dir = retval
+            return retval
+
+        ce = CompareEqs(db)
+        ce.assert_equality(f)
+
 
     def test_vanish_juxted_relpos(self):
         # Passed function will set self.idx and self.dir according to return
@@ -818,6 +882,8 @@ class EqEditTests(unittest.TestCase):
                 Eq([PJUXT, ["f"], ["g"]], [1], Dir.R)),
             (Eq([PJUXT, ["f"], ["s"], ["g"]], [1], Dir.O),
                 Eq([PJUXT, ["f"], ["g"]], [1], Dir.O)),
+            (Eq([PJUXT, ["f"], ["s"], ["g"]], [1], Dir.I),
+                Eq([PJUXT, ["f"], ["g"]], [1], Dir.I)),
 
             (Eq([PJUXT, ["f"], ["s"], ["g"]], [2], Dir.L),
                 Eq([PJUXT, ["f"], ["s"]], [2], Dir.L)),
@@ -825,6 +891,8 @@ class EqEditTests(unittest.TestCase):
                 Eq([PJUXT, ["f"], ["s"]], [2], Dir.R)),
             (Eq([PJUXT, ["f"], ["s"], ["g"]], [2], Dir.O),
                 Eq([PJUXT, ["f"], ["s"]], [2], Dir.O)),
+            (Eq([PJUXT, ["f"], ["s"], ["g"]], [2], Dir.I),
+                Eq([PJUXT, ["f"], ["s"]], [2], Dir.I)),
         )
 
         def f(eq):
@@ -846,6 +914,8 @@ class EqEditTests(unittest.TestCase):
              Eq([PJUXT, ["s"], ["g"]], [1], Dir.R)),
             (Eq([PJUXT, ["f"], ["s"], ["g"]], [2], Dir.O),
              Eq([PJUXT, ["s"], ["g"]], [1], Dir.O)),
+            (Eq([PJUXT, ["f"], ["s"], ["g"]], [2], Dir.I),
+             Eq([PJUXT, ["s"], ["g"]], [1], Dir.I)),
 
             (Eq([PJUXT, ["f"], ["s"], ["g"]], [3], Dir.L),
              Eq([PJUXT, ["f"], ["g"]], [2], Dir.L)),
@@ -853,6 +923,8 @@ class EqEditTests(unittest.TestCase):
              Eq([PJUXT, ["f"], ["g"]], [2], Dir.R)),
             (Eq([PJUXT, ["f"], ["s"], ["g"]], [3], Dir.O),
              Eq([PJUXT, ["f"], ["g"]], [2], Dir.O)),
+            (Eq([PJUXT, ["f"], ["s"], ["g"]], [3], Dir.I),
+             Eq([PJUXT, ["f"], ["g"]], [2], Dir.I)),
         )
 
         def f(eq):
@@ -898,6 +970,13 @@ class EqEditTests(unittest.TestCase):
             (Eq([PVOID]), Eq([PVOID]), ([], Dir.V, False)),
             (Eq(["a"]), Eq(["a"]), ([], Dir.R, False)),
             (Eq(["a"], [], Dir.L), Eq(["a"], [], Dir.L), ([], Dir.L, False)),
+
+            (Eq([Op("j", "j", 1), ["x"]]),
+                Eq(["x"]),
+                ([], Dir.R, True)),
+            (Eq([PJUXT, [Op("j", "j", 1), ["x"]], ["y"]], [1]),
+                Eq([PJUXT, ["x"], ["y"]], [1]),
+                ([1], Dir.R, True)),
 
             (Eq([SUP, ["x"], ["y"]]),
                 Eq([PJUXT, ["x"], ["y"]]),
@@ -1048,6 +1127,31 @@ class EqEditTests(unittest.TestCase):
                     ["b"]], [1], Dir.L),
                 Eq([SUP, [OVER, ["x"], ["a"]], ["b"]], [1, 1], Dir.L),
                 ([1, 1], Dir.L, True)),
+
+            # GOPs
+            (Eq([GOP, [PJUXT, ["a"], ["b"]]]),
+                Eq([GOP, [PJUXT, ["a"], ["b"]]], [1]),
+                ([1], Dir.R, False)),
+            (Eq([GOP, [PJUXT, ["a"], ["b"]]], [1]),
+                Eq([GOP, [PJUXT, ["a"], ["b"]]], [1]),
+                ([1], Dir.R, False)),
+            (Eq([GOP, [SUP, ["a"], ["b"]]]),
+                Eq([GOP, [PJUXT, ["a"], ["b"]]], [1]),
+                ([1], Dir.R, True)),
+            (Eq([GOP, [SUP, ["a"], ["b"]]], [1]),
+                Eq([GOP, [PJUXT, ["a"], ["b"]]], [1]),
+                ([1], Dir.R, True)),
+            (Eq([PJUXT, ["1"], [GOP, [SUP, ["a"], ["b"]]]], [2]),
+                Eq([PJUXT, ["1"], [GOP, [PJUXT, ["a"], ["b"]]]], [2, 1]),
+                ([2, 1], Dir.R, True)),
+            (Eq([PJUXT, ["1"], [GOP, [SUP, ["a"], ["b"]]]], [2, 1]),
+                Eq([PJUXT, ["1"], [GOP, [PJUXT, ["a"], ["b"]]]], [2, 1]),
+                ([2, 1], Dir.R, True)),
+
+            # final-idx-checker
+            (Eq([Op("g", "g", 1), [GOP, [SUP, ["a"], ["b"]]]], []),
+                Eq([GOP, [SUP, ["a"], ["b"]]], [1]),
+                ([1], Dir.R, True)),
         )
         ce = CompareEqs(db)
         def f(self):
@@ -1058,7 +1162,7 @@ class EqEditTests(unittest.TestCase):
 
         ce.assert_equality(f)
 
-    def test_flat_lopblock(self):
+    def test_flat_out(self):
         # Method modifying equality will set index and dir of resulting eq to
         # output value. Third value will be returned
         db = (
@@ -1210,6 +1314,37 @@ class EqEditTests(unittest.TestCase):
                                           ["x"]]], ["g"]], ["a"]], [1, 1, 1]),
                 Eq([LOOVERSUP, [Op("O", "O", 1, "opconstruct"), ["x"]],
                     ["g"], ["a"]], [1]),
+                True),
+
+            # GOPs
+            (Eq([GOP, [SUP, ["a"], ["b"]]], [1]),
+                Eq([GOP, [SUP, ["a"], ["b"]]], [1]),
+                False),
+
+            (Eq([PJUXT, ["a"], [GOP, [SUP, ["a"], ["b"]]]], [1]),
+                Eq([PJUXT, ["a"], [GOP, [SUP, ["a"], ["b"]]]], [1]),
+                False),
+            (Eq([PJUXT, ["a"], [GOP, [SUP, ["a"], ["b"]]]], [2, 1]),
+                Eq([PJUXT, ["a"], [GOP, [SUP, ["a"], ["b"]]]], [2, 1]),
+                False),
+            # Intentionally selected a GOP-block.
+            # flat_out must work even if False is returned
+            (Eq([PJUXT, ["a"], [GOP, [SUP, ["a"], ["b"]]]], [2]),
+                Eq([PJUXT, ["a"], [GOP, [SUP, ["a"], ["b"]]]], [2, 1]),
+                False),
+
+            (Eq([Op("O", "O", 2), ["a"], [GOP, [SUP, ["a"], ["b"]]]],
+                    [1]),
+                Eq([PJUXT, ["a"], [GOP, [SUP, ["a"], ["b"]]]], [1]),
+                True),
+            (Eq([Op("O", "O", 2), ["a"], [GOP, [SUP, ["a"], ["b"]]]],
+                    [2, 1,]),
+                Eq([PJUXT, ["a"], [GOP, [SUP, ["a"], ["b"]]]], [2, 1]),
+             True),
+            # Intentionally selected GOP-block.
+            (Eq([Op("O", "O", 2), ["a"], [GOP, [SUP, ["a"], ["b"]]]],
+                    [2]),
+                Eq([PJUXT, ["a"], [GOP, [SUP, ["a"], ["b"]]]], [2, 1]),
                 True),
         )
 

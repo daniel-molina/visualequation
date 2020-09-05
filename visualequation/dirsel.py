@@ -15,7 +15,8 @@ from enum import Enum, unique
 
 @unique
 class Dir(Enum):
-    L = -1   # left direction
-    R = 1    # rigth direction
-    O = 0    # overwrite mode
-    V = 2    # overwrite direction in normal mode
+    I = -2  # insertion mode
+    L = -1  # left direction in oriented insertion mode
+    V = 0   # overwrite direction in oriented insertion mode
+    R = 1   # right direction in oriented insertion mode
+    O = 2   # overwrite mode

@@ -172,16 +172,19 @@ def checkeqrules(eq: Subeq, sel_idx: Idx, dir: Dir):
     if not isinstance(sel_idx, Idx):
         return "Equation index has type different than Idx."
 
+    if not isinstance(dir, Dir):
+        return "Direction has type different than Dir."
+
     # Non-applicable
     # if NONUOPS != (utils.GOP,):
     #     return "Current implementation considers GOP, and only GOP, as " \
     #            "non-user op."
 
     s_sel = eq(sel_idx)
-    if s_sel.is_tvoid() and dir is not Dir.O:
-        return "A TVOID is selected and direction is not O."
-    if s_sel.is_pvoid() and dir not in (Dir.O, Dir.V):
-        return "A PVOID is selected and direction is not O nor V."
+    if s_sel.is_tvoid() and dir not in (Dir.O, Dir.I):
+        return "A TVOID is selected and direction is not O nor I."
+    if s_sel.is_pvoid() and dir not in (Dir.O, Dir.V, Dir.I):
+        return "A PVOID is selected and direction is not O, V nor I."
     if not s_sel.is_pvoid() and dir is Dir.V:
         return "A non-PVOID subeq is selected and direction is V."
 
