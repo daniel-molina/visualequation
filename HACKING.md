@@ -289,41 +289,66 @@ superquation of SB in S.
 >   *   It is not part of the parameter of any other operator of the block.
 
 ## Implementation of an equation in Visual Equation
- 
-### Basic ideas
 
-*   Symbols are 1-elem lists containing a string (list is needed to keep
-    references to it).
+*   Symbols are 1-elem lists (the surrounding list is needed to keep
+    references).
 *   Operators are objects with some properties.
 *   Blocks are lists which first element is the lop and the rest are lop-pars.
 *   Arguments are not represented.
 
 Since an equation must always be valid, when an operator is introduced and the 
 user has not yet specified one or more of its parameters, they are set to the
-special symbol *VOID*, which is represented by a small square when displayed.
+special symbol *PVOID*, which is represented by a small square when displayed.
 
-To give special properties to symbols, 0-args operators are considered in the
-implementation, but they are considered symbols in this formalism.
+> **Note**: Because the essential part of the symbols is the element that the
+> list contains, variables which hold the value of these element will be named
+> with the common name used for the symbol in this documentation even if it
+> would be more consistent to reserve the name for the full symbol. For
+> example, a PVOID will be represented as \[PVOID\].
+
+To give special properties to symbols, the 1-elems of lists representing a
+symbols are 0-args operators. However, operators are never identified with
+symbols in the formalism.
+
+The **class** used for operators has the following properties:
+
+*   A string holding the **name** of the operator. Must be composed its
+    common noun in lowercase. When they are represented, uppercase is used
+    but, e.g., lowercase is more suitable for filenames.
+*   A string indicating its **LaTeX code** and the position of its arguments.
+*   The **number of arguments** it has. Default value: 0.
+*   A string, possibly empty, which can be used to indicate a **special 
+    property** of the operator. In the future it may be replaced by a list of
+    tags. Default value: "".
+*   A Unicode representation of the operator.
+
+To debug the code and write examples, strings are also allowed instead of
+0-args ops, being its content its latex code.
 
 > **Example**:
 >
-> Here is equation of previous examples in the implementation format:
+> Here is the equation of previous examples using the implemented format,
+> using a string
 >
-> `[Sum, ["1"], [Prod, ["2"], ["3"]]]`
-
-
-The **string** of a symbol is its LaTeX code.
-
-The **class** of the object of an operator has the following properties:
-
-*   The number of arguments it has.
-*   A string indicating its LaTeX code and the position of its arguments.
-*   A string that is usually empty but can be used to indicate a special 
-    property of an operator. (++)
-
-> **Note**:
+> `[SUM, ["1"], [PROD, ["2"], ["3"]]]`
 >
-> In the future an operator may include a list of tags.
+> where lops are supposed to be defined, for example as
+>
+>   `SUM = Op("sum", "{0}+{1}", 2); PROD = Op("prod", "{0}*{1}", 2)`
+>
+> Note that SUM and PROD as 2-args ops are useful for examples because they are
+> common operators in the real world, but in practice they are implemented
+> as symbols in visual equation.
+>
+> First equation is shorter than the following valid code which specify the
+> symbols in the standard way
+>
+> `[SUM, [Op("one", "1")], [PROD, [Op("two", "2")], [Op("three", "3")]]]`
+>
+> If symbols (or more precisely, elems contained in 1-elem lists representing
+> symbols) have been previously defined similarly to SUM and PROD
+>
+> `[SUM, [ONE], [PROD, [TWO], [THREE]]]`
 
 ## Selection rules
 
@@ -691,36 +716,42 @@ the same input is sent to the program. The are:
 
 They can be switched with INSERT or C-\[.
 
-### Normal mode
+### Oriented insertion mode (orimode)
 
 Characteristics:
 
-*   Subequations are selected asymmetrically, unless selected subeq is a VOID.
-*   The rounded part of the selection is called the **cursor**.
+*   Subequations are selected in an oriented fashion, unless selected subeq
+    is a PVOID.
 *   If the cursor is to the right of selected subeq, direction of selection is
-    RDIR. If the cursor is to the left of the selected subeq, direction is
-    LDIR. If a VOID is selected, direction is VDIR.
-*   Insertion is done to the right of the cursor if RDIR or LDIR. If VDIR,
+    R. If the cursor is to the left of the selected subeq, direction is
+    L. If a PVOID is selected, direction is V.
+*   Insertion is done to the right of the cursor if R or L. If V,
     insertion is really a replacement in which the VOID is substituted.
-*   DEL remove the subeq to the right of the cursor, if it exists.
-*   BACKSPACE remove subeq to the left of the cursor, if it exists.
+*   DEL deletes the subeq to the right of the cursor, if it exists.
+*   BACKSPACE deletes subeq to the left of the cursor, if it exists.
+*   In both cases deleted subeq mey be the selected one depending on the
+    orientation.
 
 If DEL or BACKSPACE do not find a juxted to delete and selection is the par of
-a lop, the lop-block is flatted.
+a lop L, L-block is flatted.
 
-### Overwrite mode
+### Insertion mode (imode)
 
-*   Subequations are selected symmetrically. We do not use the concept of
-    cursor in this mode, but it would cover the whole selection if considering 
-    the equivalent mode in a graphical text editor. Direction is always called
-    ODIR.
-*   Insertion always substitute current selection.
-*   DEL removes the selected subequation.
-*   BACKSPACE removes the subeq to the left (honoring graphical texts editors
+*   Selections cannot be oriented. The cursor is always to the left of 
+    selection. Direction is always the same, I.
+*   Insertions introduce subeqs to the right of the cursor.
+*   DEL deletes selection.
+*   BACKSPACE deletes the subeq to the left (honoring graphical texts editors
     but not readline's behaviour of replacing with a white space).
+
     
 If DEL or BACKSPACE do not find a juxted to delete and selection is the par of
-a lop, the lop-block is flatted.
+a lop L, L-block is flatted.
+
+### Overwrite mode (ovmode)
+
+*   It is equivalent to *insert mode* except for insertions.
+*   Inserted subeqs substitute selection.
 
 ### Basic operations
 
@@ -738,8 +769,9 @@ CONTROL, ALT and SHIFT.
 > Key bindings requiring CONTROL and ALT being selected are noted by M-C-x.
 >
 > In each particular case, instead of "x", the correspondent key which 
-> completes the key binding will be used. For example, C-s if it is required
-> to press CONTROL and then the S key without releasing the CONTROL key.
+> completes the key binding will be used. Lower case will be always used. For
+> example, C-s if it is required to press CONTROL and then the S key without
+> releasing the CONTROL key.
 
 A limited amount of usual key bindings used in graphical applications that
 collide with readline's default key bindings and/or philosophy are honored
@@ -827,16 +859,21 @@ Select first 1-ulevel usubeq of selection if it exists and is selectable.
    
 ##### SHIFT-UP (or M-p)
 Select superequation if it exists. Do not change dir unless selection was VDIR.
-In that case, RDIR is set.
+In that case, RDIR is set. It respects the GUI notion of using SHIFT to
+extend current selection.
 
 ##### SHIFT-DOWN (or M-n)
 Select last 1-ulevel usubeq of selection if it exists and is selectable.
+It respects the GUI notion of using SHIFT to shrink current selection.
 
 #### Manipulation of subequations
 
 ##### Cut (C-x)
  
 Remove selected subeq and save/overwrite VE's clipboard.
+ 
+This shortcut is a an important key combination for emacs and readline, but by
+default the desktop tradition will be respected.
 
 ##### Copy (C-c)
 
@@ -854,7 +891,7 @@ Undo last manipulation, if it exists.
 
 Redo last manipulation, if it exists.
 
-#### Complete (TAB, C-i)
+#### Complete (TAB)
 #### Possible Completions (SHIFT-TAB, M-?)
 
 Allow to specify graphically a new form for current selection. More details
@@ -877,14 +914,14 @@ selection selected.
 No direction is changed.
 
 Marginal cases:
-*   If selection is an artificial VOID due to overwrite mode, swap the
-    closest two mates to the left if they exist. Else, do nothing.
+*   If selection is a TVOID, swap the closest two mates to the left if they 
+    exist. Else, do nothing.
 *   If there is no mate to the left, do nothing.
 
 ##### C-DEL
 
 If selection is a juxted (or combination of them) remove all the juxted of
-the same juxt-block from the cursor to the right if not ODIR. If ODIR,
+the same juxt-block to the right of the cursor in orimode. If not orimode,
 remove selection and juxteds to the right.
 
 If selection is not a juxted, it is equivalent to press DEL.
@@ -892,8 +929,7 @@ If selection is not a juxted, it is equivalent to press DEL.
 ##### C-BACKSPACE
 
 If selection is a juxted (or combination of them) remove all the juxted of
-the same juxt-block from the cursor to the left if not ODIR. If ODIR, remove
-juxteds to the left of selection.
+the same juxt-block to the left of the cursor
 
 If selection is not a juxted, it is equivalent to press BACKSPACE.
 
@@ -902,12 +938,12 @@ If selection is not a juxted, it is equivalent to press BACKSPACE.
 A group makes strict usubeqs of selected block not selectable. It has no
 effect if selection is a symbol.
 
-> **Note**: A soft group (see below) which is grouped will become again a soft
-> group if it is ungrouped.
+> **Note**: If an existing soft group (see below) is grouped, it will become
+> again a soft group if it is ungrouped.
 
 ##### Create/Delete soft groups (SHIFT-RETURN)
 
-Soft groups are juxt-blocks that are juxteds of another juxt-block.
+A soft group is a juxt-block that is a juxted of another juxt-block.
 
 To create a soft-group, select together the desired juxteds by using
 SHIFT-LEFT or SHIFT-RIGHT before using they key binding.
@@ -928,12 +964,12 @@ SHIFT-LEFT or SHIFT-RIGHT before using they key binding.
 
 > **Notes**:
 >
->*  Every C-x key binding of this section inserts a symbol.
->*  Every M-x key binding of this section inserts an operator with all their
+>*  Every C-... key binding of this section inserts a symbol.
+>*  Every M-... key binding of this section inserts an operator with all their
 >*  parameters set to VOID.
->*  Every M-C-x key binding of this section replaces selection with an operator
->   which has as first parameter the previous selection and any other it may
->   have set to VOID.
+>*  Every M-C-... key binding of this section replaces selection with an
+>   operator which has as first parameter the previous selection and any
+>   other it may have set to VOID.
 >*  Several keystrokes of the same key binding produce different
 >   symbols/operators of common characteristics.
 
@@ -947,14 +983,16 @@ Reduce a region "without" subequations or delete it.
 > **Temporal note**: They will be implemented as characters, not operators.
 > That way there is no need of a non-user op.
 ##### Subscripts and superscripts (DOWN and UP)
-Include an empty sub/super-script or go to it if it already script. The
-sub/super-script will be placed to the left if LDIR or to the right in any
-other case.
+Include an empty sub/super-script or select it if it is already a script.
+
+The sub/super-script will be the one to the left if dir is L or I. If dir is O,
+selection will be replaced with a PVOID at the same time the script is
+selected (and created if it did not exist).
 
 TAB an SHIFT-TAB after DOWN or UP will modify the position of the recently
 created script, including under/over-sets (see below).
 ##### Undersets and oversets (C-DOWN and C-UP)
-Add an under/over-set (a subequation just under/over another subequation).
+Add an under/over-set (a subequation exactly under/over another subequation).
 
 TAB an SHIFT-TAB after DOWN or UP will modify the position of the recently
 created under/over-set, including scripts.
@@ -970,11 +1008,10 @@ First time is a square root, next time is generic.
 > **Mnemonic**: '%' looks like a generic root with its arguments, only
 > lacking part of the main glyph.
 ##### Modify subequation with a variant (M-@)
-Full details to be defined. In Advanced operations it is possible to find more
- info.
+Full details to be defined.  There is more info in *Advanced operations*.
  
 > **Mnemonic**: '@' looks like a modified form of 'a'.
-##### Sumatory (C-+, M-+, M-C-+)
+##### Summatory (C-+, M-+, M-C-+)
 Sucesive keystrokes of the operator versions modify the number and position of
 the args.
 ##### Productory (C-*, M-\*, M-C-\*)
@@ -1402,7 +1439,7 @@ delete-horizontal-space with every negative numerical argument until reaching
 the last supeq. A numerical argument -n smaller than -1 acts from the n-ulevel
 usupeq of selection to the 1-ulevel usupeq of selection.
 
-##### create-horizontal-space (C-\)
+##### create-horizontal-space (C-\\)
 It is not a readline command.
 
 If selection is a block, replace every symbol of selected block by a VOID
@@ -1442,17 +1479,22 @@ in requested direction, previous insertion is not modified.
 
 #### Completing
 WIP!!!
-##### complete (TAB, C-i)
+##### complete (TAB)
 Display a a graphical window equivalent to the one for building the selected
 subequation when pressing a button in the pannel. If it is not available,
 use possible-completions instead.
+
+> **Note**: > C-i is used by default for 'complete' command in readline. C-i
+> is used in VE as an alternative to C-x.
 ##### possible-completions (SHIFT-TAB, M-?)
 List in a graphical window the possible variations of the selected subequation.
 You can choose one using the cursor keys and accept it with RETURN, C-j or C-m.
 To abort, use ESC or a key binding associated to abort. There will be window
 buttons too.
 ##### insert-completions
-Not used. M-* used to introduce productories instead.
+Not used.
+
+Default keybing, M-*, is used to introduce productories.
 ##### menu-complete (M-@)
 Replace selection with a variation. Repeated execution of the command steps
 through the list of possible variations, inserting each match in turn. At
@@ -1460,18 +1502,17 @@ the end of the list, the original subequation is restored. An argument of
 n moves n positions forward in the list of possible variations. A negative
 argument moves backward through the list.
 
-> **Note**: C-i is used by default for complete command in readline while this
-one is unbounded.
+> **Note**: This command is unbounded by default in readline.
 
 #### Keyboard Macros
 WIP!!!
-##### start-kbd-macro (C-c ()
+##### start-kbd-macro (C-i ()
 Begin saving the characters  typed  into  the  current  keyboard
 macro.
-##### end-kbd-macro (C-c ))
+##### end-kbd-macro (C-i ))
 Stop saving the characters typed into the current keyboard macro
 and store the definition.
-##### call-last-kbd-macro (C-c e)
+##### call-last-kbd-macro (C-i e)
 Re-execute the last keyboard macro defined, by making the  char‐
 acters  in  the  macro  appear  as  if  typed  at  the keyboard.
 print-last-kbd-macro () Print the last keyboard macro defined in
@@ -1479,16 +1520,16 @@ a format suitable for the inputrc file.
 
 #### Miscellaneous
 WIP!!!
-##### re-read-init-file (C-c C-r)
+##### re-read-init-file (C-i C-r)
 Read a configuration file.
-##### abort (C-g, M-C-g, C-c C-g)
+##### abort (C-g, M-C-g, C-i C-g)
 Abort the current editing command. It does not ring.
 ##### do-uppercase-version (M-a, M-b, M-x, ...)
 If  the  metafied character x is lowercase, run the command that
 is bound to the corresponding uppercase character.
 ##### prefix-meta (ESC)
 Metafy the next character typed.
-##### undo (C-_, C-c C-u)
+##### undo (C-_, C-i C-u)
 Incremental undo, separately remembered for each equation.
 ##### revert-line (M-r)
 Undo all changes made to this equation.  This is like executing
@@ -1497,7 +1538,7 @@ initial state.
 ##### set-mark (C-@, M-SPACE)
 Set the mark to the point.  If a numeric argument  is  supplied,
 the mark is set to that position.
-##### exchange-point-and-mark (C-c C-c)
+##### exchange-point-and-mark (C-i C-i, C-i C-x)
 Swap  the  point  with the mark.  The current cursor position is
 set to the saved position, and the old cursor position is  saved
 as the mark.
