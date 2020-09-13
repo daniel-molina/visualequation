@@ -11,7 +11,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import copy
+from copy import deepcopy
+import re
 
 from .subeqs import Subeq
 from .idx import Idx
@@ -80,7 +81,7 @@ LOLSUBSUBSUP = Op("lolsubsubsup",
 LOLSUBLSUPSUP = Op("lolsublsupsup",
                    r'\sideset{{^{{{2}}}_{{{1}}}}}{{^{{{3}}}}}{{{0}}}', 4,
                    'loscript')
-LOSUBLSUPSUP = Op("LOSUBLSUPSUP",
+LOSUBLSUPSUP = Op("losublsupsup",
                   r'\sideset{{^{{{2}}}}}{{^{{{3}}}_{{{1}}}}}{{{0}}}', 4,
                   'loscript')
 LOLSUBSUBLSUPSUP \
@@ -348,7 +349,7 @@ ID2LOSCRIPT_OP_DICT = {v: k for k, v in LOSCRIPT_OP2ID_DICT.items()}
 
 def _init_script_pars(base, type_):
     """Return a pars list with certain base and no scripts."""
-    basepar = [copy.deepcopy(base)]
+    basepar = [deepcopy(base)]
     if type_ == "setscript":
         return basepar + [None] * 2
     if type_ == "script":
@@ -532,11 +533,11 @@ def _scriptblock2pars(subeq, index=None):
         :param sub: A script-block (mandatory for this nested function).
         :return: The pars list of the script operator.
         """
-        retv = [copy.deepcopy(sub[1])] + [None] * len(opid)
+        retv = [deepcopy(sub[1])] + [None] * len(opid)
         par_pos = 2
         for i, valid in enumerate(opid):
             if valid:
-                retv[i + 1] = copy.deepcopy(sub[par_pos])
+                retv[i + 1] = deepcopy(sub[par_pos])
                 par_pos += 1
         return retv
 
@@ -634,77 +635,12 @@ def is_scriptop(elem, index=None):
 
 
 def is_base(eq: Subeq, index):
-    """Returns whether pounted subeq is a base."""
+    """Returns whether pointed subeq is a base."""
     return index != [] and index[-1] == 1 and is_scriptop(eq, index[:-1] + [0])
 
 
-def remove_script(index, eq):
-    """Remove pointed script from equation. Intentionally not accepting
-    stricts subeqs of an equation because its supeq may need to be modified.
-
-     Downgrade script op or remove it, depending on whether other scripts
-     remain. It may modify a script-supeq of the script-block.
-
-    .. note::
-        *idx* MUST point to an argument of a script operator DIFFERENT than
-        the base.
-
-    .. note::
-        If script op is removed, the base is placed in the same position in
-        which the script op-block was except in the case detailed below:
-
-    Special rule:
-
-        If:
-
-            *   The only script of a script operator is requested to be
-                removed, and
-            *   Script op had type_ == "loscript", and
-            *   Script-block was the base of another more external script
-                operator (setscript or script),
-
-        then, the internal script operator is removed and the external script
-        operator is changed to the equivalent one of type_ "loscript".
-
-    :param eq: An equation.
-    :param idx: The index in *eq* of the script.
-    :return: Position of a script block or bare base. Useful because it points
-    to the external script op in the special case.
-    """
-    idx = Idx(index)
-    supeq = eq.supeq(idx)
-    pars = _scriptblock2pars(supeq)
-    # Remove script.
-    # Note: Subtracting 1 since indexing starts from 0 and real pars from 1
-    pars[_valid_pars_pos(pars, idx[-1] - 1)] = None
-    new_block = _pars2scriptblock(pars)
-
-    old_scriptop_type = supeq[0].type_
-    if new_block != -1:
-        # Case: Downgrade script op
-        supeq[:] = new_block
-        return idx[:-1]
-
-    # Case: Remove op
-    supeq[:] = pars[0]
-
-    # Was script-block a loscript-block and base of another script-block?
-    if old_scriptop_type != "loscript" or len(idx) < 2 or idx[-2] != 1:
-        return idx[:-1]
-    supeqsupeq = eq(idx[:-2])
-    if not is_scriptop(supeqsupeq[0]):
-        return idx[:-1]
-
-    # Subcase: Adapt external script op if internal script was loscript
-    ext_op_idx = supeqsupeq[0]
-    # It is OK to call the following function even if the base would require
-    # an operator of type_ loscript.
-    temp_ext_op_args = _scriptblock2pars(supeqsupeq)
-    new_ext_op_args = _scriptop_pars2loscript_pars(temp_ext_op_args)
-    supeqsupeq[:] = _pars2scriptblock(new_ext_op_args)
-
-    return idx[:-2]
-
+def is_script(eq: Subeq, index):
+    return index != [] and index[-1] != 1 and is_scriptop(eq, index[:-1] + [0])
 
 # Dictionaries providing a map between positions of pars before a change of
 # script-block and after it. SET_SCR means that the setscript is more external.
@@ -751,7 +687,7 @@ def _map_refindex(sb_index, ref_index, ext_prev_pars, prev_pars, ext_next_pars,
     *sb_index* must be the index od the script-block that was effectively
     updated. In the case of being two of them, the most external one.
 
-    *ext_\*_pars* and/or *ext_\*_pars* must be set to None if there are
+    *ext_\*_pars* and/or *ext_\*_pars* must be set to None if there is no
     external script block.
     """
     sbidx = Idx(sb_index)
@@ -933,7 +869,7 @@ def _change2nonloscriptblock(eq: Subeq, index, refindex=None):
     return _map_refindex(idx, refidx, None, pars, new_ext_pars, new_inner_pars)
 
 
-def equivalent_op(op: Op, ext_op: Op = None):
+def test_equivalent_op(op: Op, ext_op: Op = None):
     """Return equivalent op, or op-pair, which is equivalent to passed
     script op but of different script type: lo <-> nonlo.
 
@@ -941,7 +877,7 @@ def equivalent_op(op: Op, ext_op: Op = None):
     the second element is set to to None. Else, the first one is the internal
     script op.
 
-    By the moment this function is used only for testing.
+    By the moment this function is used only for testing purposes.
 
     .. note::
         The order is unusual for the arguments and output: firstly internal op,
@@ -966,7 +902,10 @@ def equivalent_op(op: Op, ext_op: Op = None):
 
 def update_scriptblock(nextbase, eq: Subeq, index=None, refindex=None):
     """Update a script op if needed by providing the next base it will have.
-    Pointed subeq must be the SCRIPT BLOCK which base is being modified.
+    Pointed subeq must be the supeq of the subeq being modified. That is,
+    the script block if modified subeq is really a base, but it is OK if it
+    is not really a script block (nothing is done in that case and refindex
+    is not corrected).
 
     A 1-level supeq which is a script-block will be collapsed if reasonable
     when updating from nonlo to lo script-block. Similarly, a lo script-block
@@ -1023,25 +962,34 @@ def _insert_initial_script(baseref, scriptdir, is_superscript, newscript):
 def insert_script(index, eq: Subeq, scriptdir, is_superscript, newscript=None):
     """Insert a script and return its index.
 
-    If pointed subeq is a TVOID without a script, it is replaced by VOID
+    If pointed subeq is a TVOID without a script, it is replaced by PVOID
     before inserting the script.
+
+    Return the index of the inserted script, or its ordinal in the current
+    script block if the index already existed.
+
+    If *newscript* is None, a [PVOID] will be used as script, if it did not
+    exist.
 
     Rules:
 
-        *   If *idx* does not point to a current base, a script operator will
-            be added, being the base the subeq pointed by *idx*.
-            The index of the script will be returned.
-        *   Elif *idx* points to a current base, requested script does not
+        Notation: The term 'minimal' script op refers to the script op which
+        has only one script. That script will be the requested one.
+
+        *   If *index* does not point to a current base, a minimal script
+            operator will be added, being its base the subeq pointed by
+            *index*.
+            The index of the created script will be returned.
+        *   Elif *index* points to a current base, requested script does not
             exist and the script is compatible with the script operator, script
             operator is upgraded and the index of the new script is returned.
-        *   Elif *idx* points to a current base, requested script does not
-            exist and the script is not compatible with the script operator,
-            the simplest script block including the requested script will
-            be the base of the current script operator.
+        *   Elif *idx* points to a current base which script op is not
+            compatible with requested script, a new minimal script block
+            containing the requested script will replace that base.
             The index of the new script in *eq* is returned.
         *   Else (*idx* points to a current base and requested script exists),
-            *eq* is not modified and index of the script is returned with
-            last value multiplied by -1.
+            *eq* is not modified and the ordinal of the script par matching
+            requested script is returned.
 
     :param idx: The index of the subeq which will be the base of the script.
     :param eq: An equation.
@@ -1050,18 +998,16 @@ def insert_script(index, eq: Subeq, scriptdir, is_superscript, newscript=None):
     :param newscript: A subeq with which to initialize script. None means VOID.
     :return: The index of inserted script. If it already existed, a flag.
     """
-    if newscript is None:
-        newscript = Subeq(None)
-
+    scr = deepcopy(Subeq(newscript))
     idx = Idx(index)
     supeq = eq.supeq(idx)
     if supeq == -2 or not is_scriptop(supeq[0]):
         # Case: idx does not point to a base
         baseref = eq if supeq == -2 else supeq[idx[-1]]
-        if baseref == [TVOID]:
+        if baseref.is_tvoid():
             # TVOID -> PVOID
             baseref[:] = [PVOID]
-        _insert_initial_script(baseref, scriptdir, is_superscript, newscript)
+        _insert_initial_script(baseref, scriptdir, is_superscript, scr)
         return idx[:] + [2]
 
     pars = _scriptblock2pars(supeq)
@@ -1069,15 +1015,123 @@ def insert_script(index, eq: Subeq, scriptdir, is_superscript, newscript=None):
     if script_pos == -1:
         # Case: Requested script is not compatible with current operator
         baseref = supeq[idx[-1]]
-        _insert_initial_script(baseref, scriptdir, is_superscript, newscript)
+        _insert_initial_script(baseref, scriptdir, is_superscript, scr)
         return idx[:] + [2]
 
     if pars[script_pos] is not None:
         # Case: Requested script already exists
-        return idx[:-1] + [-par_ord_from_pars_pos(pars, script_pos)]
+        return par_ord_from_pars_pos(pars, script_pos)
 
     # Case: Requested script is compatible with current script op type_ and
     # script is not present
-    pars[script_pos] = newscript
+    pars[script_pos] = scr
     supeq[:] = _pars2scriptblock(pars)
     return idx[:-1] + [par_ord_from_pars_pos(pars, script_pos)]
+
+
+def test_which_ord_is_script(op, codename):
+    """(JUST FOR TESTING) Return the script ordinal (argument ordinal plus 1)
+    of a script operator given the codename of the script.
+
+    .. note::
+        *codename* must be a valid codename for the operator.
+    """
+    # This pattern works because real names always include first a l(sub|sup)
+    # than a (sub|sup).
+    reiter = re.finditer("lsub|under|sub|lsup|over|sup", op.name)
+    n = 1
+    while True:
+        if codename == next(reiter).group():
+            return n
+        n += 1
+
+def test_is_scriptop_with(scr_codename: str, op):
+    """(JUST FOR TESTING) Returns whether a script op contains specified
+    script.
+
+    *scr_codename* must be in ("lsub", "under", "sub", "lsup", "over", "sup")
+    """
+    return None != re.search("(?:^|[^l])" + scr_codename, op.name)
+
+
+def test_downgraded_scriptop_given_codename(op, codename):
+    """(JUST FOR TESTING) Return the script op resulting from removing
+    codename from op name.
+
+    It relays on the name convention using for the script operators. This
+    function was written with the intention of testing that other methods are
+    correct.
+
+    .. note::
+        *op* MUST have more than 1 script (more than 2 pars).
+    """
+    return eval(re.sub("(^|[^l])" + codename, "\\1", op.name).upper())
+
+
+def test_downgraded_scriptop_given_n(op, n):
+    """(JUST FOR TESTING) Return the script op resulting from op when the nth
+    script (or, equivalently, parameter n + 1) of op is removed.
+
+    It relays on the name convention using for the script operators. This
+    function was written with the intention of testing that other methods are
+    correct.
+
+    .. note::
+        *op* MUST have more than 1 script (more than 2 pars).
+    """
+    # This pattern works because real names always include first a l(sub|sup)
+    # than a (sub|sup).
+    reiter = re.finditer("lsub|under|sub|lsup|over|sup", op.name)
+    for i in range(n):
+        match = next(reiter)
+    new_op_name = op.name[:match.start()] + op.name[match.end():]
+    # Dirty, but this function is for testing
+    return eval(new_op_name.upper())
+
+
+def remove_script(index, eq, refindex=None):
+    """Remove pointed script from equation. Intentionally not accepting
+    strict subeqs of an equation because its subeq may need to be modified.
+
+     The script op will be downgraded or removed, depending on
+     whether other scripts remain. It may modify a script-subeq of the
+     script-block.
+
+    Return an updated *refindex*, or -1 if it points to the script being
+    removed.
+
+    .. note::
+        *index* MUST point to an argument of a script operator DIFFERENT than
+        the base.
+
+    .. note::
+        If script op is removed, the base is placed in the same position in
+        which the script op-block was except in the case detailed below:
+    """
+    refidx = Idx(refindex)
+    idx = Idx(index)
+    sb = eq.supeq(idx)  # This function assumes a script => supeq exists
+    prev_pars = _scriptblock2pars(sb)
+    # -- Remove script from pars list --
+    # Note: Subtracting 1 since indexing starts from 0 and real pars from 1
+    pars = deepcopy(prev_pars)
+    pars[_valid_pars_pos(pars, idx[-1] - 1)] = None
+    new_block = _pars2scriptblock(pars)
+
+    if new_block != -1:
+        # Case: Downgrade script op
+        sb[:] = new_block
+        return _map_refindex(idx[:-1], refidx, None, prev_pars, None, pars)
+
+    # Case: Substitute script-block using its base as replacement
+    sb[:] = pars[0]
+    retval = update_scriptblock(pars[0], eq, idx[:-2], refidx)
+    if idx[:-1] != refidx[:len(idx)-1]:
+        return retval
+
+    refidx_tail = refidx[len(idx)-1:]
+    if refidx_tail and refidx_tail[0] != 1:
+        return -1
+    return idx[:-1] + refidx_tail[1:]
+
+

@@ -39,7 +39,7 @@ SETSCRIPT_OPS_LIST \
     = [op for op in SETSCRIPT_OP2ID_DICT.keys() if op is not None]
 LOSCRIPT_OPS_LIST \
     = [op for op in LOSCRIPT_OP2ID_DICT.keys() if op is not None]
-
+ALL_SCRIPT_OPS_LIST = SCRIPT_OPS_LIST + SETSCRIPT_OPS_LIST + LOSCRIPT_OPS_LIST
 
 NO_EQ_MSG = "No Eqs are available for comparison"
 NoEqError = ValueError(NO_EQ_MSG)
