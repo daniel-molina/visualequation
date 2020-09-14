@@ -232,20 +232,24 @@ def checkeqrules(eq: Subeq, sel_idx: Idx, dir: Dir):
             return "Subeq in " + str(idx) + " is a GOP-par which lop-block " \
                    + "is itself a GOP-par."
 
-        # GOP-params
+        # GOP-params must be blocks
         if not s.isb() and sup != -2 and sup[0] == GOP:
             return "Subeq in " + str(idx) + " is a GOP-par and is a symbol."
 
-        # TJUXTs
+        # TJUXTs must be selected
         if len(s) > 1 and s[0] == TJUXT:
             if sel_idx != idx:
                 return "There exists a TJUXT-block which is not selected."
+
+        # TJUXTs must be juxteds
+        if s[0] == TJUXT and (sup == -2 or sup[0] != PJUXT):
+            return "TJUXT-blocks must be juxteds."
 
         # TVOIDs
         if s.is_tvoid():
             if sup == -2 or sup[0] != PJUXT or idx[-1] != len(sup) - 1:
                 return "TVOID in " + str(idx) + " is not a last juxted " \
-                       + "of a JUXT-block."
+                       + "of a PJUXT-block."
             if sel_idx != idx:
                 return "There exists a TVOID which is not selected."
 
