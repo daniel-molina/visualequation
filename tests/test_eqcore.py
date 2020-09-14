@@ -19,11 +19,11 @@ from visualequation.dirsel import Dir
 from visualequation.idx import Idx
 from visualequation.subeqs import Subeq
 from visualequation.scriptops import *
-from visualequation.eqedit import EditableEq
+from visualequation.eqcore import EditableEq
 from tests.test_utils import *
 
 
-class EqEditTests(unittest.TestCase):
+class EqCoreTests(unittest.TestCase):
     """Tests for EditableEq methods.
 
     .. note::
@@ -964,6 +964,148 @@ class EqEditTests(unittest.TestCase):
         ce = CompareEqs(db)
         ce.assert_equality(f)
 
+    def test_dissolve_subjb(self):
+        db_none = (
+            (Eq([PJUXT, ["a"], [PJUXT, ["b"], ["c"]]], [2]),
+                Eq([PJUXT, ["a"], ["b"], ["c"]], [2]), []),
+            (Eq([PJUXT, [PJUXT, ["b"], ["c"]], ["d"]], [1]),
+                Eq([PJUXT, ["b"], ["c"], ["d"]], [1]), []),
+            (Eq([PJUXT, ["a"], [PJUXT, ["b"], ["c"]], ["d"]], [2]),
+             Eq([PJUXT, ["a"], ["b"], ["c"], ["d"]], [2]), []),
+        )
+        ce = CompareEqs(db_none)
+        ce.assert_equality(Eq._dissolve_subjb)
+
+        db1 = (
+            (Eq([PJUXT, ["a"], [PJUXT, ["b"], ["c"]]], [2]),
+                Eq([PJUXT, ["a"], ["b"], ["c"]], [2]), [1]),
+            (Eq([PJUXT, ["a"], [PJUXT, ["b"], ["c"]], ["d"]], [2]),
+                Eq([PJUXT, ["a"], ["b"], ["c"], ["d"]], [2]), [1]),
+        )
+        ce = CompareEqs(db1)
+        ce.assert_equality(lambda eq: eq._dissolve_subjb([1]))
+
+        db3 = (
+            (Eq([PJUXT, [PJUXT, ["b"], ["c"]], ["d"], ["e"]], [1]),
+                Eq([PJUXT, ["b"], ["c"], ["d"], ["e"]], [1]), [4]),
+            (Eq([PJUXT, ["a"], [PJUXT, ["b"], ["c"]], ["d"]], [2]),
+                Eq([PJUXT, ["a"], ["b"], ["c"], ["d"]], [2]), [4]),
+            (Eq([PJUXT, ["a"], [PJUXT, ["b"], ["c"], ["cc"]], ["d"]], [2]),
+                Eq([PJUXT, ["a"], ["b"], ["c"], ["cc"], ["d"]], [2]), [5]),
+        )
+        ce = CompareEqs(db3)
+        ce.assert_equality(lambda eq: eq._dissolve_subjb([3]))
+
+        # README! Now index == [2], refindex == eq.idx and retval -> eq.idx
+        db_inside = (
+            (Eq([PJUXT, ["a"], [PJUXT, ["b"], ["c"]]], [2, 1]),
+                Eq([PJUXT, ["a"], ["b"], ["c"]], [2])),
+            (Eq([PJUXT, ["a"], [PJUXT, ["b"], ["c"]], ["d"]], [2, 1]),
+                Eq([PJUXT, ["a"], ["b"], ["c"], ["d"]], [2])),
+            (Eq([PJUXT, ["a"], [PJUXT, [SUP, ["x"], ["y"]], ["c"]]],
+                    [2, 1, 1]),
+                Eq([PJUXT, ["a"], [SUP, ["x"], ["y"]], ["c"]], [2, 1])),
+            (Eq([PJUXT, ["a"], [PJUXT, [SUP, ["x"], ["y"]], ["c"]]],
+                    [2, 1, 2]),
+                Eq([PJUXT, ["a"], [SUP, ["x"], ["y"]], ["c"]], [2, 2])),
+        )
+        ce = CompareEqs(db_inside)
+
+        def f(eq):
+            eq.idx = eq._dissolve_subjb(eq.idx, [2])
+        ce.assert_equality(f)
+
+    def test_dissolve_tvoid(self):
+        # README! Act on [3], refindex == eq.idx, retval -> eq.idx
+        db3 = (
+            (Eq([PJUXT, ["a"], ["b"], [TVOID]], [], Dir.O),
+                Eq([PJUXT, ["a"], ["b"]], [], Dir.O)),
+            (Eq([PJUXT, ["a"], ["b"], [TVOID]], [1], Dir.O),
+                Eq([PJUXT, ["a"], ["b"]], [1], Dir.O)),
+            (Eq([PJUXT, ["a"], ["b"], [TVOID]], [2], Dir.O),
+                Eq([PJUXT, ["a"], ["b"]], [2], Dir.O))
+        )
+        def f3(eq):
+            eq.idx = eq._dissolve_tvoid(eq.idx, [3])
+        ce = CompareEqs(db3)
+        ce.assert_equality(f3)
+
+        op3 = Op("O", "O", 3)
+        db23 = (
+            (Eq([op3, ["1"], [PJUXT, ["a"], ["b"], [TVOID]], ["3"]], [1],
+                    Dir.O),
+                Eq([op3, ["1"], [PJUXT, ["a"], ["b"]], ["3"]], [1], Dir.O)),
+            (Eq([op3, ["1"], [PJUXT, ["a"], ["b"], [TVOID]], ["3"]], [2],
+                    Dir.O),
+                Eq([op3, ["1"], [PJUXT, ["a"], ["b"]], ["3"]], [2], Dir.O)),
+            (Eq([op3, ["1"], [PJUXT, ["a"], ["b"], [TVOID]], ["3"]], [3],
+                    Dir.O),
+                Eq([op3, ["1"], [PJUXT, ["a"], ["b"]], ["3"]], [3], Dir.O)),
+            (Eq([op3, ["1"], [PJUXT, ["a"], ["b"], [TVOID]], ["3"]], [2, 1],
+                    Dir.O),
+                Eq([op3, ["1"], [PJUXT, ["a"], ["b"]], ["3"]], [2, 1], Dir.O)),
+            (Eq([op3, ["1"], [PJUXT, ["a"], ["b"], [TVOID]], ["3"]], [2, 2],
+                    Dir.O),
+                Eq([op3, ["1"], [PJUXT, ["a"], ["b"]], ["3"]], [2, 2], Dir.O)),
+        )
+
+        def f23(eq):
+            eq.idx = eq._dissolve_tvoid(eq.idx, [2, 3])
+        ce = CompareEqs(db23)
+        ce.assert_equality(f23)
+
+        db2 = (
+            (Eq([PJUXT, ["a"], [TVOID]], [], Dir.O),
+                Eq(["a"], [], Dir.O)),
+            (Eq([PJUXT, ["a"], [TVOID]], [1], Dir.O),
+                Eq(["a"], [], Dir.O)),
+
+            (Eq([PJUXT, [op3, ["a"], ["b"], ["c"]], [TVOID]], [1], Dir.O),
+                Eq([op3, ["a"], ["b"], ["c"]], [], Dir.O)),
+            (Eq([PJUXT, [op3, ["a"], ["b"], ["c"]], [TVOID]], [1, 1], Dir.O),
+                Eq([op3, ["a"], ["b"], ["c"]], [1], Dir.O)),
+            (Eq([PJUXT, [op3, ["a"], ["b"], ["c"]], [TVOID]], [1, 2], Dir.O),
+                Eq([op3, ["a"], ["b"], ["c"]], [2], Dir.O)),
+            (Eq([PJUXT, [op3, ["a"], ["b"], ["c"]], [TVOID]], [1, 3], Dir.O),
+                Eq([op3, ["a"], ["b"], ["c"]], [3], Dir.O)),
+        )
+
+        def f2(eq):
+            eq.idx = eq._dissolve_tvoid(eq.idx, [2])
+        ce = CompareEqs(db2)
+        ce.assert_equality(f2)
+
+        db22 = (
+            (Eq([op3, ["1"], [PJUXT, ["a"], [TVOID]], ["3"]], [1], Dir.O),
+                Eq([op3, ["1"], ["a"], ["3"]], [1], Dir.O)),
+            (Eq([op3, ["1"], [PJUXT, ["a"], [TVOID]], ["3"]], [2], Dir.O),
+                Eq([op3, ["1"], ["a"], ["3"]], [2], Dir.O)),
+            (Eq([op3, ["1"], [PJUXT, ["a"], [TVOID]], ["3"]], [3], Dir.O),
+                Eq([op3, ["1"], ["a"], ["3"]], [3], Dir.O)),
+            (Eq([op3, ["1"], [PJUXT, ["a"], [TVOID]], ["3"]], [2, 1], Dir.O),
+                Eq([op3, ["1"], ["a"], ["3"]], [2], Dir.O)),
+        )
+        def f22(eq):
+            eq.idx = eq._dissolve_tvoid(eq.idx, [2, 2])
+        ce = CompareEqs(db22)
+        ce.assert_equality(f22)
+
+        op0vs = [Op("O", "O", 0, "vs")]
+        db12 = (
+            (Eq([SUP, [PJUXT, op0vs, [TVOID]], ["b"]], [], Dir.O),
+                Eq([LOSUP, op0vs, ["b"]], [], Dir.O)),
+            (Eq([SUP, [PJUXT, op0vs, [TVOID]], ["b"]], [1], Dir.O),
+                Eq([LOSUP, op0vs, ["b"]], [1], Dir.O)),
+            (Eq([SUP, [PJUXT, op0vs, [TVOID]], ["b"]], [2], Dir.O),
+                Eq([LOSUP, op0vs, ["b"]], [2], Dir.O)),
+            (Eq([SUP, [PJUXT, op0vs, [TVOID]], ["b"]], [1, 1], Dir.O),
+                Eq([LOSUP, op0vs, ["b"]], [1], Dir.O)),
+        )
+        def f12(eq):
+            eq.idx = eq._dissolve_tvoid(eq.idx, [1, 2])
+        ce = CompareEqs(db12)
+        ce.assert_equality(f12)
+
     def test_flat(self):
         # output of flat will be assigned to eq.idx and eq.dir
         db = (
@@ -1354,7 +1496,6 @@ class EqEditTests(unittest.TestCase):
             return cond
         ce = CompareEqs(db)
         ce.assert_equality(f)
-
 
 if __name__ == '__main__':
     unittest.main()
