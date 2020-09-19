@@ -82,64 +82,83 @@ collide with readline's default key bindings and/or philosophy are honored
 in order to be consistent with the fact that Visual Equation is a graphical
 application at the end and to help users which are used to shortcuts of
 graphical environments but not those of emacs/readline. In the future it may be
-possible to choose a "package" of shortcuts or even define them individually.
+possible to choose a "set" of shortcuts and define them individually.
 
 #### Fundamental movements
 Users who do not know any key-bindings, with no previous experience 
 with Visual Equation or which will not dedicate time to learn the rest of
-movements will likely use these fundamental movements all the time.
+movements, will likely use the mouse and likely these fundamental movements all
+the time.
 
 Because of that, fundamental movements are intended to satisfy the following
 conditions:
 
 *   It must be possible to select any selsubeq by using them.
-*   Thye must require very few keystrokes to select selsubeqs which are close 
-    to current selection.
-*   Navigating far away must not require too many keystrokes.
-*   They must be someway reasonable so the user can learn their behaviour soon.
-*   They must be a compromise between being practical and not discouraging
-    a new user to use the program because they look strange.
+*   It must be required very few fundamental movements to select selsubeqs
+    which are close to current selection.
+*   Navigating far away must not require too many fundamental movements.
+*   Fundamental movements must be someway reasonable so the user can learn
+    their behaviour soon.
+*   Fundamental movements must be a compromise between being practical and not
+    discouraging a new user to use the program because they look strange.
 
-##### LEFT (fast movement):
+##### Left click (arbitrary distance movement)
 
-*   If RDIR, set LDIR.
-*   Else, move to the closest symbol to the left without changing dir.
-    If that symbol is not a selsubeq, select instead its usupeq of lower level.
-    
-**Marginal case**: If no candidate is found, select the last symbol or its
-usupeq of lower lever in the case that it is not a selsubeq.
+Most intuitive movement. However, it may be possible that not all usubeqs
+sharing the same area when displayed are able to be selected this way. For
+example, a usubeq giving color to its only parameter.
 
-##### RIGHT (slow, exhaustive and redundant):
+##### LEFT/RIGHT cursor keys (slow, exhaustive and redundant):
 
-*   If LDIR, set RDIR.
-*   Navigate equation forward, selecting selsubeqs before entering them and
-    before exiting them.
-*   In addition, if ODIR, insert a temporal VOID after a subeq before exiting
-    it so the user can insert a juxted there.
+>**Note**: These keys would have a more similar equivalence to their expected
+> behavior in a text editor if they were associated to the movement obtained
+> by pressing SHIFT-TAB/TAB (described below). However, that movement is not
+> exhaustive and a naive user may have a hard time being able to select
+> specific blocks which cannot be selected by clicking. If finally every
+> selsubeq is selectable with the mouse, it may be changed.
 
-#### Longer movements
+*   If R/L, set L/R.
+*   Navigate equation backward/forward, selecting selsubeqs before entering
+    them and before exiting them.
+*   In addition, if O or I, insert a TVOID after a subeq before exiting subeqs
+    to the right so the user can insert in that direction in those modes.
 
-> **Note**: CONTROL is preferred for "words" movements instead of ALT in basic
-> commands because they are commonly used by desktop applications.
+#### Other basic movements
 
-##### C-LEFT and C-RIGHT
-This key bindings are used to navigate between mates.
+##### C-LEFT/C-RIGHT
+These key bindings are used to navigate between mates.
 
-> **Note**: The behavior does more honor to gedit and equivalent readline
-> key combination than to kwrite if considering that mates are words. 
+> **Notes**:
+>*  CONTROL is preferred for "word movements" instead of ALT in basic
+>   operations because they are commonly used by desktop applications with that
+>   meaning.
 >
-> **Note**: Advanced movements will consider that mates are characters and
-> their supeqs are words.
+>*  The behavior does more honor to gedit and equivalent readline key 
+>   combination than to kwrite (considering that mates are words) because
+>   final selection shares orientation with the key. 
+>
+>*  On the contrary, advanced movements will consider that mates are characters
+>   and their supeqs are words.
 
-When using C-RIGHT/C-LEFT:
-*   If LDIR/RDIR, direction will change to RDIR/LDIR.
-*   Else, the mate to the right/left of selection is selected when
-    C-RIGHT/C-LEFT is used.
-    Marginal case: If selection is the last/first mate, choose the first/last
+When using C-LEFT/C-RIGHT:
+*   If RDIR/LDIR, direction will change to LDIR/RDIR.
+*   Else, the mate to the left/right of selection is selected when
+    C-LEFT/C-RIGHT is used.
+    Marginal case: If selection is the first/last mate, choose the last/first
     mate.
 *   Successive keystrokes of these key combinations (valid for an interleaved
     use of them) will remember the N-mate level of the selection before 
     applying the first of these key combinations.
+
+##### SHIFT-TAB/TAB (fast movement):
+
+*   If R/L, set L/R.
+*   Else, move to the closest symbol to the left/right without changing dir.
+    If that symbol is not a selsubeq, select instead its supeq of lowest level
+    which is selectable.
+    
+**Marginal case**: If no candidate is found, select the last/first symbol. If
+that is not a selsubeq, select its selectable supeq of lower lever.
 
 #### Increasing and shortening selections
 
@@ -195,8 +214,8 @@ Undo last manipulation, if it exists.
 
 Redo last manipulation, if it exists.
 
-#### Complete (TAB)
-#### Possible Completions (SHIFT-TAB, M-?)
+#### Complete (C-TAB)
+#### Possible Completions (C-SHIFT-TAB, M-?)
 
 Allow to specify graphically a new form for current selection. More details
 on advanced operations sections.
@@ -831,15 +850,20 @@ a format suitable for the inputrc file.
 WIP!!!
 ##### re-read-init-file (C-i C-r)
 Read a configuration file.
-##### abort (C-g, M-C-g, C-i C-g, ESC)
+##### abort (C-g, M-C-g, C-i C-g)
 Abort the current editing command. It does not ring.
+
+> **Note**: Any key will abort a C-i composed command. In particular ESC.
+> ESC will also abort an incremental search.
+
 ##### do-uppercase-version (M-a, M-b, M-x, ...)
 If  the  metafied character x is lowercase, run the command that
 is bound to the corresponding uppercase character.
-##### prefix-meta (Unbounded)
+##### prefix-meta (ESC)
 Metafy the next character typed.
 
-ESC is used for abort command.
+> **Note**: Any key will abort a C-i composed command. In particular ESC.
+> ESC will also abort an incremental search.
 ##### undo (C-_, C-i C-u)
 Incremental undo, separately remembered for each equation.
 ##### revert-line (M-r)
