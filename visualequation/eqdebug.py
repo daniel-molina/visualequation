@@ -21,8 +21,7 @@ import re
 from .dirsel import Dir
 from .idx import Idx
 from .ops import *
-from.subeqs import Subeq
-
+from .subeqs import Subeq
 
 PASSED_MSG = "OK!"
 
@@ -130,7 +129,7 @@ def checksubeqexistence(idx, bare_eq, onlysubeqs=True):
     return PASSED_MSG
 
 
-def checkstructure(idx, bare_eq):
+def checkeqidxstructure(idx, bare_eq):
     """Check of integrity of a pair index-equation."""
 
     msg = checkidxstructure(idx)
@@ -148,7 +147,7 @@ def checkstructure(idx, bare_eq):
     return PASSED_MSG
 
 
-def checkeqrules(eq: Subeq, sel_idx: Idx, dir: Dir):
+def checkeqidxrules(eq: Subeq, sel_idx: Idx, dir: Dir):
     """Check that an equation satisfy the conditions of current implementation
     of an equation in Visual Equation.
 
@@ -269,14 +268,38 @@ def checkeqrules(eq: Subeq, sel_idx: Idx, dir: Dir):
     return helper(None)
 
 
-def checkall(eq, sel_idx, dir):
-    msg = checkstructure(sel_idx, eq)
+def checkeqidx(eq: Subeq, sel_idx: Idx, dir: Dir):
+    msg = checkeqidxstructure(sel_idx, eq)
     if msg != PASSED_MSG:
         return msg
 
-    msg = checkeqrules(eq, sel_idx, dir)
+    msg = checkeqidxrules(eq, sel_idx, dir)
     if msg != PASSED_MSG:
         return "Wrong implementation: " + msg
+
+    return PASSED_MSG
+
+
+def checksafeeq(seq):
+    msg = checkeqidx(seq, seq.idx, seq.dir)
+    if msg != PASSED_MSG:
+        return msg
+
+    if seq.right_pref is not None and type(seq.right_pref) != bool:
+        return "Wrong right_pref attribute: It must be of type NoneType or " \
+               "bool (current type: " + type(seq.uld).__name__ + ")."
+
+    if type(seq.uld) != int:
+        return "Wrong uld attribute: It must be of type int " \
+               "(current type: " + type(seq.uld).__name__ + ")."
+
+    if seq.uld < 0:
+        return "Wrong uld attribute: It must be positive " \
+               "(current value: " + repr(seq.uld) + ")."
+
+    if type(seq.redundant_lock) != bool:
+        return "Wrong redundant_lock attribute: It must be of type bool " \
+               "(current type: " + type(seq.redundant_lock).__name__ + ")."
 
     return PASSED_MSG
 
@@ -306,7 +329,7 @@ def debuginit(fun):
               + OKBLUE + "\tdir: " + ENDC
               + BOLD + self.dir.name + ENDC)
 
-        msg = checkall(self, self.idx, self.dir)
+        msg = checksafeeq(self)
         if msg != PASSED_MSG:
             print(FAIL + "ERROR " + ENDC + "=======> " + BOLD + msg + ENDC)
             # A __init__ must not return something that is not None
@@ -325,9 +348,9 @@ def debug(fun):
             return fun(self, *args, **kwargs)
 
         # Debugging eq and idx
-        msg = checkall(self.eq, self.idx, self.dir)
+        msg = checksafeeq(self)
         if msg != PASSED_MSG:
-            print("======>", msg)
+            print(FAIL + "ERROR " + ENDC + "=======> " + BOLD + msg + ENDC)
             return -99
         else:
             print("Tests passed before call to "
@@ -341,9 +364,9 @@ def debug(fun):
               + ".\tReturn of " + BOLD + fun.__name__ + ENDC + ": "
               + WARNING + str(retval) + ENDC)
 
-        msg = checkall(self, self.idx, self.dir)
+        msg = checksafeeq(self)
         if msg != PASSED_MSG:
-            print(FAIL + "ERROR " + ENDC + "------> " + BOLD + msg + ENDC)
+            print(FAIL + "ERROR " + ENDC + "=======> " + BOLD + msg + ENDC)
             return -99
         else:
             print("\nTests passed after call. OK")

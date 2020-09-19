@@ -16,9 +16,10 @@ import unittest
 from copy import deepcopy
 from visualequation.dirsel import Dir
 from visualequation.ops import *
-from visualequation.eqedit import EditableEq
+from visualequation.eqcore import EditableEq
 from visualequation.scriptops import *
 
+op0vs = [Op("O", "O", 0, "vs")]
 
 class Eq(EditableEq):
     DEFAULT_METHOD_RETVAL = 88
@@ -32,7 +33,6 @@ class Eq(EditableEq):
         self.idx[:] = []
         self.dir = Dir.V
         return self.DEFAULT_METHOD_RETVAL
-
 
 SCRIPT_OPS_LIST = [op for op in SCRIPT_OP2ID_DICT.keys() if op is not None]
 SETSCRIPT_OPS_LIST \
@@ -178,19 +178,15 @@ class CompareEqs:
         # A function or method can modify an equation: do not allow that to
         # modify self.eq_in nor self.eq_out.
         if fun is None:
-            other_eqs = self.eq_in      # eqs not being compared
-            correct_eqs = self.eq_in    # eqs used as reference
-            calc_eqs = self.eq_out      # eqs being compared
-        elif inversely:
-            other_eqs = self.eq_out
-            correct_eqs = self.eq_in
-            if is_method:
-                calc_eqs = deepcopy(self.eq_out)
-                for eq in calc_eqs:
-                    retvals.append(fun(eq))
+            if not inversely:
+                other_eqs = self.eq_in      # eqs not being compared
+                correct_eqs = self.eq_in    # eqs used as reference
+                calc_eqs = self.eq_out      # computed eqs to be compared
             else:
-                calc_eqs = list(map(fun, deepcopy(self.eq_out)))
-        else:
+                other_eqs = self.eq_out     # eqs not being compared
+                correct_eqs = self.eq_in    # eqs used as reference
+                calc_eqs = self.eq_out      # computed eqs to be compared
+        elif not inversely:
             other_eqs = self.eq_in
             correct_eqs = self.eq_out
             if is_method:
@@ -199,6 +195,15 @@ class CompareEqs:
                     retvals.append(fun(eq))
             else:
                 calc_eqs = list(map(fun, deepcopy(self.eq_in)))
+        else:
+            other_eqs = self.eq_out
+            correct_eqs = self.eq_in
+            if is_method:
+                calc_eqs = deepcopy(self.eq_out)
+                for eq in calc_eqs:
+                    retvals.append(fun(eq))
+            else:
+                calc_eqs = list(map(fun, deepcopy(self.eq_out)))
 
         if not exclude_eq:
             if correct_eqs != calc_eqs:

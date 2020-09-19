@@ -371,7 +371,8 @@ class Subeq(list):
         return index + [0] if retidx else s[0]
 
     def nthpar(self, idx=None, n=-1, retidx=False):
-        """Return the n-th parameter of an op given the index of its op-block.
+        """Return the n-th parameter of an op given the index of the block of
+        which it is the lop.
 
         If you want the last parameter, pass n == -1.
 
@@ -401,19 +402,19 @@ class Subeq(list):
 
         Since this method is intended to be used with relative position, it
         can be useful to call this method without actually knowing the passed
-        value of *idx and/or *n*. => No error is raised if requested parameter
-        does not exist in any direction.
+        value of *idx* and/or *n*. => No error is raised if requested parameter
+        does not exist.
         """
-        index = Idx(idx)
-        if not index:
+        new_idx = Idx(idx)
+        if not new_idx:
             return -2
         # Do not suppose that pointed elem is a subeq
-        sup = self(index[:-1])
-        if not isinstance(sup[index[-1]], Subeq):
+        sup = self(new_idx[:-1])
+        if not isinstance(sup[new_idx[-1]], Subeq):
             raise NotSubeqError
-        ord = index[-1] + n
+        ord = new_idx[-1] + n
         if 0 < ord < len(sup):
-            return index[:-1] + [ord] if retidx else sup[ord]
+            return new_idx[:-1] + [ord] if retidx else sup[ord]
         return -1
 
     def prevpar(self, idx, retidx=False):
@@ -576,7 +577,7 @@ class Subeq(list):
         If pointed mate is a last mate and right is True or it is a first mate
         and right is, False, -1 is returned.
 
-        Parameter *ulevel_diff* must be a non-negative number.
+        Parameter *ulevel_diff* must be a non-negative integer.
 
         .. note::
             If first call to this function is done with *ulevel_diff* equal to
@@ -605,7 +606,7 @@ class Subeq(list):
         while True:
             pord = sidx.parord()
             if pord == -2:
-                return -1, None
+                return -1
             sidx.supeq(set=True)
             s = self(sidx)
             uld += 0 if s.is_gopb() else 1

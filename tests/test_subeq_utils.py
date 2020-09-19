@@ -717,7 +717,7 @@ class SubeqTests(unittest.TestCase):
                 for uld in (0, 4):
                     for retidx in (True, False):
                         # 0-level subeqs
-                        self.assertEqual(s.mate([], right, 0, retidx)[0], -1)
+                        self.assertEqual(s.mate([], right, 0, retidx), -1)
                         with self.assertRaises(ValueError) as cm:
                             s.mate([], right, 1+uld, retidx)
                         self.assertEqual(cm.exception.args[0],
@@ -740,15 +740,15 @@ class SubeqTests(unittest.TestCase):
                                          NOT_MATE_ERROR_MSG)
 
         s = Subeq([PJUXT, [GOP, [PJUXT, ["3"], [TVOID]]], ["d"]])
-        self.assertIs(s.mate([1, 1], False, 0)[0], -1)
-        self.assertEqual(s.mate([1, 1], False, 0, True)[0], -1)
+        self.assertIs(s.mate([1, 1], False, 0), -1)
+        self.assertEqual(s.mate([1, 1], False, 0, True), -1)
         self.assertIs(s.mate([1, 1], True, 0)[0], s[2])
         self.assertIs(s.mate([1, 1], True, 0)[1], 0)
         self.assertEqual(s.mate([1, 1], True, 0, True), ([2], 0))
         self.assertEqual(s.mate([2], False, 0), (s(1, 1), 0))
         self.assertEqual(s.mate([2], False, 0, True), (Idx(1, 1), 0))
-        self.assertIs(s.mate([2], True, 0)[0], -1)
-        self.assertIs(s.mate([2], True, 0, True)[0], -1)
+        self.assertIs(s.mate([2], True, 0), -1)
+        self.assertIs(s.mate([2], True, 0, True), -1)
 
     def test_mate_gopjuxtgopjuxt(self):
         for pos, s in enumerate(
@@ -766,7 +766,7 @@ class SubeqTests(unittest.TestCase):
 
                         # 1-level subeqs
                         self.assertEqual(s.mate([1], right,
-                                                uld, retidx)[0], -1)
+                                                uld, retidx), -1)
 
                         # 2-level subeqs
                         with self.assertRaises(ValueError) as cm:
