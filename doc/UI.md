@@ -123,9 +123,13 @@ example, a usubeq giving color to its only parameter.
 *   In addition, if O or I, insert a TVOID after a subeq before exiting subeqs
     to the right so the user can insert in that direction in those modes.
 
-#### Other basic movements
+#### Friendly operations compared to graphical text editors
 
-##### C-LEFT/C-RIGHT
+##### RETURN
+Select first 1-ulevel usubeq of selection, if it exists and is selectable.
+Else, do nothing.
+
+##### C-LEFT/C-RIGHT (fast movement selecting whole mates)
 These key bindings are used to navigate between mates.
 
 > **Notes**:
@@ -141,53 +145,90 @@ These key bindings are used to navigate between mates.
 >   and their supeqs are words.
 
 When using C-LEFT/C-RIGHT:
-*   If RDIR/LDIR, direction will change to LDIR/RDIR.
-*   Else, the mate to the left/right of selection is selected when
-    C-LEFT/C-RIGHT is used.
+*   The mate to the left/right of selection is selected without changing dir.
     Marginal case: If selection is the first/last mate, choose the last/first
     mate.
 *   Successive keystrokes of these key combinations (valid for an interleaved
     use of them) will remember the N-mate level of the selection before 
     applying the first of these key combinations.
 
+
+##### Transpose forward (M-RIGHT)
+
+Swap positions of current selection and its mate to the right, leaving original
+selection selected.
+
+No direction is changed.
+
+Marginal case: If there is no mate to the right, do nothing.
+
+##### Transpose backward (M-LEFT)
+
+Swap positions of current selection and mate the left, leaving original
+selection selected.
+
+No direction is changed.
+
+Marginal cases:
+*   If selection is a TVOID, swap the closest two mates to the left if they 
+    exist. Else, do nothing.
+*   If there is no mate to the left, do nothing.
+
+##### SHIFT-LEFT/SHIFT-RIGHT (Include more or less juxteds in selection):
+
+When using SHIFT-LEFT/SHIFT-RIGHT:
+*   If a non-juxted is selected:
+    *   If previous keystroke was of a different class, select supeq of 
+        selection. In orimode, in addition set dir to direction matching the
+        key combination.
+    *   Elif keystroke coincides with first keystroke of the sequence, select
+        supeq.
+    *   Elif selection is a symbol or GOP-par:
+        *   If not orimode or V, select supeq and consider direction of
+            current keystroke to be a new first one from now on.
+        *   Else (L or R) set the opposite direction and consider current
+            keystroke to be the first one of the sequence from now on.
+    *   Else, select the last/first param.
+*   Elif (a juxted is selected and) previous keystroke was of a different
+    class:
+    *   If there is a cojuxted in direction of keystroke, include it in
+        selection by using a TJUXT-block in the case that there are cojuxteds 
+        that are not being selected. Else, just select the whole PJUXT-block. 
+        In addition, if orimode, in any case set dir to direction of keystroke.
+    *   Else, select the while PJUXT-block of the juxted. In addition, if
+        orimode, set dir to direction of keystroke.
+*   Elif keystroke coincides with the first one of the sequence:
+    *   If there is a cojuxted in the requested direction, include it in
+        selection, using a TJUXT-block if there are no selected cojuxteds.
+    *   Else, select its PJUXT-block.
+*   Elif selection is a juxt-block, shrink selection excluding the juxted in 
+    the opposite side of keystroke direction, using TJUXT-blocks if needed.
+*   Elif not orimode, flip direction and consider current keystroke the first
+    one.
+*   Else, select supeq and consider current keystroke the first one of the
+    sequence from now on.
+
+##### SHIFT-UP (or M-p)
+Select usupeq if it exists. Do not change dir unless selection is V. In that 
+case, set R. It respects the GUI notion of using SHIFT to extend current 
+selection.
+
+##### SHIFT-DOWN (or M-n)
+Select last 1-ulevel usubeq of selection if it exists and is selectable.
+It respects the GUI notion of using SHIFT to shrink current selection.
+
+> **Note**: RETURN already selects the first 1-ulevel usubeq if it exists.
+
 ##### SHIFT-TAB/TAB (fast movement):
 
-*   If R/L, set L/R.
-*   Else, move to the closest symbol to the left/right without changing dir.
-    If that symbol is not a selsubeq, select instead its supeq of lowest level
+Move to the closest symbol to the left/right without changing dir
+*   If that symbol is not a selsubeq, select instead its supeq of lowest level
     which is selectable.
     
 **Marginal case**: If no candidate is found, select the last/first symbol. If
 that is not a selsubeq, select its selectable supeq of lower lever.
 
-#### Increasing and shortening selections
 
-##### SHIFT-LEFT and SHIFT-RIGHT:
-
-When using SHIFT-LEFT/SHIFT-RIGHT:
-*   If selection is the representative of a non-first/non-last juxted, include
-    in selection the juxted to the left/right. In the case that dir is not
-    ODIR, set LDIR/RDIR.
-*   If selection is already formed by several juxteds, shrink or extend the
-    side matching the direction if that is LDIR or RDIR. If it is ODIR, the
-    equivalent direction is determined by which was the first keystroke of the
-    sequence. It is possible to change the direction in the LDIR/RDIR case
-    by pressing RIGHT/LEFT.
-*   If an extension is not possible (no more juxteds in the direction of
-    expansion or a non-juxted is selected, select the supeq of selection and
-    set LDIR/RDIR.
-
-##### RETURN
-Select first 1-ulevel usubeq of selection if it exists and is selectable.
-   
-##### SHIFT-UP (or M-p)
-Select superequation if it exists. Do not change dir unless selection was VDIR.
-In that case, RDIR is set. It respects the GUI notion of using SHIFT to
-extend current selection.
-
-##### SHIFT-DOWN (or M-n)
-Select last 1-ulevel usubeq of selection if it exists and is selectable.
-It respects the GUI notion of using SHIFT to shrink current selection.
 
 #### Manipulation of subequations
 
@@ -214,32 +255,14 @@ Undo last manipulation, if it exists.
 
 Redo last manipulation, if it exists.
 
-#### Complete (C-TAB)
-#### Possible Completions (C-SHIFT-TAB, M-?)
+##### Subequation-specific manipulations
 
 Allow to specify graphically a new form for current selection. More details
 on advanced operations sections.
 
-##### Transpose forward (M-RIGHT)
-
-Swap positions of current selection and its mate to the right, leaving original
-selection selected.
-
-No direction is changed.
-
-Marginal case: If there is no mate to the right, do nothing.
-
-##### Transpose backward (M-LEFT)
-
-Swap positions of current selection and mate the left, leaving original
-selection selected.
-
-No direction is changed.
-
-Marginal cases:
-*   If selection is a TVOID, swap the closest two mates to the left if they 
-    exist. Else, do nothing.
-*   If there is no mate to the left, do nothing.
+###### Complete (C-TAB)
+###### Possible Completions (C-SHIFT-TAB, M-?)
+###### Edit specific subequation (double left click)
 
 ##### C-DEL
 
