@@ -296,9 +296,14 @@ superquation of SB in S.
 *   Blocks are lists which first element is the lop and the rest are lop-pars.
 *   Arguments are not represented.
 
+Because the interesting part of represented symbols is what is contained inside
+the 1-elem list, the containing element is called a **pseudosymbol** and it
+shares the same noun than its symbol in the code.
+
 Since an equation must always be valid, when an operator is introduced and the 
 user has not yet specified one or more of its parameters, they are set to the
-special symbol *PVOID*, which is represented by a small square when displayed.
+special symbol **PVOID**, which is represented by a small square when
+displayed.
 
 > **Note**: Because the essential part of the symbols is the element that the
 > list contains, variables which hold the value of these element will be named
@@ -308,13 +313,13 @@ special symbol *PVOID*, which is represented by a small square when displayed.
 
 To give special properties to symbols, the 1-elems of lists representing a
 symbols are 0-args operators. However, operators are never identified with
-symbols in the formalism.
+symbols in this formalism.
 
 The **class** used for operators has the following properties:
 
-*   A string holding the **name** of the operator. Must be composed its
-    common noun in lowercase. When they are represented, uppercase is used
-    but, e.g., lowercase is more suitable for filenames.
+*   A string holding the **name** of the operator. Must be its common noun in
+    lowercase. When they are represented, uppercase is used. On the other hand,
+    e.g., lowercase is more suitable for filenames.
 *   A string indicating its **LaTeX code** and the position of its arguments.
 *   The **number of arguments** it has. Default value: 0.
 *   A string, possibly empty, which can be used to indicate a **special 
@@ -323,7 +328,8 @@ The **class** used for operators has the following properties:
 *   A Unicode representation of the operator.
 
 To debug the code and write examples, strings are also allowed instead of
-0-args ops, being its content its latex code.
+0-args ops, being its content its latex code or something else if it does not
+need to be displayed.
 
 > **Example**:
 >
@@ -456,12 +462,15 @@ non-user argument. Characteristics of GOP:
 *   It is a non-user op, and
 *   Its argument is a non-user arg
 
+A **generalized symbol** (**gsymb**) is a symbol or a parameter associated to a
+non-user argument. In Visual Equation, they are symbols or GOP-pars.
+
 ### User subequations definitions and rules
 
 A **0-ulevel usubeq of a subeq S** is:
  
 *   If S is a usubeq, S.
-*   Elif S is a symbol, it does not exist. (Today every symbol is usubeq)
+*   Elif S is a symbol, it does not exist. (Today every symbol is a usubeq)
 *   Else (S is a block), a **0-ulevel** usubeq of a S-par**.
 
 A **N-ulevel usubeq of a subeq S**, N being a positive integer, is:

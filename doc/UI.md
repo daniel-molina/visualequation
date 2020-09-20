@@ -1,15 +1,32 @@
 # User Interface
 
-## Manipulating and navigating an equation
-Navigation, edition and other equations-related operations are classified into
-basic and advanced.
-
 > **Note**: At least part of some operations should be presented
 > in some way that a casual user is someway "forced" to know about them.
 > An initial window with tips or a dropdown are possibilities.
 
-There are three operation modes which in some cases operates differently when
-the same input is sent to the program. They are:
+## Manipulating and navigating an equation
+### Introduction
+Navigation, edition and other equations-related operations are classified into
+desktop-like and terminal-like operations.
+
+Since subequations can be arbitrarily nested, contrary to characters in a
+line or document, an equivalence must be set. The concept of mates of a
+subequation is a powerful tool to flat its equation. Desktop-like operatios
+will be based on that idea, being the subequation of interest current
+selection or its supeq.
+
+Previous partition of an equation in mates depends on a chosen subequation
+(or, equivalently, on the ulevel of the mates being considered). An alternative
+way is to consider the deepest level of the equation: its symbols.
+Considering that each symbol is a character and their supeqs are words, the
+equation can be flatted locally, even if it does not define consistent
+partition of the whole equation. Terminal-like operations will be based on
+this.
+
+### Modes
+
+There are three operation modes which, in some cases, operates differently when
+the same input is processed by the program. They are:
 
 *   Oriented insertion mode (orimode)
 *   Insertion mode (imode)
@@ -17,8 +34,6 @@ the same input is sent to the program. They are:
 
 They can be switched by pressing C-\[. INS always set/unset overwrite mode. If
 unsetting, it will set the mode that was set before setting overwrite mode.
-
-### Modes
 
 #### Oriented insertion mode (orimode)
 
@@ -57,14 +72,34 @@ a lop L, L-block is flatted.
 *   It is equivalent to *insert mode* except for insertions.
 *   Inserted subeqs substitute selection.
 
-### Basic operations
+### Numeric arguments (M-0, M-1, ..., M--)
+Numeric argument may modify the next operation indicated to visual equation.
+For example, `M-3 f` will introduce three "f" characters instead of only one.
+As in the example, in many cases a numeric argument will be equivalent to
+repeat a command several times, but not always. If that is not the case, the
+description of the command should inform about its usage.
 
-Basic operations must be intuitive for an user with no experience with emacs
-or command-line shortcuts.
+Successive numeric arguments add a digit to the argument already being
+prepared. M-- starts a negative argument. If no number is added after M--,
+-1 is used.
 
-The scope of basic operations is everything that can be done only with the
-mouse and cursor movement keys, RETURN, BACKSPACE, DEL and some common uses of
-CONTROL, ALT and SHIFT.
+### Desktop-like operations
+
+Desktop-like operations must be intuitive for a user with no experience with
+emacs or command-line shortcuts. Most of common shortcuts used in usual text
+editors and graphical applications are guaranteed to be set by default, even if
+they collide with defaults of readline. At the end, Visual Equation is a 
+graphical application, so users will expect that. Advanced users will have
+no problems in setting their own keybindings.
+ 
+> **Note**: A good feature may be to provide "sets" of shortcuts already 
+> defined, apart of being able to specify them individually.
+
+The user interaction of desktop-like operations is everything that can be done
+with the mouse and also by using cursor keys, RETURN, BACKSPACE, DEL and some
+standard uses of CONTROL, ALT and SHIFT and TAB. Main reference will be the
+GNOME desktop, but most of the time they will be shared by other desktops, even
+from different operative systems.
 
 > **Note**:
 >
@@ -75,20 +110,13 @@ CONTROL, ALT and SHIFT.
 > In each particular case, instead of "x", the correspondent key which 
 > completes the key binding will be used. Lower case will be always used. For
 > example, C-s if it is required to press CONTROL and then the S key without
-> releasing the CONTROL key.
-
-A limited amount of usual key bindings used in graphical applications that
-collide with readline's default key bindings and/or philosophy are honored
-in order to be consistent with the fact that Visual Equation is a graphical
-application at the end and to help users which are used to shortcuts of
-graphical environments but not those of emacs/readline. In the future it may be
-possible to choose a "set" of shortcuts and define them individually.
+> releasing the CONTROL key. Alphabetical characters will be always written
+> in lower-case.
 
 #### Fundamental movements
 Users who do not know any key-bindings, with no previous experience 
 with Visual Equation or which will not dedicate time to learn the rest of
-movements, will likely use the mouse and likely these fundamental movements all
-the time.
+movements, will likely use the mouse and, likely, LEFT and RIGHT keys.
 
 Because of that, fundamental movements are intended to satisfy the following
 conditions:
@@ -108,28 +136,70 @@ Most intuitive movement. However, it may be possible that not all usubeqs
 sharing the same area when displayed are able to be selected this way. For
 example, a usubeq giving color to its only parameter.
 
-##### LEFT/RIGHT cursor keys (slow, exhaustive and redundant):
+##### LEFT/RIGHT cursor keys (short, exhaustive and redundant movements):
 
->**Note**: These keys would have a more similar equivalence to their expected
-> behavior in a text editor if they were associated to the movement obtained
-> by pressing SHIFT-TAB/TAB (described below). However, that movement is not
-> exhaustive and a naive user may have a hard time being able to select
-> specific blocks which cannot be selected by clicking. If finally every
-> selsubeq is selectable with the mouse, it may be changed.
+These keys, even if in the desktop-like category, provide a different approach.
+These are bullet-proof, meaning that every selsubeq can be selected by using
+them exclusively, even only one of them. They are handy to select a random
+subeq which is close to current selection. Redundancy is useful when the
+user is introducing subeqs and needs to select a related subeq.
 
+Description:
+
+Effect of pressing LEFT/RIGHT:
 *   If R/L, set L/R.
-*   Navigate equation backward/forward, selecting selsubeqs before entering
-    them and before exiting them.
-*   In addition, if O or I, insert a TVOID after a subeq before exiting subeqs
-    to the right so the user can insert in that direction in those modes.
+*   Else, navigate equation backward/forward, selecting selsubeqs before
+    entering them and before exiting them.
+*   In addition, if O or I, insert a TVOID after a subeq before entering from/
+    exiting to the right, so the user can insert everywhere also when using
+    imode or ovmode.
 
-#### Friendly operations compared to graphical text editors
+#### Keybindings shared with graphical text editors
+
+##### Save equation (C-s)
+##### Save equation as... (SHIFT-C-s)
+##### Open equation (C-o)
+Details on shell-like operations.
 
 ##### RETURN
 Select first 1-ulevel usubeq of selection, if it exists and is selectable.
 Else, do nothing.
 
-##### C-LEFT/C-RIGHT (fast movement selecting whole mates)
+##### Select all (C-a)
+This keybinding has a long tradition in graphical applications, so it is
+respected even if it collides with an important shortcut of readline.
+
+##### Go to the first symbol (HOME)
+In orimode, direction will be set to L, or V is symbol is a PVOID.
+
+##### Go to the last symbol (END, C-e)
+In orimode, direction will be set to R, or V if symbol is a PVOID.
+Any other mode will create and select a TVOID after the last symbol.
+
+##### Cut (C-x)
+ 
+Remove selected subeq and save/overwrite VE's clipboard.
+ 
+This shortcut is a an important key combination for emacs and readline, but by
+default the desktop tradition will be respected.
+
+##### Copy (C-c)
+
+Save/overwrite VE's clipboard with selection.
+
+##### Paste (C-v)
+
+Insert VE's clipboard (in overwrite mode, selection is replaced).
+
+##### Undo (C-z)
+
+Undo last manipulation, if it exists.
+
+##### Redo (SHIFT-C-z)
+
+Redo last manipulation, if it exists.
+
+##### C-LEFT/C-RIGHT (medium-distance movements selecting whole mates)
 These key bindings are used to navigate between mates.
 
 > **Notes**:
@@ -152,6 +222,37 @@ When using C-LEFT/C-RIGHT:
     use of them) will remember the N-mate level of the selection before 
     applying the first of these key combinations.
 
+##### C-DEL
+If selection is a juxted remove all the juxteds of the same PJUXT-block to the
+right of the cursor.
+
+If selection is not a juxted, substitute pars of lop-block to the right of the
+cursor by PVOIDs.
+
+##### Delete usupeq (C-d)
+If supeq is a juxted, vanish it (with all its subeqs). Else, replace it with a
+PVOID.
+
+> **Note**: It requisitions a readline default keybinding command (also
+> associated in readline to SUPR). That command behavior in Visual Equation
+> is very local, not modifying the structure of surrounding subeqs, similarly
+> to this command (delete usupeq) and contrary to BACKSPACE.
+
+##### SHIFT-C-DEL
+Delete every mate from the cursor to the right. Those which cannot be totally
+removed without flatting blocks will be replaced by PVOIDs.
+
+##### C-BACKSPACE
+
+If selection is a juxted remove all the juxteds of the same juxt-block to the 
+left of the cursor
+
+If selection is not a juxted, substitute pars of lop-block to the left of the
+cursor by PVOIDs.
+
+##### SHIFT-C-BACKSPACE
+Delete every mate from the cursor to the left. Those which cannot be totally
+removed without flatting blocks will be replaced them by PVOIDs.
 
 ##### Transpose forward (M-RIGHT)
 
@@ -173,6 +274,12 @@ Marginal cases:
 *   If selection is a TVOID, swap the closest two mates to the left if they 
     exist. Else, do nothing.
 *   If there is no mate to the left, do nothing.
+
+##### Rotate copars to the left (M-UP)
+##### Rotate copars to the right (M-DOWN)
+
+> **Note**: Last param is chosen instead of first one for symmetry with
+> SHIFT-DOWN.
 
 ##### SHIFT-LEFT/SHIFT-RIGHT (Include more or less juxteds in selection):
 
@@ -208,52 +315,60 @@ When using SHIFT-LEFT/SHIFT-RIGHT:
 *   Else, select supeq and consider current keystroke the first one of the
     sequence from now on.
 
+##### SHIFT-C-LEFT/SHIFT-C-RIGHT
+*   If selection is a juxted, select that and all its cojuxteds to the
+    left/right, using a TJUXT-block if needed.
+*   Else, select supeq. In addition, if orimode, set dir to L/R.
+
+It must be equivalent to use SHIFT-LEFT/SHIFT-RIGHT once or more times, so
+further details may apply.
+
 ##### SHIFT-UP (or M-p)
-Select usupeq if it exists. Do not change dir unless selection is V. In that 
-case, set R. It respects the GUI notion of using SHIFT to extend current 
-selection.
+Select usupeq if it exists. Do not change dir unless it is V. In that case, set
+R. It resembles the GUI notion of using SHIFT to extend current selection.
 
 ##### SHIFT-DOWN (or M-n)
 Select last 1-ulevel usubeq of selection if it exists and is selectable.
-It respects the GUI notion of using SHIFT to shrink current selection.
+It resembles the GUI notion of using SHIFT to shrink current selection and
+also that DOWN does not always go to the start of the next line. Of course,
+SHIFT-DOWN per se would extend selection and not shrink it in reasonable text
+editors.
 
 > **Note**: RETURN already selects the first 1-ulevel usubeq if it exists.
 
-##### SHIFT-TAB/TAB (fast movement):
+#### Long movements selecting whole mates
 
-Move to the closest symbol to the left/right without changing dir
-*   If that symbol is not a selsubeq, select instead its supeq of lowest level
-    which is selectable.
-    
-**Marginal case**: If no candidate is found, select the last/first symbol. If
-that is not a selsubeq, select its selectable supeq of lower lever.
+> **Note**: Successive keystrokes of the same class will remember the mate
+> ulevel.
 
+If selection is the whole eq, do nothing.
+Else, consider that supeq of selection is called SUP.
 
+##### TAB (First pars of supeq mates, forward)
+*   If SUP has a mate to the right RSUP, select the first param of RSUP.
+*   Elif SUP has at least one mate to the left, select the first param of the
+    first mate of SUP.
+*   Else, select the first param of SUP.
 
-#### Manipulation of subequations
+##### SHIFT-TAB (First pars of supeq mates, backward)
+*   If selection is not the first param of SUP, select the first param of SUP.
+*   Elif SUP has a mate to the left LSUP, select the first param of LSUP.
+*   Elif SUP has at least one mate to the right, select the first param of the
+    last mate of SUP.
+*   Else, do nothing.
 
-##### Cut (C-x)
- 
-Remove selected subeq and save/overwrite VE's clipboard.
- 
-This shortcut is a an important key combination for emacs and readline, but by
-default the desktop tradition will be respected.
+##### C-TAB (Last pars of supeq mates, forward)
+*   If selection is not the last param of SUP, select the last param of SUP.
+*   Elif SUP has a mate to the right RSUP, select the last param of RSUP.
+*   Elif SUP has at least one mate to the left, select the last param of the
+    first mate of SUP.
+*   Else, do nothing.
 
-##### Copy (C-c)
-
-Save/overwrite VE's clipboard with selection.
-
-##### Paste (C-v)
-
-Insert VE's clipboard (in overwrite mode, selection is replaced).
-
-##### Undo (C-z)
-
-Undo last manipulation, if it exists.
-
-##### Redo (C-SHIFT-z)
-
-Redo last manipulation, if it exists.
+##### C-SHIFT-TAB (Last pars of supeq mates, backward)
+*   If SUP has a mate to the left LSUP, select the last param of LSUP.
+*   Elif SUP has at least one mate to the right, select the last param of the
+    last mate of SUP.
+*   Else, select the last param of SUP.
 
 ##### Subequation-specific manipulations
 
@@ -263,22 +378,6 @@ on advanced operations sections.
 ###### Complete (C-TAB)
 ###### Possible Completions (C-SHIFT-TAB, M-?)
 ###### Edit specific subequation (double left click)
-
-##### C-DEL
-
-If selection is a juxted (or combination of them) remove all the juxted of
-the same juxt-block to the right of the cursor.
-
-If selection is not a juxted, substitute pars of lop-block to the right of the
-cursor by PVOIDs.
-
-##### C-BACKSPACE
-
-If selection is a juxted (or combination of them) remove all the juxted of
-the same juxt-block to the left of the cursor
-
-If selection is not a juxted, substitute pars of lop-block to the left of the
-cursor.
 
 ##### Create/Delete groups (C-RETURN)
 
@@ -298,7 +397,7 @@ SHIFT-LEFT or SHIFT-RIGHT before using they key binding.
 > **Note**: There may be an option to create soft groups automatically when
 > inserting sequences of digits.
 
-#### Shortcuts for inserting symbols and operators
+### Shortcuts for inserting specific subequations
 
 > **Temporal Note**:
 >
@@ -356,7 +455,7 @@ First time is a square root, next time is generic.
 > **Mnemonic**: '%' looks like a generic root with its arguments, only
 > lacking part of the main glyph.
 ##### Modify subequation with a variant (M-@)
-Full details to be defined.  There is more info in *Advanced operations*.
+Full details to be defined. There is more info in *shell-like operations*.
  
 > **Mnemonic**: '@' looks like a modified form of 'a'.
 ##### Summatory (C-+, M-+, M-C-+)
@@ -417,99 +516,119 @@ However, M-C-. may be considered with care.
 
 > **Note**: M-. is used for an advanced operation not related with special
 > texts.
-### Advanced operations
+### Shell-like operations
 
-The intention of advance operations is to imitate Readline default
-keybindings as much as possible. We will use Readline's command names with
+The intention of shell-like operations is to imitate Readline default bound
+commands as much as possible. We will use Readline's command names with
 the following equivalence:
 
-*   characters -> selection and its mates
-*   words -> 1-ulevel usupeq US of selection and mates of US
+*   characters -> gsymbs
+*   words -> 1-ulevel usupeq US of a gsymb and closest mates of US
 
-In addition, mates are nested in an equation, contrary to words in a
-line. That is indicated with the ulevel of the mate. Following the
-symbolism of words, 1-ulevel mates would be words of the same
-line, 2-ulevel mates would be, for example, lines of the same page,
-3-ulevel mates pages of the same book, and so on.
+When a gsymb is selected, operation performed is intended to be similar to the
+equivalent one of the readline command. If an equation that is not a gsymb is
+selected, the first gsymb of selection is considered, which is known in the
+ descriptions as **effsel** (effective selection). Exceptions:
+*   Orimode and first gsymb of selection is a PVOID -> Consider it with dir V.
+*   Direction is R -> Consider last gsymb of selection, dir being V or R
+    depending whether the gsymb is a PVOID or not.
 
-Main difference with respect to equivalent basic commands is that these ones do
-not consider so much direction of selection. It is recommended to avoid LDIR 
-when using advanced commands to avoid confusion.
-
-VOID is a special character which is understood in different ways by
-different commands.
-
-If not specified, any reference to a mate always refer to current selection.
-
-#### Numeric arguments (M-0, M-1, ..., M--)
-Add this digit to the argument already being prepared, or start a
-new argument. M-- starts a negative argument. If no number is added, -1 is
-used.
-
-> **Note**: Numeric arguments can be used in basic operations too.
+There are also some commands which behaves differently. In those cases, full
+details are included in their description. For example, commands nouns
+ending in "_sel" are variants of another command with the same noun except not 
+ending in "_sel". They are never readline commands, but inspired by them. The 
+difference with respect to the base command is noticiable when selection is not
+a gsymb.
 
 #### Movements
-##### change-dir (C-()
-This is not a readline command.
 
-In normal mode, it turns LDIR into RDIR and RDIR into LDIR. If VDIR, it
-remembers previous direction when selection was not a VOID and flip it, which
-will be appreciated in the case that a sequence of movements not altering
-direction selects a non-VOID subeq.
-##### change-mode (C-[)
-This is not a readline command.
+##### beginning_of_line (HOME)
+Select the first gsymb of equation. In orimode, set L if it is not a PVOID.
 
-##### beginning-of-line (C-a)
-Select the first mate.
-##### end-of-line (C-e)
-Select the last mate.
-##### forward-char (C-f)
-Select mate to the right if it is not the last one. Else, do not move.
-##### backward-char (C-b)
-Select mate to the left if it is not the first one. Else, do not move.
-##### forward-word (M-f)
-Consider supeq SUP of selection S:
-*   If S has at least one mate to the right contained in SUP, select the
-    last one satisfying that condition.
-*   Elif SUP has a mate RSUP to the right, select last mate of S contained in
-    RSUP.
-*   Else, do not move.
+Default readline keybinding (C-a) is not used because that has a long tradition
+in graphical applications meaning "Select all".
 
-Successive calls to forward-word and backward-word (also inteleaved) must act
-on the mate-ulevel which had seletion before the first call.
-##### backward-word (M-b)
+##### beginning_of_line_sel (SHIFT-C-a)
+Select the first gsymb of selection. In orimode, set L if it is not a PVOID.
+
+##### end_of_line (C-e, END)
+Select the last gsymb of equation. If orimode, set R if it is not a PVOID.
+Else, it creates a TVOID.
+
+##### end_of_line_sel (SHIFT-C-e)
+Select the last gsymb of selection. If orimode, set R if it is not a PVOID.
+Else, it creates a TVOID.
+
+##### forward_char (C-f)
+Select the closest gsymb to the right of effsel. Direction will be changed in
+orimode when that is necessary to place the cursor correctly. If not orimode,
+TVOIDs, will be created when needed.
+
+> To be considered: PBC.
+##### backward_char (C-b)
+Counter-part of forward_char.
+
+##### forward_char_sel (SHIFT-C-f)
+Equivalent to forward_char but considering that effsel is in the opposite side
+of selection.
+
+##### backward_char_sel (SHIFT-C-b)
+Counter-part of forward_char_sel.
+
+##### forward_word (M-f)
+*   If effsel is not the last gsymb of its usupeq LGU, select LGU.
+*   Elif usupeq of effsel has a mate to the right, select its last gsymb.
+
+> To be considered: PBC.
+>
+> **Note**: Mate ulevel will NOT be retained for successive keystrokes of the
+> same type.
+
+##### backward_word (M-b)
 Counterpart of forward-word.
-##### clear-screen (C-l)
-Undecided, but it should be a nice operation.
 
-#### Manipulating and accesing the history
+##### forward_word_sel (SHIFT-M-f)
+Equivalent to forward_word but considering that effsel is in the opposite side
+of selection.
 
-**Saved equations** can be accessed as commands on the history of a shell.
-In addition, saved equations can have a name and categories and subcategories
-(to any nesting level) associated, but it is not mandatory.
+##### backward_word_sel (SHIFT-M-b)
+Counter-part of forward_char_sel.
+
+##### clear_screen (C-l)
+Remove the whole equation. Previous history is preserved.
+
+##### clear_screen_sel (SHIFT-C-l)
+Substitute equation with selection. Previous history is preserved.
+
+#### Manipulating and accessing the history
+
+**Saved equations** can be accessed like previous commands on the history of a
+shell. In addition, saved equations can have an associated name, categories
+and subcategories (arbitrarily nested), but it is not mandatory.
 
 Not to confuse "saved equations" with "exported equations". Exported equations
-are equations that can be accessed outside visual equation. Current formats
+are equations that can be accessed outside Visual Equation. Current formats
 to export equations are PNG, EPS, SVG and PDF. It is worth mentioning that
 it is possible to recover equations for further edition from exported PNGs
-and PDFs.
+and PDFs. On the contrary, saved equations are inside a database which only
+Visual Equation is intended to use.
 
-##### save-as (C-SHIFT-s)
-This is not a readline command but it is placed in this section to help the
-reader have a full view.
+##### save_as (SHIFT-C-s)
+This is desktop-like operation but it is placed in this section to help the
+reader have a big picture.
 
 Save with a graphical interface current equation as a new equation at
 the end of the history, possibly specifying a name and categories.
 
 ##### save (C-s)
-This is not a readline command but it is placed in this section to help the
-reader have a full view.
+This is desktop-like operation but it is placed in this section to help the
+reader have a big picture.
 
 If equation being edited was never saved, this command is equivalent to
-save-as. Else, it overwrites saved equation.
-##### open-equation (C-o)
-This is not a readline command but it is placed in this section to help the
-reader have a full view.
+save_as. Else, it overwrites previously saved version of equation.
+##### open_equation (C-o)
+This is desktop-like operation but it is placed in this section to help the
+reader have a big picture.
 
 This command is managed completely with a graphical interface.
 If equation being edited has not saved modifications, the user is asked to
@@ -526,7 +645,7 @@ in the history list. In detail:
 After that, the user can choose an equation from the history
 with different graphical search facilities and fetch it.
 
-##### accept-line (C-j, C-m)
+##### accept_line (C-j, C-m)
 This a non-windowed version of save-as.
 Specify a name and save current equation as a new equation with that name. 
 After that, a new empty equation is presented for edition.
@@ -534,20 +653,21 @@ It is possible to specify a category in the form
 `[category[/subcategory[/...]]/]name`. To accept the name press again C-j or 
 C-m or RETURN.
 **Note**: C-j acts differently while searching in the history. See below.
-##### insert-comment (M-#)
+
+##### insert_comment (M-#)
 Save current equation at the end of the history list (as a new equation)
 and start editing a new empty equation. This is a fast accept-line that does
 not ask the user for an equation name nor categories to include in the save.
-However, the equation will be uniquely identified anyway. With a numeric 
-argument, it is equivalent to accept-line.
+With a numeric argument, it is equivalent to accept_line.
+
 ##### save-no-window (M-C-#)
 This is not a readline command but it is placed in this section to help the
-reader have a full view.
+reader have a big picture.
 
 It acts like command save (C-s) but not allowing the user to add a name or
 categories if equation was not saved before. It is:
 *   If equation is already part of the history, overwrite its entry.
-*   Else, it is equivalent to insert-comment.
+*   Else, it is equivalent to insert_comment.
 
 In any case, a numeric argument allows the user to specify a name and
 categories. If equation already existed:
@@ -558,17 +678,20 @@ categories. If equation already existed:
 
 To discard previous categories without adding a new one, just precede the name
 by a slash as in `/newname`.
+
 ##### previous-history (C-p)
-save-no-window displayed equation and fetch the previous equation from the
+save_no_window displayed equation and fetch the previous equation from the
 history list, moving back in the list. 
 ##### next-history (C-n)
 save-no-window displayed equation and fetch the next equation from the 
 history list, moving forward in the list.
+
 ##### beginning-of-history (M-<)
 save-no-window displayed equation and fetch the first equation in the
 history.
 ##### end-of-history (M->)
 save-no-window displayed equation and fetch the last equation of the history.
+
 ##### reverse-search-history (C-r)
 save-no-window current equation and search backward starting at the current
 equation and moving up through the history as necessary. This is an 
@@ -576,6 +699,7 @@ incremental search. You can introduce part of the name, category or other
 fields (TODO: specify). You can fetch the equation with C-j. Any
 other key combination will fetch the equation and then apply the command
 to the equation.
+
 ##### forward-search-history (M-C-r)
 Counter part of reverse-search-history.
 > **Note**: C-s is not used as key binding because that is a
@@ -605,36 +729,65 @@ The counterpart of non-incremental-reverse-search-history.
 The default readline keybinding for this command, M-n, is used as C-DOWN (see 
 basic basic movements).
 #### Manipulating subequations
-##### end-of-file (C-d)
-Exit Visual Equation if equation is a VOID, discarding the kill ring and the
-undo list. 
-##### delete-char (C-d)
-*   If next mate do not exist, do nothing.
-*   Elif selectio is a non-last juxted of a juxt-block, delete juxted to the
-    right.
-*   Elif next mate exists and it is not a VOID, move it to the right of
-    selection as a juxted or several juxteds if it was a juxt-block. Leave a 
-    VOID in the original position of the mate.
-*   Elif there exists a mate to the right which is not a VOID, replace the
-    (VOID) mate to the left of that mate with it and leave a VOID in its
-    original position.
+##### end_of_file (SHIFT-C-d)
+Exit Visual Equation if equation is a PVOID, discarding the kill ring and the
+undo list.
+
+> **Note**: Even if it "Delete supeq" has no sense when equation is a PVOID,
+> I consider risky that Visual Equation quits by pressing too many times the
+> C-d unintentionally.
+##### delete_char (M-C-d)
+*   If there is no gsymb to the right of the cursor (supposing effsel is
+    selected), do nothing.
+*   Elif it is a TVOID, do nothing.
+*   Elif it is a last juxted and not orimode, replace it with a TVOID.
+*   Elif it is a juxted, vanish it.
+*   Elif it is not a PVOID, replace it with a PVOID.
 *   Else, do nothing.
 
-It saves deleted mates on the kill ring (readline do that when a
-numeric argument is passed, even if that is not documented).
+> **Note**: This is the most conservative deletion command. It cannot join
+> different words as readline equivalent can do, but there are plenty of other
+> commands for that task.
 
-> **Note**: C-d executes end-of-file if whole equation is a VOID.
+> **Note**: SHIFT-C-d executes end-of-file if whole equation is a PVOID.
+
+##### delete_char_sel (SHIFT-C-d)
+Equivalent to delete_char but considering that effsel is in the opposite side
+of selection.
 
 ##### backward-delete-char (C-?, C-h)
 Counterpart of delete-char (not exactly reciprocal, but it has the same
-philosophy and is less complex).
+philosophy and is less complex because it avoids some TVOIDs cases.
 
 ##### transpose-chars (C-t)
-Equivalent to Transpose backward (M-LEFT). 
+*   If there is no gsymb to the left of effsel, do nothing.
+*   Elif it is the last gsymb and there is only one gsymb in the equation
+    excluding effsel if it is a TVOID, do nothing.
+*   Elif it is the last gsymb, exchange the positions of last two non-TVOID
+    gsymbs. In addition, if orimode, select last gsymb with R; else, select
+    a last TVOID, creating it if needed.
+*   Else, exchange positions of gsymbs at both sides of the cursor and
+    forward_char.
+     
+> **Temporal note**: Description may have inaccuracies and may be simplified.
+
+##### transmute_with_supeq (SHIFT-C-t)
+It is not a readline command.
+
+If selection is a block B and has a supeq SUP, exchange lop-B and lop-SUP,
+removing excess of parameters and including PVOIDs as needed.
+
 ##### transpose-words (M-t)
 *   If supeq SUP of selection exists and SUP has a mate to the left, transpose
     them.
 *   Else, do nothing.
+
+##### transmute_with_subeq (SHIFT-M-t)
+It is not a readline command.
+
+If selection is a block B and its last parameter is a block BSUB, exchange
+lop-B and lop-BSUB, removing excess of parameters and including PVOIDs as 
+needed.
 
 ##### upcase-word (M-u)
 Uppercase every symbol which has sense (Latin and Greek letters) included in
@@ -645,7 +798,17 @@ With a numeric argument, certain mates of the supeq of selection are included.
 Counterpart of upcase-word.
 ##### capitalize-word (M-c)
 Capitalize the first symbol which has sense of selection.
-##### overwrite-mode (INSERT, C-[)
+
+##### change_dir (C-()
+This is not a readline command.
+
+In orimode, it turns L into R and R into L. If V, it remembers previous 
+direction if the next command does not force a direction.
+##### change_mode (C-[)
+This is not a readline command.
+
+Alternate between modes.
+##### overwrite-mode (INSERT)
 This command switch from normal mode into overwrite mode and from overwrite
 mode into normal mode.
 
@@ -659,7 +822,7 @@ common overwrite mode is that inserting without a movement never trespass a
 supeq but in text editors eventually words delimiters are overwritten and
 several words become a single one.
 
-##### quoted-insert (C-q)
+##### quoted_insert (C-q)
 If next input is a number, the number is introduced. (That is useful to 
 introduce several times a number. e.g, to introduce 3 ten times type: 
 M-1 0 C-q 3).
@@ -709,7 +872,7 @@ Code equivalence:
 *   y, Y -> upsilon, Upsilon (**)
 *   z, Z -> zeta, Z 
 
-##### quoted-insert-extra (M-C-q):
+##### quoted_insert_extra (M-C-q):
 If next input is a number, the number is introduced.
 
 This command supplies the missing greek letters of quoted-insert (C-q). 
@@ -733,34 +896,34 @@ Code equivalence:
 *   t, T , - -> theta, Theta, vartheta
 *   x, X -> xi, Xi
 
-##### tab-insert
-See shortcuts TAB and SHIFT-TAB in basic operations.
+##### tab_insert
+See shortcuts SPACE and SHIFT-SPACE in basic operations.
 
-##### self-insert (a, b, A, 1, !, ...)
+##### self_insert (a, b, A, 1, !, ...)
 Insert the character typed. In some cases such as ~ or SPACE, a special
 character is inserted instead (TODO: be more specific). In some cases,
 quoted-insert may be needed to insert some special symbols.
 
 #### Killing and Yanking
 Killed subequations can be yanked at any moment (before quiting the program).
-##### kill-line (C-k)
+##### kill_line (C-k)
 Kill any subequation after current subeq. Those which cannot be deleted totally
 without flatting their supeqs are left. It is a compromise so the
 "usually desired" command can be executed without selecting exactly the
 subeq of interest.
 With a negative argument kill any subequation before current subeq.
-##### backward-kill-line (C-c C-?, C-c C-h)
+##### backward_kill_line (C-c C-?, C-c C-h)
 Kill selection and any subequation before current subeq. It is a compromise so
 a variant of kill-line can be used.
 With a negative argument kill selection and any subequation before.
-##### unix-line-discard (C-u)
+##### unix_line_discard (C-u)
 Kill any subequation before current subeq. Those which cannot be deleted
 totally without flatting their supeqs are left. It is a compromise so the
 "usually desired" command can be executed without selecting exactly the
 subeq of interest.
 A negative argument has no effect, honoring readline.
 
-##### kill-word (M-d)
+##### kill_word (M-d)
 If selection is a juxted of a juxt-block JB and there are juxteds of JB
 after the cursor different than TVOID (selection itself may be one of them),
 delete every juxted satisfying that condition.
@@ -768,6 +931,24 @@ Elif selection is a nested juxted and has a quasi-cojuxted QCJ to the right,
 remove QCJ and every cojuxted of QCJ to the right.
 Else, set to PVOID every 1-level subeq of the supeq of selection to the
 right of the cursor.
+
+Read this:-----
+
+*   If there is no gsymb to the right of effsel, do nothing.
+*   Elif gsymb to the right of effsel is a non-last juxted, delete juxted to
+ the right.
+*   Elif next mate exists and it is not a PVOID, move it to the right of
+    selection as a juxted or several juxteds if it was a juxt-block. Leave a 
+    PVOID in the original position of the mate.
+*   Elif there exists a mate to the right which is not a PVOID, replace the
+    (PVOID) mate to the left of that mate with it and leave a PVOID in its
+    original position.
+*   Else, do nothing.
+
+It saves deleted mates on the kill ring (readline do that when a
+numeric argument is passed, even if that is not documented).
+
+
 ##### backward-kill-word (M-C-?, M-C-h)
 Counter-part of kill-word.
 ##### unix-word-rubout (C-w)
@@ -830,14 +1011,14 @@ in requested direction, previous insertion is not modified.
 
 #### Completing
 WIP!!!
-##### complete (TAB)
+##### complete (double click, right click and select in menu)
 Display a a graphical window equivalent to the one for building the selected
 subequation when pressing a button in the pannel. If it is not available,
 use possible-completions instead.
 
-> **Note**: > C-i is used by default for 'complete' command in readline. C-i
+> **Note**: C-i is used by default for 'complete' command in readline. C-i
 > is used in VE as an alternative to C-x.
-##### possible-completions (SHIFT-TAB, M-?)
+##### possible-completions (M-?, right click and select in menu)
 List in a graphical window the possible variations of the selected subequation.
 You can choose one using the cursor keys and accept it with RETURN, C-j or C-m.
 To abort, use ESC or a key binding associated to abort. There will be window
