@@ -119,8 +119,20 @@ from different operative systems.
 > in lower-case.
 
 
+##### Save equation (C-s)
+##### Save equation as... (SHIFT-C-s)
+##### Open equation (C-o)
+##### Create new equation (C-n)
+##### Export equation (C-p)
+
+Details on shell-like operations.
+
+> **Note**: C-p is a usual keybinding for "printing", so it seems convenient
+> for exporting since probably nobody is interested in really printing single
+> equations.
+
 ##### Quit (C-q)
-Exit Visual Equation with a confirming dialog.
+Exit Visual Equation with a confirmation dialog.
 
 > **Note**: C-q has a long tradition in many desktops to quit programs, so it
 > has been requisitioned to readline. M-q is used instead for that, even if
@@ -168,17 +180,6 @@ Effect of pressing LEFT/RIGHT:
     imode or ovmode.
 
 #### Keybindings shared with graphical text editors
-
-##### Save equation (C-s)
-##### Save equation as... (SHIFT-C-s)
-##### Open equation (C-o)
-Details on shell-like operations.
-
-##### Create new equation (C-n)
-
-##### Export equation (C-p)
-
-> **Note**: C-p is a usual keybinding for "printing", so it seems convenient.
 
 ##### Select all (C-a)
 This keybinding has a long tradition in graphical applications, so it is
@@ -248,16 +249,6 @@ If there is nothing to remove, lop-block is flatted.
 
 Killed subeq is saved on the kill-ring (see related shell-like section).
 
-##### Delete usupeq (C-w)
-If supeq is a juxted, vanish it (with all its subeqs). Else, replace it with a
-PVOID.
-
-Killed subeq is saved on the kill-ring (see related shell-like section).
-
-> **Note**: It uses readline keybinding command for unix-word-rubout, which is
-> quite related to this action. See also C-BACKSPACE and M-C-?/M-C-h 
-> (backward-kill-word).
-
 ##### Massive-size destruction (SHIFT-C-DEL)
 Delete every mate from the cursor to the right. Those which cannot be totally
 removed without flatting blocks will have their lops flatted. Use C-k if you
@@ -291,6 +282,86 @@ Killed subeq is saved on the kill-ring (see related shell-like section).
 
 > **Note**: The flattening effect is forced here because it is a complex
 > command (three keys involved) instead of two as in C-u.
+
+##### Delete usupeq (M-C-w)
+If supeq is a juxted, vanish it (with all its subeqs). Else, replace it with a
+PVOID.
+
+Killed subeq is saved on the kill-ring (see related shell-like section).
+
+> **Note**: Keybinding is inspired by readline command unix-word-rubout (C-w),
+> which is quite related to this action. C-w is in fact a very good option for
+> the keybinding due to the simplicity of the keystroke and the operation.
+> However it was assigned to M-C-w for the sake of the mnemonic (this command 
+> is equivalent to M-w C-w, each one described below). In case of supeq being 
+> an empty block, as they are when recently created, command associated to C-w
+> achieves the same result than this command.
+
+> **Note**: See also C-BACKSPACE and M-C-?/M-C-h which are more like the
+> original command and its alternative, backward-kill-word.
+
+##### Flat block (M-\\)
+*   If selection is a symbol, do nothing.
+*   Else, let selection be a block B:
+    *   If every param of B is a PVOID:
+        *   If B is juxted, vanish B.
+        *   Else, substitute B with a PVOID.
+    *   Elif B has one and only one non-PVOID par, substitute B with that par.
+    *   Else:
+        *   If B is a juxted, join every non-PVOID B-param in a TJUXT-block
+            and substitute B with it.
+        *   Else, join every non-PVOID B-param in a PJUXT-block and substitute
+            B with it.
+
+##### Flat supeq (SHIFT-C-w)
+Identical to *flat block*, but applied to the usupeq of selection instead.
+
+With a positive numeric argument n, it acts on the n-ulevel usupeq of
+selection. With a non-positive numerical argument -n, it acts on the n-ulevel 
+usubeq of selection (M-0 SHIFT-C-w is identical to M-\\).
+
+##### Recursively flat block (SHIFT-BACKSPACE)
+Similar to *flat block*, but the procedure is applied before to each parameter
+(and before to the parameters of its parameters if they exist, and so on)
+of selected block. As a result, selection is replaced by a juxt-block which
+contains no blocks at all, only symbols.
+
+##### Recursively flat supeq (C-w)
+Identical to *recursively flat block*, but applied to the usupeq of selection
+instead.
+
+With a positive numeric argument n, it acts on the n-ulevel usupeq of
+selection. With a non-positive numerical argument -n, it acts on the n-ulevel 
+usubeq of selection (M-0 C-w is identical to SHIFT-BACKSPACE).
+
+##### Recursively void block (C-\\)
+*   If selection is a symbol, do nothing.
+*   Else, substitute every symbol of selection (included symbols of parameters
+    of selection if they are blocks, and so on) with PVOIDs.
+
+> **Note**: The "recursive" word is used here for the name of the command with
+> keybinding including "\\", contrary to the previous case, but it seems the
+> most appropriate naming.
+
+##### Recursively void supeq (SHIFT-M-w)
+Identical to *recursively void block*, but applied to the usupeq of selection
+instead.
+
+With a positive numeric argument n, it acts on the n-ulevel usupeq of
+selection. With a non-positive numerical argument -n, it acts on the n-ulevel 
+usubeq of selection (M-0 SHIFT-M-w is identical to C-\\).
+
+##### Void Block (SHIFT-DEL)
+*   If selection is a symbol, do nothing.
+*   Else, substitute every parameter of selection (if selection is a block B,
+    it refers to whole B-pars) with a PVOID.
+
+##### Void supeq (M-w)
+Identical to *void block*, but applied to the usupeq of selection instead.
+
+With a positive numeric argument n, it acts on the n-ulevel usupeq of
+selection. With a non-positive numerical argument -n, it acts on the n-ulevel 
+usubeq of selection (M-0 M-w is identical to SHIFT-DEL).
 
 ##### Transpose forward (M-RIGHT)
 
@@ -1008,34 +1079,6 @@ numeric argument is passed, even if that is not documented).
 
 ##### backward-kill-word (M-C-?, M-C-h)
 Counter-part of kill-word.
-##### unix-word-rubout (C-w)
-Kill the word behind point, using white space as a word boundary.
-The killed text is saved on the kill-ring.
-A negative argument has no effect, honoring readline.
-##### delete-horizontal-space (M-\\)
-If selection is a juxt-block, do nothing. Else, flat the leading
-operator of selection. A positive numeric argument n acts on the (n-1)-ulevel
-usubeq of selection. A negative numerical argument -n acts on the n-ulevel 
-usupeq of selection.
-##### massively-delete-horizontal-space (M-C-\\)
-It is not a readline command.
-
-It is equivalent to use delete-horizontal-space with every positive numerical
-argument until reaching the last subeq of selection. A numerical argument
-bigger than 1 acts from the 0-ulevel supeq of selection to the (n-1)-ulevel
-subeq of selection. A numerical argument of -1 is equivalent to use 
-delete-horizontal-space with every negative numerical argument until reaching
-the last supeq. A numerical argument -n smaller than -1 acts from the n-ulevel
-usupeq of selection to the 1-ulevel usupeq of selection.
-
-##### create-horizontal-space (C-\\)
-It is not a readline command.
-
-If selection is a block, replace every symbol of selected block by a VOID
-(it acts recursively on subeqs of selection).
-
-With a negative argument -n, n-ulevel subeqs of selection are replaced by VOIDs
-before applying the default command.
 
 ##### kill-region (Maybe we bound it even if it is not a default of readline)
 Kill the text between the point and  mark  (saved  cursor  posi‐
