@@ -1218,47 +1218,48 @@ Legend:
 
 |              | standalone | C- | M- | S- | M-C- | S-C- | S-M- | S-M-C- |
 |--------------|------------|----|----|----|------|------|------|--------|
-| a            | X          | X  | Y  | U  |      | X    |      |        |
+| a            | X          | X  | Y  | U  | S    | X    |      |        |
 | b            | X          | X  | X  | U  |      | X    | X    |        |
 | c            | X          | X  | X  | U  |      |      |      |        |
-| d            | X          | X  | X  | U  |      | X    |      |        |
+| d            | X          | X  | X  | U  | S    | X    |      |        |
 | e            | Y          | X  | X  | U  |      | X    |      |        |
 | f            | X          | X  | X  | U  |      | X    | X    |        |
 | g            | X          | Y  | Y  | U  | Y    | Y    | Y    | Y      |
 | h            | X          | X  |    | U  | X    |      |      |        |
 | i            | X          | X  |    | U  |      |      |      |        |
 | j            | X          | Y  |    | U  | X    | X    |      |        |
-| k            | X          | X  |    | U  |      |      |      |        |
-| l            | X          | X  | X  | U  |      | X    |      |        |
+| k            | X          | X  |    | U  | S    |      |      |        |
+| l            | X          | X  | X  | U  | S    | X    |      |        |
 | m            | X          | Y  |    | U  |      | X    |      |        |
 | n            | X          | X  |    | U  |      |      |      |        |
 | o            | X          | X  |    | U  |      |      |      |        |
 | p            | X          | X  | Y  | U  |      |      |      |        |
 | q            | X          | X  | Y  | U  |      | Y    |      |        |
-| r            | X          | X  | X  | U  |      | X    |      |        |
+| r            | X          | X  | X  | U  | S    | X    |      | S      |
 | s            | X          | X  |    | U  |      | X    |      |        |
-| t            | X          | X  | X  | U  |      | X    | X    |        |
+| t            | X          | X  | X  | U  | S    | X    | X    |        |
 | u            | X          | X  | X  | U  |      |      |      |        |
-| v            | X          | X  | Y  | U  |      | Y    |      |        |
+| v            | X          | X  | Y  | U  | S    | Y    |      |        |
 | w            | X          | X  | X  | U  | X    | X    | X    |        |
-| x            | X          | X  |    | U  |      |      |      |        |
+| x            | X          | X  |    | U  | S    |      |      |        |
 | y            | X          | X  | X  | U  | X    |      |      |        |
 | z            | X          | X  |    | U  |      | X    |      |        |
 |              | standalone | C- | M- | S- | M-C- | S-C- | S-M- | S-M-C- |
-| SPACE        | X          | X  |    | X  |      |      |      |        |
+| SPACE        | X          | X  | S  | X  |      |      |      |        |
 | RETURN       | X          | X  |    | X  |      |      |      |        |
-| TAB          | X          | X  | S  | X  | S    | X    | S    | S      |
-| DEL          | X          | X  |    | X  |      | X    |      |        |
+| TAB          | X          | X* | S  | X  | S    | X    | S    | S      |
+| DEL          | X          | X  | S  | X  | S    | X    |      | S      |
 | BACKSPACE    | X          | X  |    | X  |      | X    |      |        |
-| LEFT         | X          | X  | X  | X  |      | X    |      |        |
-| RIGHT        | X          | X  | X  | X  |      | X    |      |        |
-| UP           | X          | X  | X  | Y  |      |      |      |        |
-| DOWN         | X          | X  | X  | Y  |      |      |      |        |
-| PAGEUP       | X          | X  |    |    |      |      |      |        |
-| PAGEDOWN     | X          | X  |    |    |      |      |      |        |
-| HOME         | X          |    |    |    |      |      |      |        |
-| END          | Y          |    |    |    |      |      |      |        |
-| INS          | X          |    |    |    |      |      |      |        |
+| LEFT         | X          | X  | X  | X  | S    | X    | S    |        |
+| RIGHT        | X          | X  | X  | X  | S    | X    | S    |        |
+| UP           | X          | X  | X  | Y  | S    |      | S    |        |
+| DOWN         | X          | X  | X  | Y  | S    |      | S    |        |
+| PAGEUP       | X          | X  |    |    |      |      | S    | S      |
+| PAGEDOWN     | X          | X  |    |    |      |      | S    | S      |
+| HOME         | X          |    |    |    | S    |      |      |        |
+| END          | Y          |    |    |    | S    |      |      |        |
+| INS          | X          |    | S  |    |      |      |      |        |
+| ESC          | X          | S  | S  |    | S    |      |      |        |
 |              | standalone | C- | M- | S- | M-C- | S-C- | S-M- | S-M-C- |
 | !            | X          | X  | X  | A  |      | A    | A    | A      |
 | "            | ?          |    |    | A  |      | A    | A    | A      |
@@ -1293,16 +1294,16 @@ Legend:
 | ~            | X          | X  | X  | A  | X    | A    | A    | A      |
 | ]            | X          | X  |    | A  | X    | A    | A    | A      |
 |              | standalone | C- | M- | S- | M-C- | S-C- | S-M- | S-M-C- |
-| 1            | X          |    | X  |    |      |      |      |        |
-| 2            | X          |    | X  |    |      |      |      |        |
-| 3            | X          |    | X  |    |      |      |      |        |
-| 4            | X          |    | X  |    |      |      |      |        |
-| 5            | X          |    | X  |    |      |      |      |        |
-| 6            | X          |    | X  |    |      |      |      |        |
-| 7            | X          |    | X  |    |      |      |      |        |
-| 8            | X          |    | X  |    |      |      |      |        |
-| 9            | X          |    | X  |    |      |      |      |        |
-| 0            | X          |    | X  |    |      |      |      |        |
+| 1            | X          |    | X  |    | S    |      |      |        |
+| 2            | X          |    | X  |    | S    |      |      |        |
+| 3            | X          |    | X  |    | S    |      |      |        |
+| 4            | X          |    | X  |    | S    |      |      |        |
+| 5            | X          |    | X  |    | S    |      |      |        |
+| 6            | X          |    | X  |    | S    |      |      |        |
+| 7            | X          |    | X  |    | S    |      |      |        |
+| 8            | X          |    | X  |    | S    |      |      |        |
+| 9            | X          |    | X  |    | S    |      |      |        |
+| 0            | X          |    | X  |    | S    |      |      |        |
 |              | standalone | C- | M- | S- | M-C- | S-C- | S-M- | S-M-C- |
 | Left click   | X          | ?  | S  | X  |      |      |      |        |
 | Dbl l. click | X          |    |    |    |      |      |      |        |
