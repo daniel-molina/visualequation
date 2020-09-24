@@ -75,16 +75,39 @@ a lop L, L-block is flatted.
 *   It is equivalent to *insert mode* except for insertions.
 *   Inserted subeqs substitute selection.
 
+### Notation for keystrokes
+
+*   When an alphabetic key is required for a keybinding, it is noted always
+    lower-case (e.g., in examples below, X is noted as x), independently of
+    whether `SHIFT` key is being used or not.
+*   When `CONTROL` key is required for a keybinding, it is noted as `C-` 
+    (e.g, `C-x`).
+*   When `ALT` key is required for a keybinding, it is noted as `M-` (e.g, 
+    `M-x`).
+*   When `SHIFT` key is required for a keybinding, it is noted as `S-` (e.g,
+    `S-TAB`)
+*   The order of precedence when writting a keybinding is, from left to right:
+    `S-`, `M-`, `C-` (e.g, `M-C-x` or `S-C-x`). However, when stroking the 
+    keybinding the order does not matter as long as the final key (`x` in the
+    examples) is pressed the last one, being all the others currently pressed
+    at the that happens.
+*   It is possible to previously press `ESC` and release it instead of leaving
+    `ALT` pressed at the same time than the rest of the keys, so `ESC x` is
+    equivalent to `M-x` and `ESC C-x` equivalent to `M-C-x`.
+
+
 ### Numeric arguments (M-0, M-1, ..., M--)
-Numeric argument may modify the next operation indicated to visual equation.
+Numeric arguments may modify the next operation indicated to visual equation.
 For example, `M-3 f` will introduce three "f" characters instead of only one.
-As in the example, in many cases a numeric argument will be equivalent to
-repeat a command several times, but not always. If that is not the case, the
-description of the command should inform about its usage.
+As in the example, by default a numeric argument will be equivalent to repeat n
+operation several times. If that is not the case, the description of the 
+operation should inform about its usage.
 
 Successive numeric arguments add a digit to the argument already being
-prepared. M-- starts a negative argument. If no number is added after M--,
--1 is used.
+prepared. For example, `M-1 M-2 h` introduces twuelve "h" characters. `M--`
+starts a negative argument. For example `M-- M-2 C-f` passes an argument -2
+to operation indicated with keybinding `C-f`. If no number is added after
+`M--`, -1 is implicitly used.
 
 ### Desktop-like operations
 
@@ -106,21 +129,8 @@ standard uses of CONTROL, ALT and SHIFT and TAB. Main reference will be the
 GNOME desktop, but most of the time they will be shared by other desktops, even
 from different operative systems.
 
-> **Note**:
->
-> Key bindings requiring CONTROL being selected are noted by C-x.
-> Key bindings requiring ALT being selected are noted by M-x.
-> Key bindings requiring CONTROL and ALT being selected are noted by M-C-x.
->
-> In each particular case, instead of "x", the correspondent key which 
-> completes the key binding will be used. Lower case will be always used. For
-> example, C-s if it is required to press CONTROL and then the S key without
-> releasing the CONTROL key. Alphabetical characters will be always written
-> in lower-case.
-
-
 ##### Save equation (C-s)
-##### Save equation as... (SHIFT-C-s)
+##### Save equation as... (S-C-s)
 ##### Open equation (C-o)
 ##### Create new equation (C-n)
 ##### Export equation (C-p)
@@ -211,7 +221,7 @@ Insert VE's clipboard (in overwrite mode, selection is replaced).
 
 Undo last manipulation, if it exists.
 
-##### Redo (SHIFT-C-z)
+##### Redo (S-C-z)
 
 Redo last manipulation, if it exists.
 
@@ -272,7 +282,7 @@ cursor by PVOIDs.
 
 Killed subeq is saved on the kill-ring (see related shell-like section).
 
-##### Massive-size backwards destruction (SHIFT-C-BACKSPACE)
+##### Massive-size backwards destruction (S-C-BACKSPACE)
 Delete every mate from the cursor to the left. Those which cannot be totally
 removed without flatting blocks will have their lops flatted. Use C-u if you
 prefer to keep the structure by replacing subeqs by PVOIDs instead of flatting
@@ -313,14 +323,14 @@ Killed subeq is saved on the kill-ring (see related shell-like section).
         *   Else, join every non-PVOID B-param in a PJUXT-block and substitute
             B with it.
 
-##### Flat supeq (SHIFT-C-w)
+##### Flat supeq (S-C-w)
 Identical to *flat block*, but applied to the usupeq of selection instead.
 
 With a positive numeric argument n, it acts on the n-ulevel usupeq of
 selection. With a non-positive numerical argument -n, it acts on the n-ulevel 
 usubeq of selection (M-0 SHIFT-C-w is identical to M-\\).
 
-##### Recursively flat block (SHIFT-BACKSPACE)
+##### Recursively flat block (S-BACKSPACE)
 Similar to *flat block*, but the procedure is applied before to each parameter
 (and before to the parameters of its parameters if they exist, and so on)
 of selected block. As a result, selection is replaced by a juxt-block which
@@ -343,7 +353,7 @@ usubeq of selection (M-0 C-w is identical to SHIFT-BACKSPACE).
 > keybinding including "\\", contrary to the previous case, but it seems the
 > most appropriate naming.
 
-##### Recursively void supeq (SHIFT-M-w)
+##### Recursively void supeq (S-M-w)
 Identical to *recursively void block*, but applied to the usupeq of selection
 instead.
 
@@ -351,7 +361,7 @@ With a positive numeric argument n, it acts on the n-ulevel usupeq of
 selection. With a non-positive numerical argument -n, it acts on the n-ulevel 
 usubeq of selection (M-0 SHIFT-M-w is identical to C-\\).
 
-##### Void Block (SHIFT-DEL)
+##### Void Block (S-DEL)
 *   If selection is a symbol, do nothing.
 *   Else, substitute every parameter of selection (if selection is a block B,
     it refers to whole B-pars) with a PVOID.
@@ -390,9 +400,9 @@ Marginal cases:
 > **Note**: Last param is chosen instead of first one for symmetry with
 > SHIFT-DOWN.
 
-##### Include one more or less juxted in selection (SHIFT-LEFT/SHIFT-RIGHT):
+##### Include one more or less juxted in selection (S-LEFT/S-RIGHT):
 
-When using SHIFT-LEFT/SHIFT-RIGHT:
+When using S-LEFT/S-RIGHT:
 *   If a non-juxted is selected:
     *   If previous keystroke was of a different class, select supeq of 
         selection. In orimode, in addition set dir to direction matching the
@@ -424,19 +434,19 @@ When using SHIFT-LEFT/SHIFT-RIGHT:
 *   Else, select supeq and consider current keystroke the first one of the
     sequence from now on.
 
-##### Include many more or less juxteds in selection (SHIFT-C-LEFT/SHIFT-C-RIGHT)
+##### Include many more or less juxteds in selection (S-C-LEFT/S-C-RIGHT)
 *   If selection is a juxted, select that and all its cojuxteds to the
     left/right, using a TJUXT-block if needed.
 *   Else, select supeq. In addition, if orimode, set dir to L/R.
 
-It must be equivalent to use SHIFT-LEFT/SHIFT-RIGHT once or more times, so
+It must be equivalent to use S-LEFT/S-RIGHT once or more times, so
 further details may apply.
 
-##### Select usupeq (SHIFT-UP, M-p)
+##### Select usupeq (S-UP, M-p)
 Select usupeq if it exists. Do not change dir unless it is V. In that case, set
 R. It resembles the GUI notion of using SHIFT to extend current selection.
 
-##### Select first param (SHIFT-DOWN, M-a)
+##### Select first param (S-DOWN, M-a)
 Select first 1-ulevel usubeq of selection if it exists and is selectable.
 
 Do not change dir unless required by a PVOID.
@@ -467,7 +477,7 @@ Else, consider that supeq of selection is called SUP.
     first mate of SUP.
 *   Else, select the first param of SUP.
 
-##### Select first par of mate to the left of supeq (SHIFT-TAB)
+##### Select first par of mate to the left of supeq (S-TAB)
 *   If selection is not the first param of SUP, select the first param of SUP.
 *   Elif SUP has a mate to the left LSUP, select the first param of LSUP.
 *   Elif SUP has at least one mate to the right, select the first param of the
@@ -481,7 +491,7 @@ Else, consider that supeq of selection is called SUP.
     first mate of SUP.
 *   Else, do nothing.
 
-##### Select last par of mate to the left of supeq (SHIFT-C-TAB)
+##### Select last par of mate to the left of supeq (S-C-TAB)
 *   If SUP has a mate to the left LSUP, select the last param of LSUP.
 *   Elif SUP has at least one mate to the right, select the last param of the
     last mate of SUP.
@@ -499,7 +509,7 @@ effect if selection is a symbol.
 > **Note**: If an existing soft group (see below) is grouped, it will become
 > again a soft group if it is ungrouped.
 
-##### Create/Delete soft groups (SHIFT-RETURN)
+##### Create/Delete soft groups (S-RETURN)
 
 A soft group is a juxt-block that is a juxted of another juxt-block.
 
@@ -518,8 +528,8 @@ SHIFT-LEFT or SHIFT-RIGHT before using they key binding.
 >
 >*  C-@, C-], C-\_, C-?
 >*  M-C-\[, M-C-], M-C-?
->*  M-SPACE, M-#, M-&, M-\* (requisitioned), M--, M-., M-digit, M-<, M->, M-?, 
->   M-\\, M-~ (requisitioned), M-\_ (requisitioned).
+>*  M-SPACE, M-#, M-& (requisitioned), M-\* (requisitioned), M--, M-., M-digit,
+>   M-<, M->, M-?, M-\\, M-~ (requisitioned), M-\_ (requisitioned).
 
 > **Notes**:
 >
@@ -536,7 +546,7 @@ SHIFT-LEFT or SHIFT-RIGHT before using they key binding.
 Insert or increase a region "without" subequations.
 A numeric argument fix the width with precision.
 
-##### Bring subeqs closer (SHIFT-SPACE)
+##### Bring subeqs closer (S-SPACE)
 Reduce a region "without" subequations or delete it.
 
 > **Temporal note**: They will be implemented as characters, not operators.
@@ -573,7 +583,7 @@ Full details to be defined. There is more info in *shell-like operations*.
 ##### Summatory (C-+, M-+, M-C-+)
 Sucesive keystrokes of the operator versions modify the number and position of
 the args.
-##### Productory (C-*, M-\*, M-C-\*)
+##### Productory (C-\*, M-\*, M-C-\*)
 Equivalent to summatory.
 ##### Integral (C-$, M-$, M-C-$)
 Equivalent to summatory.
@@ -599,35 +609,35 @@ size.
 
 It can be accelerated providing a character identified with the delimiter.
 ##### Matrices (M-(, M-C-()
-###### Equation system (M-{, M-C-{)
+##### Equation system (M-{, M-C-{)
 A digit modifies the number of equations.
 
 > **Mnemonic**: Glyph enclosing equations in a equation system looks like a
 > '{'.
-###### Brace-like (M-}, M-C-})
+##### Brace-like (M-}, M-C-})
 > **Mnemonic**: Usual braces looks like a rotated '{'.
-###### Arrows (C-~)
+##### Arrows (C-~)
 > **Mnemonic**: '~' looks like a curved arrow without head.
-###### Hat-like decorators of fixed size (M-\_, M-C-\_)
+##### Hat-like decorators of fixed size (M-\_, M-C-\_)
 > **Mnemonic**: '_' is straight, which gives an idea of something constant.
-###### Hat-like decorators of variable size (M-\~, M-C-\~)
+##### Hat-like decorators of variable size (M-\~, M-C-\~)
 > **Mnemonic**: '~' is curved, which gives an idea of being adaptable.
-###### Small operators (C--)
+##### Small operators (C--)
 > **Mnemonic**: '+' and '*' stand for big operators. '-' reduces something,
 > in this case the size of the operators.
-###### Font colors (M-&, M-C-&)
-###### Background colors (C-!, M-!)
+##### Font colors (M-&, M-C-&)
+##### Background colors (C-!, M-!)
 > **Mnemonic**: '!' indicates something important. Backgroung colors increase
 > importance of an equation. 
-###### Special text (C-., M-C-.)
-It is a symbol-like key biding because a windowed dialog will always appear 
+##### Special text (C-., M-C-.)
+It is a symbol-like key binding because a windowed dialog will always appear 
 and modification of the text will require a special dialog.
 However, M-C-. may be considered with care.
 
 > **Mnemonic**: A dot is used to finish a "text" sentence.
 
 > **Note**: M-. is used for an advanced operation not related with special
-> texts.
+> texts (yank-last-arg).
 ### Shell-like operations
 
 The intention of shell-like operations is to imitate Readline default bound
@@ -727,7 +737,7 @@ Visual Equation is intended to use.
 
 There are a lot of different commands to save equations.
 
-##### save_as (SHIFT-C-s)
+##### save_as (S-C-s)
 This is desktop-like operation but it is placed in this section to help the
 reader have a big picture.
 
@@ -782,7 +792,7 @@ and start editing a new empty equation. This is a fast accept-line that does
 not ask the user for an equation name nor categories to include in the save.
 With a numeric argument, it is equivalent to accept_line.
 
-##### save-no-window (SHIFT-C-j, SHIFT-C-m)
+##### save-no-window (S-C-j, S-C-m)
 This is not a readline command but it is placed in this section to help the
 reader have a big picture.
 
@@ -874,7 +884,7 @@ undo list. It never asks for confirmation to quit.
 
 > **Note**: C-d executes end-of-file if whole equation is a PVOID.
 
-##### delete_char_sel (SHIFT-C-d)
+##### delete_char_sel (S-C-d)
 Equivalent to delete_char but considering that effsel is in the opposite side
 of selection.
 
@@ -899,14 +909,14 @@ philosophy and is less complex because it avoids some TVOIDs cases.
     them.
 *   Else, do nothing.
 
-##### transmute_with_subeq (SHIFT-C-t)
+##### transmute_with_subeq (S-C-t)
 It is not a readline command.
 
 If selection is a block B and its last parameter is a block BSUB, exchange
 lop-B and lop-BSUB, removing excess of parameters and including PVOIDs as 
 needed.
 
-##### transmute_with_supeq (SHIFT-M-t)
+##### transmute_with_supeq (S-M-t)
 It is not a readline command.
 
 If selection is a block B and has a supeq SUP, exchange lop-B and lop-SUP,
@@ -932,7 +942,7 @@ direction if the next command does not force a direction.
 This is not a readline command.
 
 Alternate between modes.
-##### overwrite-mode (INSERT)
+##### overwrite-mode (INS)
 This command switch from normal mode into overwrite mode and from overwrite
 mode into normal mode.
 
@@ -1000,7 +1010,7 @@ Code equivalence:
 *   y, Y -> upsilon, Upsilon (**)
 *   z, Z -> zeta, Z 
 
-##### quoted_insert_extra (SHIFT-M-q, SHIFT-M-v):
+##### quoted_insert_extra (S-M-q, S-M-v):
 If next input is a number, the number is introduced.
 
 This command supplies the missing greek letters of quoted-insert (M-q). 
@@ -1153,15 +1163,12 @@ a format suitable for the inputrc file.
 WIP!!!
 ##### re-read-init-file (C-i C-r)
 Read a configuration file.
-##### abort (C-g, M-C-g, C-i C-g, SHIFT-C-g)
+##### abort (C-g, M-C-g, C-i C-g, SHIFT-C-g, SHIFT-M-g, SHIFT-M-C-g)
 Abort the current editing command. It does not ring.
 
 > **Note**: Any key will abort a C-i composed command. In particular ESC.
 > ESC will also abort an incremental search.
 
-##### do-uppercase-version (M-a, M-b, M-x, ...)
-If  the  metafied character x is lowercase, run the command that
-is bound to the corresponding uppercase character.
 ##### prefix-meta (ESC)
 Metafy the next character typed.
 
@@ -1193,13 +1200,115 @@ When in vi command mode, this causes a switch to  emacs  editing
 mode.
 
 vi-mode not supported by the moment.
-##### vi-editing-mode
+##### vi-editing-mode (M-C-j)
 When  in  emacs editing mode, this causes a switch to vi editing
 mode.
 
 vi-mode not supported by the moment.
 
-## Appendix A: Shortcuts of desktops/windows managers which should be respected
+## Appendix A: Already used keybindings
+
+Legend:
+*   X: Used.
+*   Y: Used and at least another alternative is provided.
+*   U: It autoinserts upper-case version of character.
+*   A: Avoided.
+*   S: Left free to avoid collision with desktops/operative system keybindings.
+*   ?: Unknown.
+
+|              | standalone | C- | M- | S- | M-C- | S-C- | S-M- | S-M-C- |
+|--------------|------------|----|----|----|------|------|------|--------|
+| a            | X          | X  | Y  | U  |      | X    |      |        |
+| b            | X          | X  | X  | U  |      | X    | X    |        |
+| c            | X          | X  | X  | U  |      |      |      |        |
+| d            | X          | X  | X  | U  |      | X    |      |        |
+| e            | Y          | X  | X  | U  |      | X    |      |        |
+| f            | X          | X  | X  | U  |      | X    | X    |        |
+| g            | X          | Y  | Y  | U  | Y    | Y    | Y    | Y      |
+| h            | X          | X  |    | U  | X    |      |      |        |
+| i            | X          | X  |    | U  |      |      |      |        |
+| j            | X          | Y  |    | U  | X    | X    |      |        |
+| k            | X          | X  |    | U  |      |      |      |        |
+| l            | X          | X  | X  | U  |      | X    |      |        |
+| m            | X          | Y  |    | U  |      | X    |      |        |
+| n            | X          | X  |    | U  |      |      |      |        |
+| o            | X          | X  |    | U  |      |      |      |        |
+| p            | X          | X  | Y  | U  |      |      |      |        |
+| q            | X          | X  | Y  | U  |      | Y    |      |        |
+| r            | X          | X  | X  | U  |      | X    |      |        |
+| s            | X          | X  |    | U  |      | X    |      |        |
+| t            | X          | X  | X  | U  |      | X    | X    |        |
+| u            | X          | X  | X  | U  |      |      |      |        |
+| v            | X          | X  | Y  | U  |      | Y    |      |        |
+| w            | X          | X  | X  | U  | X    | X    | X    |        |
+| x            | X          | X  |    | U  |      |      |      |        |
+| y            | X          | X  | X  | U  | X    |      |      |        |
+| z            | X          | X  |    | U  |      | X    |      |        |
+|              | standalone | C- | M- | S- | M-C- | S-C- | S-M- | S-M-C- |
+| SPACE        | X          | X  |    | X  |      |      |      |        |
+| RETURN       | X          | X  |    | X  |      |      |      |        |
+| TAB          | X          | X  | S  | X  | S    | X    | S    | S      |
+| DEL          | X          | X  |    | X  |      | X    |      |        |
+| BACKSPACE    | X          | X  |    | X  |      | X    |      |        |
+| LEFT         | X          | X  | X  | X  |      | X    |      |        |
+| RIGHT        | X          | X  | X  | X  |      | X    |      |        |
+| UP           | X          | X  | X  | Y  |      |      |      |        |
+| DOWN         | X          | X  | X  | Y  |      |      |      |        |
+| PAGEUP       | X          | X  |    |    |      |      |      |        |
+| PAGEDOWN     | X          | X  |    |    |      |      |      |        |
+| HOME         | X          |    |    |    |      |      |      |        |
+| END          | Y          |    |    |    |      |      |      |        |
+| INS          | X          |    |    |    |      |      |      |        |
+|              | standalone | C- | M- | S- | M-C- | S-C- | S-M- | S-M-C- |
+| !            | X          | X  | X  | A  |      | A    | A    | A      |
+| "            | ?          |    |    | A  |      | A    | A    | A      |
+| #            | X          | X  | X  | A  |      | A    | A    | A      |
+| $            | X          | X  | X  | A  | X    | A    | A    | A      |
+| %            | X          | X  | X  | A  | X    | A    | A    | A      |
+| &            | X          |    | X  | A  | X    | A    | A    | A      |
+| '            | X          |    |    | A  |      | A    | A    | A      |
+| (            | X          | X  | X  | A  | X    | A    | A    | A      |
+| )            | X          | X  | X  | A  | X    | A    | A    | A      |
+| *            | X          | X  | X  | A  | X    | A    | A    | A      |
+| +            | X          | X  | X  | A  | X    | A    | A    | A      |
+| ,            | X          | X  | X  | A  | X    | A    | A    | A      |
+| -            | X          | X  | X  | A  |      | A    | A    | A      |
+| .            | X          | X  | X  | A  | X    | A    | A    | A      |
+| /            | X          | X  | X  | A  | X    | A    | A    | A      |
+| :            | X          | X  |    | A  |      | A    | A    | A      |
+| ;            | X          | X  |    | A  |      | A    | A    | A      |
+| <            | X          | X  | X  | A  |      | A    | A    | A      |
+| =            | X          | X  | X  | A  | X    | A    | A    | A      |
+| >            | X          | X  | X  | A  |      | A    | A    | A      |
+| ?            | X          | X  |    | A  | X    | A    | A    | A      |
+| @            | X          | X  | X  | A  |      | A    | A    | A      |
+| \            | X          | X  | X  | A  |      | A    | A    | A      |
+| ^            | X          | X  |    | A  |      | A    | A    | A      |
+| _            | X          | X  | X  | A  | X    | A    | A    | A      |
+| {            | X          |    | X  | A  | X    | A    | A    | A      |
+| ¬            | ?          | A  |    | A  | A    | A    | A    | A      |
+| }            | X          |    | X  | A  | X    | A    | A    | A      |
+| \|           | X          | X  |    | A  |      | A    | A    | A      |
+| [            | X          | X  |    | A  |      | A    | A    | A      |
+| ~            | X          | X  | X  | A  | X    | A    | A    | A      |
+| ]            | X          | X  |    | A  | X    | A    | A    | A      |
+|              | standalone | C- | M- | S- | M-C- | S-C- | S-M- | S-M-C- |
+| 1            | X          |    | X  |    |      |      |      |        |
+| 2            | X          |    | X  |    |      |      |      |        |
+| 3            | X          |    | X  |    |      |      |      |        |
+| 4            | X          |    | X  |    |      |      |      |        |
+| 5            | X          |    | X  |    |      |      |      |        |
+| 6            | X          |    | X  |    |      |      |      |        |
+| 7            | X          |    | X  |    |      |      |      |        |
+| 8            | X          |    | X  |    |      |      |      |        |
+| 9            | X          |    | X  |    |      |      |      |        |
+| 0            | X          |    | X  |    |      |      |      |        |
+|              | standalone | C- | M- | S- | M-C- | S-C- | S-M- | S-M-C- |
+| Left click   | X          | ?  | S  | X  |      |      |      |        |
+| Dbl l. click | X          |    |    |    |      |      |      |        |
+| Right click  | X          |    |    |    |      |      |      |        |
+
+## Appendix B: Shortcuts of desktops/windows managers which should be respected
 (**) = "Keybindings similar to referred one are being avoided, not listing
 similar cases for current desktop. Similar keybindings are those those
  sharing what is not enclosed in parenthesis."
