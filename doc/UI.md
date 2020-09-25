@@ -73,10 +73,10 @@ Successive numeric arguments add a digit to the argument already being
 prepared. For example `M-1 2 h` introduces twelve "h" characters. It is also
 possible to introduce every digit with meta, so the following is equally valid
 `M-1 M-2 h`. Introducing a number several times using this procedure is
-impossible without an additional command. A usual workaround in readlin is to
+impossible without an additional command. A usual workaround in readline is to
 use the command quoted-insert (`C-q` or `C-v` by default) to manage that. In
-Visual Equation, you can use `M-q` or `M-v`. For example, to introduce 3 ten 
-times you can type: `M-1 0 M-q 3`.
+Visual Equation, you can equivalently use `M-g`. For example, to introduce 3
+ten times you can type: `M-1 0 M-g 3`.
 
 `M--` starts a negative argument. For example, `M-- M-2 C-f` passes argument -2
 to operation associated to keybinding `C-f`. If no number is added after
@@ -691,7 +691,7 @@ With a positive numeric argument n, it acts on the n-ulevel usupeq of
 selection. With a non-positive numerical argument -n, it acts on the n-ulevel 
 usubeq of selection (M-0 SHIFT-M-w is identical to C-\\).
 
-#### Void Block (S-DEL)
+#### Void block (S-DEL)
 *   If selection is a symbol, do nothing.
 *   Else, substitute every parameter of selection (if selection is a block B,
     it refers to whole B-pars) with a PVOID.
@@ -709,6 +709,31 @@ usubeq of selection (M-0 M-w is identical to SHIFT-DEL).
 > **Note**: First param is chosen instead of first one for symmetry with
 > *Select first param* (SHIFT-DOWN).
 
+#### Transmute with subeq (S-C-t)
+It is not a readline command.
+
+If selection is a block B and its last parameter is a block BSUB, exchange
+lop-B and lop-BSUB, removing excess of parameters and including PVOIDs as 
+needed.
+
+#### Transmute with supeq (S-M-t)
+It is not a readline command.
+
+If selection is a block B and has a supeq SUP, exchange lop-B and lop-SUP,
+removing excess of parameters and including PVOIDs as needed.
+
+#### Upcase word (M-u)
+Uppercase every symbol which has sense (Latin and Greek letters) included in
+selection and every mate to the right contained in the supeq of selection. If
+supeq does not exists, just in selection.
+With a numeric argument, certain mates of the supeq of selection are included.
+
+#### Downcase word (M-l)
+Counterpart of *Upcase word*.
+
+#### Capitalize word (M-c)
+Capitalize the first symbol which has sense of selection.
+
 ## Gsymb-size operations
 Operations in this section act on subequations which are gsybs of supeqs of
 them. These operations may act on higher level supeqs if a numeric argument is 
@@ -725,8 +750,8 @@ When a gsymb is selected, operation performed is intended to be similar to the
 equivalent one of the readline command. If an equation that is not a gsymb is
 selected, the first gsymb of selection is considered, which is known in the
  descriptions as **effsel** (effective selection). Exceptions:
-*   Orimode and first gsymb of selection is a PVOID -> Consider it with dir V.
-*   Direction is R -> Consider last gsymb of selection, dir being V or R
+*   If orimode and first gsymb of selection is a PVOID, consider it with dir V.
+*   If direction is R, consider last gsymb of selection, dir being V or R
     depending whether the gsymb is a PVOID or not.
 
 Outdated:
@@ -807,12 +832,12 @@ Counter-part of forward_char_sel.
 > **Note**: C-d executes end-of-file if whole equation is a PVOID.
 
 #### Alternative delete char (S-C-d)
-Equivalent to delete_char but considering that effsel is in the opposite side
+Equivalent to *Delete char* but considering that effsel is in the opposite side
 of selection.
 
 #### Backward delete char (C-h)
 Counterpart of delete-char (not exactly reciprocal, but it has the same
-philosophy and is less complex because it avoids some TVOIDs cases.
+philosophy and is less complex because it avoids some TVOIDs cases).
 
 > **Note**: Readline calls the key used for this command Rubout, usually
 > associated to BACKSPACE and C-?. C-h is also used for this command. Because 
@@ -821,8 +846,8 @@ philosophy and is less complex because it avoids some TVOIDs cases.
 > will stick to C-h.
 
 #### Alternative backward delete char (S-C-h)
-Counterpart of delete-char (not exactly reciprocal, but it has the same
-philosophy and is less complex because it avoids some TVOIDs cases.
+Equivalent to *Backward delete char* but considering that effsel is in the
+opposite side of selection.
 
 #### Transpose chars (C-t)
 *   If there is no gsymb to the left of effsel, do nothing.
@@ -841,29 +866,6 @@ philosophy and is less complex because it avoids some TVOIDs cases.
     them.
 *   Else, do nothing.
 
-#### Transmute with subeq (S-C-t)
-It is not a readline command.
-
-If selection is a block B and its last parameter is a block BSUB, exchange
-lop-B and lop-BSUB, removing excess of parameters and including PVOIDs as 
-needed.
-
-#### Transmute with supeq (S-M-t)
-It is not a readline command.
-
-If selection is a block B and has a supeq SUP, exchange lop-B and lop-SUP,
-removing excess of parameters and including PVOIDs as needed.
-
-#### Upcase word (M-u)
-Uppercase every symbol which has sense (Latin and Greek letters) included in
-selection and every mate to the right contained in the supeq of selection. If
-supeq does not exists, just in selection.
-With a numeric argument, certain mates of the supeq of selection are included.
-#### Downcase word (M-l)
-Counterpart of upcase-word.
-#### Capitalize word (M-c)
-Capitalize the first symbol which has sense of selection.
-
 #### Kill line (C-k)
 Kill any subequation after cursor. Those which cannot be deleted totally
 without flatting their supeqs are substituted by PVOID (as in *Void block*,
@@ -876,6 +878,14 @@ Counter-part of *Kill line*.
 > **Note**: Default readline keybinding is undesired (C-x Rubout), so
 > keybinding of a very similar command (*Unix line discard*), which is not
 > going to be implemented in Visual Equation, is used instead.
+
+#### Alternative kill line (S-C-k)
+Equivalent to *Kill line* but considering that effsel is in the opposite side
+of selection.
+
+#### Alternative backward kill line (S-C-u)
+Equivalent to *Backward kill line* but considering that effsel is in the
+opposite side of selection.
 
 #### Unix line discard (Not to be implemented)
 Similar to *Backward kill line*. A negative argument has no effect.
@@ -906,11 +916,20 @@ It saves deleted mates on the kill ring (readline do that when a
 numeric argument is passed, even if that is not documented).
 
 
-#### Backward kill word (M-C-h)
+#### Backward kill word (M-h, M-C-h)
 Counter-part of kill-word.
 
 > **Note**: According to Note of *Backward delete char*, Visual equation will
-> stick to M-C-h for the keybinding of this command.
+> stick to M-C-h for the keybinding of this command. Alternatively, M-h is also
+> associated to this operation.
+
+#### Alternative kill word (S-M-d)
+Equivalent to *Kill word* but considering that effsel is in the opposite side
+of selection.
+
+#### Alternative backward kill word (S-M-h, S-M-C-h)
+Equivalent to *Backward kill word* but considering that effsel is in the
+opposite side of selection.
 
 #### Kill region (Considered to be implemented)
 Kill the text between the point and  mark  (saved  cursor  posi‐
@@ -993,61 +1012,75 @@ After an insertion, it always acts on inserted subeq.
 > **Mnemonic**: '@' looks like a modified form of 'a'.
 
 
-### Greek letters (M-q/S-M-q, M-v/S-M-v)
-If next input is a number, the number is introduced.
+### Insert Greek letter (M-g char/M-g C-char)
+To insert a Greek letter, press `M-g` and then the Latin letter associated to
+requested Greek letter (equivalence table can be found below). For example,
+to introduce *alpha*, (typed α), use `M-g a`. If there is an uppercase version
+of the Greek letter, it can be introduced by inserting the Latin key uppercase
+(by pressing SHIFT at the same time or with CAPSLOCK turned on, as reasonable).
+Some Greek letters have a variant. They can be introduced by metafying the
+associated Latin letter. For example, to introduce the version of epsilon
+similar to a reversed 3 (typed as ε), use `M-g M-e`. If keybinding does not
+have a Greek letter associated, nothing is printed. However, if a digit is
+passed it is inserted literally (`M-g 3` inserts digit 3). In *Introduction*
+it is explained why that is useful for numerical arguments.
 
-If next input is a letter, it will introduce the associated Greek letter to
-introduced Latin letter, if that exists. It works also for capital letters, if 
-the capitalized version of the Greek letter exists. Else, the capital Latin
-letter is used. Full equivalence table is given below.
+> **Note**: Table of equivalence has been designed to maximize the
+> similarities between Latin and Greek letters, but it is just an artifact
+> to force a useful map between them, sometimes based exclusively in the
+> shape of the glyphs.
 
-To pass a negative numeric argument is equivalent to pass the
-same numeric argument but positive except for some letters which have
-a variant. In that case, it is equivalent to pass a positive numeric
-argument but the variant is used for the insertion instead.
+|   | M-g *locase* | M-g *upcase* | M-g M-         |
+|---|--------------|--------------|----------------|
+| a | α (alpha)    | A            |                |
+| b | β (beta)     | B            |                |
+| c | χ (xi)       | X            |                |
+| d | δ (delta)    | Δ (Delta)    |                |
+| e | ϵ (epsilon)  | E            | ε (varepsilon) |
+| f | ϕ (phi)      | Φ (Phi)      | φ (varphi)     |
+| g | γ (gamma)    | Γ (Gamma)    | Ϝ (digamma)    |
+| h | η (eta)      | H            |                |
+| i | ι (iota)     | I            |                |
+| j |              |              |                |
+| k | κ (kappa)    | K            | ϰ (varkappa)   |
+| l | λ (lambda)   | Λ (Lambda)   |                |
+| m | μ (mu)       | M            |                |
+| n | ν (nu)       | N            |                |
+| o | ω (omega)    | Ω (Omega)    | (*)            |
+| p | π (pi)       | Π (Pi)       | ϖ (varpi)      |
+| q | θ (theta)    | Θ (Theta)    | ϑ (vartheta)   |
+| r | ρ (rho)      | P            | ϱ (varrho)     |
+| s | σ (sigma)    | Σ (Sigma)    | ς (varsigma)   |
+| t | τ (tau)      | T            |                |
+| u | υ (upsilon)  | Υ (Upsilon)  |                |
+| v | v            |              |                |
+| w | w            |              |                |
+| x | ξ (xi)       | Ξ (Xi)       |                |
+| y | ψ (psi)      | Ψ (Psi)      |                |
+| z | ζ (zeta)     | Z            |                |
 
-Keybinding used for most of Greek letters is M-q or M-v (they are identical),
-but a few of them need a different keybinding: S-M-q or S-M-v (they are
-identical). Details are specified in the table below.
+(*) At some point omicron may be introduced as the variant for `o`, but it
+does not seem a default in standard LaTeX packages.
 
-An alternative way of inserting symbols of the same row is to insert one of
-them and then use M-@ to switch between different cells of the row.
+An alternative way of inserting Greek letters is to use M-@ to switch between
+Latin and Greek alphabet (at least under the same rules than the table above,
+but it may be more flexible).
 
-|   | M-q *lower-case* | M-q *upper-case* | M-- M-q         | S-M-q *lower-case* | S-M-q *upper-case* | M-- S-M-q       |
-|---|------------------|------------------|-----------------|--------------------|--------------------|-----------------|
-| a | α (alpha)        |                  |                 |                    |                    |                 |
-| b | β (beta)         |                  |                 |                    |                    |                 |
-| c | χ (xi) (**)      | X                |                 |                    |                    |                 |
-| d | δ (delta)        | Δ (Delta)        |                 |                    |                    |                 |
-| e | ϵ (epsilon)      |                  | ε (varepsilon)  |                    |                    |                 |
-| f | ϕ (phi)          | Φ (Phi)          | φ (varphi)      |                    |                    |                 |
-| g | γ (gamma)        | Γ (Gamma)        | Ϝ (digamma)     |                    |                    |                 |
-| h | η (eta)          |                  |                 |                    |                    |                 |
-| i | ι (iota)         |                  |                 |                    |                    |                 |
-| j |                  |                  |                 |                    |                    |                 |
-| k | κ (kappa)        |                  | ϰ (varkappa)    |                    |                    |                 |
-| l | λ (lambda)       | Λ (Lambda)       |                 |                    |                    |                 |
-| m | μ (mu)           |                  |                 |                    |                    |                 |
-| n | ν (nu)           |                  |                 |                    |                    |                 |
-| o | ω (omega)        | Ω (Omega)        |                 |                    |                    |                 |
-| p | π (pi)           | Π (Pi)           | ϖ (varpi)       | ρ (rho) (**)       |                    | ϱ (varrho) (**) |
-| q |                  |                  |                 |                    |                    |                 |
-| r | ρ (rho) (**)     | P                | ϱ (varrho) (**) |                    |                    |                 |
-| s | σ (sigma)        | Σ (Sigma)        | ς (varsigma)    | ψ (psi)            | Ψ (Psi)            |                 |
-| t | τ (tau)          |                  |                 | θ (theta)          | Θ (Theta)          | ϑ (vartheta)    |
-| u | υ (upsilon) (**) | Υ (Upsilon) (**) |                 |                    |                    |                 |
-| v |                  |                  |                 |                    |                    |                 |
-| w |                  |                  |                 |                    |                    |                 |
-| x | χ (xi) (**)      |                  |                 | ξ (xi)             | Ξ (Xi)             |                 |
-| y | υ (upsilon) (**) | Υ (Upsilon) (**) |                 |                    |                    |                 |
-| z | ζ (zeta)         |                  |                 |                    |                    |                 |
+### Greek-lock (M-C-g)
+This operation allow to introduce several Greek letters using only one
+keystroke instead of two. To unlock it, use the keybinding again, or M-C-u.
 
-Legend:
-*   (**) means that there are two ways of obtaining that symbol.
-*   An empty cell in column 1, 3, 4, or 6 means that the Latin letter
-    associated to that row is inserted.
-*   An empty cell in column 2 or 5 means that the upper-case version of the
-    Latin letter associated to that row is inserted.
+For example, to introduce the first four Greek letters and then the first four
+Latin letters you can type `M-C-g a b g d M-C-g a b c d`.
+
+### Insert math symbol or operator (M-m)
+It is intended to remap letters to symbols and operators. The map has not been
+yet defined though. One idea is that Latin (and/or even Greek) letters may be
+accessible via some CONTROL/META/SHIFT combinations.
+
+### Math-lock (M-C-m)
+This operation allow to introduce math symbols and operators using only one
+keystroke instead of two. To unlock it, use the keybinding again, or M-C-u.
 
 ### tab_insert
 See shortcuts SPACE and SHIFT-SPACE in basic operations.
@@ -1086,7 +1119,7 @@ function and the operator versions match functions which can have arguments.
 
 > **Mnemonic**: Arguments of functions are separated by commas where they are
 > presented as a list inside parenthesis.
-### Roots (M-%, M-C-%)
+### Roots (M-s, M-C-s, M-%, M-C-%)
 First time is a square root, next time is generic.
 
 > **Mnemonic**: '%' looks like a generic root with its arguments, only
@@ -1103,7 +1136,7 @@ Equivalent to summatory.
 > **Mnemonic**: '$' looks like an integral if the vertical var is not
 > considered.
 >
-### Fraction (C-/, M-/, M-C-/)
+### Fraction (M-q, M-C-q, C-/, M-/, M-C-/)
 There are several types of fractions.
 
 The symbol version introduce may introduce a fraction-like symbol.
@@ -1167,17 +1200,20 @@ a format suitable for the inputrc file.
 
 ### re-read-init-file (C-i C-r)
 Read a configuration file.
-### abort (C-g, M-C-g, C-i C-g, SHIFT-C-g, SHIFT-M-g, SHIFT-M-C-g)
+### abort (C-g)
 Abort the current editing command. It does not ring.
 
-> **Note**: Any key will abort a C-i composed command. In particular ESC.
-> ESC will also abort an incremental search.
+> **Note**: Any unrelated key will abort a composed command. In particular,
+> ESC. ESC will also abort an incremental search.
+
+> **Note**: M-C-g, a default readline keybinding for *Abort*, has been
+> requisitioned.
 
 ### prefix-meta (ESC)
 Metafy the next character typed.
 
-> **Note**: Any key will abort a C-i composed command. In particular ESC.
-> ESC will also abort an incremental search.
+> **Note**: Any unrelated key will abort a composed command. In particular,
+> ESC. ESC will also abort an incremental search.
 ### undo (C-_, C-i C-u)
 Incremental undo, separately remembered for each equation.
 ### revert-line (M-r)
@@ -1199,10 +1235,12 @@ that character. A negative count searches for  previous  occurrences.
 ### character-search-backward (M-C-])
 A character  is  read and point is moved to the previous occurrence of that 
 character. A negative count searches for subsequent occurrences.
-### emacs-editing-mode
-When in vi command mode, this causes a switch to emacs editing mode.
+### Default mode (M-C-u)
+Set default mode from any other mode (vi mode, Greek-lock, Math-lock...).
 
-vi-mode not supported by the moment.
+> **Mnemonic**: The u stands for *user* mode, because it returns to keybindings
+> specified by the user, which are the default ones if they have not been
+> modified.
 ### vi-editing-mode (M-C-j, M-C-m)
 When  in  emacs editing mode, this causes a switch to vi editing
 mode.
@@ -1217,7 +1255,7 @@ Copy the text in the region to the kill buffer.
 Legend:
 *   X: Used.
 *   Y: Used and at least another alternative is provided.
-*   U: It autoinserts upper-case version of character.
+*   U: It auto-inserts upper-case version of character.
 *   A: Avoided.
 *   S: Left free to avoid collision with desktops/operative system keybindings.
 *   ?: Unknown/undecided.
@@ -1227,25 +1265,25 @@ Legend:
 | a            | X          | X  | Y  | U  | S    | X    |      |        |
 | b            | X          | X  | X  | U  |      | X    | X    |        |
 | c            | X          | X  | X  | U  |      |      |      |        |
-| d            | X          | X  | X  | U  | S    | X    |      |        |
+| d            | X          | X  | X  | U  | S    | X    | X    |        |
 | e            | Y          | X  | X  | U  |      | X    |      |        |
 | f            | X          | X  | X  | U  |      | X    | X    |        |
-| g            | X          | Y  | Y  | U  | Y    | Y    | Y    | Y      |
-| h            | X          | X  |    | U  | X    |      |      |        |
+| g            | X          | X  | X  | U  | X    |      |      |        |
+| h            | X          | X  | Y  | U  | Y    | Y    | Y    | Y      |
 | i            | X          | X  |    | U  |      |      |      |        |
 | j            | X          | Y  |    | U  | X    | X    |      |        |
-| k            | X          | X  |    | U  | S    |      |      |        |
+| k            | X          | X  |    | U  | S    | X    |      |        |
 | l            | X          | X  | X  | U  | S    | X    |      |        |
-| m            | X          | Y  |    | U  |      | X    |      |        |
+| m            | X          | Y  | X  | U  | X    | X    |      |        |
 | n            | X          | X  |    | U  |      |      |      |        |
 | o            | X          | X  |    | U  |      |      |      |        |
 | p            | X          | X  | Y  | U  |      |      |      |        |
-| q            | X          | X  | Y  | U  |      | Y    |      |        |
+| q            | X          | X  | X  | U  | X    |      |      |        |
 | r            | X          | X  | X  | U  | S    | X    |      | S      |
-| s            | X          | X  |    | U  |      | X    |      |        |
+| s            | X          | X  | X  | U  | X    | X    |      |        |
 | t            | X          | X  | X  | U  | S    | X    | X    |        |
-| u            | X          | X  | X  | U  |      |      |      |        |
-| v            | X          | X  | Y  | U  | S    | Y    |      |        |
+| u            | X          | X  | X  | U  | X    | X    |      |        |
+| v            | X          | X  |    | U  | S    |      |      |        |
 | w            | X          | X  | X  | U  | X    | X    | X    |        |
 | x            | X          | X  |    | U  | S    |      |      |        |
 | y            | X          | X  | X  | U  | X    |      |      |        |
