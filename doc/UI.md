@@ -693,25 +693,33 @@ removing excess of parameters and including PVOIDs as needed.
 #### Rotate copars to the left (S-C-t)
 #### Rotate copars to the right (S-M-t)
 
-#### Destroy line (SHIFT-C-DEL)
-Delete every mate from the cursor to the right. Those which cannot be totally
-removed without flatting blocks will have their lops flatted. Use C-k if you
-prefer to keep the structure by replacing subeqs by PVOIDs instead of flatting.
+#### Kill line restricted (C-k)
+If whole equation E is a juxt-block, remove every juxted of E to the right
+of the cursor. Killed juxteds are saved on the kill-ring.
 
-Killed subeq is saved on the kill-ring.
+With a negative argument, kill any subequation before cursor.
+#### Backward kill line restricted (C-u)
+Counter-part of *Kill line*.
 
-> **Note**: The flattening effect is forced here because it is a complex
-> command (three keys involved) instead of two as in C-k.
+> **Note**: Default readline keybinding is undesired (C-x Rubout), so
+> keybinding of a very similar command (*Unix line discard*), which is not
+> going to be implemented in Visual Equation, is used instead.
 
-#### Backward destroy line (S-C-BACKSPACE)
-Delete every mate from the cursor to the left. Those which cannot be totally
-removed without flatting blocks will have their lops flatted. Use C-u if you
-prefer to keep the structure by replacing subeqs by PVOIDs instead of flatting.
+#### Unix line discard (Not to be implemented)
+Similar to *Backward kill line*. A negative argument has no effect.
 
-Killed subeq is saved on the kill-ring.
+#### Kill line (S-C-DEL)
+1. Perform *Kill line restricted*.
+2. Remove every subeq to the right of the cursor using PVOIDs if needed to
+keep intact the structure of supeqs of selection (no flat).
 
-> **Note**: The flattening effect is forced here because it is a complex
-> command (three keys involved) instead of two as in C-u.
+> **Note**: Destroying equation structure is quite unrelated to simple notion
+> of "kill line" so it has been avoided.
+
+#### Backward kill line (S-C-BACKSPACE)
+1. Perform *Backward kill line restricted*.
+2. Remove every subeq to the right of the cursor using PVOIDs if needed to
+keep intact the structure of supeqs of selection (no flat).
 
 #### Delete usupeq (M-C-w)
 If supeq is a juxted, vanish it (with all its subeqs). Else, replace it with a
@@ -720,15 +728,18 @@ PVOID.
 Killed subeq is saved on the kill-ring (see related shell-like section).
 
 > **Note**: Keybinding is inspired by readline command unix-word-rubout (C-w),
-> which is quite related to this action. C-w is in fact a very good option for
-> the keybinding due to the simplicity of the keystroke and the operation.
-> However it was assigned to M-C-w for the sake of the mnemonic (this command 
-> is equivalent to M-w C-w, each one described below). In case of supeq being 
-> an empty block, as they are when recently created, command associated to C-w
-> achieves the same result than this command.
+> which is quite related to this action. See also *Delete coparams to the 
+> left*, which is more similar to that readline commands and 
+> backward-kill-word.
+>
+> **Note**: C-w keybinding would be in fact a very good option for this
+> operation due to the simplicity of both the keystroke and the operation.
+> However it was assigned to M-C-w for the sake of the mnemonic because this
+> command is equivalent to M-w C-w (kill-ring not being considered). In
+> addition, C-w can be used as an equivalent alternative to M-C-w when supeq
+> is an empty block, as they usually are when recently created.
 
-> **Note**: See also C-BACKSPACE and M-C-?/M-C-h which are more like the
-> original command and its alternative, backward-kill-word.
+> **Note**: 
 
 #### Flat block (M-\\)
 *   If selection is a symbol, do nothing.
@@ -887,12 +898,11 @@ Counter-part of forward_char_sel.
 
 ### Editing
 
-#### Pull gsymb (C-d)
-*   If selection is a juxted and it has a juxted to the right which is a gsymb,
-    vanish that gsymb.
-*   Elif selection has a mate M to the right, move the first symbol of M to the
-    right of selection as a juxted.
-*   Else, do nothing.
+#### Delete char (C-d)
+1.  Select effsel.
+2.  Remove (vanishing or replacing by PVOID) the first gsymb to the right of
+    the cursor, if it exists, and select which was the second one to the right,
+    if it exists.
 
 #### Alternative delete char (S-C-d)
 Equivalent to *Delete char* but considering that effsel is in the opposite side
@@ -902,7 +912,7 @@ of selection.
 Counterpart of delete-char (not exactly reciprocal, but it has the same
 philosophy and is less complex because it avoids some TVOIDs cases).
 
-> **Note**: Readline calls the key used for this command Rubout, usually
+> **Note**: Readline names the key used for this command Rubout, usually
 > associated to BACKSPACE and C-?. C-h is also used for this command. Because 
 > BACKSPACE is being used in Visual Equation for Selection-size operations and
 > C-? require SHIFT being pressed in some keyboard layouts, Visual Equation 
@@ -929,62 +939,20 @@ opposite side of selection.
     them.
 *   Else, do nothing.
 
-#### Kill line (C-k)
-Kill any subequation after cursor. Those which cannot be deleted totally
-without flatting their supeqs are substituted by PVOID (as in *Void block*,
-so not recursively).
-
-With a negative argument, kill any subequation before cursor.
-#### Backward kill line (C-u)
-Counter-part of *Kill line*.
-
-> **Note**: Default readline keybinding is undesired (C-x Rubout), so
-> keybinding of a very similar command (*Unix line discard*), which is not
-> going to be implemented in Visual Equation, is used instead.
-
-#### Alternative kill line (S-C-k)
-Equivalent to *Kill line* but considering that effsel is in the opposite side
-of selection.
-
-#### Alternative backward kill line (S-C-u)
-Equivalent to *Backward kill line* but considering that effsel is in the
-opposite side of selection.
-
-#### Unix line discard (Not to be implemented)
-Similar to *Backward kill line*. A negative argument has no effect.
-
 #### Kill word (M-d)
-If selection is a juxted of a juxt-block JB and there are juxteds of JB
-after the cursor different than TVOID (selection itself may be one of them),
-delete every juxted satisfying that condition.
-Elif selection is a nested juxted and has a quasi-cojuxted QCJ to the right,
-remove QCJ and every cojuxted of QCJ to the right.
-Else, set to PVOID every 1-level subeq of the supeq of selection to the
-right of the cursor.
+1.  Select effsel.
+2.  If there is no gsymb to the right of the cursor, do nothing. Else, let
+    that gsymb be G and its supeq GSUP:
+    *   Delete G and any param of GSUP-lop to the right of G.
+    *   Select the next gsymb to the right after last removed param.
 
-Read this:-----
-
-*   If there is no gsymb to the right of effsel, do nothing.
-*   Elif gsymb to the right of effsel is a non-last juxted, delete juxted to
- the right.
-*   Elif next mate exists and it is not a PVOID, move it to the right of
-    selection as a juxted or several juxteds if it was a juxt-block. Leave a 
-    PVOID in the original position of the mate.
-*   Elif there exists a mate to the right which is not a PVOID, replace the
-    (PVOID) mate to the left of that mate with it and leave a PVOID in its
-    original position.
-*   Else, do nothing.
-
-It saves deleted mates on the kill ring (readline do that when a
-numeric argument is passed, even if that is not documented).
-
+Deleted params are saved on the kill ring.
 
 #### Backward kill word (M-h, M-C-h)
 Counter-part of kill-word.
 
-> **Note**: According to Note of *Backward delete char*, Visual equation will
-> stick to M-C-h for the keybinding of this command. Alternatively, M-h is also
-> associated to this operation.
+> **Note**: According to Note of *Backward delete char*, Visual Equation will
+> stick to M-C-h for this command. Alternatively, M-h can be used equivalently.
 
 #### Alternative kill word (S-M-d)
 Equivalent to *Kill word* but considering that effsel is in the opposite side
