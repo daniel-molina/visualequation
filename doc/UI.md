@@ -360,6 +360,41 @@ size of current selection. For example the selection itself, its mates,
 1-level subeqs and 1-level supeq. These operations may act on higher level
 subeqs or supeqs if a numeric argument is passed.
 
+> **Reasoning about main advanced keybindings**:
+>
+>*  S-TAB/TAB are used in graphical text editors to inrease/remove indentation,
+>   but it is also commonly associated to navigate through different fields.
+>*  M-LEFT/M-RIGHT are used in graphical text editors to transpose words.
+>*  C-LEFT/C-RIGHT are used in graphical text editors to jump matching word
+>   boundaries.
+>*  S-C-LEFT/S-C-RIGHT are used in graphical text editors to select from cursor
+>   to word boundaries.
+>*  C-BACKSPACE/C-DEL are used in graphical text editors to delete from the
+>   cursor to word boundaries.
+>*  S-C-BACKSPACE/S-C-DEL are used in graphical text editors to delete from the
+>   cursor to line boundaries.
+>
+> In Visual equation:
+>
+>*  TAB is associated to mates. S-TAB/TAB select them and S-C-TAB/C-TAB
+>   transpose them.
+>*  M-LEFT/M-RIGHT push and pull subeqs to the boundaries of juxt-blocks or
+>   inside/outside blocks.
+>*  CONTROL and LEFT/RIGHT are associated to word boundaries.
+>*  C-LEFT/C-RIGHT selects first/last param.
+>*  S-C-LEFT/S-C-RIGHT increases selection until first/last param.
+>*  C-BACKSPACE/C-DEL deletes from cursor to first/last param.
+>*  S-BACKSPACE/S-DEL flats/voids blocks.
+>*  S-C-BACKSPACE/S-C-DEL delete from cursor to word boundaries, voiding any
+>   subeq that cannot be vanished.
+>
+> Main disparity is that S-C-TAB/C-TAB would fit better M-LEFT/M-RIGHT common
+> usage in graphical text editors.
+> However, it is a good feature that all commands using TAB are associated to
+> the same idea (mates) while ALT, which only has two cursor commands
+> involved because other keybindings may collide with the desktop keybindings,
+> performs an unusual action in text editors.
+
 ### Changing selection
 
 #### overwrite-mode (INS)
@@ -376,20 +411,50 @@ common overwrite mode is that inserting without a movement never trespass a
 supeq but in text editors eventually words delimiters are overwritten and
 several words become a single one.
 
-#### change_dir (C-()
-This is not a readline command.
-
+#### Change dir (C-()
 In orimode, it turns L into R and R into L. If V, it remembers previous 
 direction if the next command does not force a direction.
 
 > **Note**: Same effect can be alternatively done with the appropriated cursor
 > key *LEFT* or *RIGHT*.
-#### change_mode (C-[)
-This is not a readline command.
+#### Change mode (C-[)
+Alternate between modes (orimode, ovmode, imode).
 
-Alternate between modes.
+> **Note**: Any mode can be alternatively set by clicking in the status bar.
 
-> **Note**: Mode can be alternatively set by clicking in the status bar.
+#### Selecting further subeqs
+
+> **Note**: Successive keystrokes of the same class will remember the mate
+> ulevel.
+
+If selection is the whole eq, do nothing.
+Else, consider that supeq of selection is called SUP.
+
+##### Select first par of mate to the right of supeq (Unbounded)
+*   If SUP has a mate to the right RSUP, select the first param of RSUP.
+*   Elif SUP has at least one mate to the left, select the first param of the
+    first mate of SUP.
+*   Else, select the first param of SUP.
+
+##### Select first par of mate to the left of supeq (C-LEFT)
+*   If selection is not the first param of SUP, select the first param of SUP.
+*   Elif SUP has a mate to the left LSUP, select the first param of LSUP.
+*   Elif SUP has at least one mate to the right, select the first param of the
+    last mate of SUP.
+*   Else, do nothing.
+
+##### Select last par of mate to the right of supeq (C-RIGHT)
+*   If selection is not the last param of SUP, select the last param of SUP.
+*   Elif SUP has a mate to the right RSUP, select the last param of RSUP.
+*   Elif SUP has at least one mate to the left, select the last param of the
+    first mate of SUP.
+*   Else, do nothing.
+
+##### Select last par of mate to the left of supeq (Unbounded)
+*   If SUP has a mate to the left LSUP, select the last param of LSUP.
+*   Elif SUP has at least one mate to the right, select the last param of the
+    last mate of SUP.
+*   Else, select the last param of SUP.
 
 #### Select one more or less juxted (S-LEFT/S-RIGHT):
 
@@ -426,7 +491,7 @@ When using S-LEFT/S-RIGHT:
     sequence from now on.
 
 #### Select many more or less juxteds (S-C-LEFT/S-C-RIGHT)
-*   If selection is a juxted, select that and all its cojuxteds to the
+*   If selection is a juxted, include in selection all its cojuxteds to the
     left/right, using a TJUXT-block if needed.
 *   Else, select supeq. In addition, if orimode, set dir to L/R.
 
@@ -450,22 +515,23 @@ editors.
 Select last 1-ulevel usubeq of selection, if it exists and is selectable.
 Do not change dir unless required by a PVOID.
 
-#### Select closest mates (C-LEFT/C-RIGHT)
+#### Select mate to the left/right (S-TAB/TAB)
 These key bindings are used to navigate between mates.
 
 > **Notes**:
->*  CONTROL is preferred for "word movements" instead of ALT in basic
->   operations because they are commonly used by desktop applications with that
->   meaning.
+>*  TAB is used for mate operations (select and transpose).
 >
->*  The behavior does more honor to gedit and equivalent readline key 
->   combination than to kwrite (considering that mates are words) because
->   final selection shares orientation with the key. 
+>*  In graphical text editors, CONTROL is preferred for word displacements
+>   and ALT for word transpositions.
 >
->*  On the contrary, advanced movements will consider that mates are characters
->   and their supeqs are words.
+>*  The behavior does more honor to kwrite than to equivalent readline or gedit
+>   keybindings (considering that mates are words) because final selection does
+>   not set orientation depending on the key. The reasoning is that it was
+>   decided that operations will not change direction unless strictly needed,
+>   it is explicitly requested (*Change dir*) or by use of the basic selection
+>   commands (LEFT/RIGHT).
 
-When using C-LEFT/C-RIGHT:
+When using S-TAB/TAB:
 *   The mate to the left/right of selection is selected without changing dir.
     Marginal case: If selection is the first/last mate, choose the last/first
     mate.
@@ -474,7 +540,7 @@ When using C-LEFT/C-RIGHT:
     applying the first of these key combinations.
 
 > **Note**: Successive keystrokes of the same class will remember the mate
-> ulevel if needed.
+> ulevel.
 
 #### Create/Delete groups (C-RETURN)
 
@@ -493,40 +559,6 @@ SHIFT-LEFT or SHIFT-RIGHT before using they key binding.
 
 > **Note**: There may be an option to create soft groups automatically when
 > inserting sequences of digits.
-
-#### Selecting further subeqs
-
-> **Note**: Successive keystrokes of the same class will remember the mate
-> ulevel.
-
-If selection is the whole eq, do nothing.
-Else, consider that supeq of selection is called SUP.
-
-##### Select first par of mate to the right of supeq (TAB)
-*   If SUP has a mate to the right RSUP, select the first param of RSUP.
-*   Elif SUP has at least one mate to the left, select the first param of the
-    first mate of SUP.
-*   Else, select the first param of SUP.
-
-##### Select first par of mate to the left of supeq (Unbounded)
-*   If selection is not the first param of SUP, select the first param of SUP.
-*   Elif SUP has a mate to the left LSUP, select the first param of LSUP.
-*   Elif SUP has at least one mate to the right, select the first param of the
-    last mate of SUP.
-*   Else, do nothing.
-
-##### Select last par of mate to the right of supeq (Unbounded)
-*   If selection is not the last param of SUP, select the last param of SUP.
-*   Elif SUP has a mate to the right RSUP, select the last param of RSUP.
-*   Elif SUP has at least one mate to the left, select the last param of the
-    first mate of SUP.
-*   Else, do nothing.
-
-##### Select last par of mate to the left of supeq (S-TAB)
-*   If SUP has a mate to the left LSUP, select the last param of LSUP.
-*   Elif SUP has at least one mate to the right, select the last param of the
-    last mate of SUP.
-*   Else, select the last param of SUP.
 
 
 ### Editing
@@ -576,7 +608,7 @@ Redo last manipulation, if it exists.
 #### Crop selection (SHIFT-C-l)
 Substitute equation with selection. Undo command would restore previous eq.
 
-#### Delete coparams (C-DEL)
+#### Delete coparams to the right (C-DEL)
 If selection is a juxted remove all the juxteds of the same PJUXT-block to the
 right of the cursor.
 
@@ -590,7 +622,7 @@ Killed subeq is saved on the kill-ring.
 > **Note**: Successive keystrokes of the same class will remember the mate
 > ulevel if needed.
 
-#### Backward delete coparams (C-BACKSPACE) 
+#### Delete coparams to the left (C-BACKSPACE) 
 
 If selection is a juxted remove all the juxteds of the same juxt-block to the 
 left of the cursor
@@ -603,7 +635,7 @@ Killed subeq is saved on the kill-ring (see related shell-like section).
 > **Note**: Successive keystrokes of the same class will remember the mate
 > ulevel if needed.
 
-#### Transpose forward (M-RIGHT)
+#### Transpose mates forward (C-TAB)
 
 Swap positions of current selection and its mate to the right, leaving original
 selection selected.
@@ -615,7 +647,7 @@ Marginal case: If there is no mate to the right, do nothing.
 > **Note**: Successive keystrokes of the same class will remember the mate
 > ulevel if needed.
 
-#### Transpose backward (M-LEFT)
+#### Transpose backward (S-C-TAB)
 
 Swap positions of current selection and mate the left, leaving original
 selection selected.
@@ -630,7 +662,7 @@ Marginal cases:
 > **Note**: Successive keystrokes of the same class will remember the mate
 > ulevel if needed.
 
-#### Push (C-TAB)
+#### Push (M-RIGHT)
 *   If selection is a last mate, do nothing.
 *   Elif selection is a juxted and has a cojuxted to the right which is a
     gsymb:
@@ -642,9 +674,24 @@ Marginal cases:
         selection and remove original selection (by vanishing or substituting
         by PVOID, depending whether it is a juxted or not).
     *   Else, move selection to the left of its mate to the right as a juxted.
-        
-#### Pull (S-C-TAB)
+
+#### Pull (M-LEFT)
 Counter-part of *Push*.
+
+#### Transmute with first par (M-DOWN)
+If selection is a block B and its first parameter is a block BSUB, exchange
+lop-B and lop-BSUB, removing excess of parameters and including PVOIDs as 
+needed.
+
+> **Note**: First param is chosen instead of last one for symmetry with
+> *Select first param* (SHIFT-DOWN).
+
+#### Transmute with supeq (M-UP)
+If selection is a block B and has a supeq SUP, exchange lop-B and lop-SUP,
+removing excess of parameters and including PVOIDs as needed.
+
+#### Rotate copars to the left (S-C-t)
+#### Rotate copars to the right (S-M-t)
 
 #### Destroy line (SHIFT-C-DEL)
 Delete every mate from the cursor to the right. Those which cannot be totally
@@ -745,25 +792,6 @@ Identical to *void block*, but applied to the usupeq of selection instead.
 With a positive numeric argument n, it acts on the n-ulevel usupeq of
 selection. With a non-positive numerical argument -n, it acts on the n-ulevel 
 usubeq of selection (M-0 M-w is identical to SHIFT-DEL).
-
-#### Rotate copars to the left (M-UP)
-#### Rotate copars to the right (M-DOWN)
-
-> **Note**: First param is chosen instead of first one for symmetry with
-> *Select first param* (SHIFT-DOWN).
-
-#### Transmute with subeq (S-C-t)
-It is not a readline command.
-
-If selection is a block B and its last parameter is a block BSUB, exchange
-lop-B and lop-BSUB, removing excess of parameters and including PVOIDs as 
-needed.
-
-#### Transmute with supeq (S-M-t)
-It is not a readline command.
-
-If selection is a block B and has a supeq SUP, exchange lop-B and lop-SUP,
-removing excess of parameters and including PVOIDs as needed.
 
 #### Upcase word (M-u)
 Uppercase every symbol which has sense (Latin and Greek letters) included in
