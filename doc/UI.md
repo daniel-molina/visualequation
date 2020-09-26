@@ -497,7 +497,7 @@ SHIFT-LEFT or SHIFT-RIGHT before using they key binding.
 #### Selecting further subeqs
 
 > **Note**: Successive keystrokes of the same class will remember the mate
-> ulevel if needed.
+> ulevel.
 
 If selection is the whole eq, do nothing.
 Else, consider that supeq of selection is called SUP.
@@ -508,21 +508,21 @@ Else, consider that supeq of selection is called SUP.
     first mate of SUP.
 *   Else, select the first param of SUP.
 
-##### Select first par of mate to the left of supeq (S-TAB)
+##### Select first par of mate to the left of supeq (Unbounded)
 *   If selection is not the first param of SUP, select the first param of SUP.
 *   Elif SUP has a mate to the left LSUP, select the first param of LSUP.
 *   Elif SUP has at least one mate to the right, select the first param of the
     last mate of SUP.
 *   Else, do nothing.
 
-##### Select last par of mate to the right of supeq (C-TAB)
+##### Select last par of mate to the right of supeq (Unbounded)
 *   If selection is not the last param of SUP, select the last param of SUP.
 *   Elif SUP has a mate to the right RSUP, select the last param of RSUP.
 *   Elif SUP has at least one mate to the left, select the last param of the
     first mate of SUP.
 *   Else, do nothing.
 
-##### Select last par of mate to the left of supeq (S-C-TAB)
+##### Select last par of mate to the left of supeq (S-TAB)
 *   If SUP has a mate to the left LSUP, select the last param of LSUP.
 *   Elif SUP has at least one mate to the right, select the last param of the
     last mate of SUP.
@@ -629,6 +629,22 @@ Marginal cases:
 
 > **Note**: Successive keystrokes of the same class will remember the mate
 > ulevel if needed.
+
+#### Push (C-TAB)
+*   If selection is a last mate, do nothing.
+*   Elif selection is a juxted and has a cojuxted to the right which is a
+    gsymb:
+    *   If there is at least one cojuxted to the right of selection which is
+        not a gsymb, move selection just before that juxted.
+    *   Else, move selection so it becomes the last juxted.
+*   Else:
+    *   If mate to the right of selection is a PVOID, substitute PVOID with
+        selection and remove original selection (by vanishing or substituting
+        by PVOID, depending whether it is a juxted or not).
+    *   Else, move selection to the left of its mate to the right as a juxted.
+        
+#### Pull (S-C-TAB)
+Counter-part of *Push*.
 
 #### Destroy line (SHIFT-C-DEL)
 Delete every mate from the cursor to the right. Those which cannot be totally
@@ -997,7 +1013,8 @@ in requested direction, previous insertion is not modified.
 >*  parameters set to PVOID (note that if preceded by M-v, it overwrites
 >   selection and first PVOID of operator is replaced by removed selection).
 >*  Many M-C- keybindings have been reserved, but its use has not been yet
->   defined.
+>   defined. It may be used to display different possibilities or open the
+>   usual dialog to create/modify blocks of a given type.
 >*  Several keystrokes of the same key binding produce different
 >   symbols/operators of common characteristics.
 
