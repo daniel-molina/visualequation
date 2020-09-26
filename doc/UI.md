@@ -75,8 +75,9 @@ possible to introduce every digit with meta, so the following is equally valid
 `M-1 M-2 h`. Introducing a number several times using this procedure is
 impossible without an additional command. A usual workaround in readline is to
 use the command quoted-insert (`C-q` or `C-v` by default) to manage that. In
-Visual Equation, you can equivalently use `M-g`. For example, to introduce 3
-ten times you can type: `M-1 0 M-g 3`.
+Visual Equation, you can equivalently use `M-g` which is normally used to
+transform Latin letters into Greek, but it also transforms numbers into itself.
+For example, to introduce 3 ten times you can type: `M-1 0 M-g 3`.
 
 `M--` starts a negative argument. For example, `M-- M-2 C-f` passes argument -2
 to operation associated to keybinding `C-f`. If no number is added after
@@ -283,6 +284,13 @@ the same input is processed by the program. They are:
 
 They can be switched by pressing C-\[. INS always set/unset overwrite mode. If
 unsetting, it will set the mode that was set before setting overwrite mode.
+
+Noticeable keyboards are `M-v` and `S-M-v` (which can be thought as commands
+similar to *Paste* (`C-v`) and *Paste overwriting* (`S-C-v`)). `S-M-v` replaces
+current selection by next input, independently of the mode. `M-v` acts
+equivalently if input is a symbol but, if it is an operator, in addition first
+parameter is set to previous selection, while any other parameter is set to
+PVOID as usual.
 
 > **Note**: DEL or BACKSPACE will flat supeq when every parameter of supeq is a
 > PVOID. This avoids unexpected results for the inexperienced users and, at the
@@ -534,9 +542,28 @@ default the desktop tradition will be respected.
 
 Save/overwrite VE's clipboard with selection.
 
+#### Overwrite (S-M-v)
+Overwrite selection with next input.
+
+#### Overwrite integrating selection (M-v)
+Overwrite selection with next input and set first PVOID of the input, if any,
+to previous selection.
+
 #### Paste (C-v)
 
 Insert VE's clipboard (in overwrite mode, selection is replaced).
+
+#### Paste overwriting (S-C-v)
+
+Overwrite selection with VE's clipboard.
+
+#### Paste integrating selection (M-C-v, S-M-C-v)
+Overwrite selection with VE's clipboard and set first PVOID of replacement,
+if any, to previous selection.
+
+> **Note**: M-C-v is known to be used in KDE for clipboard management, so an
+> alternative (S-M-C-V) is provided. It is also possible to achieve the same
+> effect by using M-v C-v.
 
 #### Undo (C-z)
 
@@ -816,20 +843,12 @@ Counter-part of forward_char_sel.
 
 ### Editing
 
-#### Delete char (C-d)
-*   If there is no gsymb to the right of the cursor (supposing effsel is
-    selected), do nothing.
-*   Elif it is a TVOID, do nothing.
-*   Elif it is a last juxted and not orimode, replace it with a TVOID.
-*   Elif it is a juxted, vanish it.
-*   Elif it is not a PVOID, replace it with a PVOID.
+#### Pull gsymb (C-d)
+*   If selection is a juxted and it has a juxted to the right which is a gsymb,
+    vanish that gsymb.
+*   Elif selection has a mate M to the right, move the first symbol of M to the
+    right of selection as a juxted.
 *   Else, do nothing.
-
-> **Note**: This is the most conservative deletion command. It cannot join
-> different words as readline equivalent can do, but there are plenty of other
-> commands for that task.
-
-> **Note**: C-d executes end-of-file if whole equation is a PVOID.
 
 #### Alternative delete char (S-C-d)
 Equivalent to *Delete char* but considering that effsel is in the opposite side
@@ -973,12 +992,12 @@ in requested direction, previous insertion is not modified.
 
 > **Notes**:
 >
->*  Every C-... key binding of this section inserts a symbol.
->*  Every M-... key binding of this section inserts an operator with all their
->*  parameters set to VOID.
->*  Every M-C-... key binding of this section replaces selection with an
->   operator which has as first parameter the previous selection and any
->   other it may have set to VOID.
+>*  Every C- keybinding of this section inserts a symbol.
+>*  Every M- keybinding of this section inserts an operator with all their
+>*  parameters set to PVOID (note that if preceded by M-v, it overwrites
+>   selection and first PVOID of operator is replaced by removed selection).
+>*  Many M-C- keybindings have been reserved, but its use has not been yet
+>   defined.
 >*  Several keystrokes of the same key binding produce different
 >   symbols/operators of common characteristics.
 
@@ -1073,14 +1092,14 @@ keystroke instead of two. To unlock it, use the keybinding again, or M-C-u.
 For example, to introduce the first four Greek letters and then the first four
 Latin letters you can type `M-C-g a b g d M-C-g a b c d`.
 
-### Insert math symbol or operator (M-m)
-It is intended to remap letters to symbols and operators. The map has not been
-yet defined though. One idea is that Latin (and/or even Greek) letters may be
-accessible via some CONTROL/META/SHIFT combinations.
+### Insert math element (M-m)
+It is intended to remap letters to mathematical symbols and operators. The map
+has not been yet defined though. One idea is that Latin (and/or Greek) be
+accessible through CONTROL/META/SHIFT combinations.
 
 ### Math-lock (M-C-m)
-This operation allow to introduce math symbols and operators using only one
-keystroke instead of two. To unlock it, use the keybinding again, or M-C-u.
+This operation allow to *Insert math element* using only one keystroke instead 
+of two. To unlock it, use the keybinding again, or M-C-u.
 
 ### tab_insert
 See shortcuts SPACE and SHIFT-SPACE in basic operations.
@@ -1172,12 +1191,11 @@ A digit modifies the number of equations.
 > in this case the size of the operators.
 ### Font colors (M-&, M-C-&)
 ### Background colors (C-!, M-!)
-> **Mnemonic**: '!' indicates something important. Backgroung colors increase
+> **Mnemonic**: '!' indicates something important. Background colors increase
 > importance of an equation. 
 ### Special text (C-., M-C-.)
 It is a symbol-like key binding because a windowed dialog will always appear 
 and modification of the text will require a special dialog.
-However, M-C-. may be considered with care.
 
 > **Mnemonic**: A dot is used to finish a "text" sentence.
 
@@ -1283,7 +1301,7 @@ Legend:
 | s            | X          | X  | X  | U  | X    | X    |      |        |
 | t            | X          | X  | X  | U  | S    | X    | X    |        |
 | u            | X          | X  | X  | U  | X    | X    |      |        |
-| v            | X          | X  |    | U  | S    |      |      |        |
+| v            | X          | X  | X  | U  | SY   | X    | X    | Y      |
 | w            | X          | X  | X  | U  | X    | X    | X    |        |
 | x            | X          | X  |    | U  | S    |      |      |        |
 | y            | X          | X  | X  | U  | X    |      |      |        |
