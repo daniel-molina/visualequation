@@ -901,8 +901,8 @@ Counter-part of forward_char_sel.
 #### Delete char (C-d)
 1.  Select effsel.
 2.  Remove (vanishing or replacing by PVOID) the first gsymb to the right of
-    the cursor, if it exists, and select which was the second one to the right,
-    if it exists.
+    the cursor, if it exists, and select required gsymb so a next *Delete char*
+    would act on gsymb to the right.
 
 #### Alternative delete char (S-C-d)
 Equivalent to *Delete char* but considering that effsel is in the opposite side
@@ -944,7 +944,8 @@ opposite side of selection.
 2.  If there is no gsymb to the right of the cursor, do nothing. Else, let
     that gsymb be G and its supeq GSUP:
     *   Delete G and any param of GSUP-lop to the right of G.
-    *   Select the next gsymb to the right after last removed param.
+    *   Select required gsymb so next *Kill word* would act on a reasonable
+        gsymb to the right.
 
 Deleted params are saved on the kill ring.
 
