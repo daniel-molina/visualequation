@@ -25,7 +25,6 @@ from . import scriptops
 from . import simpleeqcreator
 #from .symbols import utils
 
-
 class EditableEq(Subeq):
     """Class to edit an equation.
 
@@ -82,7 +81,6 @@ class EditableEq(Subeq):
                 without correcting the correspondent script op is known as a
                 'base-checker'.
     """
-    @eqdebug.debuginit
     def __init__(self, eq0=None, sel_index0=None, dir0=None, debug=True):
         super().__init__(deepcopy(eq0))
         # The index of current subeq being selected.
@@ -99,7 +97,9 @@ class EditableEq(Subeq):
             self.dir = Dir.V
         else:
             self.dir = Dir.R
-        self.dir_before_ov = None
+        # Used for movements and recovering ori mode.
+        # It must hold a value in (True, False).
+        self.right_pref = True
         self.debug = debug
 
     def __repr__(self):
@@ -171,36 +171,32 @@ class EditableEq(Subeq):
 
     def _safe_dir(self, dirflag=0, subeq: Union[int, None] = 0,
                   index: Union[Idx, int] = -1):
-        """Set direction respecting ovmode and imode. If orimode, it checks
-        subeq that is supposed to be selected and determine direction
-        according to preferences stablished by the caller.
+        """Set direction respecting ovmode, imode and voids. If orimode,
+        it checks subeq that is supposed to be selected and determine direction
+        according to preferences established by the caller.
 
             *   supeq-checker (but not applicable)
             *   Not final-idx-checker
             *   base-checker (but not applicable).
 
-        wp ~ "when possible" ~ self.dir is not O or I and referred subeq is not
-        PVOID.
+        wp ~ "when possible" ~ self.dir not in (Dir.O, Dir.I) and referred
+        subeq is not a PVOID (those cases does not allow any choice).
 
         If *dirflag* is:
 
+            *    0, use self.dir wp unless it was V; in that case, use
+                 self.right_pref (set R or L respecting self.dir).
             *    1, use R wp.
             *   -1, use L wp.
-            *    5, use self.dir unless it was V; in that case R.
-            *   -5, use self.dir unless it was V; in that case L.
-            *    0 means that it is not needed to specify a
-                preference. Use it if dir in Dir.O or Dir.I or subeq is PVOID.
-
-        WARNING: If subeq is not a PVOID, self.dir == Dir.V and *dirflag* is
-        set to 0, Dir.V is returned, what is probably undesired. Use
-        *dirflag* == 0 only when you know the details and you want to
-        emphasize that it is not possible to obtain Dir.R or Dir.L.
+            *    5, use self.dir wp unless it was V; in that case: R.
+            *   -5, use self.dir wp unless it was V; in that case: L.
+            *   10, use self.right_pref wp (set R or L not honoring self.dir).
 
         If *subeq* is:
 
-            *   0, it uses subeq referred by *index*.
-            *   None, it is equivalent to pass [ops.PVOID].
-            *   ow., it uses passed subequation.
+            *   0, use subeq referred by *index*.
+            *   None, use [PVOID].
+            *   ow., use *subeq* (a valid subequation).
 
         If *index* is:
 
@@ -212,8 +208,7 @@ class EditableEq(Subeq):
 
             It is OK to refer to a GOP-block instead of its par even if that
             is the one that is going to be selected (a GOP-par cannot be a
-            PVOID).
-
+            PVOID so result is not affected).
         """
         if self.is_ovmode():
             return Dir.O
@@ -227,18 +222,39 @@ class EditableEq(Subeq):
             s = self(self.idx) if index == -1 else self(index)
         if s.is_pvoid():
             return Dir.V
-        # From here, it is orimode and subeq to be selected is not PVOID
-        if dirflag == 0:
-            raise ValueError("dirflag was set to 0 and R or L must be decided")
-        if dirflag in (1, Dir.R):
+
+        # From here, orimode is set and subeq to be selected is not PVOID
+        default_pref_dir = Dir.R if self.right_pref else Dir.L
+        if dirflag == 10:
+            return default_pref_dir
+        if dirflag == 1:
             return Dir.R
-        if dirflag in (-1, Dir.L):
+        if dirflag == -1:
             return Dir.L
         if dirflag == 5:
             return self.dir if self.dir != Dir.V else Dir.R
         if dirflag == -5:
             return self.dir if self.dir != Dir.V else Dir.L
+        if dirflag == 0:
+            return self.dir if self.dir != Dir.V else default_pref_dir
         raise ValueError("Incorrect input parameters")
+
+    def _change_dir(self, dirflag=0, subeq=0, index=-1):
+        """Set dir under the same rules than _safe_dir.
+
+        It is essentially self.dir = _safe_dir(dirflag, subeq, index) but, in
+        addition, self._right_pref is corrected if needed.
+
+        Return whether right_pref is modified.
+        """
+        new_dir = self._safe_dir(dirflag, subeq, index)
+        if new_dir is Dir.L and not self.is_ldir():
+            self.right_pref = False
+            return True
+        elif new_dir is Dir.R and not self.is_rdir():
+            self.right_pref = True
+            return True
+        return False
 
     def _condtly_correct_scriptop(self, newbase, index=-1, refindex=-2):
         """Correct a script-block if index points to a base and it is needed.
@@ -504,10 +520,9 @@ class EditableEq(Subeq):
                                                         del_idx[:-1])
                 retidx = self.urepr(retval, True)
 
-            # prefer RDIR if reljuxted == 0, else the same
-            # Output is the same if it is chosen 5 or -5 flag for reljuxted
+            # prefer Dir.R if reljuxted == 0, else the same dir
             return (self.urepr(retidx, True),
-                    self._safe_dir(5 if reljuxted else 1, 0, retidx))
+                    self._safe_dir(0 if reljuxted else 1, 0, retidx))
 
         if del_idx[-1] == 1:
             # Case: Vanish first juxted
@@ -523,10 +538,9 @@ class EditableEq(Subeq):
                                                         pointed_idx[:-1],
                                                         pointed_idx[:-1])
                 retidx = self.urepr(retval, True)
-            # Prefer LDIR if reljuxted == 0, else the same
-            # Output is the same if it is chosen 5 or -5 flag for reljuxted
+            # Prefer LDIR if reljuxted == 0, else the same dir
             return (self.urepr(retidx, True),
-                    self._safe_dir(5 if reljuxted else -1, 0, retidx))
+                    self._safe_dir(0 if reljuxted else -1, 0, retidx))
 
         # Case: Intermediate juxted
         #
@@ -620,7 +634,7 @@ class EditableEq(Subeq):
         *index* can point to any subeq, not necessarily an usubeq. If pointed
         subeq is a GOP-block, it acts on its parameter.
 
-       It returns an updated *index*, the adequate direction supposing that it
+       It returns an updated *index*, the adequate direction supposing that
        this method acts on current selection and a boolean indicating whether
        some operation was applied to the equation.
 
@@ -633,7 +647,7 @@ class EditableEq(Subeq):
         idx = self.urepr(self._safe_idx_arg(index), True)
         s = self(idx)
         if len(s) == 1 or s.is_jb():
-            return self.urepr(idx, True), self._safe_dir(5, 0, idx), False
+            return self.urepr(idx, True), self._safe_dir(0, 0, idx), False
 
         repl_c = simpleeqcreator.SimpleEqCreator()
         repl_c.extend(s[1:], accept_pvoids=False)
@@ -648,7 +662,7 @@ class EditableEq(Subeq):
         if self.is_juxted(idx) and s.is_perm_jb():  # s == self(idx)
             s[0] = TJUXT
         new_idx = self._condtly_correct_scriptop(s, idx, idx)
-        return self.urepr(new_idx, True), self._safe_dir(5, 0, new_idx), True
+        return self.urepr(new_idx, True), self._safe_dir(0, 0, new_idx), True
 
     def _flat_out(self, index=-1):
         """Remove leading operator and leave params (joined in a juxt-block if
@@ -691,7 +705,7 @@ class EditableEq(Subeq):
         """
         idx = self._biggest_subeq_same_urepr(index, True)
         if not idx:
-            return self.urepr(idx, True), self._safe_dir(5, 0, idx), False
+            return self.urepr(idx, True), self._safe_dir(0, 0, idx), False
 
         # It is guaranteed by previous code that:
         #   1. Supeq exists, and
@@ -701,7 +715,7 @@ class EditableEq(Subeq):
         n_void_pars = sup[1:].count([PVOID])
         n_non_void_pars = len(sup) - n_void_pars - 1
         if not n_void_pars and sup.is_perm_jb():
-            return self.urepr(idx, True), self._safe_dir(5, 0, idx), False
+            return self.urepr(idx, True), self._safe_dir(0, 0, idx), False
 
         if not n_non_void_pars:
             # Case: Every param is a PVOID
@@ -757,7 +771,7 @@ class EditableEq(Subeq):
             new_idx = new_sup_idx
 
         ret_idx = self.urepr(new_idx, True)
-        return ret_idx, self._safe_dir(5, 0, ret_idx), True
+        return ret_idx, self._safe_dir(0, 0, ret_idx), True
 
     def _act_on(self, forward):
         """Return -1 if it must act on 'previous' subeq, 0 if it must act on

@@ -146,26 +146,27 @@ class EqCoreTests(unittest.TestCase):
     def test_safe_dir(self):
         eq = Eq([Op("a", "a", 2), ["e"], [PVOID]])
 
+        pref_dir = Dir.R if eq.right_pref else Dir.L
         eq.idx[:] = []
         eq.dir = Dir.R
         # Act on non-PVOID subeq when dir is R
         for args in ((), (["h"], -43), (0, -1), (0, [1]), (0, 1), (0, Idx(1))):
+            self.assertEqual(eq._safe_dir(0, *args), Dir.R)
+            self.assertEqual(eq._safe_dir(10, *args), pref_dir)
             self.assertEqual(eq._safe_dir(1, *args), Dir.R)
             self.assertEqual(eq._safe_dir(-1, *args), Dir.L)
             self.assertEqual(eq._safe_dir(5, *args), Dir.R)
             self.assertEqual(eq._safe_dir(-5, *args), Dir.R)
-            with self.assertRaises(ValueError):
-                eq._safe_dir(0, *args)
 
         eq.dir = Dir.L
         # Act on non-PVOID subeq when dir is L
         for args in ((), (["h"], -43), (0, -1), (0, [1]), (0, 1), (0, Idx(1))):
+            self.assertEqual(eq._safe_dir(0, *args), Dir.L)
+            self.assertEqual(eq._safe_dir(10, *args), pref_dir)
             self.assertEqual(eq._safe_dir(1, *args), Dir.R)
             self.assertEqual(eq._safe_dir(-1, *args), Dir.L)
             self.assertEqual(eq._safe_dir(5, *args), Dir.L)
             self.assertEqual(eq._safe_dir(-5, *args), Dir.L)
-            with self.assertRaises(ValueError):
-                eq._safe_dir(0, *args)
 
         # Act on PVOID in orimode
         for dir in (Dir.R, Dir.L, Dir.V):
@@ -174,6 +175,7 @@ class EqCoreTests(unittest.TestCase):
                 if args == (0, -1):
                     eq.idx[:] = [2]
                 self.assertEqual(eq._safe_dir(0, *args), Dir.V)
+                self.assertEqual(eq._safe_dir(10, *args), Dir.V)
                 self.assertEqual(eq._safe_dir(1, *args), Dir.V)
                 self.assertEqual(eq._safe_dir(-1, *args), Dir.V)
                 self.assertEqual(eq._safe_dir(5, *args), Dir.V)
@@ -184,6 +186,7 @@ class EqCoreTests(unittest.TestCase):
         for idx in ([], [1], [2]):
             eq.idx[:] = idx
             self.assertEqual(eq._safe_dir(0), Dir.O)
+            self.assertEqual(eq._safe_dir(10), Dir.O)
             self.assertEqual(eq._safe_dir(1), Dir.O)
             self.assertEqual(eq._safe_dir(-1), Dir.O)
             self.assertEqual(eq._safe_dir(5), Dir.O)
@@ -194,6 +197,7 @@ class EqCoreTests(unittest.TestCase):
         for idx in ([], [1], [2]):
             eq.idx[:] = idx
             self.assertEqual(eq._safe_dir(0), Dir.I)
+            self.assertEqual(eq._safe_dir(10), Dir.I)
             self.assertEqual(eq._safe_dir(1), Dir.I)
             self.assertEqual(eq._safe_dir(-1), Dir.I)
             self.assertEqual(eq._safe_dir(5), Dir.I)
@@ -696,29 +700,6 @@ class EqCoreTests(unittest.TestCase):
         ce = CompareEqs(db)
         ce.assert_equality(Eq._empty)
 
-    def test_remove_eq(self):
-        # Replace a non-GOP block
-        db = (
-            (Eq(["a"]), Eq()),
-            (Eq([PVOID]), Eq()),
-            (Eq([Op("O", "O")]), Eq()),
-            (Eq([PJUXT, ["f"], ["s"]]), Eq()),
-            (Eq([PJUXT, ["f"], ["s"]], [1]), Eq()),
-            (Eq([GOP, [PJUXT, ["a"], ["b"]]], [1]), Eq()),
-            (Eq([PJUXT, [PJUXT, ["a"], ["b"]], ["c"]], [1]), Eq()),
-            (Eq([PJUXT, [PJUXT, ["a"], ["b"]], ["c"]], [1, 1]), Eq()),
-            (Eq([PJUXT, [PJUXT, ["a"], ["b"]], ["c"]], [1, 2]), Eq()),
-            (Eq([PJUXT, [PJUXT, ["a"], ["b"]], ["c"]], [2]), Eq()),
-        )
-        ce = CompareEqs(db)
-        ce.assert_equality(Eq.remove_eq)
-        def f(eq):
-            eq.dir = Dir.O
-            eq.remove_eq()
-        for eq1, eq2 in db:
-            eq2.dir = Dir.O
-        ce.assert_equality(f)
-
     def test_vanish_juxted_nogopb(self):
         # Passed function will set self.idx and self.dir according to return
         # value to facilitate the comparison
@@ -1025,6 +1006,7 @@ class EqCoreTests(unittest.TestCase):
             (Eq([PJUXT, ["a"], ["b"], [TVOID]], [2], Dir.O),
                 Eq([PJUXT, ["a"], ["b"]], [2], Dir.O))
         )
+
         def f3(eq):
             eq.idx = eq._dissolve_tvoid(eq.idx, [3])
         ce = CompareEqs(db3)

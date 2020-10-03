@@ -586,7 +586,7 @@ class Subeq(list):
             call.
 
         .. note::
-            The algorithm is described in HACKING.md.
+            The algorithm is described in doc/FORMALISM.md.
         """
         s = self(idx)
         if ulevel_diff < 0:
@@ -648,12 +648,12 @@ class Subeq(list):
     def boundary_symbol(self, idx=None, last=False, strict=True, retidx=False):
         """Return the first or last symbol of a subeq.
 
-        self must be an equation if *strict* is False.
+        self must be a whole equation if *strict* is False.
 
         If *strict* is False:
 
-        *   If the boundary symbol is not selectable, it will be returned the
-            GOP-par which is its N-ulevel usupeq of biggest N.
+        *   If the boundary symbol BS is not selectable, the GOP-par which is a
+            N-ulevel usupeq of BS with biggest N will be returned.
         *   If pointed subeq has not a selectable urepr, -1 is returned.
         """
         index = Idx(idx)
