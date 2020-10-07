@@ -991,7 +991,7 @@ def insert_script(index, eq: Subeq, scriptdir, is_superscript, newscript=None):
             *eq* is not modified and the ordinal of the script par matching
             requested script is returned.
 
-    :param idx: The index of the subeq which will be the base of the script.
+    :param index: The index of the subeq which will be the base of the script.
     :param eq: An equation.
     :param scriptdir: Dir in which to include the script. 0 means vscript.
     :param is_superscript: Boolean indicating whether it is a superscript.

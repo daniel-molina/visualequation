@@ -282,6 +282,10 @@ class Subeq(list):
             s = s[pos]
         return s
 
+    def isb(self, idx=None):
+        s = self(idx)
+        return isinstance(s, Subeq) and len(s) > 1
+
     def supeq(self, idx):
         """Return the supeq of subeq pointed by idx or -2."""
         index = Idx(idx)
@@ -301,9 +305,19 @@ class Subeq(list):
     def is_void(self, idx=None):
         return self(idx) in ([ops.PVOID], [ops.TVOID])
 
-    def isb(self, idx=None):
+    def all_pvoid(self, idx=None):
+        """Return whether every param of block pointed by index is a PVOID.
+
+        If pointed subeq is a symbol, -1 is returned.
+        """
         s = self(idx)
-        return isinstance(s, Subeq) and len(s) > 1
+        if not s.isb():
+            return -1
+
+        for par in s[1:]:
+            if par != [ops.PVOID]:
+                return False
+        return True
 
     def isusubeq(self, idx=None):
         """Return if a subeq element is an usubeq, including lops."""
@@ -341,6 +355,12 @@ class Subeq(list):
             return False
         sup = self(index[:-1])
         return isinstance(sup[index[-1]], Subeq) and sup[0] == ops.GOP
+
+    def is_lastpar(self, idx):
+        index = Idx(idx)
+        if not index:
+            return False
+        return index[-1] == len(self(index[:-1])) - 1
 
     def outlop(self, idx, retidx=False):
         """Get the lop of parameter pointed by idx.

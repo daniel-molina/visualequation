@@ -18,7 +18,6 @@ Functions to debug an equation.
 import functools
 import re
 
-from .dirsel import Dir
 from .idx import Idx
 from .ops import *
 from .subeqs import Subeq
@@ -147,7 +146,7 @@ def checkeqidxstructure(idx, bare_eq):
     return PASSED_MSG
 
 
-def checkeqidxrules(eq: Subeq, sel_idx: Idx, dir: Dir):
+def checkeqidxrules(eq: Subeq, sel_idx: Idx):
     """Check that an equation satisfy the conditions of current implementation
     of an equation in Visual Equation.
 
@@ -171,21 +170,10 @@ def checkeqidxrules(eq: Subeq, sel_idx: Idx, dir: Dir):
     if not isinstance(sel_idx, Idx):
         return "Equation index has type different than Idx."
 
-    if not isinstance(dir, Dir):
-        return "Direction has type different than Dir."
-
     # Non-applicable
     # if NONUOPS != (utils.GOP,):
     #     return "Current implementation considers GOP, and only GOP, as " \
     #            "non-user op."
-
-    s_sel = eq(sel_idx)
-    if s_sel.is_tvoid() and dir not in (Dir.O, Dir.I):
-        return "A TVOID is selected and direction is not O nor I."
-    if s_sel.is_pvoid() and dir not in (Dir.O, Dir.V, Dir.I):
-        return "A PVOID is selected and direction is not O, V nor I."
-    if not s_sel.is_pvoid() and dir is Dir.V:
-        return "A non-PVOID subeq is selected and direction is V."
 
     # Selectivity
     flag = eq.selectivity(sel_idx)
@@ -268,12 +256,12 @@ def checkeqidxrules(eq: Subeq, sel_idx: Idx, dir: Dir):
     return helper(None)
 
 
-def checkeqidx(eq: Subeq, sel_idx: Idx, dir: Dir):
+def checkeqidx(eq: Subeq, sel_idx: Idx):
     msg = checkeqidxstructure(sel_idx, eq)
     if msg != PASSED_MSG:
         return msg
 
-    msg = checkeqidxrules(eq, sel_idx, dir)
+    msg = checkeqidxrules(eq, sel_idx)
     if msg != PASSED_MSG:
         return "Wrong implementation: " + msg
 
@@ -281,7 +269,7 @@ def checkeqidx(eq: Subeq, sel_idx: Idx, dir: Dir):
 
 
 def checksafeeq(seq):
-    msg = checkeqidx(seq, seq.idx, seq.dir)
+    msg = checkeqidx(seq, seq.idx)
     if msg != PASSED_MSG:
         return msg
 
@@ -326,8 +314,8 @@ def debuginit(fun):
         print(">>>>> Debugging started <<<<<")
         print(OKBLUE + "\neq: "  + ENDC + BOLD + str(self) + ENDC)
         print(OKBLUE + "\nidx: " + ENDC + BOLD + str(self.idx) + ENDC
-              + OKBLUE + "\tdir: " + ENDC
-              + BOLD + self.dir.name + ENDC)
+              + OKBLUE + "\tOvrwrt: " + ENDC
+              + BOLD + repr(self.ovrwrt) + ENDC)
 
         msg = checksafeeq(self)
         if msg != PASSED_MSG:
@@ -359,8 +347,8 @@ def debug(fun):
         retval = fun(self, *args, **kwargs)
         print(OKBLUE + "\neq: "  + ENDC + BOLD + str(self) + ENDC)
         print(OKBLUE + "\nidx: " + ENDC + BOLD + str(self.idx) + ENDC
-              + OKBLUE + "\tdir: " + ENDC
-              + BOLD + self.dir.name + ENDC
+              + OKBLUE + "\tOvrwrt: " + ENDC
+              + BOLD + repr(self.ovrwrt) + ENDC
               + ".\tReturn of " + BOLD + fun.__name__ + ENDC + ": "
               + WARNING + str(retval) + ENDC)
 
