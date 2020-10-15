@@ -529,28 +529,10 @@ When using S-TAB/TAB:
 > **Note**: Successive keystrokes of the same class will remember the mate
 > ulevel.
 
-#### Create/Delete groups (C-g)
-
-A group makes strict usubeqs of selected block not selectable. It has no
-effect if selection is a symbol.
-
-> **Note**: If an existing soft group (see below) is (hard) grouped, it will
-> become again a soft group if it is (hard) ungrouped.
-
-#### Create/Delete soft groups (M-g)
-
-A soft group is a juxt-block that is a juxted of another juxt-block.
-
-To create a soft-group, select together the desired juxteds by using
-S-LEFT or S-RIGHT before using they keybinding.
-
-> **Note**: There may be an option to create soft groups automatically when
-> inserting sequences of digits.
-
 
 ### Editing
 
-#### Cut (C-x)
+#### Cut (C-x, S-DEL)
 #### Cut special (S-C-x)
 
 Remove selected subeq and save/overwrite VE's clipboard.
@@ -618,11 +600,11 @@ command enough times to return to the initial void equation.
 Redo all changes made to all equations. This is like executing *redo*
 command enough times to return the equations to their final state.
 
-#### Delete and select mate (S-DEL)
+#### Delete and select mate (C-d)
 If selection is a juxted, it is equivalent to DEL.
 Else, after deleting selection, the mate to right is selected.
 
-#### Backward delete and select mate (S-BACKSPACE)
+#### Backward delete and select mate (S-C-d)
 If selection is a juxted, it is equivalent to BACKSPACE.
 Else, the mate to left is selected and deleted as if DEL was pressed.
 
@@ -754,7 +736,7 @@ keep intact the structure of supeqs of selection (no flat).
 2. Remove every subeq to the right of the cursor using PVOIDs if needed to
 keep intact the structure of supeqs of selection (no flat).
 
-#### Flat block (C-d)
+#### Flat block (C-j)
 *   If selection is a symbol, do nothing.
 *   Else, let selection be a block B:
     *   If every param of B is a PVOID:
@@ -767,20 +749,20 @@ keep intact the structure of supeqs of selection (no flat).
         *   Else, join every non-PVOID B-param in a PJUXT-block and substitute
             B with it.
 
-#### Flat supeq (M-d)
+#### Flat supeq (M-j)
 Identical to *flat block*, but applied to the usupeq of selection instead.
 
 With a positive numeric argument n, it acts on the n-ulevel usupeq of
 selection. With a non-positive numerical argument -n, it acts on the n-ulevel 
 usubeq of selection (M-0 SHIFT-C-w is identical to M-\\).
 
-#### Recursively flat block (S-C-d)
+#### Recursively flat block (S-C-j)
 Similar to *flat block*, but the procedure is applied before to each parameter
 (and before to the parameters of its parameters if they exist, and so on)
 of selected block. As a result, selection is replaced by a juxt-block which
 contains no blocks at all, only symbols.
 
-#### Recursively flat supeq (S-M-d)
+#### Recursively flat supeq (S-M-j)
 Identical to *recursively flat block*, but applied to the usupeq of selection
 instead.
 
@@ -878,11 +860,11 @@ Select first gsymb of equation.
 #### Last gsymb (END)
 Create a TVOID to the right of the last gsymb of equation and select it.
 
-#### Next gsymb (M-HOME)
+#### Next gsymb (C->)
 If selection is not a gsymb, select the first gsymb of selection. Else,
 select previous gsymb.
 
-#### Previous gsymb (M-END)
+#### Previous gsymb (C-<)
 If selection is not a gsymb, select the last gsymb of selection. Else,
 select next gsymb.
 
@@ -953,25 +935,24 @@ After an insertion, it always acts on inserted subeq.
 > **Mnemonic**: '@' looks like a modified form of 'a'.
 
 
-### Insert Greek letter (M-g letter/M-g M-letter)
-To insert a Greek letter, press `M-g` and then the Latin letter associated to
+### Insert Greek letter (C-g letter/C-g S-letter/M-g letter)
+To insert a Greek letter, press `C-g` and then the Latin letter associated to
 requested Greek letter (equivalence table can be found below). For example,
-to introduce *alpha*, (typed α), use `M-g a`. If there is an uppercase version
+to introduce *alpha*, (typed α), use `C-g a`. If there is an uppercase version
 of the Greek letter, it can be introduced by inserting the Latin key uppercase
 (by pressing SHIFT at the same time or with CAPSLOCK turned on, as reasonable).
 Some Greek letters have a variant. They can be introduced by metafying the
 associated Latin letter. For example, to introduce the version of epsilon
-similar to a reversed 3 (typed as ε), use `M-g M-e`. If keybinding does not
+similar to a reversed 3 (typed as ε), use `M-g e`. If keybinding does not
 have a Greek letter associated, nothing is printed. However, if a digit is
-passed it is inserted literally (`M-g 3` inserts digit 3). In *Introduction*
-it is explained why that is useful for numerical arguments.
+passed it is inserted literally (`C-g 3` inserts digit 3).
 
 > **Note**: Table of equivalence has been designed to maximize the
 > similarities between Latin and Greek letters, but it is just an artifact
 > to force a useful map between them, sometimes based exclusively in the
 > shape of the glyphs.
 
-|   | M-g *locase* | M-g *upcase* | M-g M-         |
+|   | C-g          | C-g S-       | M-g            |
 |---|--------------|--------------|----------------|
 | a | α (alpha)    | A            |                |
 | b | β (beta)     | B            |                |
@@ -1014,7 +995,7 @@ keystroke instead of two. To unlock it, use the keybinding again, or ESC.
 For example, to introduce the first four Greek letters and then the first four
 Latin letters you can type `M-C-g a b g d M-C-g a b c d`.
 
-### Insert math element (M-m)
+### Insert math element (C-m)
 It is intended to remap letters to mathematical symbols and operators. The map
 has not been yet defined though. One idea is that Latin (and/or Greek) be
 accessible through CONTROL/META/SHIFT combinations.
@@ -1067,7 +1048,7 @@ First time is a square root, next time is generic.
 > **Mnemonic**: '%' looks like a generic root with its arguments, only
 > lacking part of the main glyph.
 
-### Summatory (C-m, Idea: M-+, M-C-+)
+### Summatory (Idea: M-+, M-C-+)
 Successive keystrokes of the operator versions modify the number and position 
 of the args.
 

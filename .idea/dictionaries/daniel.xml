@@ -2,9 +2,15 @@
   <dictionary name="daniel">
     <words>
       <w>cojuxted</w>
+      <w>cojuxteds</w>
       <w>copar</w>
+      <w>definiendum</w>
+      <w>definiendums</w>
+      <w>definiens</w>
       <w>dirpref</w>
+      <w>elems</w>
       <w>gsymb</w>
+      <w>hlighted</w>
       <w>ilevel</w>
       <w>juxt</w>
       <w>juxted</w>
@@ -15,8 +21,12 @@
       <w>odir</w>
       <w>orimode</w>
       <w>ovmode</w>
+      <w>pjuxts</w>
       <w>productory</w>
+      <w>pseudosymbol</w>
+      <w>pseudosymbols</w>
       <w>pvoid</w>
+      <w>rcursor</w>
       <w>rdir</w>
       <w>readline</w>
       <w>selsubeq</w>
@@ -32,14 +42,18 @@
       <w>supeqs</w>
       <w>superequation</w>
       <w>superequations</w>
+      <w>symb</w>
       <w>tempgroup</w>
       <w>tjuxt</w>
+      <w>tjuxts</w>
       <w>tvoid</w>
       <w>uarg</w>
       <w>uargs</w>
       <w>ublock</w>
       <w>ublocks</w>
       <w>ulevel</w>
+      <w>unhighlight</w>
+      <w>unhighlighting</w>
       <w>univocally</w>
       <w>upar</w>
       <w>upars</w>
