@@ -1,76 +1,144 @@
 # The formalism behind Visual Equation
 
-Below you can read most of definitions and rules used in Visual Equation code.
-There are a lot of definitions, but I hope they are intuitive. It is intended
-to be only as rigorous as needed to avoid ambiguity, but relationships become
-complex and some technicalities must be used.
+Version: 1.2
 
-> **Disclaimer**: *Definitions have being changed and extended as it has been
-> required by new features, it is possible that some of the code notation has
-> not been updated yet.*
+Here you can read most of definitions and rules used in Visual Equation code.
+It is basically a bunch of definitions interconnected. It really looks like
+a math book. There are also conclusions and theorems-like stuff, but (as usual)
+they all have common sense, being definitions the key points. They allow to
+classify and name the different elements needed by a this program. It allows to
+be organised when writing code comments, deciding the name of identifiers and
+writing documentation. However, final user manual will avoid many definitions 
+used here to make the reading simpler.
+ 
+This text is intended to be only as formal as needed to avoid ambiguity, but
+relationships become complex and at the end this is the central reference for
+any other documentation, so being self-contained and rigorous is important.
 
-> **Note**:
+If you have corrections, good ideas or better names for definitions, feel free
+to share them.
+
+> **Disclaimer**: *Definitions are being changed and extended as it is
+> required by new features, so it is possible that some of the code
+> nomenclature is not up to date.*
+
+> **Notes**:
 >
 > The main use of parenthesis throughout the text is to help the reader
-> understand sentences and their scope. Information inside parenthesis should
-> be always redundant for the meticulous reader.
+> understand sentences and their scope. Information inside them should be
+> always redundant for the meticulous reader, but probably a helping hand
+> even for an ideal reader when pers knows that parenthesis are being used that
+> way.
+>
+> Every number below is an integer. Expressions such as N > 0 refer to
+> integers greater than 0.
 
 ## Formalism of an equation
 
 ### Introduction
 Most of definitions included in other sections do not relay on the actual
 implementation of an equation, so I found better to keep the formalism agnostic
-with respect to the implementation.
+with respect to the implementation. This documents mainly deals with the
+formalism, but there is also a section on the implementation which relates
+both.
 
 ### Meta-properties of equation elements
-An equation is an element probably consisting of other elements.
+Equation are elements, probably consisting of other elements.
 
-This formalism is build to give elements the following "meta-properties":
+This formalism is designed to give elements certain, let us say,
+meta-properties. As in formal logic, there is a limit of abstraction in which
+it is not possible to define things without appealing intuitive human 
+notions/usual language constructions such as membership, identity and so on. As
+a consequence, these meta-definitions are more a statement of the words of the
+English language that will be used to refer to certain ideas than well-posed
+definitions.
 
 #### Identity, equality an properties
 
 *   Every element is **unique** and is allowed to have a unique *proper noun*.
-    One element that is **not the same** element than other must have a
-    different proper noun.
-*   There can be elements **equal** to others and they are allowed to have a
-    *common noun* that is shared between them. If two elements are not equal,
+    One element that is **not the same** element than other can never have the
+    same proper noun.
+*   There can be elements **equal** to others. If two elements are not equal,
     it is said that they are **different**.
-*   Every element can be referred by a **property** it has. That property is
-    probably shared by other elements. When specifying an element by its
-    properties, nothing is said about any other properties that the element
-    has if those properties cannot be deduced from the original property.
-    Definitions will give a **definiendum** to refer to an element satisfying
-    certain properties.
+*   Every element can be referred by a **property** it has, which is
+    probably shared by other elements. When specifying an element by a
+    property, nothing is said about any other properties that the element
+    holds if those properties cannot be deduced from the original property.
+    Definitions below will provide a **definiendum** to refer to an element
+    satisfying certain properties. E.g.: an "equation" will have the property
+    of being a subequation which has no superequations. There can be many
+    equations, some of them with different properties, but all of them can be
+    referred as "equations".
 
 #### Identity and equation edition    
 
-*   An element can **replace** other element. In that case, if the first
-    element existed, it continue being the same but in another **position**. If
+*   Element can **replace** other elements or being **inserted** elsewhere.
+    They will continue being the same elements but in another **position**. If
     the second element does not replace a third element, it is **deleted** so
     it does not exist anymore.
-*   If an element of an element is replaced, the second element is not the same
-    element anymore.
+*   If an element of an element is replaced, the second element will not be the
+    same element anymore.
 
 #### How to refer equation elements
 
-The expression **A d** or **is a d** refers to an arbitrary element which
-satisfies the **definiens** of a **definiendum** d or asserts that an element
+Brackets in this section means that they will be replaced by a particular
+expression in practice.
+
+The statement **\[Certain element\] is a d** (e.g, "\[Certain element\] is a
+juxt" or "\[Certain element\] is an equation") asserts that mentioned element
 satisfies the **properties** stated in the **definiens** of **definiendum** d.
 
-Definiendums of elements with certain properties which include elements that
-are different will be lowercase.
+The expression **an element PN** gives the **proper noun** PN (noun PN will be 
+different in each case) to an arbitrary and unspecified element without
+restriction of the properties that the element must hold.
 
-The expression **A CN** refers to an arbitrary element with **common name** CN.
-Common names will be uppercase.
+**A p PN \[...\]** gives the proper noun PN (noun PN will be different in
+each case and usually will be formed with the initials of the particular d
+of the sentence) to a generic and unspecified arbitrary element with (at
+least) the properties stated in the definiens of p. Proper nouns must be
+uppercase.
 
-The expression **A p PN** gives the proper noun PN to an arbitrary element with
-the common **properties** to elements called p. Proper nouns will be uppercase.
+The statement **A d \[...\]** (e.g. "a subeq \[...\]" or "an image \[...\]") 
+refers the rest of the sentence to an arbitrary element which satisfies the
+definiens of p without giving the element a proper noun. It will be done when
+it is not needed to refer to that (unique) element again.
 
-The expression **A CN PN** gives the proper noun PN to an arbitrary element
-with common name CN.
+#### Tuples
 
-The expression **an element PN** gives the **proper noun** PN to an arbitrary 
-element.
+A **tuple** is used to group several elements together. It has a given
+number of elements and all of this elements has as an ordinal associated
+which **order** them as elements of the tuple. Tuples are not considered as 
+elements of the theory, but a general tool used temporally in next section 
+(particular tuples will be referred as blocks). However, tuples definitions
+below will be extensively used.
+
+In general, tuple elements will never be considered recursively unless
+explicitly allowed for a **definiendum**. It is, an **element of a tuple** 
+cannot be the tuple itself and, if an **element E of a tuple** T is also a 
+tuple, an element of E will not be considered an element of T.
+
+However, the following definitions can be used:
+
+A (or the) **0-level element of a tuple** T is T.
+
+A **L-level element of a tuple** T, L > 0, is a **(L-1)-level subequation of**
+a tuple which is an element of T.
+
+That is a recursive definition that finishes when N becomes 0 and the preceding
+definition applies.
+
+> **Property**: A N-level element of a tuple T is an element of T if, and only
+> if, N is 1.
+
+A **any-level element of a tuple** T is a N-element of T, N >= 0.
+
+A **strict element of a tuple** T is a any-level element of T which is not T.
+
+The **nesting level** (**level**) **of a N-level tuple of another tuple** is
+the (non-negative) value N. 
+
+The **maximum nesting level** (**max level**) M of a tuple T is the integer M
+such that no (M+1)-level elements of T exist.
 
 ### Elements of an equation
 There are four main types of elements:
@@ -80,98 +148,117 @@ There are four main types of elements:
 *   Arguments
 *   Blocks
 
-**Symbols** are elements that make sense by themselves. For example, digits or 
-Greek letters.
+If one element is of one main type, it cannot be of any other main type.
+
+**Symbols** are elements that make sense by themselves. For example, 
+digits or Greek letters.
 
 **Operators** (**ops**) are elements which require other elements in certain
-order to make sense. Those elements are known as **parameters**. A parameter
-is a symbol or a block.
-
-A **OP-par** is a parameter of operator OP.
+order to make sense.
 
 > **Example**:
 >
-> Operator FRAC is the operator used to represent fractions. It is an operator
-> because it needs an element acting as numerator of the fraction and another
-> element acting as the denominator. The order is important to distinguish
-> which parameter is each one.
+> Operators can be used to represent fractions. Fraction can be seen as
+> operators because they need an element acting as numerator of the fraction
+> and another element acting as the denominator. The order of requiring
+> elements is important to distinguish which is the role of each one.
+
+**Blocks** are tuples with N+1 elements, N > 0, satisfying:
+
+*   The leading element is an operator which needs N parameters. It is called
+    the **leading operator** (**lop**) of the block.
+*   The rest of elements are the elements needed by the leading operator. The
+    ordinal of each of this elements in the block is the same than the ordinal
+    which identifies its role in the associated leading operator. ("Needed
+    elements" by an operator are formalised below.)
+
+> **Note**: A particular type of block, *juxt-blocks*, will be used to
+> represent several subequations contiguously (e.g., digits of a number,
+> supposing each digit is represented by a subequation). They are described in
+> another section.
+
+A **x-block** is a block which has x as leading operator. If x is a proper
+noun, it refers to the (unique) block which has x as lop.
+
+**lop-B** is the leading operator of a block B.
+
+A **parameter** (**par** or **param**) **of an operator** is one of the
+elements required by the operator. A parameter must be a symbol or a block.
+
+A **lop-B-par** is a parameter of operator lop-B.
+
+A **OP-par** is a generic par of a operator OP not associated to a particular
+block.
 
 **Arguments** are abstract elements that are not represented when a equation is
 written down. They can be seen as the placeholders of the parameters needed by
-an operator. An argument is always associated to an operator and operators
-that are equal have equal arguments and in the same order. As a consequence, it
-can be argued that they could be avoided and use instead properties of an
-operator. Due to its central role, it was decided to consider them elements.
+an operator. An argument is always associated to an ordinal and to operators
+with certain properties like the number of arguments it has and certain role 
+(e.g.: the first argument of a operator representing a square root). It can be 
+argued that arguments can be avoided in this formalism and just talk in terms 
+of properties of an operator. Due to its central role, it has been decided to 
+consider them as elements too.
  
 The number of arguments of an operator OP is the **arity** of OP.
 
 It is said that a parameter is **associated to** an argument of an operator.
 
-A **N-arg(s) operator** is an operator with N arguments. A **unary op** is a
-1-arg op. A **binary** op is an 2-args op. A **ternary** op is a 3-args op.
+A **lop-B-arg** is an argument of operator lop-B.
 
-The **ordinal of the argument of a N-arg(s) operator** is a positive integer
-(from 1 to N) that indicates univocally an argument of an operator. Arguments
-of operator OP will be referred as "the first argument of OP", "the second
-argument of OP", and so on.
+A **N-arg(s) operator** is an operator with N argument(s). A **unary op** is a
+1-arg op. A **binary op** is an 2-args op. A **ternary** op is a 3-args op.
+
+The **ordinal of the argument of a N-arg(s) operator**, N > 0, indicates
+univocally an argument of an operator. Arguments of operator OP will be
+referred as "the first argument of OP", "the second argument of OP", and so on.
 
 The **ordinal of a parameter** is the ordinal of its associated argument.
 
-A **OP-arg** is an argument of operator OP.
+An **OP-arg** is a generic arg of a operator OP not associated to a particular
+block.
 
-**Blocks** are tuples with N+1 elements, N > 0, composed by:
-
-*   The leading element, which is an operator of arity N. It is called the
-    **leading operator** (**lop**) of the block.
-*   The rest of elements are the parameters of the leading operator in order
-    indicated by the ordinal of the argument associated to them.
-
-A **X-block** is the block which has X as leading operator.
-
-**lop-B** is the leading operator of a block B.
-
-A **lop-B-arg** is an argument of operator lop-B.
-
-A **lop-B-par** is a parameter of operator lop-B.
-
-A **primitive element** or **primitive** is a symbol or an operator.  
+A **primitive element** (**primitive**) is a symbol or an operator.  
 
 A **subequation** (**subeq**) is a symbol or a block.
 
-An **equation** (**eq**) is a subequation which is not the parameter of an
-operator.
+An **equation** (**eq**) is a subequation which is not a parameter.
 
-> **Property**:
+> **Properties:**:
 >
-> A subequation is not always an equation but an equation is always a
+>1. A subequation is not always an equation but an equation is always a
 > subequation.
 
+
 > **Note**: *Whenever possible the term subequation will be preferred in the
-> following definitions. However, in the code some concepts defined will be 
-> usually referred to equations instead of subeqs.*
+> following definitions because it is more general. However, in the code some
+> concepts defined here may be usually associated to equations instead of
+> subeqs.*
 
 ### Basic subequation definitions
-A **0-level subequation of another subequation S** is S.
 
-A **N-level subequation of another subequation S**, N being a positive
-integer, is:
+> **Properties**:
+>
+>1. A **any-level primitive of a subequation S** is:
+>
+>*  If S is a symbol, S.
+>*  If S is a block, the leading operator of S or a **any-level primitive of**
+>   a lop-S-par.
+>
+>1. A (or the) **0-level subequation of another subequation S** is S.
+>
+>1. A **N-level subequation of another subequation S**, N > 0, is:
+>
+>*   If S is a symbol, it does not exist.
+>*   If S is a block, a **(N-1)-level subequation of a** S-par.
 
-*   If S is a symbol, it does not exist.
-*   If S is a block B, a **(N-1)-level subequation of a B-par**.
+A **subequation of another subequation S** is a A **any-level subequation of 
+S**.
 
-That is a recursive definition that finishes when N becomes 0 and the preceding
-definition applies.
-
-The **nesting level**, or simply the **level**, of a N-level subequation of
-another subequation is the (non-negative) value N.
-
-A **strict subequation** of S is a subequation of S that is not S.
-
-The **maximum nesting level M** (**max nlevel**) of a subequation S is the
-the integer M such that no (M+1)-level subequations of S exist.
-
-A **subequation of another subequation S** is a N-level subeq of any
-non-negative value of N (from 0 to the max nlevel of S).
+> **Note**: Previous definition relaxes the expression "element of a tuple"
+> specified above for elements of a tuple if elements are any-level
+> subequations of the tuple.
+>
+> The "any-level" is still mandatory for elements which are not subequations.
 
 > **Properties**:
 >
@@ -201,41 +288,32 @@ non-negative value of N (from 0 to the max nlevel of S).
 >
 > `1 + (3 * 2)`
 
-A **primitive** of a subequation S is:
-
-*   If S is a symbol, S.
-*   If S is a block, the leading operator of S or a **primitive** of a S-par.
-
-A **symbol of a subequation S** is a primitive of S which is a symbol.
-
-An **operator of a subequation S** is a primitive of S which is an op.
 
 A subequation S **contains** or **has** a subequation SUB if SUB is a subeq
 of S.
 
 > **Property** (probably the most used in visual equation):
 >
-> There is a natural map between any primitive of a subequation S and every
-> subequation SB of S:
+> There is a natural map between every any-level primitive of a subequation S
+> and every subequation SB of S:
 >
->*  If the primitive is a symbol SY -> SY.
->*  If the primitive is an operator OP -> the block of which OP is the leading 
->   operator (the OP-block).
+>*  For a any-level symbol SY of S, SY.
+>*  For a any-level operator OP of S, the block B which has OP as lop-B.
 
-A **N-level superquation** SP of a subequation SB in a subequation S, SB being
-a subequation of S and N a positive integer, is a subeq such that:
+A **N-level superequation SP of a subequation SB in a subequation S**, SB being
+a subequation of S and N > 0, is a subeq such that:
 
-*   It is a subequation of S, and
-*   SB is a N-level subequation of it.
+*   SP is a subequation of S, and
+*   SB is a N-level subequation of SP.
 
 The **nesting level**, or simply the **level**, of a N-level superequation of
-a subequation in another subequation is the (positive) value N.
+a subequation in another subequation is the (strictly positive) value N.
 
 A **superquation** (**supeq**) of a subeq SB in a subequation S is a N-level
- superquation of SB in S for any positive value of N.
+superquation of SB in S for any N > 0.
 
 A subequation SB **has a superequation** SP in subequation S if SP is a
-superquation of SB in S.
+superequation of SB in S.
 
 > **Note**: *When it is said **A supeq of SB**, it is understood that it refers
 > to a supeq of SB in equation to which SB belongs (the biggest scenario). 
@@ -245,7 +323,7 @@ superquation of SB in S.
 > **Note**:
 >
 > Intentionally, **0-level superequations** are not defined.
-> Informally:
+> Informally, that means:
 >
 > `subeq of S <= S`
 > `supeq of S (in P) > S`
@@ -254,7 +332,7 @@ superquation of SB in S.
 >
 >1. At least, one supeq of SB in S exists if SB is not S (that supeq is S).
 >1. A N-level supeq of SB in S does not exist or it is unique.
->1. If two subeqs has the same level with respect to a common supeq, then they
+>1. If two subeqs have the same level with respect to a common supeq, then they
 >   have the same level with respect to any common supeq.
 
 >  **Example:**
@@ -266,153 +344,96 @@ superquation of SB in S.
 
 > **Properties and remarks**:
 >
->1. To be finite, an equation requires that some of the parameters of some of
->   its operators are symbols.
->1. A subeq of an equation is always the whole equation or a parameter of some
->   operator of the equation.
+>1. To be finite, an equation requires that some of the elements of some of
+>   its blocks are symbols.
+>1. A subeq of an equation is always the whole equation, the parameter of some
+>   operator of the equation or an element of a juxt-block.
 >1. Subequations contain other subequations only **completely**, meaning that, 
->   if subequation S contains subequation T, every element of T is an element 
->   of S. In other words, they do not partially overlap.
->1. An parameter of a subequation S cannot be S (nor equal since only finite
+>   if subequation S contains subequation T, every any-level element of T is an
+>   any-level element of S. In other words, subeqs do not partially overlap.
+>1. A parameter of a subequation S cannot be S (nor equal since only finite
 >   subequations are considered).
 >1. One parameter of an operator OP cannot be a subequation of other
 >   parameter of OP.
->1. A subequation do not need another subequation to make sense, even if the 
+>1. A subequation does not need another subequation to make sense, even if the 
 >   concept of subeq SB of a subeq S is defined and in that case SB requires S.
 >1. Superequations always are referred to a subequation SB in certain
->   subequation S, when it is not specified, the whole equation E to which
->   S belongs is supposed to have that role.
->1. A block always contains, at least, one operator (the leading operator).
->1. The leading operator is a privileged operator in a block because:
+>   subequation S; when S is not specified, the whole equation E to which
+>   SB belongs is supposed to have that role.
+>1. A block B always contains, at least, one operator (the leading operator,
+>   lop-B).
+>1. The leading operator of a block B is a privileged any-level operator of B
+>   because:
 >
->   *   It and its parameters define completely the block.
->   *   It is not part of the parameter of any other operator of the block.
-
-## Implementation of an equation in Visual Equation
-
-*   Symbols are 1-elem lists (the surrounding list is needed to keep
-    references).
-*   Operators are objects with some properties.
-*   Blocks are lists which first element is the lop and the rest are lop-pars.
-*   Arguments are not represented.
-
-Because the interesting part of represented symbols is what is contained inside
-the 1-elem list, the containing element is called a **pseudosymbol** and it
-shares the same noun than its symbol in the code.
-
-Since an equation must always be valid, when an operator is introduced and the 
-user has not yet specified one or more of its parameters, they are set to the
-special symbol **PVOID**, which is represented by a small square when
-displayed.
-
-> **Note**: Because the essential part of the symbols is the element that the
-> list contains, variables which hold the value of these element will be named
-> with the common name used for the symbol in this documentation even if it
-> would be more consistent to reserve the name for the full symbol. For
-> example, a PVOID will be represented as \[PVOID\].
-
-To give special properties to symbols, the 1-elems of lists representing a
-symbols are 0-args operators. However, operators are never identified with
-symbols in this formalism.
-
-The **class** used for operators has the following properties:
-
-*   A string holding the **name** of the operator. Must be its common noun in
-    lowercase. When they are represented, uppercase is used. On the other hand,
-    e.g., lowercase is more suitable for filenames.
-*   A string indicating its **LaTeX code** and the position of its arguments.
-*   The **number of arguments** it has. Default value: 0.
-*   A string, possibly empty, which can be used to indicate a **special 
-    property** of the operator. In the future it may be replaced by a list of
-    tags. Default value: "".
-*   A Unicode representation of the operator.
-
-To debug the code and write examples, strings are also allowed instead of
-0-args ops, being its content its latex code or something else if it does not
-need to be displayed.
-
-> **Example**:
->
-> Here is the equation of previous examples using the implemented format,
-> using a string
->
-> `[SUM, ["1"], [PROD, ["2"], ["3"]]]`
->
-> where lops are supposed to be defined, for example as
->
->   `SUM = Op("sum", "{0}+{1}", 2); PROD = Op("prod", "{0}*{1}", 2)`
->
-> Note that SUM and PROD as 2-args ops are useful for examples because they are
-> common operators in the real world, but in practice they are implemented
-> as symbols in visual equation.
->
-> First equation is shorter than the following valid code which specify the
-> symbols in the standard way
->
-> `[SUM, [Op("one", "1")], [PROD, [Op("two", "2")], [Op("three", "3")]]]`
->
-> If symbols (or more precisely, elems contained in 1-elem lists representing
-> symbols) have been previously defined similarly to SUM and PROD
->
-> `[SUM, [ONE], [PROD, [TWO], [THREE]]]`
+>   *   lop-B and its parameters define B completely.
+>   *   It is not an any-level op of any any-level parameter of B.
 
 ## Selection rules
 
-There are reasons to avoid the user to select some subequations:
+A subequation that can be selected means, in the implementation, that they
+can be highlighted or the cursor/caret can be placed to the left of the subeq.
+
+In the current implementation, only a subset of all this machinery is currently
+being used in VE. In fact, the only current reason to use selection rules is to
+avoid selecting contiguous subequations redundantly.
+
+In general, there are many reasons to avoid the user to select some
+subequations:
 
 1.  They can be artifacts that have no meaning to the user.
 1.  It can be redundant to select certain blocks.
-1.  The user can ask explicitly not to select a subeq.
+1.  The user may ask explicitly not to select a subeq.
 1.  There can be LaTeX limitations to select a subequation.
 1.  That subequation cannot be edited with the same flexibility than
     typical subequations because that has consequences that current code
     cannot manage.
 1.  Other cases?
 
-The following definitions specify the terminology used to prohibit certain
+The next definitions specify the terminology used to prohibit certain
 subequations of an equation to be selected.
 
 > **Note**:
 > 
 > It can be tricky to correctly use the language to indicate that an element
-> has a property because it is an element of another element but no by itself
-> since an element *equal* to that one may not have that property or the
-> element itself may not have that property after an equation edition in which
-> the element survives.
+> has a property because it is an element of another element but not by itself.
+> In particular, an element *equal* to that one may not have that property, or
+> the element itself may not have that property after an equation edition (if
+> the element survives).
 >
 > The chosen solution is to define selectivity as a property of a subequation 
 > *of an equation* because when the equation is fixed selectivity rules can be
-> consistent. It could be helpful to reader to think that being selectable is
-> a property of subequations "in" an equation to emphasize the dependence on
-> the equation.
+> consistent. It could be helpful to the reader to think that being
+> selectable is a property of subequations "in" an equation to emphasize the
+> dependence on the equation.
 
 ### The user property
 
-An element which is not a block have intrinsically the **user property** or
-not. Blocks inherit this property from its lop.
+A symbol, operator or argument can hold the **user property**.
 
-> **Note*:
->
-> The user property has only the same meaning for symbols and blocks.
+A block B has the user property if lop-B has the user property.
 
-Depending on its type, an elements with the user property is referred as:
+A subequation is **potentially selectable** if it has the user property.
 
-*   User symbol
+**Rule**: Every symbol holds the user property.
+
+Depending on its type, an element with the user property is referred as:
+
 *   User operator (uop)
 *   User arguments (uarg)
 *   User block (ublock)
 
-Any term previously defined term preceded by "user" and their abbreviations
-beginning with "u" indicates that in addition they are user elements. In
-particular, they are considered usubeqs, usupeqs, X-ublocks, upars, lop-X
--upars.
+"User symbol" is avoided due to previous rule.
+
+Any other term preceded by "user" and their abbreviations beginning with "u" 
+indicates that, in addition, they are user elements. In particular, they are
+considered usubeqs, usupeqs, X-ublocks, upars, lop-X-upars.
 
 > **Examples**:
 >
 > When it is considered a X-ublock, it is supposed that it is a usubeq. As a
 > consequence, X is necessarily a uop since ublocks can only be uop-blocks.
 >
-> Let X be a particular op. Then, X-block is the block defined by X, which is
+> Let X be a unique op. Then, X-block is the block defined by X, which is
 > unique since X is unique. If we knew that X is a uop, we can write
 > X-ublock. However, if X was not really a uop, writing X-ublock would be a
 > nonsense or it may be possible to say that element X-ublock does not exist
@@ -434,7 +455,8 @@ A **selectable subequation** (**selsubeq**) of an equation E is a subequation
 SS of E such that:
  
 *   SS is a usubeq, and
-*   SS has no usupeq which is a subeq of a parameter of a non-user arg.
+*   SS has no usupeq which is a subeq of a parameter associated to a non-user
+    arg.
 
 > **Properties**:
 >
@@ -453,27 +475,24 @@ SS of E such that:
 
 > **Note**:
 >
-> Those properties are much more simple by using the definitions below.
-
-**GOP** is the common noun of they only (in an equality sense) operator with a
-non-user argument. Characteristics of GOP:
- 
-*   It is a unary operator, and
-*   It is a non-user op, and
-*   Its argument is a non-user arg
+> Previous properties are much more simple by using the definitions below.
 
 A **generalized symbol** (**gsymb**) is a symbol or a parameter associated to a
-non-user argument. In Visual Equation, they are symbols or GOP-pars.
+non-user argument.
+
+> **Note**: Currently there are no user arguments in VE, probably for good, so
+> every gsymb is a symbol in VE. However, this formalism allows them. (They
+> may be used in the future and the theory has been already written).
 
 ### User subequations definitions and rules
 
 A **0-ulevel usubeq of a subeq S** is:
  
 *   If S is a usubeq, S.
-*   Elif S is a symbol, it does not exist. (Today every symbol is a usubeq)
+*   Elif S is a symbol, it does not exist.
 *   Else (S is a block), a **0-ulevel** usubeq of a S-par**.
 
-A **N-ulevel usubeq of a subeq S**, N being a positive integer, is:
+A **N-ulevel usubeq of a subeq S**, N > 0, is:
 
 *   If S is a symbol, it does not exist.
 *   Elif S is a ublock, a **(N-1)-ulevel usubeq of a S-par**.
@@ -505,68 +524,100 @@ other related terms can be defined as expected.
 A **faithful subequation** is a subequation that has one, and only one,
 0-ulevel usubeq.
 
-**Rule**: Every symbol is faithful.
-
 The **user representative** (**urepr**) of a faithful subequation FS is the
 0-ulevel usubeq of FS.
 
 > Properties:
 >
+>1. Every symbol is faithful.
 >1. A usubeq is always a faithful subeq.
 >1. The urepr of a usubeq US is US.
 >1. A faithful subeq can have any number of N-ulevel usubeqs for N > 0,
 >   including not having anyone.
 
-A **faithful operator** is an operator FOP such that:
+A **faithful operator** is an operator such that:
 
 *   It is a uop, or
 *   It has one arg.
 
-A **filter** is a faithful op which is not a user op and has a user arg.
+A **filter** is a faithful op which is not a user op and has one user arg.
 
-**Rule**: There are no filters in visual equation (maybe in a future (?)).
+> **Note**: Filters are currently not used in VE.
 
 > **Properties**:
 >
 >1. If FS is a faithful subeq and FS is the parameter of an arg of a faithful
 >   op FO, the FO-block is faithful.
 >1. Let FNUOP be a faithful non-user op. A FNUOP-block is a faithful subeq if,
->   and only if, one parameter of FSO is a faithful subeq.
->1. If NFO is a non-faithful op, a NFO-block can be faithful or non-faithful.
+>   and only if, the only FNUOP-par is a faithful subeq.
+>1. If NFO is a non-faithful op, a NFO-par can be faithful or non-faithful.
 
-**Rule**: Every operator of visualequation is faithful.
+## Contiguous subequations
 
-> **Properties**:
->
->1. Every subeq is faithful.
->
->1. The only non-user blocks are GOP-blocks.
-
-## Juxtaposing subequations
-Visual Equation uses some operators named juxts to display subequations
-contiguously. That typically means that subequations are being multiplied, but
-that can have other uses or interpretations such as to represent a number with
-more than one digit. To connect several subequations together, a juxt with the
-required number of arguments is used.
+Visual Equation uses some operators named **juxts** to display contiguous or 
+juxtaposed subequations. That typically means that subequations are being
+multiplied, but that can have other uses or interpretations such as to 
+represent a number with more than one digit. To connect several subequations 
+together, a juxt with the required number of arguments is used. Juxts
+arguments holds the user property. TODO: Use the prevalent definition structure
+ for definition of juxts.
 
 A **juxted** is a parameter of a juxt.
 
 > **Example**:
 >
-> To display A B C D, being all of them symbols, the corresponding equation is
+> Consider that JUXTN, N in the noun being a positive integer, is a juxt with N
+> arguments.
+>
+> To display A B C D, being all of them symbols, the corresponding equation
+> can be
 >
 >   `(JUXT4, A, B, C, D)`
+
+> **Note**: In current VE implementation, non-last juxteds cannot be pointed to
+> the right with the cursor. Rest of subeqs can.
+
+Two juxteds are **cojuxteds** if they are juxteds of the same juxt-block.
+
+> **Note**: In VE, there are two kind of juxts: Permanent juxts (pjuxts) and
+> temporal juxts (tjuxts). Pjuxts do not hold the user property and tjuxts
+> hold it.
 >
-> In visual equation implementation it is not needed to specify the number
-> of arguments of the juxt since it can be deduced from the length of the
-> list.
+> Pjuxts are the default juxts so only their juxteds are selectable.
 >
->   `[JUXT, [A], [B], [C], [D]]`
+> Tjuxts are created temporally if several juxteds need to be selected together
+> by user request. If a pjuxt-block needs to be highlighted as a whole, it is
+> replaced temporally by a tjuxt-block. A tjuxt-block is always the current
+> highlighted selection. When the selection changes, the tjuxt-block is
+> deleted or replaced.
+>
+> Juxts are edited dynamically without being noticeable by the user.
+
+### Nested juxteds (unuseful in current implementation of VE)
+
+A **nested juxted** is a juxted which juxt-block is itself a juxted.
+
+Two juxteds J1 and J2 are **quasi-cojuxteds** if:
+
+*   J2 is a juxted of a N-level supeq of J1, and
+*   Every M-level supeq of J1 for 1 <= M <= N is a juxt-block.
+
+> **Properties**:
+>*  Two cojuxteds are quasi-cojuxteds.
+>*  If two quasi-cojuxteds are not cojuxteds, at least one of them is a nested
+>   juxted.
+
+Current implementation of a juxt in Visual Equation uses the same operator for
+every juxt with the same characteristics independently of the number of
+juxteds it contains. In fact, juxts are the only operators implemented in VE
+with a variable number of arguments.
+
+A **soft group** is a JUXT-block which is a juxted of another JUXT-block.
 
 > **Example**:
 >
 > If it is intentional that some contiguous juxtaposed subequations are
-> selectable as a whole, an structure like this would be used:
+> grouped as a whole, an structure like this would be used:
 >
 >   `(JUXT2, (JUXT2, A, B), C)`
 >
@@ -588,68 +639,22 @@ A **juxted** is a parameter of a juxt.
 > `X`. Second argument of the first juxted is itself another juxt-ublock with 
 > two juxteds `(JUXT2, B, C)`.
 
-A **nested juxted** is a juxted which juxt-block is itself a juxted.
-
-Two juxteds are **cojuxteds** if they are juxteds of the same juxt-block.
-
-Two juxteds J1 and J2 are **quasi-cojuxteds** if:
-
-*   J2 is a juxted of a N-level supeq of J1, and
-*   Every M-level supeq of J1 for 1 <= M <= N is a juxt-block.
-
-> **Properties**:
->*  Two cojuxteds are quasi-cojuxteds.
->*  If two quasi-cojuxteds are not cojuxteds, at least one of them is a nested
->   juxted.
-
-Current implementation of a juxt in Visual Equation uses the same operator for
-every juxt with the same characteristics independently of the number of
-juxteds it contains. In fact, juxts are the only operators implemented in VE
-with a variable number of arguments.
-
-**JUXT** is the common name of the juxt for general use in visual equation.
-
-A **soft group** is a JUXT-block which is a juxted of anther JUXT-block.
-
-**TJUXT** is the common name of a special juxt that is used to get selected
-several subequations which were, or are going to be, juxteds of some
-JUXT-block. This operator joins them in a temporal juxt-block which is a single
-juxted of the external JUXT-block, until the operator is removed automatically
-when an operation different than flipping orientation of selection is
-performed.
-
-A TJUXT-block must be always the current selection and when selection changes,
-the TJUXT-block must be dissolved, typically integrating its juxteds as juxteds
-of the JUXT-block where the TJUXT-block belonged.
-
-## Building rules
-
-1.  A GOP-block cannot be the GOP-par of another GOP-block.
-1.  The special symbol **TVOID** must always be used as a last juxted and must
-    be the current selection (=> There can be only one TVOID at the same time).
-1.  A TJUXT-block is always a juxted of a JUXT-block and must always be
-    selected (=> There can be only one TJUXT-block at the same time).
-1.  A VOID cannot be a juxted.
-
 ## Equation metrics
 
-A **N-ulevel peer** of an equation E, N being a positive number, is a subeq
-P of US such that:
+> **Note**: Next definitions refer to an equation because selectivity property
+> is used, which require an equation to be defined.
+
+A **N-ulevel peer** of an equation E, N > 0, is a subeq P of US such that:
 
 *   P is a N-ulevel usubeq of E, and
 *   P is selectable.
 
-> **Note**: That and next definitions refer to an equation because selectivity
-> property is used, which require an equation to be defined.
-
-A **N-ulevel aide** of an equation E, N being a non-negative number, is a subeq
-AI of US such that:
+A **N-ulevel aide** of an equation E, N >= 0, is a subeq AI of US such that:
 
 *   AI is a M-ulevel peer of E for some 0 < M < N, and
 *   AI has no strict subeqs which are selectable.
 
-A **N-ulevel mate** of an equation E, N being a non-negative number, is a subeq
-MA of S such that:
+A **N-ulevel mate** of an equation E, N >= 0, is a subeq MA of S such that:
 
 *   MA is a N-ulevel peer of E, or
 *   MA is a N-ulevel aide of E.
@@ -725,3 +730,108 @@ GOP):
 7.  Set ORD to 1.
     Go to step 6.
 
+## Implementation of an equation in Visual Equation
+
+*   Symbols are 1-elem lists (the surrounding list is needed to keep
+    references).
+*   Operators are objects with some properties.
+*   Blocks are lists.
+*   Arguments are materialized as properties of their operators.
+
+Because the interesting part of represented symbols is what is contained inside
+the 1-elem list, the containing element is called a **pseudosymbol** and, in
+the source code, they are named as the proper noun of its symbol in the source 
+code.
+
+Since an equation must always be valid, when an operator is introduced and the 
+user has not yet specified one or more of its parameters, they are set to the
+special symbol **PVOID**.
+
+To give special properties to symbols, pseudosymbols are objects similar to
+operators. In fact, operator class is derived from pseudosymbol class.
+
+The class used for **pseudosymbols** has the following properties:
+
+*   A string holding the **name** of the pseudosymbol. Must be lowercase.
+    When they are represented, uppercase is used. Lowercase is preferred 
+    because it has some advantages, e.g., for filenames in a random OS.
+*   A string indicating its **LaTeX code**.
+*   Some properties such as color, font style, etc..
+
+To debug the code and write examples, strings are also allowed instead of
+pseudosymbols, being its content its latex code or something else if it does
+not need to be displayed.
+
+The class used for **operators** has the following properties:
+
+*   A string holding the **name** of the operator. Must be lowercase. When they
+    are represented, uppercase is used. 
+*   The **number of arguments** it has.
+*   A string indicating its **LaTeX code** and the position of its parameters.
+*   Some properties such as color, font style, selectivity of subequations,
+    etc..
+*   Some methods that may help, e.g., navigate with cursor keys through
+    the equation.
+
+> **Example**:
+>
+> Here is the equation of previous examples using the implemented format,
+> using a string for pseudosymbols
+>
+> `[SUM, ["1"], [PROD, ["2"], ["3"]]]`
+>
+> where lops are supposed to be defined, for example as
+>
+>   `SUM = Op("sum", "{0}+{1}", 2); PROD = Op("prod", "{0}*{1}", 2)`
+>
+> Note that SUM and PROD are useful binary ops for examples because they are
+> common operators in the real world, but in practice they are implemented
+> as symbols in visual equation.
+>
+> First equation is shorter than the following valid code which specify the
+> symbols in the standard way
+>
+> `[SUM, [Op("one", "1")], [PROD, [Op("two", "2")], [Op("three", "3")]]]`
+>
+> If symbols (or more precisely, elems contained in 1-elem lists representing
+> symbols) have been previously defined similarly to SUM and PROD
+>
+> `[SUM, [ONE], [PROD, [TWO], [THREE]]]`
+
+### Building rules
+
+1.  A PVOID cannot be a juxted.
+1.  A tjuxt-block must be always selected and highlighted.
+1.  When selection changes from a tjuxt-block TJB, TJB is transformed into a
+    pjuxt-block if it is not a juxted. If TJB is a juxted, their juxteds are
+    integrated as juxted of the pjuxt-block of which TJB is juxted.
+
+## Changelog
+### 1.2
+*   juxts now explicitly store the current number of arguments they have.
+*   Discarding "common noun" terminology. It was strange and now it has no
+    relevance because:
+*   It is allowed that operators and symbols can have additional properties
+    not mentioned in their definitions. That avoids the use of previously
+    named "filters", e.g., for color, font style... 
+*   Removed support in VE for user arguments, but still present in this
+    formalism. In any case, now there is no need of a specific group op
+    (previously GOP). That behaviour can be reduced to a property that any
+    leading operator can have.
+*   Subequations now are selected or pointed. To be selected is synonymous of
+    being highlighted. Being pointed is having the cursor to the left or right.
+
+### ~ 1.1 (never numbered)
+*   Equations as nested lists.
+*   Operators with the same common name are equal.
+*   Distinguishing between parameters and arguments.
+*   Formalised the notion of selectivity of a subeq.
+*   Several ideas to formalize contiguous subeqs
+    (juxt-ublocks, parent juxts, descendant juxts, terminal juxts)
+*   Discarded complex operators allowing random arguments not being selectable.
+
+
+### Before long_rewriting branch
+*   Equations as plain lists, not nested lists.
+*   Index was just an integer.
+*   Difficult operations required to guess the bounds of a subeq.
