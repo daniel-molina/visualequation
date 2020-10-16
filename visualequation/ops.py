@@ -86,17 +86,33 @@ class PseudoSymb:
         return not self == other
 
     def _repr_private(self):
+        """Helper.
+
+        .. note::
+            It returns a string, not a repr of string.
+        """
         return repr(self._name) + ", " + repr(self._latex_code)
 
     def _repr_pp(self):
-        s_repr = ""
+        """Helper.
+
+        .. note::
+            It returns a string, not a repr of string.
+        """
+        s = ""
         for k, v in self.pp.items():
             if v is not None:
-                s_repr += ", " + k + "=" + repr(v)
+                s += ", " + k + "=" + str(v)
 
-        return s_repr
+        return s
 
     def __repr__(self):
+        """Return a valid string to generate the object.
+
+        .. note::
+            Python reminder: Output displayed by Python interpreter uses repr
+            implicitly.
+        """
         return "PseudoSymb(" + self._repr_private() + self._repr_pp() + ")"
 
     def __str__(self):
@@ -112,7 +128,6 @@ class Op(PseudoSymb):
 
     def __init__(self, name: str, latex_code: str,
                  n_args: int = 1, pref_arg: int = 1, lo_base: bool = False,
-                 user_sel: bool = True,
                  pp: Optional[PublicProperties] = None,
                  **kwargs):
         super().__init__(name, latex_code, pp=pp, **kwargs)
@@ -129,29 +144,33 @@ class Op(PseudoSymb):
         if not isinstance(lo_base, bool):
             raise TypeError("Parameter lo_base must be a bool.")
 
-        if not isinstance(user_sel, bool):
-            raise TypeError("Parameter user_sel must be a bool.")
-
         self._n_args = n_args
         self._pref_arg = pref_arg
         self._lo_base = lo_base
-        self._user_sel = user_sel
 
-    def _repr_private_aux(self, no_n_args=False, no_pref_arg=False,
-                          no_lo_base=False, no_user_sel=False):
+    def _repr_private_aux(self):
+        """Helper.
+
+        .. note::
+            It returns a string, not a repr of string.
+        """
         s_repr = ""
-        if not no_n_args and self._n_args != 1:
+        if self._n_args != 1:
             s_repr += ", n_args=" + repr(self._n_args)
-        if not no_pref_arg and self._pref_arg != 1:
+        if self._pref_arg != 1:
             s_repr += ", pref_arg=" + repr(self._pref_arg)
-        if not no_lo_base and self._lo_base:
+        if self._lo_base:
             s_repr += ", lo_base=True"
-        if not no_user_sel and not self._user_sel:
-            s_repr += ", user_sel=False"
 
         return s_repr
 
     def __repr__(self):
+        """Return a valid string to generate the object.
+
+        .. note::
+            Python reminder: Output displayed by Python interpreter uses repr
+            implicitly.
+        """
         return "Op(" + self._repr_private() + self._repr_pp() \
                + self._repr_private_aux() + ")"
 
@@ -214,7 +233,7 @@ class Op(PseudoSymb):
 
 class PJuxt(Op):
     def __init__(self, initial_n: int = 2, **kwargs):
-        super().__init__("pjuxt", "", n_args=-1, user_sel=False, **kwargs)
+        super().__init__("pjuxt", "", n_args=-1, **kwargs)
         if not isinstance(initial_n, int):
             raise TypeError("Parameter initial_n must be an int.")
         if initial_n < 2:
@@ -222,7 +241,21 @@ class PJuxt(Op):
         self.current_n = initial_n
 
     def __repr__(self):
-        return "PJuxt(" + repr(self.current_n) + self._repr_pp() + ")"
+        """Return a valid string to generate the object.
+
+        .. note::
+            Python reminder: Output displayed by Python interpreter uses repr
+            implicitly.
+        """
+        s = "PJuxt("
+        s_n = ""
+        if self.current_n != 2:
+            s_n += repr(self.current_n)
+        extra = self._repr_pp()
+        if extra and not s_n:
+            extra = extra[2:]
+        s += s_n + extra + ")"
+        return s
 
     def equiv_tjuxt(self):
         return TJuxt(self.current_n, pp = deepcopy(self.pp))
@@ -267,15 +300,33 @@ class TJuxt(Op):
             raise ValueError("Parameter initial_n must be bigger than 1.")
         self.current_n = initial_n
 
+    def __repr__(self):
+        """Return a valid string to generate the object.
+
+        .. note::
+            Python reminder: Output displayed by Python interpreter uses repr
+            implicitly.
+        """
+        s = "TJuxt("
+        s_n = ""
+        if self.current_n != 2:
+            s_n += repr(self.current_n)
+        extra = self._repr_pp()
+        if extra and not s_n:
+            extra = extra[2:]
+        s += s_n + extra + ")"
+        return s
+
+
     def equiv_pjuxt(self):
         return PJuxt(self.current_n, pp = deepcopy(self.pp))
 
 
-# The following PseudoSymbs instances are defined to here because they are not
+# The following PseudoSymbs instances are defined here because they are not
 # supposed to be modified
-SELARG = Op("selarg", r'\cdots')
+SELARG = PseudoSymb("selarg", r'\cdots')
 #PVOID = Op("pvoid", r'\begingroup\color{purple}\oblong\endgroup')
-PVOID = Op("pvoid", r'\oblong')
+PVOID = PseudoSymb("pvoid", r'\oblong')
 #TVOID = Op("tvoid", r'\begingroup\color{lightgray}\oblong\endgroup')
 #TVOID = Op("tvoid", r'\oblong')
 #IEDIT = Op("ledit", r'\left\lgroup {0} \right\rmoustache', 1)

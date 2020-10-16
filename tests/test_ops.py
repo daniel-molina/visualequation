@@ -138,6 +138,18 @@ class OpsTests(unittest.TestCase):
             repr(psymb2),
             "PseudoSymb('a', 'b', font=2, style=4)")
 
+    def test_pseudo_symb_repr_backslashes(self):
+        latex_code = r"\omega"
+        self.assertEqual(repr(PseudoSymb("omega", latex_code)),
+                         r"PseudoSymb('omega', '\\omega')")
+        self.assertEqual(repr(PseudoSymb("omega", latex_code)),
+                         "PseudoSymb('omega', '\\\\omega')")
+        self.assertEqual(repr(PseudoSymb("omega", latex_code)),
+                         "PseudoSymb('omega', '" + "\\" + latex_code + "')")
+        self.assertEqual(repr(PVOID),
+                         "PseudoSymb('pvoid', '" + "\\" + PVOID._latex_code
+                         + "')")
+
     def test_op_class(self):
         op = Op("O", "B")
         self.assertEqual(op._name, "O")
@@ -167,20 +179,19 @@ class OpsTests(unittest.TestCase):
         self.assertEqual(op._pref_arg, 2)
         self.assertEqual(op.pp["color"], None)
 
-        op = Op("O", "B", 3, user_sel=False)
+        op = Op("O", "B", 3, font=9)
         self.assertEqual(op._name, "O")
         self.assertEqual(op._latex_code, "B")
         self.assertEqual(op._n_args, 3)
         self.assertEqual(op._pref_arg, 1)
-        self.assertEqual(op._user_sel, False)
         self.assertEqual(op.pp["color"], None)
+        self.assertEqual(op.pp["font"], 9)
 
         op = Op("O", "B", 3, color=8)
         self.assertEqual(op._name, "O")
         self.assertEqual(op._latex_code, "B")
         self.assertEqual(op._n_args, 3)
         self.assertEqual(op._pref_arg, 1)
-        self.assertEqual(op._user_sel, True)
         self.assertEqual(op.pp["color"], 8)
 
         op = Op("O", "B", 3, pp=PublicProperties(color=8))
@@ -188,7 +199,6 @@ class OpsTests(unittest.TestCase):
         self.assertEqual(op._latex_code, "B")
         self.assertEqual(op._n_args, 3)
         self.assertEqual(op._pref_arg, 1)
-        self.assertEqual(op._user_sel, True)
         self.assertEqual(op.pp["color"], 8)
 
     def test_op_repr(self):
@@ -220,15 +230,27 @@ class OpsTests(unittest.TestCase):
             repr(op),
             "Op('a', 'b', lo_base=True)")
 
-        op = Op("a", "b", user_sel=False)
+        op = Op("a", "b", lo_base=True, n_args=5)
         self.assertEqual(
             repr(op),
-            "Op('a', 'b', user_sel=False)")
+            "Op('a', 'b', n_args=5, lo_base=True)")
 
         op = Op("a", "b", n_args=2, style=3)
         self.assertEqual(
             repr(op),
             "Op('a', 'b', style=3, n_args=2)")
+
+    def test_op_repr_backslashes(self):
+        latex_code = r"{0}{1}"
+        self.assertEqual(latex_code.format("1", "2"), "12")
+        self.assertEqual(repr(Op("O", r"{0}")), r"Op('O', '{0}')")
+        latex_code = r"\frac{{{0}}}{{{1}}}"
+        self.assertEqual(repr(Op("O", latex_code)),
+                         r"Op('O', '" + "\\" + latex_code + "')")
+
+        # Proof of concept, not strictly a test for the method
+        latex_code_formated = r"\frac{1x^2}{2}"
+        self.assertEqual(latex_code.format("1x^2", "2"), latex_code_formated)
 
     def test_op_rstep(self):
         for n_args in range(1, 6):
@@ -352,6 +374,23 @@ class OpsTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     print(pj.lstep(n))
 
+    def test_pjuxt_repr(self):
+        pj = PJuxt()
+        self.assertEqual(repr(pj), r"PJuxt()")
+
+        pj = PJuxt(2)
+        self.assertEqual(repr(pj), r"PJuxt()")
+
+        pj = PJuxt(color=5)
+        self.assertEqual(repr(pj), r"PJuxt(color=5)")
+
+        pj = PJuxt(6)
+        self.assertEqual(repr(pj), r"PJuxt(6)")
+
+        pj = PJuxt(6, color=7)
+        self.assertEqual(repr(pj), r"PJuxt(6, color=7)")
+
+
     def test_pjuxt_tjuxt(self):
         for kw in (PublicProperties(color=4),
                    PublicProperties(style=3, font=5),
@@ -359,7 +398,6 @@ class OpsTests(unittest.TestCase):
             pj = PJuxt(2, pp=kw)
             tj = pj.equiv_tjuxt()
             pj._name = "tjuxt"
-            pj._user_sel = True
             self.assertEqual(pj.__dict__, tj.__dict__)
 
     def test_tjuxt(self):
@@ -388,6 +426,31 @@ class OpsTests(unittest.TestCase):
         for n in range(-5, 2):
             with self.assertRaises(ValueError):
                 TJuxt(n)
+
+    def test_tjuxt_repr(self):
+        tj = TJuxt()
+        self.assertEqual(repr(tj), r"TJuxt()")
+
+        tj = TJuxt(2)
+        self.assertEqual(repr(tj), r"TJuxt()")
+
+        tj = TJuxt(color = 3)
+        self.assertEqual(repr(tj), r"TJuxt(color=3)")
+
+        tj = TJuxt(6)
+        self.assertEqual(repr(tj), r"TJuxt(6)")
+
+        tj = TJuxt(6, color=2)
+        self.assertEqual(repr(tj), r"TJuxt(6, color=2)")
+
+    def test_tjuxt_pjuxt(self):
+        for kw in (PublicProperties(color=4),
+                   PublicProperties(style=3, font=5),
+                   PublicProperties(style=3, font=3, color=5)):
+            tj = TJuxt(2, pp=kw)
+            pj = tj.equiv_pjuxt()
+            tj._name = "pjuxt"
+            self.assertEqual(pj.__dict__, tj.__dict__)
 
 if __name__ == '__main__':
     unittest.main()
