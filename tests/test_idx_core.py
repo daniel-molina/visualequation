@@ -28,11 +28,9 @@ class IdxCore(unittest.TestCase):
         self.assertEqual(idx0, idx1)
         self.assertEqual(idx0, idx2)
         self.assertEqual(idx0, idx3)
-        self.assertEqual(idx0, NOIDX)
         self.assertEqual(idx0, [])
         self.assertEqual(len(idx0), 0)
         self.assertIsNot(idx0, idx1)
-        self.assertIsNot(idx0, NOIDX)
 
     def test_ctor(self):
         idx1 = Idx([1, 3, 4])
@@ -118,7 +116,7 @@ class IdxCore(unittest.TestCase):
             Idx() + (3, 5)
         self.assertIsInstance(Idx() + [], Idx)
         self.assertIsInstance(Idx([1]) + [], Idx)
-        self.assertIsInstance(NOIDX + [3], Idx)
+        self.assertIsInstance(Idx() + [3], Idx)
         self.assertIsInstance(Idx([5]) + [2], Idx)
         # Idx accepts this even if it is not a valid subeq index
         self.assertIsInstance(Idx([0]) + [2], Idx)
@@ -128,8 +126,8 @@ class IdxCore(unittest.TestCase):
         self.assertNotIsInstance([3] + Idx([5]), Idx)
 
         self.assertEqual(len(Idx([5]) + [2, 5] + Idx([])), 3)
-        self.assertEqual(len(NOIDX + [2, 5] + Idx([6])), 3)
-        self.assertEqual(len(NOIDX + [] + Idx([6])), 1)
+        self.assertEqual(len(Idx() + [2, 5] + Idx([6])), 3)
+        self.assertEqual(len(Idx(None) + [] + Idx([6])), 1)
 
     def test_add_type_error(self):
         with self.assertRaises(TypeError) as cm:
@@ -143,7 +141,7 @@ class IdxCore(unittest.TestCase):
         with self.assertRaises(TypeError):
             Idx([1, 4]) + 3
         with self.assertRaises(TypeError) as cm:
-            NOIDX + [Subeq()]
+            Idx() + [Subeq()]
         self.assertEqual(cm.exception.args[0], IDX_TYPE_ERROR_MSG)
         with self.assertRaises(TypeError) as cm:
             Idx() + [Subeq([ops.PVOID])]
@@ -166,7 +164,7 @@ class IdxCore(unittest.TestCase):
             Idx([5]) + [-1] + Idx([0])
         self.assertEqual(cm.exception.args[0], IDX_VALUE_ERROR_MSG)
         with self.assertRaises(ValueError) as cm:
-            NOIDX + Idx([-4]) + Idx([0])
+            Idx() + Idx([-4]) + Idx([0])
         self.assertEqual(cm.exception.args[0], IDX_VALUE_ERROR_MSG)
         # Left operand is not an Idx so it will not raise an error
         [-31] + Idx([4, 2])
@@ -187,7 +185,7 @@ class IdxCore(unittest.TestCase):
         with self.assertRaises(IndexError):
             Idx()[0]
         with self.assertRaises(IndexError):
-            NOIDX[0]
+            Idx(None)[0]
 
     def test_getitem_slice(self):
         for idx in (Idx([1, 3, 0]), Idx([8, 2, 9])):
@@ -224,12 +222,11 @@ class IdxCore(unittest.TestCase):
             self.assertEqual(len(idx[3:]), 0)
             self.assertEqual(len(idx[1:1]), 0)
 
-        self.assertIsInstance(NOIDX[:], Idx)
-        self.assertIsInstance(NOIDX[-3:532], Idx)
-        self.assertEqual(len(NOIDX), 0)
+        self.assertIsInstance(Idx(), Idx)
+        self.assertIsInstance(Idx()[-3:532], Idx)
+        self.assertEqual(len(Idx()), 0)
 
     def test_setitem_int(self):
-        nidx = NOIDX[:]
         idx = Idx([5, 2, 3])
         idx[0] = 2
         self.assertIsInstance(idx, Idx)
@@ -308,15 +305,6 @@ class IdxCore(unittest.TestCase):
             self.assertEqual(cm.exception.args[0], IDX_VALUE_ERROR_MSG)
             self.assertEqual(idx, idx_bkp)
 
-        NOIDX_BKP = NOIDX[:]
-        # Do not do this in real code!
-        NOIDX[:] = [2, 4]
-        self.assertFalse(not NOIDX)
-        self.assertTrue(len(NOIDX), 2)
-        NOIDX[:] = NOIDX_BKP[:]
-        self.assertTrue(not NOIDX)
-        self.assertEqual(len(NOIDX), 0)
-
     def test_iadd(self):
         idx = Idx([2])
         idx += Idx(4, 5)
@@ -382,7 +370,7 @@ class IdxCore(unittest.TestCase):
             idx.insert(1, -5)
         self.assertEqual(cm.exception.args[0], IDX_VALUE_ERROR_MSG)
         self.assertEqual(len(idx), 3)
-        a = NOIDX[:]
+        a = Idx()[:]
         a.insert(3131, 9)
         a.insert(41, 34)
         self.assertEqual(a, Idx([9, 34]))

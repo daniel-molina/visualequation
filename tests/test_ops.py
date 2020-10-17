@@ -146,9 +146,6 @@ class OpsTests(unittest.TestCase):
                          "PseudoSymb('omega', '\\\\omega')")
         self.assertEqual(repr(PseudoSymb("omega", latex_code)),
                          "PseudoSymb('omega', '" + "\\" + latex_code + "')")
-        self.assertEqual(repr(PVOID),
-                         "PseudoSymb('pvoid', '" + "\\" + PVOID._latex_code
-                         + "')")
 
     def test_op_class(self):
         op = Op("O", "B")

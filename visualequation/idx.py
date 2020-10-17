@@ -11,7 +11,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import List, Union, Iterable
+from typing import List, Union, Iterable, Optional
 
 SUPEQ_ERROR_MSG = "Pointed subeq does not have a supeq"
 SupeqError = IndexError(SUPEQ_ERROR_MSG)
@@ -21,12 +21,14 @@ LOP_ERROR_MSG = "Pointed elem is a lop, not a subeq"
 LopError = IndexError(LOP_ERROR_MSG)
 NO_CO_PAR_ERROR_MSG = "Pointed subeq does not have a co-par in specified dir"
 NoCoParError = IndexError(NO_CO_PAR_ERROR_MSG)
-
+INCONSISTENT_NPARS_ERROR_MSG = "Number of parameters is not compatible."
+InconsistentParsError = ValueError(INCONSISTENT_NPARS_ERROR_MSG)
 IDX_TYPE_ERROR_MSG = "Building values for Idx must be integers, possibly " \
                      "in a list or tuple"
 IdxTypeError = TypeError(IDX_TYPE_ERROR_MSG)
 IDX_VALUE_ERROR_MSG = "Idx values must be non-negative"
 IdxValueError = ValueError(IDX_VALUE_ERROR_MSG)
+
 
 class Idx(list):
     """A class to manage indices referring a subeq of another subeq.
@@ -137,28 +139,67 @@ class Idx(list):
 
         If *set* is True, an exception is raised in the previous case.
         """
-        if not set:
-            return self[:-1] + [0] if self else -2
         if not self:
-            raise SupeqError
+            if set:
+                raise SupeqError
+            return -2
+        if self[-1] == 0:
+            raise LopError
+        if not set:
+            return self[:-1] + [0]
         self[-1] = 0
 
     def prevpar(self, set=False):
-        """Return index of left par of a subeq, -2 if pointed subeq is not a
-        par or -1 if pointed subeq is a 1st par or lop."""
-        if not set:
-            if not self:
-                return -2
-            return self[:-1] + [self[-1] - 1] if self[-1] > 1 else -1
+        """Return index of left par of a subeq.
+
+        Return -2 if pointed subeq is not a par.
+        Return -1 if pointed subeq is a 1st par or lop.
+        """
         if not self:
-            raise SupeqError
-        if self[-1] == 1:
+            if set:
+                raise SupeqError
+            return -2
+
+        sup_idx = self[:-1]
+        ord = self[-1]
+        if ord == 0:
+            raise LopError
+
+        if not set:
+            return sup_idx + [ord - 1] if ord != 1 else -1
+        if ord == 1:
             raise NoCoParError
         self[-1] -= 1
+
+    def nextpar(self, n_pars: Optional[int] = None, set=False):
+        """Return index of next co-parameter.
+
+        If *self* is [], -2 is returned.
+        If index point to last par (*n_pars*-th), -1 is returned.
+        If *n_pars* is None, it is assumed that next parameter exists.
+        """
+        if not self:
+            if set:
+                raise SupeqError
+            return -2
+
+        sup_idx = self[:-1]
+        ord = self[-1]
+
+        if ord == 0:
+            raise LopError
+        if n_pars is not None and ord > n_pars:
+            raise InconsistentParsError
+
+        if not set:
+            if n_pars is None or ord < n_pars:
+                return sup_idx + [ord + 1]
+            return -1
+
+        if ord == n_pars:
+            raise NoCoParError
+        self[-1] += 1
 
     def level(self):
         """Return the nesting level of pointed subeq."""
         return len(self)
-
-
-NOIDX = Idx([])

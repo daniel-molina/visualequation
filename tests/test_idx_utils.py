@@ -18,7 +18,7 @@ from visualequation.idx import *
 
 class IdxUtils(unittest.TestCase):
     def test_parord(self):
-        self.assertEqual(NOIDX.parord(), -2)
+        self.assertEqual(Idx().parord(), -2)
         self.assertEqual(Idx([14]).parord(), 14)
         self.assertEqual(Idx([4, 2]).parord(), 2)
         self.assertEqual(Idx([9, 4, 1]).parord(), 1)
@@ -26,11 +26,11 @@ class IdxUtils(unittest.TestCase):
         self.assertEqual(Idx([9, 4, 0]).parord(), 0)
 
     def test_supeq(self):
-        self.assertNotIsInstance(NOIDX.supeq(), Idx)
-        self.assertEqual(NOIDX.supeq(), -2)
+        self.assertEqual(Idx().supeq(), -2)
+        self.assertNotIsInstance(Idx().supeq(), Idx)
         sup_idx = Idx([1]).supeq()
         self.assertIsInstance(sup_idx, Idx)
-        self.assertEqual(sup_idx, NOIDX)
+        self.assertEqual(sup_idx, Idx())
         self.assertIsInstance(Idx([4, 2]).supeq(), Idx)
         self.assertEqual(Idx([4, 2]).supeq(), Idx([4]))
 
@@ -42,7 +42,7 @@ class IdxUtils(unittest.TestCase):
         with self.assertRaises(IndexError) as cm:
             idx.supeq(set=True)
         self.assertEqual(cm.exception.args[0], SUPEQ_ERROR_MSG)
-        self.assertEqual(idx, NOIDX)
+        self.assertEqual(idx, Idx())
 
         # Unintended use
         self.assertEqual(Idx([4, 0]).supeq(), Idx([4]))
@@ -52,8 +52,8 @@ class IdxUtils(unittest.TestCase):
         self.assertEqual(idx, Idx([2, 8]))
 
     def test_outlop(self):
-        self.assertNotIsInstance(NOIDX.outlop(), Idx)
-        self.assertEqual(NOIDX.outlop(), -2)
+        self.assertNotIsInstance(Idx().outlop(), Idx)
+        self.assertEqual(Idx().outlop(), -2)
         self.assertIsInstance(Idx([2]).outlop(), Idx)
         self.assertEqual(Idx([2]).outlop(), Idx([0]))
         self.assertIsInstance(Idx([5, 6]).outlop(), Idx)
@@ -64,8 +64,8 @@ class IdxUtils(unittest.TestCase):
             idx.outlop(set=True)
         self.assertEqual(cm.exception.args[0], SUPEQ_ERROR_MSG)
         self.assertIsInstance(idx, Idx)
-        self.assertEqual(idx, NOIDX)
-        idx.append(0)
+        self.assertEqual(idx, Idx())
+        idx.append(1)
         self.assertIsNone(idx.outlop(set=True))
         self.assertEqual(idx, Idx([0]))
         self.assertIsInstance(idx, Idx)
@@ -73,17 +73,17 @@ class IdxUtils(unittest.TestCase):
         self.assertIsNone(idx.outlop(set=True))
         self.assertEqual(idx, Idx([3, 5, 0]))
         self.assertIsInstance(idx, Idx)
-        # Unintended use
-        idx = Idx([3, 5, 0]).outlop()
-        self.assertEqual(idx, Idx([3, 5, 0]))
-        self.assertIsInstance(idx, Idx)
+
+        with self.assertRaises(IndexError) as cm:
+            Idx([3, 5, 0]).outlop()
+        self.assertEqual(cm.exception.args[0], LOP_ERROR_MSG)
         idx = Idx([3, 5, 0])
-        self.assertIsNone(idx.outlop(set=True))
-        self.assertEqual(idx, Idx([3, 5, 0]))
-        self.assertIsInstance(idx, Idx)
+        with self.assertRaises(IndexError) as cm:
+            Idx([3, 5, 0]).outlop(set=True)
+        self.assertEqual(cm.exception.args[0], LOP_ERROR_MSG)
 
     def test_prevpar(self):
-        self.assertEqual(NOIDX.prevpar(), -2)
+        self.assertEqual(Idx().prevpar(), -2)
         self.assertEqual(Idx([1]).prevpar(), -1)
         self.assertEqual(Idx([4, 1]).prevpar(), -1)
         self.assertEqual(Idx([3, 1, 5, 1]).prevpar(), -1)
@@ -116,16 +116,86 @@ class IdxUtils(unittest.TestCase):
         self.assertIsInstance(idx, Idx)
         self.assertEqual(idx, Idx([6, 1, 5]))
 
-        # Unintended use
-        self.assertEqual(Idx([6, 0]).prevpar(), -1)
+        with self.assertRaises(IndexError) as cm:
+            Idx([6, 0]).prevpar()
+        self.assertEqual(cm.exception.args[0], LOP_ERROR_MSG)
         idx = Idx([6, 0])
-        with self.assertRaises(ValueError):
+        with self.assertRaises(IndexError) as cm:
             idx.prevpar(set=True)
+        self.assertEqual(cm.exception.args[0], LOP_ERROR_MSG)
+
+    def test_nextpar(self):
+        self.assertEqual(Idx().nextpar(), -2)
+        self.assertEqual(Idx().nextpar(n_pars=3), -2)
+        self.assertEqual(Idx([1]).nextpar(), Idx(2))
+        self.assertEqual(Idx([1]).nextpar(n_pars=1), -1)
+        self.assertEqual(Idx([1]).nextpar(n_pars=5), Idx(2))
+        self.assertEqual(Idx([4, 1]).nextpar(), Idx(4, 2))
+        self.assertEqual(Idx([4, 1]).nextpar(n_pars=1), -1)
+        self.assertEqual(Idx([4, 1]).nextpar(n_pars=2), Idx(4, 2))
+        self.assertEqual(Idx([3, 1, 5, 1]).nextpar(), Idx(3, 1, 5, 2))
+        self.assertEqual(Idx([3]).nextpar(), Idx([4]))
+        self.assertEqual(Idx([3]).nextpar(n_pars=3), -1)
+        self.assertEqual(Idx([6, 9]).nextpar(), Idx([6, 10]))
+        self.assertEqual(Idx([6, 9]).nextpar(n_pars=11), Idx([6, 10]))
+        self.assertIsInstance(Idx([6, 9]).nextpar(), Idx)
+
+        with self.assertRaises(ValueError) as cm:
+            Idx([3, 5]).nextpar(n_pars=4)
+        self.assertEqual(cm.exception.args[0], INCONSISTENT_NPARS_ERROR_MSG)
+        with self.assertRaises(IndexError) as cm:
+            Idx([3, 0]).nextpar()
+        self.assertEqual(cm.exception.args[0], LOP_ERROR_MSG)
+        with self.assertRaises(IndexError) as cm:
+            Idx([3, 0]).nextpar(n_pars=4)
+        self.assertEqual(cm.exception.args[0], LOP_ERROR_MSG)
+
+        # set == True
+        idx = Idx([2])
+        self.assertIsNone(idx.nextpar(set=True))
         self.assertIsInstance(idx, Idx)
-        self.assertEqual(idx, [6, 0])
+        self.assertEqual(idx, Idx([3]))
+        idx = Idx([8])
+        self.assertIsNone(idx.nextpar(set=True))
+        self.assertIsInstance(idx, Idx)
+        self.assertEqual(idx, Idx([9]))
+        idx = Idx([8])
+        self.assertIsNone(idx.nextpar(n_pars=10, set=True))
+        self.assertIsInstance(idx, Idx)
+        self.assertEqual(idx, Idx([9]))
+        idx = Idx([6, 1, 6])
+        self.assertIsNone(idx.nextpar(set=True))
+        self.assertIsInstance(idx, Idx)
+        self.assertEqual(idx, Idx([6, 1, 7]))
+        idx = Idx([6, 1, 6])
+        self.assertIsNone(idx.nextpar(n_pars=7, set=True))
+        self.assertIsInstance(idx, Idx)
+        self.assertEqual(idx, Idx([6, 1, 7]))
+
+        idx = Idx()
+        with self.assertRaises(IndexError) as cm:
+            idx.nextpar(set=True)
+        self.assertEqual(cm.exception.args[0], SUPEQ_ERROR_MSG)
+        idx = Idx([2])
+        with self.assertRaises(IndexError) as cm:
+            idx.nextpar(n_pars=2, set=True)
+        self.assertEqual(cm.exception.args[0], NO_CO_PAR_ERROR_MSG)
+        idx = Idx([2])
+        with self.assertRaises(ValueError) as cm:
+            idx.nextpar(n_pars=1, set=True)
+        self.assertEqual(cm.exception.args[0], INCONSISTENT_NPARS_ERROR_MSG)
+
+        idx = Idx([6, 0])
+        with self.assertRaises(IndexError) as cm:
+            idx.nextpar(set=True)
+        self.assertEqual(cm.exception.args[0], LOP_ERROR_MSG)
+        idx = Idx([6, 0])
+        with self.assertRaises(IndexError) as cm:
+            idx.nextpar(n_pars=4, set=True)
+        self.assertEqual(cm.exception.args[0], LOP_ERROR_MSG)
 
     def test_level(self):
-        self.assertEqual(NOIDX.level(), 0)
+        self.assertEqual(Idx().level(), 0)
         self.assertEqual(Idx([1]).level(), 1)
         self.assertEqual(Idx([1, 5]).level(), 2)
         idx = Idx([1, 5, 1, 2, 5, 5, 1, 2])
