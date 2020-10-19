@@ -12,6 +12,15 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import List, Union, Iterable, Optional
+from enum import Enum
+
+
+class SelMode(Enum):
+    LCURSOR = -1
+    RCURSOR = 1
+    LHIGHLIGHTED = -2
+    RHIGHLIGHTED = 2
+
 
 SUPEQ_ERROR_MSG = "Pointed subeq does not have a supeq"
 SupeqError = IndexError(SUPEQ_ERROR_MSG)

@@ -182,9 +182,13 @@ class Subeq(list):
         return Subeq(list.__imul__(self, n))
 
     def __str__(self):
-        if len(self) == 0:
+        if not self:
             return "[]"
-        s_str = "[" + str(self[0])
+        if isinstance(self[0], str):
+            # Emphasize that strings are really strings
+            s_str = "[" + repr(self[0])
+        else:
+            s_str = "[" + str(self[0])
         for e in self[1:]:
             s_str += ", " + str(e)
         return s_str + "]"
@@ -195,7 +199,7 @@ class Subeq(list):
             return repr(elem)
         if not len(elem):
             return "[]"
-        s_str = "[" + cls._repr_aux(elem[0])
+        s_str = "[" + repr(elem[0])
         for e in elem[1:]:
             s_str += ", " + cls._repr_aux(e)
         return s_str + "]"
@@ -210,41 +214,6 @@ class Subeq(list):
         if not self:
             return "Subeq()"
         return "Subeq(" + self._repr_aux(self) + ")"
-
-    @classmethod
-    def _srepr_aux(cls, elem):
-        if isinstance(elem, PseudoSymb):
-            s = elem._name.upper()
-
-            if isinstance(elem, (PJuxt, TJuxt)):
-                s += str(elem.current_n)
-
-            extra = ""
-            for v in elem.pp.values():
-                if v is not None:
-                    extra += ", " + str(v)
-            if extra:
-                s += "(" + extra[2:] + ")"
-
-            return s
-
-        if isinstance(elem, str):
-            # Emphasize that content is a string (add '')
-            return repr(elem)
-        if not elem:
-            return "[]"
-        s_str = "[" + cls._srepr_aux(elem[0])
-        for e in elem[1:]:
-            s_str += ", " + cls._srepr_aux(e)
-        return s_str + "]"
-
-    def srepr(self, listonly=False):
-        """Return a shorter representation useful for human reading."""
-        if listonly:
-            return self._srepr_aux(self)
-        if len(self) == 0:
-            return "Subeq()"
-        return "Subeq(" + self._srepr_aux(self) + ")"
 
     def append(self, value: Union['Subeq', str, PseudoSymb]):
         if not isinstance(value, (Subeq, PseudoSymb, str)):

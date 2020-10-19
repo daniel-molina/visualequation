@@ -16,8 +16,8 @@ import unittest
 from visualequation.subeqs import *
 from visualequation.idx import *
 
-OP = Op("O", "O")
-ps = PseudoSymb("omega", r"\omega")
+OP = Op("O")
+ps = PseudoSymb(r"\omega")
 
 
 class SubeqTests(unittest.TestCase):
@@ -32,7 +32,7 @@ class SubeqTests(unittest.TestCase):
         self.assertEqual(Subeq([PVOID]).latex(), PVOID._latex_code)
         self.assertEqual(Subeq([PJuxt(), ["a"], ["b"]]).latex(), "a b")
         self.assertEqual(Subeq([TJuxt(), ["a"], ["b"]]).latex(), "a b")
-        self.assertEqual(Subeq([Op("", "\\frac{{{0}}}{{{1}}}", 2),
+        self.assertEqual(Subeq([Op("\\frac{{{0}}}{{{1}}}", 2),
                                 ["a"], ["b"]]).latex(), "\\frac{a}{b}")
 
     def test_call(self):
@@ -161,18 +161,18 @@ class SubeqTests(unittest.TestCase):
         self.assertEqual(Subeq([PJuxt(), ["d"], ["f"]]).all_pvoid(2), -1)
 
         self.assertEqual(Subeq([OP, [PVOID]]).all_pvoid(), True)
-        self.assertEqual(Subeq([Op("O", "O", 2), [PVOID], ["d"]]).all_pvoid(),
+        self.assertEqual(Subeq([Op("O", 2), [PVOID], ["d"]]).all_pvoid(),
                          False)
         self.assertEqual(
-            Subeq([Op("O", "O", 2), [PVOID], [PVOID]]).all_pvoid(), True)
+            Subeq([Op("O", 2), [PVOID], [PVOID]]).all_pvoid(), True)
         self.assertEqual(
-            Subeq([Op("O", "O", 3), [PVOID], ["d"], [PVOID]]).all_pvoid(),
+            Subeq([Op("O", 3), [PVOID], ["d"], [PVOID]]).all_pvoid(),
                          False)
         self.assertEqual(
-            Subeq([Op("O", "O", 3), [PVOID], ["d"], ["g"]]).all_pvoid(),
+            Subeq([Op("O", 3), [PVOID], ["d"], ["g"]]).all_pvoid(),
                          False)
         self.assertEqual(
-            Subeq([Op("O", "O", 3), [PVOID], [PVOID], [PVOID]]).all_pvoid(),
+            Subeq([Op("O", 3), [PVOID], [PVOID], [PVOID]]).all_pvoid(),
                          True)
 
         # Unintended
@@ -368,7 +368,7 @@ class SubeqTests(unittest.TestCase):
         self.assertEqual(s.is_lastjuxted(3), True)
         self.assertEqual(s.is_lastjuxted([3]), True)
 
-        s = Subeq([PJuxt(3), ["3"], [Op("O", "O", 2), ["4"], ["2"]], [ps]])
+        s = Subeq([PJuxt(3), ["3"], [Op("O", 2), ["4"], ["2"]], [ps]])
         self.assertEqual(s.is_lastjuxted(None), False)
         self.assertEqual(s.is_lastjuxted([]), False)
         self.assertEqual(s.is_lastjuxted(1), False)
@@ -381,7 +381,7 @@ class SubeqTests(unittest.TestCase):
         self.assertEqual(s.is_lastjuxted(3), True)
         self.assertEqual(s.is_lastjuxted([3]), True)
 
-        s = Subeq([Op("O", "O", 3), ["3"], [PJuxt(2), ["4"], ["2"]], [ps]])
+        s = Subeq([Op("O", 3), ["3"], [PJuxt(2), ["4"], ["2"]], [ps]])
         self.assertEqual(s.is_lastjuxted(None), False)
         self.assertEqual(s.is_lastjuxted([]), False)
         self.assertEqual(s.is_lastjuxted(1), False)
@@ -411,7 +411,7 @@ class SubeqTests(unittest.TestCase):
         self.assertEqual(s.is_nonlastjuxted(3), False)
         self.assertEqual(s.is_nonlastjuxted([3]), False)
 
-        s = Subeq([PJuxt(3), ["3"], [Op("O", "O", 2), ["4"], ["2"]], [ps]])
+        s = Subeq([PJuxt(3), ["3"], [Op("O", 2), ["4"], ["2"]], [ps]])
         self.assertEqual(s.is_nonlastjuxted(None), False)
         self.assertEqual(s.is_nonlastjuxted([]), False)
         self.assertEqual(s.is_nonlastjuxted(1), True)
@@ -424,7 +424,7 @@ class SubeqTests(unittest.TestCase):
         self.assertEqual(s.is_nonlastjuxted(3), False)
         self.assertEqual(s.is_nonlastjuxted([3]), False)
 
-        s = Subeq([Op("O", "O", 3), ["3"], [PJuxt(2), ["4"], ["2"]], [ps]])
+        s = Subeq([Op("O", 3), ["3"], [PJuxt(2), ["4"], ["2"]], [ps]])
         self.assertEqual(s.is_nonlastjuxted(None), False)
         self.assertEqual(s.is_nonlastjuxted([]), False)
         self.assertEqual(s.is_nonlastjuxted(1), False)
@@ -634,13 +634,13 @@ class SubeqTests(unittest.TestCase):
                   Subeq([PJuxt(), ["d"], [ps]]),
                   Subeq([PJuxt(),
                          [OP, [PJuxt(), ["3"], [ps]]], ["d"]]),
-                  Subeq([PJuxt(), [Op("w", "w", 1), ["t"]],
+                  Subeq([PJuxt(), [Op( "W", 1), ["t"]],
                          [OP, [PJuxt(), ["3"], [ps]]]]),
-                  Subeq([PJuxt(), ["d"], [Op("e", "e")],
+                  Subeq([PJuxt(), ["d"], [PseudoSymb("e")],
                          [OP, [PJuxt(), ["3"], [ps]]]]),
                   Subeq([OP, [PJuxt(), ["a"], [ps]]]),
-                  Subeq([OP, [Op("d", "d", 1), ["a"]]]),
-                  Subeq([OP, [Op("f", "f", 3), ["a"],
+                  Subeq([OP, [Op("d", 1), ["a"]]]),
+                  Subeq([OP, [Op("f", 3), ["a"],
                                    [ps], ["f"]]])):
             self.assertEqual(s.ulevel([]), 0)
 
@@ -654,9 +654,9 @@ class SubeqTests(unittest.TestCase):
 
         for pos, s in enumerate(
                 (Subeq([PJuxt(), [OP, [PJuxt(), ["3"], [ps]]], ["d"]]),
-                 Subeq([PJuxt(), [Op("w", "w", 1), ["t"]],
+                 Subeq([PJuxt(), [Op("W", 1), ["t"]],
                         [OP, [PJuxt(), ["3"], [ps]]]]),
-                 Subeq([PJuxt(), ["d"], [Op("e", "e")],
+                 Subeq([PJuxt(), ["d"], [PseudoSymb("e")],
                         [OP, [PJuxt(), ["3"], [ps]]]]))):
             with self.assertRaises(TypeError) as cm:
                 s.ulevel([0])
@@ -674,9 +674,9 @@ class SubeqTests(unittest.TestCase):
                     s.ulevel(idx)
                 self.assertEqual(cm.exception.args[0], NOT_SUBEQ_ERROR_MSG)
 
-        for s in (Subeq([PJuxt(), [Op("O", "O", 2), ["a"], [ps]]]),
-                  Subeq([PJuxt(), [Op("d", "d", 1), ["a"]]]),
-                  Subeq([PJuxt(), [Op("f", "f", 3), ["a"],
+        for s in (Subeq([PJuxt(), [Op("O", 2), ["a"], [ps]]]),
+                  Subeq([PJuxt(), [Op("d", 1), ["a"]]]),
+                  Subeq([PJuxt(), [Op("f", 3), ["a"],
                                    [ps], ["f"]]])):
             self.assertEqual(s.ulevel([]), 0)
             self.assertEqual(s.ulevel(1), 0)
@@ -691,7 +691,7 @@ class SubeqTests(unittest.TestCase):
 
     def test_selectivity(self):
         for s in (Subeq(["a"]), Subeq(None),
-                  Subeq([Op("O", "O", 2), ["d"], [ps]])):
+                  Subeq([Op("O", 2), ["d"], [ps]])):
             self.assertEqual(s.selectivity(), 1)
             with self.assertRaises(TypeError) as cm:
                 s.selectivity(0)
@@ -701,11 +701,11 @@ class SubeqTests(unittest.TestCase):
 
         for pos, s in enumerate(
                 (Subeq([PJuxt(),
-                        [OP, [Op("O", "O", 2), ["3"], [ps]]], ["d"]]),
-                 Subeq([PJuxt(), [Op("w", "w", 1), ["t"]],
-                        [OP, [Op("O", "O", 2), ["3"], [ps]]]]),
+                        [OP, [Op("O", 2), ["3"], [ps]]], ["d"]]),
+                 Subeq([PJuxt(), [Op("W", 1), ["t"]],
+                        [OP, [Op("O", 2), ["3"], [ps]]]]),
                  Subeq([PJuxt(3), ["d"], [ps],
-                        [OP, [Op("O", "O", 2), ["3"], [ps]]]]))):
+                        [OP, [Op("O", 2), ["3"], [ps]]]]))):
             self.assertEqual(s.selectivity(), -1)
             self.assertEqual(s.selectivity(1 + pos), 0)
             self.assertEqual(s.selectivity([1 + pos, 1]), 1)
@@ -742,11 +742,11 @@ class SubeqTests(unittest.TestCase):
 
     def test_mate_juxtopjuxt(self):
         for pos, s in enumerate(
-                (Subeq([Op("O", "O", 2),
+                (Subeq([Op("O", 2),
                         [OP, [PJuxt(), ["3"], [ps]]], ["d"]]),
-                 Subeq([Op("O", "O", 2), [Op("w", "w", 1), ["t"]],
+                 Subeq([Op("O", 2), [Op("W", 1), ["t"]],
                         [OP, [PJuxt(), ["3"], [ps]]]]),
-                 Subeq([Op("O", "O", 3), ["d"], [Op("e", "e")],
+                 Subeq([Op("O", 3), ["d"], [PseudoSymb("e")],
                         [OP, [PJuxt(), ["3"], [ps]]]]))):
             for right in (True, False):
                 for retidx in (True, False):
@@ -808,8 +808,8 @@ class SubeqTests(unittest.TestCase):
                                          NOT_USUBEQ_ERROR_MSG)
 
     def test_mate_nojuxts(self):
-        op2 = Op("O2", "O2", 2)
-        op3 = Op("O3", "O3", 3)
+        op2 = Op("O2", 2)
+        op3 = Op("O3", 3)
 
         op_0 = op3
         op_2 = op3
@@ -856,8 +856,8 @@ class SubeqTests(unittest.TestCase):
         self.assertEqual(s.mate([2, 2, 2], False, 0), (s(2, 2, 1), 0))
 
     def test_mate_1juxt(self):
-        op2 = Op("O2", "O2", 2)
-        op3 = Op("O3", "O3", 3)
+        op2 = Op("O2", 2)
+        op3 = Op("O3", 3)
 
         op_0 = op3
         op_2 = op3
@@ -950,7 +950,7 @@ class SubeqTests(unittest.TestCase):
         self.assertIs(s.boundary_mate(2, last=False), s(1, 1))
         self.assertIs(s.boundary_mate(2, last=True), s(1, 2))
 
-        s = Subeq([PJuxt(), [Op("w", "w", 1), ["t"]], [OP, [PJuxt(), ["3"],
+        s = Subeq([PJuxt(), [Op("W", 1), ["t"]], [OP, [PJuxt(), ["3"],
                                                            [ps]]]])
         self.assertIs(s.boundary_mate(0, last=False), s(1))
         self.assertIs(s.boundary_mate(0, last=True), s(2))
@@ -961,7 +961,7 @@ class SubeqTests(unittest.TestCase):
         self.assertIs(s.boundary_mate(3, last=False), s(1, 1))
         self.assertIs(s.boundary_mate(3, last=True), s(2, 1, 2))
 
-        s = Subeq([PJuxt(3), ["d"], [Op("e", "e")], [OP, [PJuxt(), ["3"],
+        s = Subeq([PJuxt(3), ["d"], [Op("E")], [OP, [PJuxt(), ["3"],
                                                             [ps]]]])
         self.assertIs(s.boundary_mate(0, last=False), s(1))
         self.assertIs(s.boundary_mate(0, last=True), s(3))

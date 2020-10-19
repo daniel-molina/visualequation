@@ -4,6 +4,8 @@
       <w>cojuxted</w>
       <w>cojuxteds</w>
       <w>copar</w>
+      <w>csub</w>
+      <w>csup</w>
       <w>definiendum</w>
       <w>definiendums</w>
       <w>definiens</w>
@@ -17,6 +19,8 @@
       <w>juxteds</w>
       <w>juxts</w>
       <w>ldir</w>
+      <w>lsub</w>
+      <w>lsup</w>
       <w>modificating</w>
       <w>odir</w>
       <w>orimode</w>
@@ -30,6 +34,7 @@
       <w>rcursor</w>
       <w>rdir</w>
       <w>readline</w>
+      <w>rsup</w>
       <w>selsubeq</w>
       <w>selsubeqs</w>
       <w>subcase</w>
