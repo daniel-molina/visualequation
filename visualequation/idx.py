@@ -142,7 +142,7 @@ class Idx(list):
         del self[-1]
 
     def outlop(self, set=False):
-        """Return index of lop of pointed subeq.
+        """Return index of lop which has as parameter the pointed subeq.
 
         If pointed subeq is the whole eq (block or symbol), -2 is returned.
 

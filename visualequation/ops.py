@@ -112,7 +112,8 @@ PSEUDOSYMB_PP_MIXED_ERROR_MSG = "pp must be a PublicProperties"
 
 
 class PseudoSymb:
-    def __init__(self, latex_code: str, pp: Optional[PublicProperties] = None,
+    def __init__(self, latex_code: str, lo_base: bool = False,
+                 pp: Optional[PublicProperties] = None,
                  **kwargs):
         """Create a PseudoSymb.
 
@@ -123,6 +124,10 @@ class PseudoSymb:
         if not isinstance(latex_code, str):
             raise TypeError("Parameter latex_code must be a str.")
         self._latex_code = latex_code
+
+        if not isinstance(lo_base, bool):
+            raise TypeError("Parameter lo_base must be a bool.")
+        self._lo_base = lo_base
 
         if pp is not None:
             if not isinstance(pp, PublicProperties):
@@ -142,13 +147,12 @@ class PseudoSymb:
     def __ne__(self, other):
         return not self == other
 
-    def _repr_priv_ps(self):
-        """Helper.
-
-        .. note::
-            It returns a repr of str because it must be introduced as a str.
-        """
-        return repr(self._latex_code)
+    def _repr_priv(self):
+        """Return a string containing the args of private attributes."""
+        s_repr = repr(self._latex_code)
+        if self._lo_base:
+            s_repr += ", True"
+        return s_repr
 
     def _repr_pub(self):
         """Helper."""
@@ -165,16 +169,17 @@ class PseudoSymb:
             Python reminder: Output displayed by Python interpreter uses repr
             implicitly.
         """
-        return "PseudoSymb(" + self._repr_priv_ps() + self._repr_pub() + ")"
+        return "PseudoSymb(" + self._repr_priv() + self._repr_pub() + ")"
 
-    def __str__(self):
+    def _str_pub(self):
         s_pp = ""
         for v in self.pp.values():
             if v is not None:
                 s_pp += ", " + v.name
-        if s_pp:
-            return type(self).__name__ + "{" + s_pp[2:] + "}"
-        return type(self).__name__
+        return "{" + s_pp[2:] + "}" if s_pp else ""
+
+    def __str__(self):
+        return type(self).__name__ + self._str_pub()
 
     def __hash__(self):
         return hash(self.__dict__)
@@ -187,7 +192,7 @@ class Op(PseudoSymb):
                  n_args: int = 1, pref_arg: int = 1, lo_base: bool = False,
                  pp: Optional[PublicProperties] = None,
                  **kwargs):
-        super().__init__(latex_code, pp=pp, **kwargs)
+        super().__init__(latex_code, lo_base, pp=pp, **kwargs)
         if not isinstance(n_args, int):
             raise TypeError("Parameter n_args must be an int.")
         if n_args == 0 or n_args < -1:
@@ -198,22 +203,18 @@ class Op(PseudoSymb):
         if pref_arg < 1:
             raise ValueError("Parameter pref_arg must be positive.")
 
-        if not isinstance(lo_base, bool):
-            raise TypeError("Parameter lo_base must be a bool.")
-
         self._n_args = n_args
         self._pref_arg = pref_arg
-        self._lo_base = lo_base
 
-    def _repr_priv_op(self):
+    def _repr_priv(self):
         """Helper.
 
         .. note::
             It returns a string, not a repr of string.
         """
-        s_repr = ""
+        s_repr = repr(self._latex_code)
         if self._n_args != 1:
-            s_repr += ", n_args=" + repr(self._n_args)
+            s_repr += ", " + repr(self._n_args)
         if self._pref_arg != 1:
             s_repr += ", pref_arg=" + repr(self._pref_arg)
         if self._lo_base:
@@ -228,8 +229,7 @@ class Op(PseudoSymb):
             Python reminder: Output displayed by Python interpreter uses repr
             implicitly.
         """
-        return "Op(" + self._repr_priv_ps() + self._repr_priv_op() \
-               + self._repr_pub() + ")"
+        return "Op(" + self._repr_priv() + self._repr_pub() + ")"
 
     def _assert_valid_args(self, selmode: SelMode, arg_ord: Optional[int]):
         if not isinstance(selmode, SelMode):

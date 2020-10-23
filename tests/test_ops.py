@@ -91,9 +91,9 @@ class OpsTests(unittest.TestCase):
         psymb3 = PseudoSymb("b", color=3)
         self.assertNotEqual(psymb1, psymb3)
 
-        psymb4 = PseudoSymb("b", PublicProperties())
+        psymb4 = PseudoSymb("b", False, PublicProperties())
         self.assertEqual(psymb1, psymb4)
-        psymb5 = PseudoSymb("b", PublicProperties(color=3))
+        psymb5 = PseudoSymb("b", False, PublicProperties(color=3))
         self.assertEqual(psymb3, psymb5)
         psymb4bis = PseudoSymb("b", pp=PublicProperties())
         self.assertEqual(psymb1, psymb4bis)
@@ -101,18 +101,18 @@ class OpsTests(unittest.TestCase):
         self.assertEqual(psymb3, psymb5bis)
 
         with self.assertRaises(KeyError):
-            PseudoSymb("b", PublicProperties(dasd=3))
+            PseudoSymb("b", pp=PublicProperties(dasd=3))
 
         with self.assertRaises(KeyError):
             PseudoSymb("b", pp=PublicProperties(dfad=3))
 
         with self.assertRaises(TypeError) as cm:
-            PseudoSymb("b", 43)
+            PseudoSymb("b", pp=43)
         self.assertEqual(cm.exception.args[0],
                          PSEUDOSYMB_WRONG_PP_ARG_ERROR_MSG)
 
         with self.assertRaises(TypeError) as cm:
-            PseudoSymb("b", PublicProperties(color=3), style=4)
+            PseudoSymb("b", pp=PublicProperties(color=3), style=4)
         self.assertEqual(cm.exception.args[0], PSEUDOSYMB_PP_MIXED_ERROR_MSG)
 
         with self.assertRaises(TypeError) as cm:
@@ -120,7 +120,7 @@ class OpsTests(unittest.TestCase):
         self.assertEqual(cm.exception.args[0], PSEUDOSYMB_PP_MIXED_ERROR_MSG)
 
         with self.assertRaises(TypeError) as cm:
-            PseudoSymb("b", PublicProperties(color=3), wrongkw=4)
+            PseudoSymb("b", pp=PublicProperties(color=3), wrongkw=4)
         self.assertEqual(cm.exception.args[0], PSEUDOSYMB_PP_MIXED_ERROR_MSG)
 
     def test_pseudo_symb_str(self):
@@ -136,10 +136,12 @@ class OpsTests(unittest.TestCase):
     def test_pseudo_symb_repr(self):
         psymb1 = PseudoSymb("b")
         self.assertEqual(repr(psymb1), "PseudoSymb('b')")
+        psymb1lo = PseudoSymb("b", True)
+        self.assertEqual(repr(psymb1lo), "PseudoSymb('b', True)")
         psymb2 = PseudoSymb("b", font=2)
-        self.assertEqual(
-            repr(psymb2),
-            "PseudoSymb('b', font=2)")
+        self.assertEqual(repr(psymb2), "PseudoSymb('b', font=2)")
+        psymb2lo = PseudoSymb("b", True, font=2)
+        self.assertEqual(repr(psymb2lo), "PseudoSymb('b', True, font=2)")
         psymb2.pp["style"] = 4
         self.assertEqual(repr(psymb2), "PseudoSymb('b', font=2, style=4)")
 
@@ -215,19 +217,19 @@ class OpsTests(unittest.TestCase):
         self.assertEqual(repr(op), "Op('b', font=2, style=4)")
 
         op = Op("b", n_args=2)
-        self.assertEqual(repr(op), "Op('b', n_args=2)")
+        self.assertEqual(repr(op), "Op('b', 2)")
 
         op = Op("b", 3, pref_arg=2)
-        self.assertEqual(repr(op), "Op('b', n_args=3, pref_arg=2)")
+        self.assertEqual(repr(op), "Op('b', 3, pref_arg=2)")
 
         op = Op("b", lo_base=True)
         self.assertEqual(repr(op), "Op('b', lo_base=True)")
 
         op = Op("b", lo_base=True, n_args=5)
-        self.assertEqual(repr(op), "Op('b', n_args=5, lo_base=True)")
+        self.assertEqual(repr(op), "Op('b', 5, lo_base=True)")
 
         op = Op("b", n_args=2, style=3)
-        self.assertEqual(repr(op), "Op('b', n_args=2, style=3)")
+        self.assertEqual(repr(op), "Op('b', 2, style=3)")
 
     def test_op_repr_backslashes(self):
         latex_code = r"{0}{1}"

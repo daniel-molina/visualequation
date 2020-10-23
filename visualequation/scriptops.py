@@ -11,670 +11,770 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+"""A module to manage the class and operations related to scripts.
+
+Two types of scripts are considered:
+
+    *   Corner scripts.
+    *   Vertical scripts.
+
+A subeq which attribute self._lo_base == True can have any combination of them.
+Else, it can have only scripts of the same type (or corner ones or vertical
+ones). Depending on that, we can classify scripts operators in three subtypes.
+
+    *   LO: Script operators for bases which have self._lo_base == True.
+    *   VERT: Script operators which only manage vertical scripts.
+    *   CORN: Script operators which only manage corner scripts.
+
+.. note::
+    Implementation note: This script currently combines two philosophies
+    to manage scripts (probably centered around ScriptOp and ScriptPars each
+    one), so lot of code is probably unneeded. In an new iteration it is
+    encouraged to simplify the concept. One idea would be to use lists of 7
+    elements for ScriptPars independently of the ScriptOpSubtype.
+"""
+
+from typing import Optional, Union
 from copy import deepcopy
-import re
+from enum import Enum
+from re import sub
+from collections import OrderedDict
 
 from .subeqs import Subeq
-from .idx import Idx
-from .ops import Op, TVOID, PVOID
-from .errors import ShowError
+from .idx import Idx, SelMode
+from .ops import Op
 
-# Vertical script operators
-UNDER = Op("under", r'\underset{{{1}}}{{{0}}}', 2, 'setscript')
-OVER = Op("over", r'\overset{{{1}}}{{{0}}}', 2, 'setscript')
-UNDEROVER = Op("underover", r'\overset{{{2}}}{{{\underset{{{1}}}{{{0}}}}}}', 3,
-               'setscript')
 
-# Standard script operators
-LSUB = Op("lsub", r'\tensor*[_{{{1}}}]{{{0}}}{{}}', 2, 'script')
-SUB = Op("sub", r'\tensor*{{{0}}}{{_{{{1}}}}}', 2, 'script')
-LSUP = Op("lsup", r'\tensor*[^{{{1}}}]{{{0}}}{{}}', 2, 'script')
-SUP = Op("sup", r'\tensor*{{{0}}}{{^{{{1}}}}}', 2, 'script')
-LSUBSUB = Op("lsubsub", r'\tensor*[_{{{1}}}]{{{0}}}{{_{{{2}}}}}', 3, 'script')
-LSUBLSUP = Op("lsublsup", r'\tensor*[_{{{1}}}^{{{2}}}]{{{0}}}{{}}', 3,
-              'script')
-LSUBSUP = Op("lsubsup", r'\tensor*[_{{{1}}}]{{{0}}}{{^{{{2}}}}}', 3, 'script')
-SUBLSUP = Op("sublsup", r'\tensor*[^{{{2}}}]{{{0}}}{{_{{{1}}}}}', 3, 'script')
-SUBSUP = Op("subsup", r'\tensor*{{{0}}}{{^{{{2}}}_{{{1}}}}}', 3, 'script')
-LSUPSUP = Op("lsupsup", r'\tensor*[^{{{1}}}]{{{0}}}{{^{{{2}}}}}', 3, 'script')
-LSUBSUBLSUP = Op("lsubsublsup",
-                 r'\tensor*[_{{{1}}}^{{{3}}}]{{{0}}}{{_{{{2}}}}}', 4, 'script')
-LSUBSUBSUP = Op("lsubsubsup", r'\tensor*[_{{{1}}}]{{{0}}}{{^{{{3}}}_{{{2}}}}}',
-                4, 'script')
-LSUBLSUPSUP = Op("lsublsupsup",
-                 r'\tensor*[^{{{2}}}_{{{1}}}]{{{0}}}{{^{{{3}}}}}', 4, 'script')
-SUBLSUPSUP = Op("sublsupsup", r'\tensor*[^{{{2}}}]{{{0}}}{{^{{{3}}}_{{{1}}}}}',
-                4, 'script')
-LSUBSUBLSUPSUP = Op("lsubsublsupsup",
-                    r'\tensor*[_{{{1}}}^{{{3}}}]{{{0}}}{{_{{{2}}}^{{{4}}}}}',
-                    5, 'script')
+class ScriptOpSubtype(Enum):
+    LO = 0
+    VERT = 1
+    CORN = 2
 
-# Script for Large Operators. Valid only for variable-size, fun-args or
-# anything defined with \mathop.
-# It is necessary not to include brackets in the base when no \sideset is used
-LOUNDER = Op("lounder", r'{0}_{{{1}}}', 2, 'loscript')
-LOOVER = Op("loover", r'{0}^{{{1}}}', 2, 'loscript')
-LOUNDEROVER = Op("lounderover", r'{0}_{{{1}}}^{{{2}}}', 3, 'loscript')
 
-LOLSUB = Op("lolsub", r'\sideset{{_{{{1}}}}}{{}}{{{0}}}', 2, 'loscript')
-LOSUB = Op("losub", r'\sideset{{}}{{_{{{1}}}}}{{{0}}}', 2, 'loscript')
-LOLSUP = Op("lolsup", r'\sideset{{^{{{1}}}}}{{}}{{{0}}}', 2, 'loscript')
-LOSUP = Op("losup", r'\sideset{{}}{{^{{{1}}}}}{{{0}}}', 2, 'loscript')
-LOLSUBSUB = Op("lolsubsub", r'\sideset{{_{{{1}}}}}{{_{{{2}}}}}{{{0}}}', 3,
-               'loscript')
-LOLSUBLSUP = Op("lolsublsup", r'\sideset{{_{{{1}}}^{{{2}}}}}{{}}{{{0}}}', 3,
-                'loscript')
-LOLSUBSUP = Op("lolsubsup", r'\sideset{{_{{{1}}}}}{{^{{{2}}}}}{{{0}}}', 3,
-               'loscript')
-LOSUBLSUP = Op("losublsup", r'\sideset{{^{{{2}}}}}{{_{{{1}}}}}{{{0}}}', 3,
-               'loscript')
-LOSUBSUP = Op("losubsup", r'\sideset{{}}{{_{{{1}}}^{{{2}}}}}{{{0}}}', 3,
-              'loscript')
-LOLSUPSUP = Op("lolsupsup", r'\sideset{{^{{{1}}}}}{{^{{{2}}}}}{{{0}}}', 3,
-               'loscript')
-LOLSUBSUBLSUP = Op("lolsubsublsup",
-                   r'\sideset{{_{{{1}}}^{{{3}}}}}{{_{{{2}}}}}{{{0}}}', 4,
-                   'loscript')
-LOLSUBSUBSUP = Op("lolsubsubsup",
-                  r'\sideset{{_{{{1}}}}}{{^{{{3}}}_{{{2}}}}}{{{0}}}', 4,
-                  'loscript')
-LOLSUBLSUPSUP = Op("lolsublsupsup",
-                   r'\sideset{{^{{{2}}}_{{{1}}}}}{{^{{{3}}}}}{{{0}}}', 4,
-                   'loscript')
-LOSUBLSUPSUP = Op("losublsupsup",
-                  r'\sideset{{^{{{2}}}}}{{^{{{3}}}_{{{1}}}}}{{{0}}}', 4,
-                  'loscript')
-LOLSUBSUBLSUPSUP \
-    = Op("lolsubsublsupsup",
-         r'\sideset{{_{{{1}}}^{{{3}}}}}{{_{{{2}}}^{{{4}}}}}{{{0}}}', 5,
-         'loscript')
-# +Under
-LOLSUBUNDER = Op("lolsubunder", r'\sideset{{_{{{1}}}}}{{}}{{{0}}}_{{{2}}}', 3,
-                 'loscript')
-LOUNDERSUB = Op("loundersub", r'\sideset{{}}{{_{{{2}}}}}{{{0}}}_{{{1}}}', 3,
-                'loscript')
-LOUNDERLSUP = Op("lounderlsup", r'\sideset{{^{{{2}}}}}{{}}{{{0}}}_{{{1}}}', 3,
-                 'loscript')
-LOUNDERSUP = Op("loundersup", r'\sideset{{}}{{^{{{2}}}}}{{{0}}}_{{{1}}}', 3,
-                'loscript')
-LOLSUBUNDERSUB = Op("lolsubundersub",
-                    r'\sideset{{_{{{1}}}}}{{_{{{3}}}}}{{{0}}}_{{{2}}}', 4,
-                    'loscript')
-LOLSUBUNDERLSUP = Op("lolsubunderlsup",
-                     r'\sideset{{_{{{1}}}^{{{3}}}}}{{}}{{{0}}}_{{{2}}}', 4,
-                     'loscript')
-LOLSUBUNDERSUP = Op("lolsubundersup",
-                    r'\sideset{{_{{{1}}}}}{{^{{{3}}}}}{{{0}}}_{{{2}}}', 4,
-                    'loscript')
-LOUNDERSUBLSUP = Op("loundersublsup",
-                    r'\sideset{{^{{{3}}}}}{{_{{{2}}}}}{{{0}}}_{{{1}}}', 4,
-                    'loscript')
-LOUNDERSUBSUP = Op("loundersubsup",
-                   r'\sideset{{}}{{_{{{2}}}^{{{3}}}}}{{{0}}}_{{{1}}}', 4,
-                   'loscript')
-LOUNDERLSUPSUP = Op("lounderlsupsup",
-                    r'\sideset{{^{{{2}}}}}{{^{{{3}}}}}{{{0}}}_{{{1}}}', 4,
-                    'loscript')
-LOLSUBUNDERSUBLSUP \
-    = Op("lolsubundersublsup",
-         r'\sideset{{_{{{1}}}^{{{4}}}}}{{_{{{3}}}}}{{{0}}}_{{{2}}}', 5,
-         'loscript')
-LOLSUBUNDERSUBSUP \
-    = Op("lolsubundersubsup",
-         r'\sideset{{_{{{1}}}}}{{^{{{4}}}_{{{3}}}}}{{{0}}}_{{{2}}}', 5,
-         'loscript')
-LOLSUBUNDERLSUPSUP \
-    = Op("lolsubunderlsupsup",
-         r'\sideset{{^{{{3}}}_{{{1}}}}}{{^{{{4}}}}}{{{0}}}_{{{2}}}', 5,
-         'loscript')
-LOUNDERSUBLSUPSUP \
-    = Op("loundersublsupsup",
-         r'\sideset{{^{{{3}}}}}{{^{{{4}}}_{{{2}}}}}{{{0}}}_{{{1}}}', 5,
-         'loscript')
-LOLSUBUNDERSUBLSUPSUP \
-    = Op("lolsubundersublsupsup",
-         r'\sideset{{_{{{1}}}^{{{4}}}}}{{_{{{3}}}^{{{5}}}}}{{{0}}}_{{{2}}}', 6,
-         'loscript')
-# +Over
-LOLSUBOVER = Op("lolsubover", r'\sideset{{_{{{1}}}}}{{}}{{{0}}}^{{{2}}}', 3,
-                'loscript')
-LOSUBOVER = Op("losubover", r'\sideset{{}}{{_{{{1}}}}}{{{0}}}^{{{2}}}', 3,
-               'loscript')
-LOLSUPOVER = Op("lolsupover", r'\sideset{{^{{{1}}}}}{{}}{{{0}}}^{{{2}}}', 3,
-                'loscript')
-LOOVERSUP = Op("looversup", r'\sideset{{}}{{^{{{2}}}}}{{{0}}}^{{{1}}}', 3,
-               'loscript')
-LOLSUBSUBOVER = Op("lolsubsubover",
-                   r'\sideset{{_{{{1}}}}}{{_{{{2}}}}}{{{0}}}^{{{3}}}', 4,
-                   'loscript')
-LOLSUBLSUPOVER = Op("lolsublsupover",
-                    r'\sideset{{_{{{1}}}^{{{2}}}}}{{}}{{{0}}}^{{{3}}}', 4,
-                    'loscript')
-LOLSUBOVERSUP = Op("lolsuboversup",
-                   r'\sideset{{_{{{1}}}}}{{^{{{3}}}}}{{{0}}}^{{{2}}}', 4,
-                   'loscript')
-LOSUBLSUPOVER = Op("losublsupover",
-                   r'\sideset{{^{{{2}}}}}{{_{{{1}}}}}{{{0}}}^{{{3}}}', 4,
-                   'loscript')
-LOSUBOVERSUP = Op("losuboversup",
-                  r'\sideset{{}}{{_{{{1}}}^{{{3}}}}}{{{0}}}^{{{2}}}', 4,
-                  'loscript')
-LOLSUPOVERSUP = Op("lolsupoversup",
-                   r'\sideset{{^{{{1}}}}}{{^{{{3}}}}}{{{0}}}^{{{2}}}', 4,
-                   'loscript')
-LOLSUBSUBLSUPOVER \
-    = Op("lolsubsublsupover",
-         r'\sideset{{_{{{1}}}^{{{3}}}}}{{_{{{2}}}}}{{{0}}}^{{{4}}}', 5,
-         'loscript')
-LOLSUBSUBOVERSUP \
-    = Op("lolsubsuboversup",
-         r'\sideset{{_{{{1}}}}}{{^{{{4}}}_{{{2}}}}}{{{0}}}^{{{3}}}', 5,
-         'loscript')
-LOLSUBLSUPOVERSUP \
-    = Op("lolsublsupoversup",
-         r'\sideset{{^{{{2}}}_{{{1}}}}}{{^{{{4}}}}}{{{0}}}^{{{3}}}', 5,
-         'loscript')
-LOSUBLSUPOVERSUP \
-    = Op("losublsupoversup",
-         r'\sideset{{^{{{2}}}}}{{^{{{4}}}_{{{1}}}}}{{{0}}}^{{{3}}}', 5,
-         'loscript')
-LOLSUBSUBLSUPOVERSUP \
-    = Op("lolsubsublsupoversup",
-         r'\sideset{{_{{{1}}}^{{{3}}}}}{{_{{{2}}}^{{{5}}}}}{{{0}}}^{{{4}}}', 6,
-         'loscript')
-# +UnderOver
-LOLSUBUNDEROVER = Op("lolsubunderover",
-                     r'\sideset{{_{{{1}}}}}{{}}{{{0}}}_{{{2}}}^{{{3}}}', 4,
-                     'loscript')
-LOUNDERSUBOVER = Op("loundersubover",
-                    r'\sideset{{}}{{_{{{2}}}}}{{{0}}}_{{{1}}}^{{{3}}}', 4,
-                    'loscript')
-LOUNDERLSUPOVER = Op("lounderlsupover",
-                     r'\sideset{{^{{{2}}}}}{{}}{{{0}}}_{{{1}}}^{{{3}}}', 4,
-                     'loscript')
-LOUNDEROVERSUP = Op("lounderoversup",
-                    r'\sideset{{}}{{^{{{3}}}}}{{{0}}}_{{{1}}}^{{{2}}}', 4,
-                    'loscript')
-LOLSUBUNDERSUBOVER \
-    = Op("lolsubundersubover",
-         r'\sideset{{_{{{1}}}}}{{_{{{3}}}}}{{{0}}}_{{{2}}}^{{{4}}}', 5,
-         'loscript')
-LOLSUBUNDERLSUPOVER \
-    = Op("lolsubunderlsupover",
-         r'\sideset{{_{{{1}}}^{{{3}}}}}{{}}{{{0}}}_{{{2}}}^{{{4}}}', 5,
-         'loscript')
-LOLSUBUNDEROVERSUP \
-    = Op("lolsubunderoversup",
-         r'\sideset{{_{{{1}}}}}{{^{{{4}}}}}{{{0}}}_{{{2}}}^{{{3}}}', 5,
-         'loscript')
-LOUNDERSUBLSUPOVER \
-    = Op("loundersublsupover",
-         r'\sideset{{^{{{3}}}}}{{_{{{2}}}}}{{{0}}}_{{{1}}}^{{{4}}}', 5,
-         'loscript')
-LOUNDERSUBOVERSUP \
-    = Op("loundersuboversup",
-         r'\sideset{{}}{{_{{{2}}}^{{{4}}}}}{{{0}}}_{{{1}}}^{{{3}}}', 5,
-         'loscript')
-LOUNDERLSUPOVERSUP \
-    = Op("lounderlsupoversup",
-         r'\sideset{{^{{{2}}}}}{{^{{{4}}}}}{{{0}}}_{{{1}}}^{{{3}}}', 5,
-         'loscript')
-LOLSUBUNDERSUBLSUPOVER \
-    = Op("lolsubundersublsupover",
-         r'\sideset{{_{{{1}}}^{{{4}}}}}{{_{{{3}}}}}{{{0}}}_{{{2}}}^{{{5}}}', 6,
-         'loscript')
-LOLSUBUNDERSUBOVERSUP \
-    = Op("lolsubundersuboversup",
-         r'\sideset{{_{{{1}}}}}{{^{{{5}}}_{{{3}}}}}{{{0}}}_{{{2}}}^{{{4}}}', 6,
-         'loscript')
-LOLSUBUNDERLSUPOVERSUP \
-    = Op("lolsubunderlsupoversup",
-         r'\sideset{{^{{{3}}}_{{{1}}}}}{{^{{{5}}}}}{{{0}}}_{{{2}}}^{{{4}}}', 6,
-         'loscript')
-LOUNDERSUBLSUPOVERSUP \
-    = Op("loundersublsupoversup",
-         r'\sideset{{^{{{3}}}}}{{^{{{5}}}_{{{2}}}}}{{{0}}}_{{{1}}}^{{{4}}}', 6,
-         'loscript')
-LOLSUBUNDERSUBLSUPOVERSUP \
-    = Op("lolsubundersublsupoversup",
-         r'\sideset{{_{{{1}}}^{{{4}}}}}{{_{{{3}}}^{{{6}}}}}{{{0}}}'
-         r'_{{{2}}}^{{{5}}}', 7, 'loscript')
+class ScriptPos(Enum):
+    """ A enum for script positions.
 
-SCRIPT_OP_TYPES = ('setscript', 'script', 'loscript')
+    Reasoning:
+            5 6 7 <--- Super-scripts (left, center, right)
+              1   <--- Base
+            2 3 4 <--- Sub-scripts (left, center, right)
 
-LOSCRIPT_BASE_TYPES = ('vs', 'fun_args', 'opconstruct')
+    ..note::
+        Specific values are being used to simplify the code below (do not
+        change them without a very good reason and fixing the dependent code).
+    """
+    LSUB = 2
+    CSUB = 3
+    RSUB = 4
+    LSUP = 5
+    CSUP = 6
+    RSUP = 7
 
-SETSCRIPT_OP2ID_DICT = {
-    None: (False, False),
-    UNDER: (True, False),
-    OVER: (False, True),
-    UNDEROVER: (True, True)
-}
 
-ID2SETSCRIPT_OP_DICT = {v: k for k, v in SETSCRIPT_OP2ID_DICT.items()}
+VERT_SCR_POS_TUPLE = (ScriptPos.CSUB, ScriptPos.CSUP)
+CORN_SCR_POS_TUPLE = (ScriptPos.LSUB, ScriptPos.RSUB,
+                      ScriptPos.LSUP, ScriptPos.RSUP)
 
-SCRIPT_OP2ID_DICT = {
-    None: (False, False, False, False),
-    LSUB: (True, False, False, False),
-    SUB: (False, True, False, False),
-    LSUP: (False, False, True, False),
-    SUP: (False, False, False, True),
-    LSUBSUB: (True, True, False, False),
-    LSUBLSUP: (True, False, True, False),
-    LSUBSUP: (True, False, False, True),
-    SUBLSUP: (False, True, True, False),
-    SUBSUP: (False, True, False, True),
-    LSUPSUP: (False, False, True, True),
-    LSUBSUBLSUP: (True, True, True, False),
-    LSUBSUBSUP: (True, True, False, True),
-    LSUBLSUPSUP: (True, False, True, True),
-    SUBLSUPSUP: (False, True, True, True),
-    LSUBSUBLSUPSUP: (True, True, True, True)
-}
 
-ID2SCRIPT_OP_DICT = {v: k for k, v in SCRIPT_OP2ID_DICT.items()}
-
-LOSCRIPT_OP2ID_DICT = {
-    None: (False, False, False, False, False, False),
-    LOUNDER: (False, True, False, False, False, False),
-    LOOVER: (False, False, False, False, True, False),
-    LOUNDEROVER: (False, True, False, False, True, False),
-    LOLSUB: (True, False, False, False, False, False),
-    LOSUB: (False, False, True, False, False, False),
-    LOLSUP: (False, False, False, True, False, False),
-    LOSUP: (False, False, False, False, False, True),
-    LOLSUBSUB: (True, False, True, False, False, False),
-    LOLSUBLSUP: (True, False, False, True, False, False),
-    LOLSUBSUP: (True, False, False, False, False, True),
-    LOSUBLSUP: (False, False, True, True, False, False),
-    LOSUBSUP: (False, False, True, False, False, True),
-    LOLSUPSUP: (False, False, False, True, False, True),
-    LOLSUBSUBLSUP: (True, False, True, True, False, False),
-    LOLSUBSUBSUP: (True, False, True, False, False, True),
-    LOLSUBLSUPSUP: (True, False, False, True, False, True),
-    LOSUBLSUPSUP: (False, False, True, True, False, True),
-    LOLSUBSUBLSUPSUP: (True, False, True, True, False, True),
+SCRIPTOPS_DICT = {
+    # is_lo, lsub, csub, rsub, lsup, csup, rsup
+    (True, False, True, False, False, False, False):
+        r'{0}_{{{1}}}',
+    (True, False, False, False, False, True, False):
+        r'{0}^{{{1}}}',
+    (True, False, True, False, False, True, False):
+        r'{0}_{{{1}}}^{{{2}}}',
+    (True, True, False, False, False, False, False):
+        r'\sideset{{_{{{1}}}}}{{}}{{{0}}}',
+    (True, False, False, True, False, False, False):
+        r'\sideset{{}}{{_{{{1}}}}}{{{0}}}',
+    (True, False, False, False, True, False, False):
+        r'\sideset{{^{{{1}}}}}{{}}{{{0}}}',
+    (True, False, False, False, False, False, True):
+        r'\sideset{{}}{{^{{{1}}}}}{{{0}}}',
+    (True, True, False, True, False, False, False):
+        r'\sideset{{_{{{1}}}}}{{_{{{2}}}}}{{{0}}}',
+    (True, True, False, False, True, False, False):
+        r'\sideset{{_{{{1}}}^{{{2}}}}}{{}}{{{0}}}',
+    (True, True, False, False, False, False, True):
+        r'\sideset{{_{{{1}}}}}{{^{{{2}}}}}{{{0}}}',
+    (True, False, False, True, True, False, False):
+        r'\sideset{{^{{{2}}}}}{{_{{{1}}}}}{{{0}}}',
+    (True, False, False, True, False, False, True):
+        r'\sideset{{}}{{_{{{1}}}^{{{2}}}}}{{{0}}}',
+    (True, False, False, False, True, False, True):
+        r'\sideset{{^{{{1}}}}}{{^{{{2}}}}}{{{0}}}',
+    (True, True, False, True, True, False, False):
+        r'\sideset{{_{{{1}}}^{{{3}}}}}{{_{{{2}}}}}{{{0}}}',
+    (True, True, False, True, False, False, True):
+        r'\sideset{{_{{{1}}}}}{{^{{{3}}}_{{{2}}}}}{{{0}}}',
+    (True, True, False, False, True, False, True):
+        r'\sideset{{^{{{2}}}_{{{1}}}}}{{^{{{3}}}}}{{{0}}}',
+    (True, False, False, True, True, False, True):
+        r'\sideset{{^{{{2}}}}}{{^{{{3}}}_{{{1}}}}}{{{0}}}',
+    (True, True, False, True, True, False, True):
+        r'\sideset{{_{{{1}}}^{{{3}}}}}{{_{{{2}}}^{{{4}}}}}{{{0}}}',
     # +Under
-    LOLSUBUNDER: (True, True, False, False, False, False),
-    LOUNDERSUB: (False, True, True, False, False, False),
-    LOUNDERLSUP: (False, True, False, True, False, False),
-    LOUNDERSUP: (False, True, False, False, False, True),
-    LOLSUBUNDERSUB: (True, True, True, False, False, False),
-    LOLSUBUNDERLSUP: (True, True, False, True, False, False),
-    LOLSUBUNDERSUP: (True, True, False, False, False, True),
-    LOUNDERSUBLSUP: (False, True, True, True, False, False),
-    LOUNDERSUBSUP: (False, True, True, False, False, True),
-    LOUNDERLSUPSUP: (False, True, False, True, False, True),
-    LOLSUBUNDERSUBLSUP: (True, True, True, True, False, False),
-    LOLSUBUNDERSUBSUP: (True, True, True, False, False, True),
-    LOLSUBUNDERLSUPSUP: (True, True, False, True, False, True),
-    LOUNDERSUBLSUPSUP: (False, True, True, True, False, True),
-    LOLSUBUNDERSUBLSUPSUP: (True, True, True, True, False, True),
+    (True, True, True, False, False, False, False):
+        r'\sideset{{_{{{1}}}}}{{}}{{{0}}}_{{{2}}}',
+    (True, False, True, True, False, False, False):
+        r'\sideset{{}}{{_{{{2}}}}}{{{0}}}_{{{1}}}',
+    (True, False, True, False, True, False, False):
+        r'\sideset{{^{{{2}}}}}{{}}{{{0}}}_{{{1}}}',
+    (True, False, True, False, False, False, True):
+        r'\sideset{{}}{{^{{{2}}}}}{{{0}}}_{{{1}}}',
+    (True, True, True, True, False, False, False):
+        r'\sideset{{_{{{1}}}}}{{_{{{3}}}}}{{{0}}}_{{{2}}}',
+    (True, True, True, False, True, False, False):
+        r'\sideset{{_{{{1}}}^{{{3}}}}}{{}}{{{0}}}_{{{2}}}',
+    (True, True, True, False, False, False, True):
+        r'\sideset{{_{{{1}}}}}{{^{{{3}}}}}{{{0}}}_{{{2}}}',
+    (True, False, True, True, True, False, False):
+        r'\sideset{{^{{{3}}}}}{{_{{{2}}}}}{{{0}}}_{{{1}}}',
+    (True, False, True, True, False, False, True):
+        r'\sideset{{}}{{_{{{2}}}^{{{3}}}}}{{{0}}}_{{{1}}}',
+    (True, False, True, False, True, False, True):
+        r'\sideset{{^{{{2}}}}}{{^{{{3}}}}}{{{0}}}_{{{1}}}',
+    (True, True, True, True, True, False, False):
+        r'\sideset{{_{{{1}}}^{{{4}}}}}{{_{{{3}}}}}{{{0}}}_{{{2}}}',
+    (True, True, True, True, False, False, True):
+        r'\sideset{{_{{{1}}}}}{{^{{{4}}}_{{{3}}}}}{{{0}}}_{{{2}}}',
+    (True, True, True, False, True, False, True):
+        r'\sideset{{^{{{3}}}_{{{1}}}}}{{^{{{4}}}}}{{{0}}}_{{{2}}}',
+    (True, False, True, True, True, False, True):
+        r'\sideset{{^{{{3}}}}}{{^{{{4}}}_{{{2}}}}}{{{0}}}_{{{1}}}',
+    (True, True, True, True, True, False, True):
+        r'\sideset{{_{{{1}}}^{{{4}}}}}{{_{{{3}}}^{{{5}}}}}{{{0}}}_{{{2}}}',
     # +Over
-    LOLSUBOVER: (True, False, False, False, True, False),
-    LOSUBOVER: (False, False, True, False, True, False),
-    LOLSUPOVER: (False, False, False, True, True, False),
-    LOOVERSUP: (False, False, False, False, True, True),
-    LOLSUBSUBOVER: (True, False, True, False, True, False),
-    LOLSUBLSUPOVER: (True, False, False, True, True, False),
-    LOLSUBOVERSUP: (True, False, False, False, True, True),
-    LOSUBLSUPOVER: (False, False, True, True, True, False),
-    LOSUBOVERSUP: (False, False, True, False, True, True),
-    LOLSUPOVERSUP: (False, False, False, True, True, True),
-    LOLSUBSUBLSUPOVER: (True, False, True, True, True, False),
-    LOLSUBSUBOVERSUP: (True, False, True, False, True, True),
-    LOLSUBLSUPOVERSUP: (True, False, False, True, True, True),
-    LOSUBLSUPOVERSUP: (False, False, True, True, True, True),
-    LOLSUBSUBLSUPOVERSUP: (True, False, True, True, True, True),
+    (True, True, False, False, False, True, False):
+        r'\sideset{{_{{{1}}}}}{{}}{{{0}}}^{{{2}}}',
+    (True, False, False, True, False, True, False):
+        r'\sideset{{}}{{_{{{1}}}}}{{{0}}}^{{{2}}}',
+    (True, False, False, False, True, True, False):
+        r'\sideset{{^{{{1}}}}}{{}}{{{0}}}^{{{2}}}',
+    (True, False, False, False, False, True, True):
+        r'\sideset{{}}{{^{{{2}}}}}{{{0}}}^{{{1}}}',
+    (True, True, False, True, False, True, False):
+        r'\sideset{{_{{{1}}}}}{{_{{{2}}}}}{{{0}}}^{{{3}}}',
+    (True, True, False, False, True, True, False):
+        r'\sideset{{_{{{1}}}^{{{2}}}}}{{}}{{{0}}}^{{{3}}}',
+    (True, True, False, False, False, True, True):
+        r'\sideset{{_{{{1}}}}}{{^{{{3}}}}}{{{0}}}^{{{2}}}',
+    (True, False, False, True, True, True, False):
+        r'\sideset{{^{{{2}}}}}{{_{{{1}}}}}{{{0}}}^{{{3}}}',
+    (True, False, False, True, False, True, True):
+        r'\sideset{{}}{{_{{{1}}}^{{{3}}}}}{{{0}}}^{{{2}}}',
+    (True, False, False, False, True, True, True):
+        r'\sideset{{^{{{1}}}}}{{^{{{3}}}}}{{{0}}}^{{{2}}}',
+    (True, True, False, True, True, True, False):
+        r'\sideset{{_{{{1}}}^{{{3}}}}}{{_{{{2}}}}}{{{0}}}^{{{4}}}',
+    (True, True, False, True, False, True, True):
+        r'\sideset{{_{{{1}}}}}{{^{{{4}}}_{{{2}}}}}{{{0}}}^{{{3}}}',
+    (True, True, False, False, True, True, True):
+        r'\sideset{{^{{{2}}}_{{{1}}}}}{{^{{{4}}}}}{{{0}}}^{{{3}}}',
+    (True, False, False, True, True, True, True):
+        r'\sideset{{^{{{2}}}}}{{^{{{4}}}_{{{1}}}}}{{{0}}}^{{{3}}}',
+    (True, True, False, True, True, True, True):
+        r'\sideset{{_{{{1}}}^{{{3}}}}}{{_{{{2}}}^{{{5}}}}}{{{0}}}^{{{4}}}',
     # +UnderOver
-    LOLSUBUNDEROVER: (True, True, False, False, True, False),
-    LOUNDERSUBOVER: (False, True, True, False, True, False),
-    LOUNDERLSUPOVER: (False, True, False, True, True, False),
-    LOUNDEROVERSUP: (False, True, False, False, True, True),
-    LOLSUBUNDERSUBOVER: (True, True, True, False, True, False),
-    LOLSUBUNDERLSUPOVER: (True, True, False, True, True, False),
-    LOLSUBUNDEROVERSUP: (True, True, False, False, True, True),
-    LOUNDERSUBLSUPOVER: (False, True, True, True, True, False),
-    LOUNDERSUBOVERSUP: (False, True, True, False, True, True),
-    LOUNDERLSUPOVERSUP: (False, True, False, True, True, True),
-    LOLSUBUNDERSUBLSUPOVER: (True, True, True, True, True, False),
-    LOLSUBUNDERSUBOVERSUP: (True, True, True, False, True, True),
-    LOLSUBUNDERLSUPOVERSUP: (True, True, False, True, True, True),
-    LOUNDERSUBLSUPOVERSUP: (False, True, True, True, True, True),
-    LOLSUBUNDERSUBLSUPOVERSUP: (True, True, True, True, True, True)
+    (True, True, True, False, False, True, False):
+        r'\sideset{{_{{{1}}}}}{{}}{{{0}}}_{{{2}}}^{{{3}}}',
+    (True, False, True, True, False, True, False):
+        r'\sideset{{}}{{_{{{2}}}}}{{{0}}}_{{{1}}}^{{{3}}}',
+    (True, False, True, False, True, True, False):
+        r'\sideset{{^{{{2}}}}}{{}}{{{0}}}_{{{1}}}^{{{3}}}',
+    (True, False, True, False, False, True, True):
+        r'\sideset{{}}{{^{{{3}}}}}{{{0}}}_{{{1}}}^{{{2}}}',
+    (True, True, True, True, False, True, False):
+        r'\sideset{{_{{{1}}}}}{{_{{{3}}}}}{{{0}}}_{{{2}}}^{{{4}}}',
+    (True, True, True, False, True, True, False):
+        r'\sideset{{_{{{1}}}^{{{3}}}}}{{}}{{{0}}}_{{{2}}}^{{{4}}}',
+    (True, True, True, False, False, True, True):
+        r'\sideset{{_{{{1}}}}}{{^{{{4}}}}}{{{0}}}_{{{2}}}^{{{3}}}',
+    (True, False, True, True, True, True, False):
+        r'\sideset{{^{{{3}}}}}{{_{{{2}}}}}{{{0}}}_{{{1}}}^{{{4}}}',
+    (True, False, True, True, False, True, True):
+        r'\sideset{{}}{{_{{{2}}}^{{{4}}}}}{{{0}}}_{{{1}}}^{{{3}}}',
+    (True, False, True, False, True, True, True):
+        r'\sideset{{^{{{2}}}}}{{^{{{4}}}}}{{{0}}}_{{{1}}}^{{{3}}}',
+    (True, True, True, True, True, True, False):
+        r'\sideset{{_{{{1}}}^{{{4}}}}}{{_{{{3}}}}}{{{0}}}_{{{2}}}^{{{5}}}',
+    (True, True, True, True, False, True, True):
+        r'\sideset{{_{{{1}}}}}{{^{{{5}}}_{{{3}}}}}{{{0}}}_{{{2}}}^{{{4}}}',
+    (True, True, True, False, True, True, True):
+        r'\sideset{{^{{{3}}}_{{{1}}}}}{{^{{{5}}}}}{{{0}}}_{{{2}}}^{{{4}}}',
+    (True, False, True, True, True, True, True):
+        r'\sideset{{^{{{3}}}}}{{^{{{5}}}_{{{2}}}}}{{{0}}}_{{{1}}}^{{{4}}}',
+    (True, True, True, True, True, True, True):
+        r'\sideset{{_{{{1}}}^{{{4}}}}}{{_{{{3}}}^{{{6}}}}}{{{0}}}'
+        r'_{{{2}}}^{{{5}}}',
+    # Non-lo corners
+    (False, True, False, False, False, False, False):
+        r'\tensor*[_{{{1}}}]{{{0}}}{{}}',
+    (False, False, False, True, False, False, False):
+        r'\tensor*{{{0}}}{{_{{{1}}}}}',
+    (False, False, False, False, True, False, False):
+        r'\tensor*[^{{{1}}}]{{{0}}}{{}}',
+    (False, False, False, False, False, False, True):
+        r'\tensor*{{{0}}}{{^{{{1}}}}}',
+    (False, True, False, True, False, False, False):
+        r'\tensor*[_{{{1}}}]{{{0}}}{{_{{{2}}}}}',
+    (False, True, False, False, True, False, False):
+        r'\tensor*[_{{{1}}}^{{{2}}}]{{{0}}}{{}}',
+    (False, True, False, False, False, False, True):
+        r'\tensor*[_{{{1}}}]{{{0}}}{{^{{{2}}}}}',
+    (False, False, False, True, True, False, False):
+        r'\tensor*[^{{{2}}}]{{{0}}}{{_{{{1}}}}}',
+    (False, False, False, True, False, False, True):
+        r'\tensor*{{{0}}}{{^{{{2}}}_{{{1}}}}}',
+    (False, False, False, False, True, False, True):
+        r'\tensor*[^{{{1}}}]{{{0}}}{{^{{{2}}}}}',
+    (False, True, False, True, True, False, False):
+        r'\tensor*[_{{{1}}}^{{{3}}}]{{{0}}}{{_{{{2}}}}}',
+    (False, True, False, True, False, False, True):
+        r'\tensor*[_{{{1}}}]{{{0}}}{{^{{{3}}}_{{{2}}}}}',
+    (False, True, False, False, True, False, True):
+        r'\tensor*[^{{{2}}}_{{{1}}}]{{{0}}}{{^{{{3}}}}}',
+    (False, False, False, True, True, False, True):
+        r'\tensor*[^{{{2}}}]{{{0}}}{{^{{{3}}}_{{{1}}}}}',
+    (False, True, False, True, True, False, True):
+        r'\tensor*[_{{{1}}}^{{{3}}}]{{{0}}}{{_{{{2}}}^{{{4}}}}}',
+    # Non-lo vertical
+    (False, False, True, False, False, False, False):
+        r'\underset{{{1}}}{{{0}}}',
+    (False, False, False, False, False, True, False):
+        r'\overset{{{1}}}{{{0}}}',
+    (False, False, True, False, False, True, False):
+        r'\overset{{{2}}}{{{\underset{{{1}}}{{{0}}}}}}',
 }
 
-ID2LOSCRIPT_OP_DICT = {v: k for k, v in LOSCRIPT_OP2ID_DICT.items()}
 
+class ScriptOp(Op):
+    def __init__(self, full_subtype, *args, **kwargs):
+        """Define a ScriptOp by passing needed ScriptPos's as parameters."""
 
-def _init_script_pars(base, type_):
-    """Return a pars list with certain base and no scripts."""
-    basepar = [deepcopy(base)]
-    if type_ == "setscript":
-        return basepar + [None] * 2
-    if type_ == "script":
-        return basepar + [None] * 4
-    return basepar + [None] * 6
+        if not isinstance(full_subtype, bool):
+            raise TypeError("Parameter full_subtype must be a bool.")
 
+        if not args:
+            raise ValueError("At least one ScriptPos parameter must be "
+                             "provided.")
 
-def _get_script_pos_in_pars(pars, scriptdir, is_superscript):
-    """Return script position in a pars list. If script parameters are not
-    compatible with pars, return -1.
-
-    .. note::
-        Only compatibility of referred script in provided *pars* is checked.
-        In particular, it is NOT checked whether the base (pars[0]) is valid
-        for the op associated to *pars*.
-
-    Combinations which do not return -1:
-
-        *   len(args) == 3 (setscript) and scriptdir == 0
-        *   len(args) == 5 (script)    and scriptdir in (-1, 1)
-        *   len(args) == 7 (loscript)  and scriptdir in (-1, 0, 1)
-
-    :param pars: A pars list of a script operator.
-    :param scriptdir: 0 for under/over, -1 for lsub/lsup and 1 for sub/sup.
-    :param is_superscript: True for over, lsup and sup. Ow, False.
-    :return: script position in pars (from 1 to len(pars)-1 since base is not a
-    script) or -1.
-    """
-    if len(pars) == 3:
-        if scriptdir != 0:
-            return -1
-        return 2 if is_superscript else 1
-    elif len(pars) == 5:
-        if scriptdir not in (-1, 1):
-            return -1
-        if scriptdir == -1:
-            return 3 if is_superscript else 1
+        if full_subtype:
+            self._subtype = ScriptOpSubtype.LO
+        elif args[0] in VERT_SCR_POS_TUPLE:
+            self._subtype = ScriptOpSubtype.VERT
         else:
-            return 4 if is_superscript else 2
-    else:
-        if scriptdir == -1:
-            return 4 if is_superscript else 1
-        elif scriptdir == 0:
-            return 5 if is_superscript else 2
-        elif scriptdir == 1:
-            return 6 if is_superscript else 3
-        else:
-            return -1
+            self._subtype = ScriptOpSubtype.CORN
 
+        # dicts not ordered prior to Python 3.7
+        self._scripts = OrderedDict.fromkeys(ScriptPos, False)
+        for spos in args:
+            if not isinstance(spos, ScriptPos):
+                raise TypeError("Positional parameters must be ScriptPos's.")
+            if self._scripts[spos]:
+                raise ValueError("Positional parameter " + repr(spos)
+                                 + " has been passed more than once.")
+            self._scripts[spos] = True
 
-def _set_script_in_pars(pars, scriptdir, is_superscript, pspar):
-    pars[_get_script_pos_in_pars(pars, scriptdir, is_superscript)] = pspar
+        # Look for incompatibilities
+        if self._subtype is not ScriptOpSubtype.LO:
+            danger = False
+            for n in (3, 6):
+                if ScriptPos(n) in args:
+                    danger = True
+                    break
+            if danger:
+                for n in (2, 4, 5, 7):
+                    if ScriptPos(n) in args:
+                        raise ValueError("ScriptPos parameters are not "
+                                         "compatible with non-LO ScriptOp.")
+        key = (self._subtype is ScriptOpSubtype.LO,)
+        key += tuple(val for val in self._scripts.values())
+        super().__init__(SCRIPTOPS_DICT[key], len(args) + 1, 1, **kwargs)
 
+    def is_lo(self):
+        return self._subtype is ScriptOpSubtype.LO
 
-def _get_script_in_pars(pars, scriptdir, is_superscript):
-    """Get current script in pars according to parameters.
+    def is_vert(self):
+        return self._subtype is ScriptOpSubtype.VERT
 
-    If script is not compatible with passed pars, -1 is returned.
-    """
-    pos = _get_script_pos_in_pars(pars, scriptdir, is_superscript)
-    return pars[pos] if pos > 0 else -1
+    def is_corn(self):
+        return self._subtype is ScriptOpSubtype.CORN
 
+    def _repr_priv(self):
+        s_repr = "True" if self.is_lo() else "False"
+        for spos, present in self._scripts.items():
+            if present:
+                s_repr += ", " + str(spos)
+        return s_repr
 
-def _scriptop_pars2loscript_pars(pars):
-    """Transform, if needed, pars to match the best loscript op.
+    def __repr__(self):
+        return "ScriptOp(" + self._repr_priv() + self._repr_pub() + ")"
 
-    .. note::
-        This function only changes script positions being used, it does NOT
-        check whether the base is valid for certain type_. It does not care
-        about valid bases.
-    """
-    if len(pars) == 3:
-        return [pars[0], None, pars[1], None, None, pars[2], None]
-    elif len(pars) == 5:
-        return [pars[0], pars[1], None, pars[2], pars[3], None, pars[4]]
-    else:
-        return pars
+    def __str__(self):
+        s = "F" if self.is_lo() else ""
+        for spos, val in self._scripts.items():
+            if val:
+                s += spos.name
+        return s + self._str_pub()
 
-
-def _scriptop_pars2script_pars(pars):
-    """Transform, if needed, pars to match the best script op.
-
-    .. note::
-        This function only changes script positions being used, it does NOT
-        check whether the base is valid for certain type_. It does not care
-        about valid bases.
-
-    Consider scriptop_pars2nonloscript_pars function if you do not want to
-    impose script on setscript.
-    """
-    if len(pars) == 3:
-        return [pars[0], None, pars[1], None, pars[2]]
-    elif len(pars) == 5:
-        return pars
-    elif pars[2] is None and pars[5] is None:
-        return [pars[0], pars[1], pars[3], pars[4], pars[6]]
-    else:
-        return [pars[0], None, pars[2], None, pars[5]]
-
-
-def _scriptop_pars2setscript_pars(pars):
-    """Transform, if needed, pars to match the best setscript op.
-
-    .. note::
-        This function only changes script positions being used, it does NOT
-        check whether the base is valid for certain type_. It does not care
-        about valid bases.
-
-    Consider scriptop_pars2nonloscript_pars function if you do not want to
-    impose setscript on script.
-    """
-    if len(pars) == 3:
-        return pars
-    elif len(pars) == 5:
-        return [pars[0], pars[2], pars[4]]
-    elif pars[2] is None and pars[5] is None:
-        return [pars[0], pars[3], pars[6]]
-    else:
-        return [pars[0], pars[2], pars[5]]
-
-
-def _scriptop_pars2nonloscript_pars(pars):
-    """Decide if setscript or script fit better certain pars and return the
-    correspondent pars.
-
-    .. note::
-        This function only changes script positions being used, it does NOT
-        check whether the base is valid at all.
-    """
-    if len(pars) != 7:
-        return pars
-    if pars[2] is None and pars[5] is None:
-        # No subeqs are lost in this case
-        return [pars[0], pars[1], pars[3], pars[4], pars[6]]
-    else:
-        # Some subeqs may be lost in this case
-        return [pars[0], pars[2], pars[5]]
-
-
-def do_require_loscript(base: Subeq):
-    """Return whether a loscript operator is needed given its base."""
-    # Valid for symbols/0-args ops and blocks.
-    s = base[1] if base.is_gopb() else base
-    return hasattr(s[0], 'type_') and s[0].type_ in LOSCRIPT_BASE_TYPES
-
-
-def scriptop_type(op):
-    """Return the type_ of a script operator.
-
-    If it is not one of them, -1 is returned.
-    """
-    if hasattr(op, "type_") and op.type_ in SCRIPT_OP_TYPES:
-        return op.type_
-    return -1
-
-
-def _scriptblock2pars(subeq, index=None):
-    """Return a list of arguments of the passed script-block.
-
-    The list will have the format [base, lsub_arg, ..., sup_arg].
-    The parameters not available will be set to None.
-
-    If lop-block is not a script operator, -1 will be returned.
-
-    .. note::
-        It is OK if the script-block does not have a valid base according to
-        do_require_loscript (probably because you are modificating the eq).
-        What decides the pars returned is the script op.
-    """
-
-    def pars(opid, sub):
-        """Return the args list provided a tuple from any script operator
-        dictionary.
+    def valid_scripts_values(self):
+        """Return an iterator through valid _scripts values, in order.
 
         .. note::
-            It is supposed that first parameter of *s* (the base) is not
-            included in *opid*.
-
-        :param opid: A tuple specifying the arguments used by the script
-        operator, not considering the base.
-        :param sub: A script-block (mandatory for this nested function).
-        :return: The pars list of the script operator.
+            Valid script are not those which are present, but those allowed by
+            the ScriptOpSubtype.
         """
-        retv = [deepcopy(sub[1])] + [None] * len(opid)
-        par_pos = 2
-        for i, valid in enumerate(opid):
-            if valid:
-                retv[i + 1] = deepcopy(sub[par_pos])
-                par_pos += 1
-        return retv
+        if self.is_lo():
+            return self._scripts.values()
+        if self.is_vert():
+            return (self._scripts[ScriptPos(num)] for num in (3, 6))
+        return (self._scripts[ScriptPos(num)] for num in (2, 4, 5, 7))
 
-    s = subeq(index)
-    op = s[0]
-    # Check that it is effectively a script-block
-    if not hasattr(op, 'type_') or op.type_ not in SCRIPT_OP_TYPES:
-        return -1
+    def valid_scripts_keys(self):
+        """Return an iterator through valid _scripts keys, in order.
 
-    if op.type_ == "setscript":
-        return pars(SETSCRIPT_OP2ID_DICT[op], s)
-    elif op.type_ == "script":
-        return pars(SCRIPT_OP2ID_DICT[op], s)
-    else:
-        return pars(LOSCRIPT_OP2ID_DICT[op], s)
+        .. note::
+            Valid script are not those which are present, but those allowed by
+            the ScriptOpSubtype.
+        """
+        if self.is_lo():
+            return self._scripts.keys()
+        if self.is_vert():
+            return (ScriptPos(num) for num in (3, 6))
+        return (ScriptPos(num) for num in (2, 4, 5, 7))
 
+    def valid_scripts_items(self):
+        """Return an iterator through valid _scripts items, in order.
 
-def _valid_pars_pos(pars, flat_pos):
-    """Return the position of the n-th non-None par in pars.
+        .. note::
+            Valid script are not those which are present, but those allowed by
+            the ScriptOpSubtype.
+        """
+        if self.is_lo():
+            return self._scripts.items()
+        return ((k, self._scripts[k]) for k in self.valid_scripts_keys())
 
-    .. note::
+    def ord2spos(self, ord: int):
+        """Given the ordinal of an argument, return associated ScriptPos.
 
-        flat_pos == 0 would mean the base in the pars of a script-block.
-    """
-    valid_pars_found = 0
-    for pars_pos, pars_arg in enumerate(pars):
-        if pars_arg is not None:
-            if valid_pars_found == flat_pos:
-                return pars_pos
-            else:
-                valid_pars_found += 1
+        .. note::
+            *ord* == 1 would always refer to the base, which is not a
+            ScriptPos.
+            In that case, an exception is raised.
+        """
+        if not isinstance(ord, int):
+            raise TypeError("Parameter ord must be an int.")
+        if ord < 2 or ord > self._n_args:
+            raise ValueError("Parameter ordinal is not in (2, "
+                             + str(self._n_args) + ").")
+        ord_counter = 1
+        for spos, present in self._scripts.items():
+            if present:
+                ord_counter += 1
+            if ord_counter == ord:
+                return spos
+        raise ValueError("This should never have happened...")
 
+    def spos2ord(self, pos: ScriptPos):
+        """Given a ScriptPos, return the ordinal of associated argument."""
+        if not isinstance(pos, ScriptPos):
+            raise TypeError("Parameter pos must be a ScriptPos.")
+        if not self._scripts[pos]:
+            raise ValueError("Passed ScriptPos is not present in this op.")
+        ord = 1
+        for k, v in self._scripts.items():
+            if v:
+                ord += 1
+            if k is pos:
+                return ord
+        raise ValueError("This should never have happened...")
 
-def par_ord_from_pars_pos(pars, par_pos):
-    """Return the ordinal of a parameter of an operator given the pars
-    representation of its block and the position in pars of the parameter.
+    def _script2r(self, spos):
+        """Return the ScriptPos to the right of spos.
 
-    .. note::
+        If instance does not have a script to the right of *spos*, None is
+        returned.
 
-        A *par_pos* refers to the base of a script-block it will be returned
-        value 1.
+        .. note::
+            *spos* MUST be an existing ScriptPos for the instance.
+        """
+        # Golf code contest starts here :P
+        # It would be sane to write this more clearly.
+        if spos in (ScriptPos.RSUB, ScriptPos.RSUP):
+            return None
+        v = 2 if spos.value < 5 else 5
+        if self._scripts[ScriptPos(v + 2)]:
+            if not self._scripts[ScriptPos(v + 1)] or spos.value == v + 1:
+                return ScriptPos(v + 2)
+            return ScriptPos(v + 1)
+        if self._scripts[ScriptPos(v + 1)] and spos.value == v:
+            return ScriptPos(v + 1)
 
-    :param pars: A pars list.
-    :param par_pos: The position of the par in *pars* (first par pos is 0).
-    :return: The parameter ordinal associted to *par_pos*.
-    """
-    # Take into account the leading op, which is not included in args
-    ordinal = 1
-    if pars[par_pos] is None:
-        raise ValueError("Asked parameter is None in the pars representation")
-    for i in range(par_pos):
-        if pars[i] is not None:
-            ordinal += 1
-    return ordinal
+    def _script2l(self, spos):
+        """Return the ScriptPos to the left of spos.
 
+        If instance does not have a script to the left of *spos*, None is
+        returned.
 
-def _pars2scriptop(pars):
-    """Return the operator associated to a pars list.
+        .. note::
+            *spos* MUST be an existing ScriptPos for the instance.
+        """
+        if spos in (ScriptPos.LSUB, ScriptPos.LSUP):
+            return None
+        v = 2 if spos.value < 5 else 5
+        if self._scripts[ScriptPos(v)]:
+            if not self._scripts[ScriptPos(v + 1)] or spos.value == v + 1:
+                return ScriptPos(v)
+            return ScriptPos(v + 1)
+        if self._scripts[ScriptPos(v + 1)] and spos.value == v + 2:
+            return ScriptPos(v + 1)
 
-    .. note::
-        If every argument, except possibly the base, is None, None is returned.
-    """
-    key = tuple(bool(par) for par in pars[1:])
-    try:
-        if len(key) == 2:
-            return ID2SETSCRIPT_OP_DICT[key]
-        elif len(key) == 4:
-            return ID2SCRIPT_OP_DICT[key]
-        elif len(key) == 6:
-            return ID2LOSCRIPT_OP_DICT[key]
+    def rstep(self, selmode: SelMode, arg_ord: Optional[int] = None):
+        """Return selmode and ordinal of par to select after pressing RIGHT."""
+        self._assert_valid_args(selmode, arg_ord)
+        if arg_ord is None:
+            return SelMode.LCURSOR, 1
+        if arg_ord != 1 and self._script2r(self.ord2spos(arg_ord)) is not None:
+            return SelMode.LCURSOR, arg_ord + 1
+
+    def lstep(self, selmode: SelMode, arg_ord: Optional[int] = None):
+        """Return selmode and ordinal of par to select after pressing LEFT."""
+        self._assert_valid_args(selmode, arg_ord)
+        if arg_ord is None:
+            return SelMode.RCURSOR, 1
+        if arg_ord != 1 and self._script2l(self.ord2spos(arg_ord)) is not None:
+            return arg_ord - 1
+
+    def ustep(self, selmode: SelMode, arg_ord: Optional[int] = None):
+        """Return selmode and ordinal of par to select after pressing UP."""
+        self._assert_valid_args(selmode, arg_ord)
+        if arg_ord != 1:
+            return None
+        if selmode in (SelMode.RCURSOR, SelMode.RHIGHLIGHTED):
+            for pos in (ScriptPos.RSUP, ScriptPos.CSUP, ScriptPos.LSUP):
+                if self._scripts[pos]:
+                    return SelMode.LCURSOR, self.spos2ord(pos)
         else:
-            ShowError('Wrong number of parameters in pars list processed by '
-                      'pars2scriptop: ' + repr(pars), True)
-    except KeyError:
-        ShowError('Wrong pars list in pars2scriptop: ' + repr(pars), True)
+            for pos in (ScriptPos.LSUP, ScriptPos.CSUP, ScriptPos.RSUP):
+                if self._scripts[pos]:
+                    return SelMode.RCURSOR, self.spos2ord(pos)
+
+    def dstep(self, selmode: SelMode, arg_ord: Optional[int] = None):
+        """Return selmode and ordinal of par to select after pressing DOWN."""
+        self._assert_valid_args(selmode, arg_ord)
+        if arg_ord != 1:
+            return None
+        if selmode in (SelMode.RCURSOR, SelMode.RHIGHLIGHTED):
+            for pos in (ScriptPos.RSUB, ScriptPos.CSUB, ScriptPos.LSUB):
+                if self._scripts[pos]:
+                    return SelMode.LCURSOR, self.spos2ord(pos)
+        else:
+            for pos in (ScriptPos.LSUB, ScriptPos.CSUB, ScriptPos.RSUB):
+                if self._scripts[pos]:
+                    return SelMode.RCURSOR, self.spos2ord(pos)
+
+    def to_json(self):
+        scripts_list = [k.value for k, v in self._scripts.items() if v]
+        return dict(cls="SO", typ=self._subtype.value, scr=scripts_list)
+
+    @classmethod
+    def from_json(cls, dct):
+        spos_list = [ScriptPos(v) for v in dct["scr"]]
+        return cls(ScriptOpSubtype(dct["typ"]), *spos_list)
 
 
-def _pars2scriptblock(pars):
-    """Return a script block associated to certain pars list of any script op.
+class ScriptPars(list):
+    def __init__(self, base: Subeq, subtype: ScriptOpSubtype):
+        """Create a ScriptOp pars list from a base and requested ScriptOpType.
 
-    .. note::
-        If every argument, except possibly the base, is None, -1 is returned.
-    """
-    op = _pars2scriptop(pars)
-    if op is None:
-        return -1
-    else:
-        return Subeq([op] + [item for item in pars if item is not None])
+        The number of pars is decided according to *subtype* and they all
+        are set to None.
+        """
 
+        super().__init__()
+        self.append(deepcopy(Subeq(base)))
+        if subtype is ScriptOpSubtype.VERT:
+            self.extend([None] * 2)
+        elif subtype is ScriptOpSubtype.CORN:
+            self.extend([None] * 4)
+        else:
+            self.extend([None] * 6)
 
-def is_scriptop(elem, index=None):
-    """Return whether an operator is an script op."""
-    op = elem if index is None else elem(index)
-    return hasattr(op, "type_") and op.type_ in SCRIPT_OP_TYPES
+    def find(self, script_pos: ScriptPos):
+        """Return script position in a pars list. If script parameters are not
+        compatible with pars, return -1.
 
+        .. note::
+            Only compatibility of referred script in provided *self* is
+            checked. In particular, it is NOT checked whether the base
+            (pars[0]) is valid for the op associated to *self*.
 
-def is_base(eq: Subeq, index):
-    """Returns whether pointed subeq is a base."""
-    return index != [] and index[-1] == 1 and is_scriptop(eq, index[:-1] + [0])
+        :param script_pos: A script position.
+        :return: script position in pars (from 1 to len(pars)-1 since base is
+                 not a script) or -1.
+        """
+        if len(self) == 3:
+            if script_pos not in VERT_SCR_POS_TUPLE:
+                return -1
+            return VERT_SCR_POS_TUPLE.index(script_pos) + 1
+        if len(self) == 5:
+            if script_pos not in CORN_SCR_POS_TUPLE:
+                return -1
+            return CORN_SCR_POS_TUPLE.index(script_pos) + 1
 
+        return script_pos.value - 1
 
-def is_script(eq: Subeq, index):
-    return index != [] and index[-1] != 1 and is_scriptop(eq, index[:-1] + [0])
+    def set_script(self, script_pos: ScriptPos, pspar: Subeq):
+        self[self.find(script_pos)] = pspar
+
+    def get_script(self, script_pos: ScriptPos):
+        """Get current script in pars given its script position.
+
+        If script is not compatible with passed pars, -1 is returned.
+        """
+        pos = self.find(script_pos)
+        return self[pos] if pos > 0 else -1
+
+    def transform2lo(self):
+        """Transform, if needed, to match the best LO ScriptOp.
+
+        .. note::
+            This function only changes script positions being used, it does NOT
+            check whether the base is valid for certain subtype. It does not care
+            about valid bases.
+        """
+        if len(self) == 3:
+            self[:] = [self[0], None, self[1], None, None, self[2], None]
+        elif len(self) == 5:
+            self[:] = [self[0], self[1], None, self[2], self[3], None, self[4]]
+
+    def transform2corn(self):
+        """Transform, if needed, pars to match the best CORN ScriptOp.
+
+        .. note::
+            This function only changes script positions being used, it does
+            NOT check whether the base is valid for certain subtype. It does
+            not care about valid bases.
+
+        Consider transform2nonfull if you do not want to impose CORN on VERT.
+        """
+        if len(self) == 3:
+            self[:] = [self[0], None, self[1], None, self[2]]
+            return
+        if len(self) == 5:
+            return
+        if self[2] is None and self[5] is None:
+            self[:] = [self[0], self[1], self[3], self[4], self[6]]
+            return
+        self[:] = [self[0], None, self[2], None, self[5]]
+
+    def transform2vert(self):
+        """Transform, if needed, pars to match the best VERT ScriptOp.
+
+        .. note::
+            This function only changes script positions being used, it does NOT
+            check whether the base is valid for certain type_. It does not care
+            about valid bases.
+
+        Consider scriptop_pars2nonfull_pars function if you do not want to
+        impose VERT on CORN.
+        """
+        if len(self) == 3:
+            return
+        if len(self) == 5:
+            self[:] = [self[0], self[2], self[4]]
+            return
+        if self[2] is None and self[5] is None:
+            self[:] = [self[0], self[3], self[6]]
+            return
+        self[:] = [self[0], self[2], self[5]]
+
+    def transform2nonfull(self):
+        """Decide whether VERT or CORN fit better certain pars and return the
+        correspondent new pars.
+
+        .. note::
+            This function only changes script positions being used, it does NOT
+            check whether the base is valid at all.
+        """
+        if len(self) != 7:
+            return
+        if self[2] is None and self[5] is None:
+            # No subeqs are lost in this case
+            self[:] = [self[0], self[1], self[3], self[4], self[6]]
+            return
+        # Some subeqs may be lost in this case
+        self[:] = [self[0], self[2], self[5]]
+
+    @classmethod
+    def from_scriptblock(cls, subeq: Subeq, index: Idx = None):
+        """Return a ScriptPars of the passed script-block.
+
+        If subeq is a symbol or lop-block is not a ScriptOp, -1 is returned.
+
+        .. note::
+            It is OK if the script-block does not have a valid base according
+            to does_require_full (probably because you are modificating the
+            eq). Decisions are taken based on lop-block.
+        """
+
+        s = subeq(index)
+        op = s[0]
+        # Check that it is effectively a script-block
+        if not isinstance(op, ScriptOp):
+            return -1
+
+        pars = cls(deepcopy(s[1]), op._subtype)
+        for i, (spos, present) in enumerate(op.valid_scripts_items()):
+            pars[i + 1] = deepcopy(s[op.spos2ord(spos)]) if present else None
+        return pars
+
+    def argord2index(self, argord: int):
+        """Return the position of the n-th non-None par in pars list.
+
+        .. note::
+
+            flat_pos == 0 would mean the base in the pars of a script-block.
+        """
+
+        valid_pars_found = 0
+        for pars_pos, pars_arg in enumerate(self):
+            if pars_arg is not None:
+                if valid_pars_found == argord:
+                    return pars_pos
+                else:
+                    valid_pars_found += 1
+        raise ValueError("Invalid argord parameter: " + repr(argord) + ".")
+
+    def index2scriptpos(self, index):
+        """Return the ScriptPos associated to certain element of self
+        specified by its index"""
+        if index == 0:
+            raise ValueError("Invalid 0 index parameter. That is the base.")
+        if index < 0 or index > len(self) - 1:
+            raise ValueError("Invalid index parameter: " + repr(index) + ".")
+        if len(self) == 7:
+            return ScriptPos(index + 1)
+        if len(self) == 5:
+            return ScriptPos((2, 4, 5, 7)[index - 1])
+        return ScriptPos((3, 6)[index - 1])
+
+    def spos2argord(self, spos: ScriptPos):
+        """Return the ordinal of a parameter of a ScriptOp given the pars
+        representation of its block and the ScriptPos of the param."""
+        index = self.find(spos)
+        if index == -1:
+            raise ValueError("Instance not compatible with passed ScriptPos.")
+        return self.index2argord(index)
+
+    def used_scriptpos(self):
+        """Return a generator of used ScriptPos's in order."""
+        return (self.index2scriptpos(num + 1) for num, p in enumerate(self[1:])
+                if p is not None)
+
+    def index2argord(self, index: int):
+        """Return the ordinal of a parameter of a ScriptOp given the pars
+        representation of its block and the position in pars of the parameter.
+
+        .. note::
+            *par_pos* == 0 refers to the base of a script-block => 1 will be
+            returned in every case.
+
+        :param index: The position of the par in *self* (first par_pos is 0).
+        :return: The parameter ordinal associated to *par_pos* in a ScriptOp.
+        """
+        # Take into account the leading op, which is not included in args
+        ordinal = 1
+        if self[index] is None:
+            raise ValueError("Request is not valid. Referred element is "
+                             "None.")
+        for i in range(index):
+            if self[i] is not None:
+                ordinal += 1
+        return ordinal
+
+    def scriptop(self):
+        """Return the operator associated to a pars list.
+
+        .. note::
+            If every argument (except possibly the base) is None, None is
+            returned.
+        """
+        tpl = tuple(self.used_scriptpos())
+        if not tpl:
+            return None
+        if len(self) == 7:
+            return ScriptOp(True, *tpl)
+        return ScriptOp(False, *tpl)
+
+    def scriptblock(self):
+        """Return associated script block.
+
+        .. note::
+            If every argument, except possibly the base, is None, -1 is
+            returned.
+        """
+        op = self.scriptop()
+        if op is None:
+            return -1
+        return Subeq([op] + [item for item in self if item is not None])
+
 
 # Dictionaries providing a map between positions of pars before a change of
-# script-block and after it. SET_SCR means that the setscript is more external.
-SCR2SET_DICT = {0: 0, 2: 1, 4: 2}
-SCR2LO_DICT = {0: 0, 1: 1, 2: 3, 3: 4, 4: 6}
-SCR2SCR_SET_DICT = {0: (0, 0), 1: (1,), 2: (2,), 3: (3,), 4: (4,)}
-SCR2SET_SCR_DICT = {0: (0, 0), 1: (0, 1), 2: (0, 2), 3: (0, 3), 4: (0, 4)}
-SCR_SET2SET_SCR_DICT = {(0, 0): (0, 0),
-                   (1,): (0, 1), (0, 1): (1,), (2,): (0, 2),
-                   (3,): (0, 3), (0, 2): (2,), (4,): (0, 4)}
-SET2LO_DICT = {0: 0, 1: 2, 2: 5}
-SET2SCR_SET_DICT = {0: (0, 0), 1: (0, 1), 2: (0, 2)}
-SET2SET_SCR_DICT = {0: (0, 0), 1: (1, ), 2: (2, )}
-SCR_SET2LO_DICT = {
+# script-block and after it. VERT_CORN means that the VERT is more external.
+CORN2VERT_DICT = {0: 0, 2: 1, 4: 2}
+CORN2LO_DICT = {0: 0, 1: 1, 2: 3, 3: 4, 4: 6}
+CORN2CORN_VERT_DICT = {0: (0, 0), 1: (1,), 2: (2,), 3: (3,), 4: (4,)}
+CORN2VERT_CORN_DICT = {0: (0, 0), 1: (0, 1), 2: (0, 2), 3: (0, 3), 4: (0, 4)}
+CORN_VERT2VERT_CORN_DICT = {(0, 0): (0, 0),
+                            (1,): (0, 1), (0, 1): (1,), (2,): (0, 2),
+                            (3,): (0, 3), (0, 2): (2,), (4,): (0, 4)}
+VERT2LO_DICT = {0: 0, 1: 2, 2: 5}
+VERT2CORN_VERT_DICT = {0: (0, 0), 1: (0, 1), 2: (0, 2)}
+VERT2VERT_CORN_DICT = {0: (0, 0), 1: (1,), 2: (2,)}
+CORN_VERT2LO_DICT = {
     (0, 0): 0, (1,): 1, (0, 1): 2, (2,): 3, (3,): 4, (0, 2): 5, (4,): 6}
-SET_SCR2LO_DICT = {
+VERT_CORN2LO_DICT = {
     (0, 0): 0, (0, 1): 1, (1,): 2, (0, 2): 3, (0, 3): 4, (2,): 5, (0, 4): 6}
 
-SET2SCR_DICT = {v: k for k, v in SCR2SET_DICT.items()}
-LO2SCR_DICT = {v: k for k, v in SCR2LO_DICT.items()}
-SCR_SET2SCR_DICT = {v: k for k, v in SCR2SCR_SET_DICT.items()}
-SET_SCR2SCR_DICT = {v: k for k, v in SCR2SET_SCR_DICT.items()}
-SET_SCR2SCR_SET_DICT = {v: k for k, v in SCR_SET2SET_SCR_DICT.items()}
-LO2SET_DICT = {v: k for k, v in SET2LO_DICT.items()}
-SCR_SET2SET_DICT = {v: k for k, v in SET2SCR_SET_DICT.items()}
-SET_SCR2SET_DICT = {v: k for k, v in SET2SET_SCR_DICT.items()}
-LO2SCR_SET_DICT = {v: k for k, v in SCR_SET2LO_DICT.items()}
-LO2SET_SCR_DICT = {v: k for k, v in SET_SCR2LO_DICT.items()}
+VERT2CORN_DICT = {v: k for k, v in CORN2VERT_DICT.items()}
+LO2CORN_DICT = {v: k for k, v in CORN2LO_DICT.items()}
+CORN_VERT2CORN_DICT = {v: k for k, v in CORN2CORN_VERT_DICT.items()}
+VERT_CORN2CORN_DICT = {v: k for k, v in CORN2VERT_CORN_DICT.items()}
+VERT_CORN2CORN_VERT_DICT = {v: k for k, v in CORN_VERT2VERT_CORN_DICT.items()}
+LO2VERT_DICT = {v: k for k, v in VERT2LO_DICT.items()}
+CORN_VERT2VERT_DICT = {v: k for k, v in VERT2CORN_VERT_DICT.items()}
+VERT_CORN2VERT_DICT = {v: k for k, v in VERT2VERT_CORN_DICT.items()}
+LO2CORN_VERT_DICT = {v: k for k, v in CORN_VERT2LO_DICT.items()}
+LO2VERT_CORN_DICT = {v: k for k, v in VERT_CORN2LO_DICT.items()}
+
+
+def does_require_full(base: Subeq):
+    return not isinstance(base[0], str) and base[0]._lo_base
+
+
+def is_scriptop(elem: Union[Subeq, Op], index: Optional[Idx] = None):
+    """Return whether an operator is an script op."""
+    op = elem if index is None else elem(index)
+    return isinstance(op, ScriptOp)
+
+
+def is_base(eq: Subeq, index: Idx):
+    """Returns whether pointed subeq is a base."""
+    return index != [] and index[-1] == 1 and is_scriptop(eq, index.outlop())
+
+
+def is_script(eq: Subeq, index: Idx):
+    return index != [] and index[-1] != 1 and is_scriptop(eq, index.outlop())
 
 
 def _map_refindex(sb_index, ref_index, ext_prev_pars, prev_pars, ext_next_pars,
                   next_pars):
     """Return the equivalent index of a subequation after a modification of a
-    script-block or a external-internal script-block.
+    script-block or a external-internal script-block (modification is not
+    managed by this function, only the correction of the index).
 
     Requirements:
 
@@ -684,11 +784,11 @@ def _map_refindex(sb_index, ref_index, ext_prev_pars, prev_pars, ext_next_pars,
     In case that *ref_index* points to a script involved in the operation and
     it does not exist after it, -1 is returned.
 
-    *sb_index* must be the index od the script-block that was effectively
+    *sb_index* must be the index of the script-block that was effectively
     updated. In the case of being two of them, the most external one.
 
-    *ext_\*_pars* and/or *ext_\*_pars* must be set to None if there is no
-    external script block.
+    *ext_prev_pars* and/or *ext_next_pars* must be set to None if there is no
+    previous/next external script block.
     """
     sbidx = Idx(sb_index)
     refidx = Idx(ref_index)
@@ -700,26 +800,26 @@ def _map_refindex(sb_index, ref_index, ext_prev_pars, prev_pars, ext_next_pars,
 
     # Note: tail has at least one element at this point
     if ext_prev_pars is None:
-        prev_pos_key = _valid_pars_pos(prev_pars, tail.pop(0) - 1)
+        prev_pos_key = prev_pars.argord2index(tail.pop(0) - 1)
     elif tail == [1] and ext_next_pars is None:
         return start
     elif tail == [1]:
         return start + [1]
     elif tail[0] == 1:
-        prev_pos_key = (0, _valid_pars_pos(prev_pars, tail[1] - 1))
+        prev_pos_key = (0, prev_pars.argord2index(tail[1] - 1))
         del tail[0:2]
     else:
-        prev_pos_key = (_valid_pars_pos(ext_prev_pars, tail.pop(0) - 1),)
+        prev_pos_key = (ext_prev_pars.argord2index(tail.pop(0) - 1),)
 
     def next_pos_value2l(next_pos_val):
-        # It can raise ValueError, which will be handled by the caller (below)
+        # It can raise ValueError, which will be handled by the caller below
         if ext_next_pars is None:
             # This case assures that value is not a tuple
-            return [par_ord_from_pars_pos(next_pars, next_pos_val)]
+            return [next_pars.index2argord(next_pos_val)]
         elif len(next_pos_val) == 1:
-            return [par_ord_from_pars_pos(ext_next_pars, next_pos_val[0])]
+            return [ext_next_pars.index2argord(next_pos_val[0])]
         else:
-            return [1, par_ord_from_pars_pos(next_pars, next_pos_val[1])]
+            return [1, next_pars.index2argord(next_pos_val[1])]
 
     def prev_pos_key2idx(key_dict=None):
         """If argument is None it is understood that the mapping is the
@@ -736,176 +836,157 @@ def _map_refindex(sb_index, ref_index, ext_prev_pars, prev_pars, ext_next_pars,
         if len(prev_pars) == len(next_pars):
             return prev_pos_key2idx()
         if len(prev_pars) == 3 and len(next_pars) == 5:
-            return prev_pos_key2idx(SET2SCR_DICT)
+            return prev_pos_key2idx(VERT2CORN_DICT)
         if len(prev_pars) == 3 and len(next_pars) == 7:
-            return prev_pos_key2idx(SET2LO_DICT)
+            return prev_pos_key2idx(VERT2LO_DICT)
         if len(prev_pars) == 5 and len(next_pars) == 3:
-            return prev_pos_key2idx(SCR2SET_DICT)
+            return prev_pos_key2idx(CORN2VERT_DICT)
         if len(prev_pars) == 5 and len(next_pars) == 7:
-            return prev_pos_key2idx(SCR2LO_DICT)
+            return prev_pos_key2idx(CORN2LO_DICT)
         if len(prev_pars) == 7 and len(next_pars) == 3:
-            return prev_pos_key2idx(LO2SET_DICT)
+            return prev_pos_key2idx(LO2VERT_DICT)
         if len(prev_pars) == 7 and len(next_pars) == 5:
-            return prev_pos_key2idx(LO2SCR_DICT)
+            return prev_pos_key2idx(LO2CORN_DICT)
 
     if ext_prev_pars and ext_next_pars is None:
         if len(ext_prev_pars) == 3 and len(next_pars) == 3:
-            return prev_pos_key2idx(SET_SCR2SET_DICT)
+            return prev_pos_key2idx(VERT_CORN2VERT_DICT)
         if len(ext_prev_pars) == 3 and len(next_pars) == 5:
-            return prev_pos_key2idx(SET_SCR2SCR_DICT)
+            return prev_pos_key2idx(VERT_CORN2CORN_DICT)
         if len(ext_prev_pars) == 3 and len(next_pars) == 7:
-            return prev_pos_key2idx(SET_SCR2LO_DICT)
+            return prev_pos_key2idx(VERT_CORN2LO_DICT)
         if len(ext_prev_pars) == 5 and len(next_pars) == 3:
-            return prev_pos_key2idx(SCR_SET2SET_DICT)
+            return prev_pos_key2idx(CORN_VERT2CORN_DICT)
         if len(ext_prev_pars) == 5 and len(next_pars) == 5:
-            return prev_pos_key2idx(SCR_SET2SCR_DICT)
+            return prev_pos_key2idx(CORN_VERT2CORN_DICT)
         if len(ext_prev_pars) == 5 and len(next_pars) == 7:
-            return prev_pos_key2idx(SCR_SET2LO_DICT)
+            return prev_pos_key2idx(CORN_VERT2LO_DICT)
 
     if ext_prev_pars is None and ext_next_pars:
         if len(prev_pars) == 3 and len(ext_next_pars) == 3:
-            return prev_pos_key2idx(SET2SET_SCR_DICT)
+            return prev_pos_key2idx(VERT2VERT_CORN_DICT)
         if len(prev_pars) == 3 and len(ext_next_pars) == 5:
-            return prev_pos_key2idx(SET2SCR_SET_DICT)
+            return prev_pos_key2idx(VERT2CORN_VERT_DICT)
         if len(prev_pars) == 5 and len(ext_next_pars) == 3:
-            return prev_pos_key2idx(SCR2SET_SCR_DICT)
+            return prev_pos_key2idx(CORN2VERT_CORN_DICT)
         if len(prev_pars) == 5 and len(ext_next_pars) == 5:
-            return prev_pos_key2idx(SCR2SCR_SET_DICT)
+            return prev_pos_key2idx(CORN2CORN_VERT_DICT)
         if len(prev_pars) == 7 and len(ext_next_pars) == 3:
-            return prev_pos_key2idx(LO2SET_SCR_DICT)
+            return prev_pos_key2idx(LO2VERT_CORN_DICT)
         if len(prev_pars) == 7 and len(ext_next_pars) == 5:
-            return prev_pos_key2idx(LO2SCR_SET_DICT)
+            return prev_pos_key2idx(LO2CORN_VERT_DICT)
 
     if len(ext_prev_pars) == len(ext_next_pars):
         return prev_pos_key2idx()
     if len(ext_prev_pars) == 3 and len(ext_next_pars) == 5:
-        return prev_pos_key2idx(SET_SCR2SCR_SET_DICT)
-    return prev_pos_key2idx(SCR_SET2SET_SCR_DICT)
+        return prev_pos_key2idx(VERT_CORN2CORN_VERT_DICT)
+    return prev_pos_key2idx(CORN_VERT2VERT_CORN_DICT)
 
 
-def _change2loscriptblock(eq: Subeq, index, refindex=None):
-    """Internal function.
+def _change2full(eq: Subeq, index, refindex=None):
+    """Helper function.
 
-    eq(index) must be a real \*script-block.
+    eq(index) must be a script-block.
 
-    If pointed subeq is a script/setscript-block, it checks whether the 1-level
-    supeq is a setscript/script-block so their scripts can be included in
-    the new loscriptblock.
+    If pointed subeq is a VERT/CORN script-block, it checks whether the
+    1-level supeq is a CORN/VERT script-block so their scripts can be included
+    in the new LO script-block.
     """
     idx = Idx(index)
     refidx = Idx(refindex)
     sb = eq(idx)
-    op_type = scriptop_type(sb[0])
-    if op_type == "loscript":
+    op_subtype = sb[0]._subtype
+    if op_subtype is ScriptOpSubtype.LO:
         return refidx
 
-    inner_pars = _scriptblock2pars(sb)
-    sup = eq.supeq(index)
+    inner_pars = ScriptPars.from_scriptblock(sb)
+    sup = eq.supeq(idx)
     ext_pars = None
-    if sup != -2:
-        # Not including loscript type: it cannot have a \*script-block as base
-        if scriptop_type(sup[0]) not in (-1, op_type):
-            ext_pars = _scriptblock2pars(sup)
-            del idx[-1]
+    if sup != -2 and isinstance(sup[0], ScriptOp) \
+            and sup[0]._subtype is not op_subtype:
+        # It cannot be the case of sup being a LO ScriptOp-block because of
+        # Subeqs building rules: they cannot have ScriptOp-blocks as bases.
+        ext_pars = ScriptPars.from_scriptblock(sup)
+        del idx[-1]
 
-    if op_type == "script":
-        # Subcases:
-        #   [script, ...] -> [loscript, ...]
-        #   [setscript, [script, ...], ...] -> [loscript, ...]
-        new_pars = [inner_pars[0], inner_pars[1], None, inner_pars[2],
-                    inner_pars[3], None, inner_pars[4]]
+    if op_subtype is ScriptOpSubtype.CORN:
+        # Sub-cases:
+        #   [CORN, ...] -> [LO, ...]
+        #   [VERT, [CORN, ...], ...] -> [LO, ...]
+        new_pars = ScriptPars(inner_pars[0], ScriptOpSubtype.LO)
+        new_pars[1:] = [inner_pars[1], None, inner_pars[2],
+                        inner_pars[3], None, inner_pars[4]]
         if ext_pars:
             new_pars[2] = ext_pars[1]
             new_pars[5] = ext_pars[2]
     elif not ext_pars:
-        # Subcase: [setscript, ...] -> [loscript, ...]
-        new_pars = [inner_pars[0], None, inner_pars[1], None, None,
-                    inner_pars[2], None]
+        # Subcase: [VERT, ...] -> [LO, ...]
+        new_pars = ScriptPars(inner_pars[0], ScriptOpSubtype.LO)
+        new_pars[1:] = [None, inner_pars[1], None, None, inner_pars[2], None]
     else:
-        # Subcase: [script, [setscript, ...], ...] -> [loscript, ...]
-        new_pars = [inner_pars[0], ext_pars[1], inner_pars[1], ext_pars[2],
-                    ext_pars[3], inner_pars[2], ext_pars[4]]
+        # Subcase: [CORN, [VERT, ...], ...] -> [LO, ...]
+        new_pars = ScriptPars(inner_pars[0], ScriptOpSubtype.LO)
+        new_pars[1:] = [ext_pars[1], inner_pars[1], ext_pars[2],
+                        ext_pars[3], inner_pars[2], ext_pars[4]]
 
     # Note: idx has previously been corrected if needed
-    eq(idx)[:] = _pars2scriptblock(new_pars)
+    eq(idx)[:] = new_pars.scriptblock()
     return _map_refindex(idx, refidx, ext_pars, inner_pars, None, new_pars)
 
 
-def _change2nonloscriptblock(eq: Subeq, index, refindex=None):
-    """Internal function.
+def _change2nonfull(eq: Subeq, index, refindex=None):
+    """Helper function.
+
+    eq(index) must be a script-block.
 
     It does not check any supeq, so they are never combined with the new
-    scriptop. However, to avoid loosing scripts a loscript-block will be
-    converted in a script-block which base is a setscript-block if necesary.
+    scriptop. However, to avoid loosing scripts a LO script-block will be
+    converted in a CORN script-block which base is a VERT script-block if
+    necessary.
 
     Implementation note:
 
-        [loscript, ...] -> [script, [setscript, ...], ....]
+        [LO, ...] -> [CORN, [VERT, ...], ....]
     """
     idx = Idx(index)
     refidx = Idx(refindex)
     sb = eq(idx)
-    op_type = scriptop_type(sb[0])
-    if op_type != "loscript":
+    op = sb[0]
+    op_subtype = op._subtype
+    if op_subtype is not ScriptOpSubtype.LO:
         return refidx
 
-    pars = _scriptblock2pars(sb)
+    pars = ScriptPars.from_scriptblock(sb)
     new_ext_pars = None
     if pars[2] is None and pars[5] is None:
-        new_inner_pars = [pars[0], pars[1], pars[3], pars[4], pars[6]]
+        new_inner_pars = ScriptPars(pars[0], ScriptOpSubtype.CORN)
+        new_inner_pars[1:] = [pars[1], pars[3], pars[4], pars[6]]
         new_pars = new_inner_pars
     elif [pars[1], pars[3], pars[4], pars[6]].count(None) == 4:
-        new_inner_pars = [pars[0], pars[2], pars[5]]
+        new_inner_pars = ScriptPars(pars[0], ScriptOpSubtype.VERT)
+        new_inner_pars[1:] = [pars[2], pars[5]]
         new_pars = new_inner_pars
     else:
         # Two script ops are needed to avoid missing any script
-        # -> Use the setscript op externally and script op internally
-        new_inner_pars = [pars[0], pars[2], pars[5]]
-        inner_sb = _pars2scriptblock(new_inner_pars)
-        new_ext_pars = [inner_sb, pars[1], pars[3], pars[4], pars[6]]
+        # -> Use VERT op externally and CORN internally
+        new_inner_pars = ScriptPars(pars[0], ScriptOpSubtype.VERT)
+        new_inner_pars[1:] = [pars[2], pars[5]]
+        inner_sb = new_inner_pars.scriptblock()
+
+        new_ext_pars = ScriptPars(inner_sb, ScriptOpSubtype.CORN)
+        new_ext_pars[1:] = [pars[1], pars[3], pars[4], pars[6]]
         new_pars = new_ext_pars
 
-    sb[:] = _pars2scriptblock(new_pars)
+    sb[:] = new_pars.scriptblock()
     return _map_refindex(idx, refidx, None, pars, new_ext_pars, new_inner_pars)
 
 
-def test_equivalent_op(op: Op, ext_op: Op = None):
-    """Return equivalent op, or op-pair, which is equivalent to passed
-    script op but of different script type: lo <-> nonlo.
-
-    A pair is returned. If only one script op is needed for the equivalence,
-    the second element is set to to None. Else, the first one is the internal
-    script op.
-
-    By the moment this function is used only for testing purposes.
-
-    .. note::
-        The order is unusual for the arguments and output: firstly internal op,
-        secondly external op.
-    """
-    s = Subeq([op] + [["x"]] * op.n_args)
-    if op.type_ == "loscript":
-        _change2nonloscriptblock(s, [])
-        if is_scriptop(s[1][0]):
-            return s[1][0], s[0]
-        return s[0], None
-
-    if ext_op is None:
-        _change2loscriptblock(s, [])
-        return s[0], None
-
-    s = Subeq([ext_op] + [s] + [["x"]] * ext_op.n_args)
-    # Refer to the internal script-block, not the external
-    _change2loscriptblock(s, [1])
-    return s[0], None
-
-
-def update_scriptblock(nextbase, eq: Subeq, index=None, refindex=None):
+def update_scriptblock(nextbase: list, eq: Subeq, index=None, refindex=None):
     """Update a script op if needed by providing the next base it will have.
     Pointed subeq must be the supeq of the subeq being modified. That is,
     the script block if modified subeq is really a base, but it is OK if it
     is not really a script block (nothing is done in that case and refindex
-    is not corrected).
+    is returned unmodified).
 
     A 1-level supeq which is a script-block will be collapsed if reasonable
     when updating from nonlo to lo script-block. Similarly, a lo script-block
@@ -926,44 +1007,44 @@ def update_scriptblock(nextbase, eq: Subeq, index=None, refindex=None):
     """
     scriptblock = eq(index)
     refidx = Idx(refindex)
-    op_type = scriptop_type(scriptblock[0])
-    if op_type == -1:
+    nb = Subeq(nextbase)
+
+    if not isinstance(scriptblock[0], ScriptOp):
         return refidx
-    if op_type == "loscript":
-        if do_require_loscript(Subeq(nextbase)):
+    if scriptblock[0].is_lo():
+        if does_require_full(nb):
             return refidx
-        else:
-            # setscript/script (or a combination of both) -> loscript
-            return _change2nonloscriptblock(eq, index, refindex)
-    elif not do_require_loscript(Subeq(nextbase)):
+        # VERT/CORN (or a combination of both) -> LO
+        return _change2nonfull(eq, index, refindex)
+
+    if not does_require_full(nb):
         return refidx
-    return _change2loscriptblock(eq, index, refindex)
+    return _change2full(eq, index, refindex)
 
 
-def _insert_initial_script(baseref, scriptdir, is_superscript, newscript):
+def _insert_initial_script(baseref: Subeq, script_pos: ScriptPos,
+                           newscript: Subeq):
     """Insert a script to a block which is (currently) not a base or requested
     script is not compatible with operator script of base pointed.
 
     Index of the script will be index of *baseref* plus [2]
     """
-    if do_require_loscript(baseref):
-        type_ = "loscript"
-    elif scriptdir == 0:
-        type_ = "setscript"
+    if does_require_full(baseref):
+        subtype = ScriptOpSubtype.LO
+    elif script_pos in VERT_SCR_POS_TUPLE:
+        subtype = ScriptOpSubtype.VERT
     else:
-        type_ = "script"
-    pars = _init_script_pars(baseref, type_)
+        subtype = ScriptOpSubtype.CORN
+    pars = ScriptPars(baseref, subtype)
     # referred script is guaranteed to be valid in pars list because we
-    # constructed pars with the correct type_
-    _set_script_in_pars(pars, scriptdir, is_superscript, newscript)
-    baseref[:] = _pars2scriptblock(pars)
+    # constructed pars with the correct subtype
+    pars.set_script(script_pos, newscript)
+    baseref[:] = pars.scriptblock()
 
 
-def insert_script(index, eq: Subeq, scriptdir, is_superscript, newscript=None):
+def insert_script(index, eq: Subeq, script_pos: ScriptPos,
+                  newscript: Optional[list] = None):
     """Insert a script and return its index.
-
-    If pointed subeq is a TVOID without a script, it is replaced by PVOID
-    before inserting the script.
 
     Return the index of the inserted script, or its ordinal in the current
     script block if the index already existed.
@@ -993,8 +1074,7 @@ def insert_script(index, eq: Subeq, scriptdir, is_superscript, newscript=None):
 
     :param index: The index of the subeq which will be the base of the script.
     :param eq: An equation.
-    :param scriptdir: Dir in which to include the script. 0 means vscript.
-    :param is_superscript: Boolean indicating whether it is a superscript.
+    :param scrip_pos: Position to insert the script.
     :param newscript: A subeq with which to initialize script. None means VOID.
     :return: The index of inserted script. If it already existed, a flag.
     """
@@ -1004,92 +1084,29 @@ def insert_script(index, eq: Subeq, scriptdir, is_superscript, newscript=None):
     if supeq == -2 or not is_scriptop(supeq[0]):
         # Case: idx does not point to a base
         baseref = eq if supeq == -2 else supeq[idx[-1]]
-        if baseref.is_tvoid():
-            # TVOID -> PVOID
-            baseref[:] = [PVOID]
-        _insert_initial_script(baseref, scriptdir, is_superscript, scr)
+        _insert_initial_script(baseref, script_pos, scr)
         return idx[:] + [2]
 
-    pars = _scriptblock2pars(supeq)
-    script_pos = _get_script_pos_in_pars(pars, scriptdir, is_superscript)
-    if script_pos == -1:
+    pars = ScriptPars.from_scriptblock(supeq)
+    script = pars.get_script(script_pos)
+    if script == -1:
         # Case: Requested script is not compatible with current operator
         baseref = supeq[idx[-1]]
-        _insert_initial_script(baseref, scriptdir, is_superscript, scr)
+        _insert_initial_script(baseref, script_pos, scr)
         return idx[:] + [2]
 
-    if pars[script_pos] is not None:
+    if script is not None:
         # Case: Requested script already exists
-        return par_ord_from_pars_pos(pars, script_pos)
+        return pars.spos2argord(script_pos)
 
-    # Case: Requested script is compatible with current script op type_ and
+    # Case: Requested script is compatible with current ScriptOpSubtype and
     # script is not present
-    pars[script_pos] = scr
-    supeq[:] = _pars2scriptblock(pars)
-    return idx[:-1] + [par_ord_from_pars_pos(pars, script_pos)]
+    pars.set_script(script_pos, scr)
+    supeq[:] = pars.scriptblock()
+    return idx[:-1] + [pars.spos2argord(script_pos)]
 
 
-def test_which_ord_is_script(op, codename):
-    """(JUST FOR TESTING) Return the script ordinal (argument ordinal plus 1)
-    of a script operator given the codename of the script.
-
-    .. note::
-        *codename* must be a valid codename for the operator.
-    """
-    # This pattern works because real names always include first a l(sub|sup)
-    # than a (sub|sup).
-    reiter = re.finditer("lsub|under|sub|lsup|over|sup", op.name)
-    n = 1
-    while True:
-        if codename == next(reiter).group():
-            return n
-        n += 1
-
-def test_is_scriptop_with(scr_codename: str, op):
-    """(JUST FOR TESTING) Returns whether a script op contains specified
-    script.
-
-    *scr_codename* must be in ("lsub", "under", "sub", "lsup", "over", "sup")
-    """
-    return None != re.search("(?:^|[^l])" + scr_codename, op.name)
-
-
-def test_downgraded_scriptop_given_codename(op, codename):
-    """(JUST FOR TESTING) Return the script op resulting from removing
-    codename from op name.
-
-    It relays on the name convention using for the script operators. This
-    function was written with the intention of testing that other methods are
-    correct.
-
-    .. note::
-        *op* MUST have more than 1 script (more than 2 pars).
-    """
-    return eval(re.sub("(^|[^l])" + codename, "\\1", op.name).upper())
-
-
-def test_downgraded_scriptop_given_n(op, n):
-    """(JUST FOR TESTING) Return the script op resulting from op when the nth
-    script (or, equivalently, parameter n + 1) of op is removed.
-
-    It relays on the name convention using for the script operators. This
-    function was written with the intention of testing that other methods are
-    correct.
-
-    .. note::
-        *op* MUST have more than 1 script (more than 2 pars).
-    """
-    # This pattern works because real names always include first a l(sub|sup)
-    # than a (sub|sup).
-    reiter = re.finditer("lsub|under|sub|lsup|over|sup", op.name)
-    for i in range(n):
-        match = next(reiter)
-    new_op_name = op.name[:match.start()] + op.name[match.end():]
-    # Dirty, but this function is for testing
-    return eval(new_op_name.upper())
-
-
-def remove_script(index, eq, refindex=None):
+def remove_script(index, eq: Subeq, refindex):
     """Remove pointed script from equation. Intentionally not accepting
     strict subeqs of an equation because its subeq may need to be modified.
 
@@ -1111,12 +1128,12 @@ def remove_script(index, eq, refindex=None):
     refidx = Idx(refindex)
     idx = Idx(index)
     sb = eq.supeq(idx)  # This function assumes a script => supeq exists
-    prev_pars = _scriptblock2pars(sb)
+    prev_pars = ScriptPars.from_scriptblock(sb)
     # -- Remove script from pars list --
     # Note: Subtracting 1 since indexing starts from 0 and real pars from 1
     pars = deepcopy(prev_pars)
-    pars[_valid_pars_pos(pars, idx[-1] - 1)] = None
-    new_block = _pars2scriptblock(pars)
+    pars[pars.argord2index(idx[-1] - 1)] = None
+    new_block = pars.scriptblock()
 
     if new_block != -1:
         # Case: Downgrade script op

@@ -11,36 +11,19 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import unittest
-from collections import OrderedDict
-
-from visualequation.ops import *
-from visualequation.dirsel import Dir
-from visualequation.idx import Idx
-from visualequation.subeqs import Subeq
-from visualequation.scriptops import *
 from tests.test_utils import *
 
 
+def equiv_loop(op1: ScriptOp, op2: Optional[ScriptOp] = None):
+    """Return an FULL ScriptOp with exactly the same ScriptPos than input
+    combined."""
+    tpl = tuple(k for k, v in op1.valid_scripts_items() if v)
+    if op2 is not None:
+        tpl += tuple(k for k, v in op2.valid_scripts_items() if v)
+    return ScriptOp(True, *tpl)
+
+
 class ScriptOpsTests(unittest.TestCase):
-    def test_equivalent_op(self):
-        ops = OrderedDict()
-        for lo_op in LOSCRIPT_OPS_LIST:
-            nonlo_pair = test_equivalent_op(lo_op)
-            self.assertEqual(test_equivalent_op(nonlo_pair[0], nonlo_pair[1]),
-                             (lo_op, None))
-            if nonlo_pair[1] is not None:
-                self.assertEqual(test_equivalent_op(nonlo_pair[1],
-                                                    nonlo_pair[0]),
-                                 (lo_op, None))
-            ops[nonlo_pair] = lo_op
-        self.assertEqual(len(ops), 63)
-
-        for t in (pair[1].type_ for pair in ops if pair[1] is not None):
-            # External \*script op after transformation, if any, must be script
-            # by convention
-            self.assertEqual(t, "script")
-
     def test_update_scriptblock(self):
         def f(eq):
             retval = update_scriptblock(eq(eq.idx), eq, eq.idx, eq.idx)
@@ -49,17 +32,17 @@ class ScriptOpsTests(unittest.TestCase):
 
         db = (
             (Eq(["a"]), Eq(["a"])),
-            (Eq([PJUXT, ["d"], ["f"]]), Eq([PJUXT, ["d"], ["f"]])),
-            (Eq([PJUXT, ["d"], ["f"]], [1]),
-                Eq([PJUXT, ["d"], ["f"]], [1])),
-            (Eq([PJUXT, ["d"], ["f"]], [2]),
-                Eq([PJUXT, ["d"], ["f"]], [2])),
+            (Eq([PJuxt(), ["d"], ["f"]]), Eq([PJuxt(), ["d"], ["f"]])),
+            (Eq([PJuxt(), ["d"], ["f"]], [1]),
+                Eq([PJuxt(), ["d"], ["f"]], [1])),
+            (Eq([PJuxt(), ["d"], ["f"]], [2]),
+                Eq([PJuxt(), ["d"], ["f"]], [2])),
         )
         ce = CompareEqs(db)
         ce.assert_equality(f, is_method=False)
 
         def f_lo(eq):
-            eq.idx = update_scriptblock([Op("O", "O", 0, "vs")], eq)
+            eq.idx = update_scriptblock([ps_lo], eq)
             return eq
 
         def f_nonlo(eq):
@@ -67,14 +50,15 @@ class ScriptOpsTests(unittest.TestCase):
             return eq
 
         n_single_ops = 0
-        for op in SETSCRIPT_OPS_LIST + SCRIPT_OPS_LIST:
+        for op in VERT_SCR_OPS_LIST + CORN_SCR_OPS_LIST:
             n_single_ops += 1
 
-            new_op = test_equivalent_op(op)[0]
+            tpl = tuple(k for k, v in op.valid_scripts_items() if v)
+            new_op = ScriptOp(True, *tpl)
             db = (
                 (Eq(["a"]), Eq(["a"], [])),
-                (Eq([op] + [["x"]]*op.n_args),
-                    Eq([new_op] + [["x"]]*new_op.n_args)),
+                (Eq([op] + [["x"]] * op._n_args),
+                    Eq([new_op] + [["x"]] * new_op._n_args)),
             )
             # non-lo -> lo
             ce = CompareEqs(db)
@@ -96,7 +80,7 @@ class ScriptOpsTests(unittest.TestCase):
         self.assertEqual(n_single_ops, 15+3)
 
         def f_lo1(eq):
-            eq.idx = update_scriptblock([Op("O", "O", 0, "vs")], eq, [1])
+            eq.idx = update_scriptblock([ps_lo], eq, [1])
             return eq
 
         def f_nonlo1(eq):
@@ -106,15 +90,15 @@ class ScriptOpsTests(unittest.TestCase):
         ce = CompareEqs()
         ce_reversed = CompareEqs()
         n_combined_ops = 0
-        for op1 in SETSCRIPT_OPS_LIST:
-            for op2 in SCRIPT_OPS_LIST:
+        for op1 in VERT_SCR_OPS_LIST:
+            for op2 in CORN_SCR_OPS_LIST:
                 n_combined_ops += 1
-                block1 = [op2] + [["x"]] * op2.n_args
-                block_scr_in = [op1] + [block1] + [["x"]] * (op1.n_args - 1)
-                block2 = [op1] + [["x"]] * op1.n_args
-                block_scr_out = [op2] + [block2] + [["x"]] * (op2.n_args - 1)
-                e_op = test_equivalent_op(op1, op2)[0]
-                result = [e_op] + [["x"]]*e_op.n_args
+                block1 = [op2] + [["x"]] * op2._n_args
+                block_scr_in = [op1] + [block1] + [["x"]] * (op1._n_args - 1)
+                block2 = [op1] + [["x"]] * op1._n_args
+                block_scr_out = [op2] + [block2] + [["x"]] * (op2._n_args - 1)
+                e_op = equiv_loop(op1, op2)
+                result = [e_op] + [["x"]]*e_op._n_args
                 ce.add_pair(block_scr_out, result)
                 ce_reversed.add_pair(block_scr_in, result)
 
@@ -155,71 +139,72 @@ class ScriptOpsTests(unittest.TestCase):
                 return eq
             return wrapper
 
-        flo = f_creator([Op("O", "O", 0, "vs")], [])
-        flo1 = f_creator([Op("O", "O", 0, "vs")], [1])
+        flo = f_creator([ps_lo], [])
+        flo1 = f_creator([ps_lo], [1])
         fnonlo = f_creator(["z"], [])
         fnonlo1 = f_creator(["z"], [1])
 
-        p = [PJUXT, ["a"], ["b"]]
-        for op in SETSCRIPT_OPS_LIST + SCRIPT_OPS_LIST:
-            e_op = test_equivalent_op(op)[0]
+        p = [PJuxt(), ["a"], ["b"]]
+        for op in VERT_SCR_OPS_LIST + CORN_SCR_OPS_LIST:
+            tpl = tuple(k for k, v in op.valid_scripts_items() if v)
+            e_op = ScriptOp(True, *tpl)
 
             db = (
-                (Eq([PJUXT] + [["x"]] * op.n_args, []),
-                 Eq([PJUXT] + [["x"]] * op.n_args, [])),
-                (Eq([op] + [["x"]] * op.n_args, []),
-                 Eq([e_op] + [["x"]] * op.n_args, [])),
+                (Eq([PJuxt(op._n_args)] + [["x"]] * op._n_args, []),
+                 Eq([PJuxt(op._n_args)] + [["x"]] * op._n_args, [])),
+                (Eq([op] + [["x"]] * op._n_args, []),
+                 Eq([e_op] + [["x"]] * op._n_args, [])),
             )
             ce = CompareEqs(db)
             ce.assert_equality(flo, is_method=False)
             ce.assert_equality(fnonlo, is_method=False, inversely=True)
 
             db = (
-                (Eq([PJUXT] + [["x"]] * op.n_args, []),
-                 Eq([PJUXT] + [["x"]] * op.n_args, [])),
-                (Eq([PJUXT, [op] + [["x"]] * op.n_args, ["y"]], []),
-                 Eq([PJUXT, [e_op] + [["x"]] * op.n_args, ["y"]], [])),
-                (Eq([PJUXT, [op] + [["x"]] * op.n_args, ["y"]], [1]),
-                 Eq([PJUXT, [e_op] + [["x"]] * op.n_args, ["y"]], [1])),
-                (Eq([PJUXT, [op] + [["x"]] * op.n_args, ["y"]], [2]),
-                 Eq([PJUXT, [e_op] + [["x"]] * op.n_args, ["y"]], [2])),
+                (Eq([PJuxt()] + [["x"]] * op._n_args, []),
+                 Eq([PJuxt()] + [["x"]] * op._n_args, [])),
+                (Eq([PJuxt(), [op] + [["x"]] * op._n_args, ["y"]], []),
+                 Eq([PJuxt(), [e_op] + [["x"]] * op._n_args, ["y"]], [])),
+                (Eq([PJuxt(), [op] + [["x"]] * op._n_args, ["y"]], [1]),
+                 Eq([PJuxt(), [e_op] + [["x"]] * op._n_args, ["y"]], [1])),
+                (Eq([PJuxt(), [op] + [["x"]] * op._n_args, ["y"]], [2]),
+                 Eq([PJuxt(), [e_op] + [["x"]] * op._n_args, ["y"]], [2])),
             )
             ce = CompareEqs(db)
             ce.assert_equality(flo1, is_method=False)
             ce.assert_equality(fnonlo1, is_method=False, inversely=True)
 
-            for n in range(1, op.n_args + 1):
+            for n in range(1, op._n_args + 1):
                 db = (
-                    (Eq([PJUXT] + [["x"]] * op.n_args, [n]),
-                     Eq([PJUXT] + [["x"]] * op.n_args, [n])),
+                    (Eq([PJuxt()] + [["x"]] * op._n_args, [n]),
+                     Eq([PJuxt()] + [["x"]] * op._n_args, [n])),
 
-                    (Eq([op] + [["x"]] * op.n_args, [n]),
-                     Eq([e_op] + [["x"]] * op.n_args, [n])),
+                    (Eq([op] + [["x"]] * op._n_args, [n]),
+                     Eq([e_op] + [["x"]] * op._n_args, [n])),
 
-                    (Eq([op] + [p] + [["x"]] * (op.n_args - 1), [n]),
-                     Eq([e_op] + [p] + [["x"]] * (op.n_args - 1), [n])),
+                    (Eq([op] + [p] + [["x"]] * (op._n_args - 1), [n]),
+                     Eq([e_op] + [p] + [["x"]] * (op._n_args - 1), [n])),
 
-                    (Eq([op] + [["x"]] * op.n_args, [n]),
-                     Eq([e_op] + [["x"]] * op.n_args, [n])),
-                    (Eq([op] + [p] * op.n_args, [n, 1]),
-                     Eq([e_op] + [p] * op.n_args, [n, 1])),
-                    (Eq([op] + [p] * op.n_args, [n, 2]),
-                     Eq([e_op] + [p] * op.n_args, [n, 2])),
+                    (Eq([op] + [["x"]] * op._n_args, [n]),
+                     Eq([e_op] + [["x"]] * op._n_args, [n])),
+                    (Eq([op] + [p] * op._n_args, [n, 1]),
+                     Eq([e_op] + [p] * op._n_args, [n, 1])),
+                    (Eq([op] + [p] * op._n_args, [n, 2]),
+                     Eq([e_op] + [p] * op._n_args, [n, 2])),
                 )
                 ce = CompareEqs(db)
                 ce.assert_equality(flo, is_method=False)
                 ce.assert_equality(fnonlo, is_method=False, inversely=True)
 
                 db = (
-                    (Eq([PJUXT] + [["x"]] * op.n_args, [n]),
-                     Eq([PJUXT] + [["x"]] * op.n_args, [n])),
+                    (Eq([PJuxt()] + [["x"]] * op._n_args, [n]),
+                     Eq([PJuxt()] + [["x"]] * op._n_args, [n])),
 
-                    (Eq([PJUXT, [op] + [p] * op.n_args, ["y"]], [1, n]),
-                     Eq([PJUXT, [e_op] + [p] * op.n_args, ["y"]], [1, n])),
-                    (Eq([PJUXT, [op] + [p] * op.n_args, ["y"]], [1, n, 1]),
-                     Eq([PJUXT, [e_op] + [p] * op.n_args, ["y"]], [1, n, 1])),
-                    (Eq([PJUXT, [op] + [p] * op.n_args, ["y"]], [1, n, 2]),
-                     Eq([PJUXT, [e_op] + [p] * op.n_args, ["y"]], [1, n, 2])),
+                    (Eq([PJuxt(), [op] + [p] * op._n_args, ["y"]], [1, n]),
+                     Eq([PJuxt(), [e_op] + [p] * op._n_args, ["y"]], [1, n])),
+                    (Eq([PJuxt(), [op] + [p] * op._n_args, ["y"]], [1, n, 1]),
+                     Eq([PJuxt(), [e_op] + [p] * op._n_args, ["y"]], [1, n, 1])),
+                    (Eq([PJuxt(), [op] + [p] * op._n_args, ["y"]], [1, n, 2]),
+                     Eq([PJuxt(), [e_op] + [p] * op._n_args, ["y"]], [1, n, 2])),
                 )
                 ce = CompareEqs(db)
                 ce.assert_equality(flo1, is_method=False)
@@ -236,49 +221,52 @@ class ScriptOpsTests(unittest.TestCase):
 
             return wrapper
 
-        flo = f_creator([Op("O", "O", 0, "vs")], [])
-        flo1 = f_creator([Op("O", "O", 0, "vs")], [1])
-        flo11 = f_creator([Op("O", "O", 0, "vs")], [1, 1])
+        flo = f_creator([ps_lo], [])
+        flo1 = f_creator([ps_lo], [1])
+        flo11 = f_creator([ps_lo], [1, 1])
         fnonlo = f_creator(["z"], [])
         fnonlo1 = f_creator(["z"], [1])
         fnonlo11 = f_creator(["z"], [1, 1])
 
-        p = [PJUXT, ["a"], ["b"]]
-        for op_set in SETSCRIPT_OPS_LIST:
-            for op_scr in SCRIPT_OPS_LIST:
-                sb_scr_set = [op_scr] + [[op_set] + [p] * op_set.n_args] \
-                              + [p] * (op_scr.n_args - 1)
-                sb_set_scr = [op_set] + [[op_scr] + [p] * op_scr.n_args] \
-                              + [p] * (op_set.n_args - 1)
+        p = [PJuxt(), ["a"], ["b"]]
+        for op_vert in VERT_SCR_OPS_LIST:
+            for op_corn in CORN_SCR_OPS_LIST:
+                sb_c_v = [op_corn] + [[op_vert] + [p] * op_vert._n_args] \
+                         + [p] * (op_corn._n_args - 1)
+                sb_v_c = [op_vert] + [[op_corn] + [p] * op_corn._n_args] \
+                         + [p] * (op_vert._n_args - 1)
 
-                e_op = test_equivalent_op(op_set, op_scr)[0]
-                e_op_scr = test_equivalent_op(op_scr)[0]
-                e_op_set = test_equivalent_op(op_set)[0]
-                sb_e = [e_op] +  [p] * e_op.n_args
-                sb_e_scr = [e_op_scr] + [[op_set] + [p] * op_set.n_args] \
-                             + [p] * (op_scr.n_args - 1)
-                sb_e_set = [e_op_set] + [[op_scr] + [p] * op_scr.n_args] \
-                             + [p] * (op_set.n_args - 1)
+                tpl_v = tuple(k for k, v in op_vert.valid_scripts_items() if v)
+                tpl_c = tuple(k for k, v in op_corn.valid_scripts_items() if v)
+
+                e_op = ScriptOp(True, *tpl_v, *tpl_c)
+                e_op_vert = ScriptOp(True, *tpl_v)
+                e_op_corn = ScriptOp(True, *tpl_c)
+                sb_e = [e_op] + [p] * e_op._n_args
+                sb_e_scr = [e_op_corn] + [[op_vert] + [p] * op_vert._n_args] \
+                           + [p] * (op_corn._n_args - 1)
+                sb_e_set = [e_op_vert] + [[op_corn] + [p] * op_corn._n_args] \
+                           + [p] * (op_vert._n_args - 1)
                 # Act on []
                 db_scr = (
-                    (Eq([PJUXT, sb_scr_set, p], []),
-                     Eq([PJUXT, sb_scr_set, p], [])),
-                    (Eq([PJUXT, sb_scr_set, p], [1]),
-                     Eq([PJUXT, sb_scr_set, p], [1])),
-                    (Eq([PJUXT, sb_scr_set, p], [1, 1]),
-                     Eq([PJUXT, sb_scr_set, p], [1, 1])),
-                    (Eq([PJUXT, sb_scr_set, p], [2]),
-                     Eq([PJUXT, sb_scr_set, p], [2])),
+                    (Eq([PJuxt(), sb_c_v, p], []),
+                     Eq([PJuxt(), sb_c_v, p], [])),
+                    (Eq([PJuxt(), sb_c_v, p], [1]),
+                     Eq([PJuxt(), sb_c_v, p], [1])),
+                    (Eq([PJuxt(), sb_c_v, p], [1, 1]),
+                     Eq([PJuxt(), sb_c_v, p], [1, 1])),
+                    (Eq([PJuxt(), sb_c_v, p], [2]),
+                     Eq([PJuxt(), sb_c_v, p], [2])),
                 )
                 db_set = (
-                    (Eq([PJUXT, sb_set_scr, p], []),
-                     Eq([PJUXT, sb_set_scr, p], [])),
-                    (Eq([PJUXT, sb_set_scr, p], [1]),
-                     Eq([PJUXT, sb_set_scr, p], [1])),
-                    (Eq([PJUXT, sb_set_scr, p], [1, 1]),
-                     Eq([PJUXT, sb_set_scr, p], [1, 1])),
-                    (Eq([PJUXT, sb_set_scr, p], [2]),
-                     Eq([PJUXT, sb_set_scr, p], [2])),
+                    (Eq([PJuxt(), sb_v_c, p], []),
+                     Eq([PJuxt(), sb_v_c, p], [])),
+                    (Eq([PJuxt(), sb_v_c, p], [1]),
+                     Eq([PJuxt(), sb_v_c, p], [1])),
+                    (Eq([PJuxt(), sb_v_c, p], [1, 1]),
+                     Eq([PJuxt(), sb_v_c, p], [1, 1])),
+                    (Eq([PJuxt(), sb_v_c, p], [2]),
+                     Eq([PJuxt(), sb_v_c, p], [2])),
                 )
                 ce = CompareEqs(db_scr + db_set)
                 ce.assert_equality(flo, is_method=False)
@@ -292,24 +280,24 @@ class ScriptOpsTests(unittest.TestCase):
 
                 # Act on [1]
                 db1_scr = (
-                    (Eq([PJUXT, sb_scr_set, p], []),
-                     Eq([PJUXT, sb_e_scr,   p], [])),
-                    (Eq([PJUXT, sb_scr_set, p], [1]),
-                     Eq([PJUXT, sb_e_scr,   p], [1])),
-                    (Eq([PJUXT, sb_scr_set, p], [1, 1]),
-                     Eq([PJUXT, sb_e_scr,   p], [1, 1])),
-                    (Eq([PJUXT, sb_scr_set, p], [2]),
-                     Eq([PJUXT, sb_e_scr,   p], [2])),
+                    (Eq([PJuxt(), sb_c_v, p], []),
+                     Eq([PJuxt(), sb_e_scr,   p], [])),
+                    (Eq([PJuxt(), sb_c_v, p], [1]),
+                     Eq([PJuxt(), sb_e_scr,   p], [1])),
+                    (Eq([PJuxt(), sb_c_v, p], [1, 1]),
+                     Eq([PJuxt(), sb_e_scr,   p], [1, 1])),
+                    (Eq([PJuxt(), sb_c_v, p], [2]),
+                     Eq([PJuxt(), sb_e_scr,   p], [2])),
                 )
                 db1_set = (
-                    (Eq([PJUXT, sb_set_scr, p], []),
-                     Eq([PJUXT, sb_e_set,   p], [])),
-                    (Eq([PJUXT, sb_set_scr, p], [1]),
-                     Eq([PJUXT, sb_e_set,   p], [1])),
-                    (Eq([PJUXT, sb_set_scr, p], [1, 1]),
-                     Eq([PJUXT, sb_e_set,   p], [1, 1])),
-                    (Eq([PJUXT, sb_set_scr, p], [2]),
-                     Eq([PJUXT, sb_e_set,   p], [2])),
+                    (Eq([PJuxt(), sb_v_c, p], []),
+                     Eq([PJuxt(), sb_e_set,   p], [])),
+                    (Eq([PJuxt(), sb_v_c, p], [1]),
+                     Eq([PJuxt(), sb_e_set,   p], [1])),
+                    (Eq([PJuxt(), sb_v_c, p], [1, 1]),
+                     Eq([PJuxt(), sb_e_set,   p], [1, 1])),
+                    (Eq([PJuxt(), sb_v_c, p], [2]),
+                     Eq([PJuxt(), sb_e_set,   p], [2])),
                 )
                 ce = CompareEqs(db1_scr + db1_set)
                 ce.assert_equality(flo1, is_method=False)
@@ -323,20 +311,20 @@ class ScriptOpsTests(unittest.TestCase):
 
                 # Act on [1, 1]
                 db11_scr = (
-                    (Eq([PJUXT, sb_scr_set, p], []),
-                     Eq([PJUXT, sb_e,       p], [])),
-                    (Eq([PJUXT, sb_scr_set, p], [1]),
-                     Eq([PJUXT, sb_e,       p], [1])),
-                    (Eq([PJUXT, sb_scr_set, p], [2]),
-                     Eq([PJUXT, sb_e,       p], [2])),
+                    (Eq([PJuxt(), sb_c_v, p], []),
+                     Eq([PJuxt(), sb_e,       p], [])),
+                    (Eq([PJuxt(), sb_c_v, p], [1]),
+                     Eq([PJuxt(), sb_e,       p], [1])),
+                    (Eq([PJuxt(), sb_c_v, p], [2]),
+                     Eq([PJuxt(), sb_e,       p], [2])),
                 )
                 db11_set = (
-                    (Eq([PJUXT, sb_set_scr, p], []),
-                     Eq([PJUXT, sb_e,       p], [])),
-                    (Eq([PJUXT, sb_set_scr, p], [1]),
-                     Eq([PJUXT, sb_e,       p], [1])),
-                    (Eq([PJUXT, sb_set_scr, p], [2]),
-                     Eq([PJUXT, sb_e,       p], [2])),
+                    (Eq([PJuxt(), sb_v_c, p], []),
+                     Eq([PJuxt(), sb_e,       p], [])),
+                    (Eq([PJuxt(), sb_v_c, p], [1]),
+                     Eq([PJuxt(), sb_e,       p], [1])),
+                    (Eq([PJuxt(), sb_v_c, p], [2]),
+                     Eq([PJuxt(), sb_e,       p], [2])),
                 )
                 ce = CompareEqs(db11_scr + db11_set)
                 ce.assert_equality(flo11, is_method=False)
@@ -355,10 +343,10 @@ class ScriptOpsTests(unittest.TestCase):
                 # Usual tests has been done before
 
                 db11_special = (
-                    (Eq([PJUXT, sb_scr_set, p], [1, 1]),
-                     Eq([PJUXT, sb_e,       p], [1])),
-                    (Eq([PJUXT, sb_set_scr, p], [1, 1]),
-                     Eq([PJUXT, sb_e,       p], [1])),
+                    (Eq([PJuxt(), sb_c_v, p], [1, 1]),
+                     Eq([PJuxt(), sb_e,       p], [1])),
+                    (Eq([PJuxt(), sb_v_c, p], [1, 1]),
+                     Eq([PJuxt(), sb_e,       p], [1])),
                 )
                 ce = CompareEqs(db11_special)
                 ce.assert_equality(flo11, is_method=False)
@@ -366,27 +354,27 @@ class ScriptOpsTests(unittest.TestCase):
                 ce.assert_equality(fnonlo11, is_method=False)
 
                 db11_special_bis = (
-                    (Eq([PJUXT, sb_e, p], [1, 1]),
-                     Eq([PJUXT, sb_e, p], [1, 1])),
+                    (Eq([PJuxt(), sb_e, p], [1, 1]),
+                     Eq([PJuxt(), sb_e, p], [1, 1])),
                 )
                 ce = CompareEqs(db11_special_bis)
                 ce.assert_equality(flo11, is_method=False)
 
-                for n_scr in range(2, op_scr.n_args + 1):
+                for n_scr in range(2, op_corn._n_args + 1):
                     # Act on []
                     db = (
-                        (Eq([PJUXT, sb_scr_set, p], [1, n_scr]),
-                         Eq([PJUXT, sb_scr_set, p], [1, n_scr])),
-                        (Eq([PJUXT, sb_scr_set, p], [1, n_scr, 1]),
-                         Eq([PJUXT, sb_scr_set, p], [1, n_scr, 1])),
-                        (Eq([PJUXT, sb_scr_set, p], [1, n_scr, 2]),
-                         Eq([PJUXT, sb_scr_set, p], [1, n_scr, 2])),
-                        (Eq([PJUXT, sb_set_scr, p], [1, 1, n_scr]),
-                         Eq([PJUXT, sb_set_scr, p], [1, 1, n_scr])),
-                        (Eq([PJUXT, sb_set_scr, p], [1, 1, n_scr, 1]),
-                         Eq([PJUXT, sb_set_scr, p], [1, 1, n_scr, 1])),
-                        (Eq([PJUXT, sb_set_scr, p], [1, 1, n_scr, 2]),
-                         Eq([PJUXT, sb_set_scr, p], [1, 1, n_scr, 2])),
+                        (Eq([PJuxt(), sb_c_v, p], [1, n_scr]),
+                         Eq([PJuxt(), sb_c_v, p], [1, n_scr])),
+                        (Eq([PJuxt(), sb_c_v, p], [1, n_scr, 1]),
+                         Eq([PJuxt(), sb_c_v, p], [1, n_scr, 1])),
+                        (Eq([PJuxt(), sb_c_v, p], [1, n_scr, 2]),
+                         Eq([PJuxt(), sb_c_v, p], [1, n_scr, 2])),
+                        (Eq([PJuxt(), sb_v_c, p], [1, 1, n_scr]),
+                         Eq([PJuxt(), sb_v_c, p], [1, 1, n_scr])),
+                        (Eq([PJuxt(), sb_v_c, p], [1, 1, n_scr, 1]),
+                         Eq([PJuxt(), sb_v_c, p], [1, 1, n_scr, 1])),
+                        (Eq([PJuxt(), sb_v_c, p], [1, 1, n_scr, 2]),
+                         Eq([PJuxt(), sb_v_c, p], [1, 1, n_scr, 2])),
                     )
                     ce = CompareEqs(db)
                     ce.assert_equality(flo, is_method=False)
@@ -401,15 +389,15 @@ class ScriptOpsTests(unittest.TestCase):
 
                     # Act on [1]
                     db1 = (
-                        (Eq([PJUXT, sb_scr_set, p], [1, n_scr]),
-                         Eq([PJUXT, sb_e_scr,   p], [1, n_scr])),
-                        (Eq([PJUXT, sb_scr_set, p], [1, n_scr, 1]),
-                         Eq([PJUXT, sb_e_scr,   p], [1, n_scr, 1])),
-                        (Eq([PJUXT, sb_scr_set, p], [1, n_scr, 2]),
-                         Eq([PJUXT, sb_e_scr,   p], [1, n_scr, 2])),
+                        (Eq([PJuxt(), sb_c_v, p], [1, n_scr]),
+                         Eq([PJuxt(), sb_e_scr,   p], [1, n_scr])),
+                        (Eq([PJuxt(), sb_c_v, p], [1, n_scr, 1]),
+                         Eq([PJuxt(), sb_e_scr,   p], [1, n_scr, 1])),
+                        (Eq([PJuxt(), sb_c_v, p], [1, n_scr, 2]),
+                         Eq([PJuxt(), sb_e_scr,   p], [1, n_scr, 2])),
                         # Unintended use since the base would be modified
-                        (Eq([PJUXT, sb_set_scr, p], [1, 1, n_scr]),
-                         Eq([PJUXT, sb_e_set,   p], [1, 1, n_scr])),
+                        (Eq([PJuxt(), sb_v_c, p], [1, 1, n_scr]),
+                         Eq([PJuxt(), sb_e_set,   p], [1, 1, n_scr])),
                     )
                     ce = CompareEqs(db1)
                     ce.assert_equality(flo1, is_method=False)
@@ -426,22 +414,22 @@ class ScriptOpsTests(unittest.TestCase):
                     # This section trusts in updated eqs but not in retvals
 
                     # Surface
-                    k1 = Subeq([PJUXT, ["k11"], ["k12"]])
-                    s1 = deepcopy(Subeq([PJUXT, sb_scr_set, p]))
+                    k1 = Subeq([PJuxt(), ["k11"], ["k12"]])
+                    s1 = deepcopy(Subeq([PJuxt(), sb_c_v, p]))
                     sub1 = s1([1, n_scr])
                     sub1[:] = k1
                     e_s1 = deepcopy(s1)
-                    update_scriptblock([Op("O", "O", 0, "vs")], e_s1, [1, 1])
+                    update_scriptblock([ps_lo], e_s1, [1, 1])
                     e_sub1 = e_s1(1)
                     e_pos_k1 = e_sub1.index(k1)
 
                     # Deeper
-                    k2 = Subeq([PJUXT, ["k21"], ["k22"]])
-                    s2 = deepcopy(Subeq([PJUXT, sb_set_scr, p]))
+                    k2 = Subeq([PJuxt(), ["k21"], ["k22"]])
+                    s2 = deepcopy(Subeq([PJuxt(), sb_v_c, p]))
                     sub2 = s2([1, 1, n_scr])
                     sub2[:] = k2
                     e_s2 = deepcopy(s2)
-                    update_scriptblock([Op("O", "O", 0, "vs")], e_s2, [1, 1])
+                    update_scriptblock([ps_lo], e_s2, [1, 1])
                     e_sub2 = e_s2(1)
                     e_pos_k2 = e_sub2.index(k2)
 
@@ -471,17 +459,17 @@ class ScriptOpsTests(unittest.TestCase):
                     ce.assert_equality(fnonlo1, is_method=False,
                                        inversely=True)
 
-                for n_set in range(2, op_set.n_args + 1):
+                for n_set in range(2, op_vert._n_args + 1):
                     # Act on []
                     db = (
-                        (Eq([PJUXT, sb_set_scr, p], [1, n_set]),
-                         Eq([PJUXT, sb_set_scr, p], [1, n_set])),
-                        (Eq([PJUXT, sb_set_scr, p], [1, n_set, 1]),
-                         Eq([PJUXT, sb_set_scr, p], [1, n_set, 1])),
-                        (Eq([PJUXT, sb_scr_set, p], [1, 1, n_set]),
-                         Eq([PJUXT, sb_scr_set, p], [1, 1, n_set])),
-                        (Eq([PJUXT, sb_scr_set, p], [1, 1, n_set, 1]),
-                         Eq([PJUXT, sb_scr_set, p], [1, 1, n_set, 1])),
+                        (Eq([PJuxt(), sb_v_c, p], [1, n_set]),
+                         Eq([PJuxt(), sb_v_c, p], [1, n_set])),
+                        (Eq([PJuxt(), sb_v_c, p], [1, n_set, 1]),
+                         Eq([PJuxt(), sb_v_c, p], [1, n_set, 1])),
+                        (Eq([PJuxt(), sb_c_v, p], [1, 1, n_set]),
+                         Eq([PJuxt(), sb_c_v, p], [1, 1, n_set])),
+                        (Eq([PJuxt(), sb_c_v, p], [1, 1, n_set, 1]),
+                         Eq([PJuxt(), sb_c_v, p], [1, 1, n_set, 1])),
                     )
                     ce = CompareEqs(db)
                     ce.assert_equality(flo, is_method=False)
@@ -496,15 +484,15 @@ class ScriptOpsTests(unittest.TestCase):
 
                     # Act on [1]
                     db1 = (
-                        (Eq([PJUXT, sb_set_scr, p], [1, n_set]),
-                         Eq([PJUXT, sb_e_set,   p], [1, n_set])),
-                        (Eq([PJUXT, sb_set_scr, p], [1, n_set, 1]),
-                         Eq([PJUXT, sb_e_set,   p], [1, n_set, 1])),
+                        (Eq([PJuxt(), sb_v_c, p], [1, n_set]),
+                         Eq([PJuxt(), sb_e_set,   p], [1, n_set])),
+                        (Eq([PJuxt(), sb_v_c, p], [1, n_set, 1]),
+                         Eq([PJuxt(), sb_e_set,   p], [1, n_set, 1])),
                         # Unintended use since the base would be modified
-                        (Eq([PJUXT, sb_scr_set, p], [1, 1, n_set]),
-                         Eq([PJUXT, sb_e_scr,   p], [1, 1, n_set])),
-                        (Eq([PJUXT, sb_scr_set, p], [1, 1, n_set, 1]),
-                         Eq([PJUXT, sb_e_scr, p], [1, 1, n_set, 1])),
+                        (Eq([PJuxt(), sb_c_v, p], [1, 1, n_set]),
+                         Eq([PJuxt(), sb_e_scr,   p], [1, 1, n_set])),
+                        (Eq([PJuxt(), sb_c_v, p], [1, 1, n_set, 1]),
+                         Eq([PJuxt(), sb_e_scr, p], [1, 1, n_set, 1])),
                     )
                     ce = CompareEqs(db1)
                     ce.assert_equality(flo1, is_method=False)
@@ -521,22 +509,22 @@ class ScriptOpsTests(unittest.TestCase):
                     # This section trusts in updated eqs but not in retvals
 
                     # Surface
-                    k1 = Subeq([PJUXT, ["k11"], ["k12"]])
-                    s1 = deepcopy(Subeq([PJUXT, sb_set_scr, p]))
+                    k1 = Subeq([PJuxt(), ["k11"], ["k12"]])
+                    s1 = deepcopy(Subeq([PJuxt(), sb_v_c, p]))
                     sub1 = s1([1, n_set])
                     sub1[:] = k1
                     e_s1 = deepcopy(s1)
-                    update_scriptblock([Op("O", "O", 0, "vs")], e_s1, [1, 1])
+                    update_scriptblock([ps_lo], e_s1, [1, 1])
                     e_sub1 = e_s1(1)
                     e_pos_k1 = e_sub1.index(k1)
 
                     # Deeper
-                    k2 = Subeq([PJUXT, ["k21"], ["k22"]])
-                    s2 = deepcopy(Subeq([PJUXT, sb_scr_set, p]))
+                    k2 = Subeq([PJuxt(), ["k21"], ["k22"]])
+                    s2 = deepcopy(Subeq([PJuxt(), sb_c_v, p]))
                     sub2 = s2([1, 1, n_set])
                     sub2[:] = k2
                     e_s2 = deepcopy(s2)
-                    update_scriptblock([Op("O", "O", 0, "vs")], e_s2, [1, 1])
+                    update_scriptblock([ps_lo], e_s2, [1, 1])
                     e_sub2 = e_s2(1)
                     e_pos_k2 = e_sub2.index(k2)
 
@@ -567,122 +555,118 @@ class ScriptOpsTests(unittest.TestCase):
                                        inversely=True)
 
     def test_insert_script(self):
-        op0vs = [Op("O", "O", 0, "vs")]
-        scr_dict = {
-            "lsub": (-1, False), "under": (0, False), "sub": (1, False),
-            "lsup": (-1, True), "over": (0, True), "sup": (1, True),
-        }
+        def fnone_gtor(spos):
+            def fnone(eq):
+                retval = insert_script(eq.idx, eq, spos)
+                self.assertIsInstance(retval, Idx)
+                self.assertEqual(eq(retval), [PVOID])
+                eq._set(["x"], retval)
+                eq.idx[:] = retval
+                return eq
 
-        def fnone(eq):
-            retval = insert_script(eq.idx, eq, *scr_dict[op_cn])
-            self.assertIsInstance(retval, Idx)
-            self.assertEqual(eq(retval), [PVOID])
-            eq._set(["x"], retval)
-            eq.idx[:] = retval
-            return eq
+            return fnone
 
-        def fy(eq):
-            retval = insert_script(eq.idx, eq, *scr_dict[op_cn], ["y"])
-            self.assertIsInstance(retval, Idx)
-            self.assertEqual(eq(retval), ["y"])
-            eq._set(["x"], retval)
-            eq.idx[:] = retval
-            return eq
+        def fy_gtor(spos):
+            def fy(eq):
+                retval = insert_script(eq.idx, eq, spos, ["y"])
+                self.assertIsInstance(retval, Idx)
+                self.assertEqual(eq(retval), ["y"])
+                eq._set(["x"], retval)
+                eq.idx[:] = retval
+                return eq
+            return fy
 
-        for op_cn in scr_dict:
+        for spos in ScriptPos:
             # Test insertions from no base
-            op = eval(op_cn.upper())
-            loop = test_equivalent_op(op)[0]
+            op = ScriptOp(False, spos)
+            loop = ScriptOp(True, spos)
             s = ["a"]
             fins = [op, ["a"], ["x"]]
-            los = op0vs
-            finlos = [loop, op0vs, ["x"]]
+            los = [ps_lo]
+            finlos = [loop, los, ["x"]]
 
             db = (
                 (Eq(s, []), Eq(fins, [2])),
                 (Eq(los, []), Eq(finlos, [2])),
-                (Eq([Op("O", "O", 1), s], [1]),
-                    Eq([Op("O", "O", 1), fins], [1, 2])),
-                (Eq([Op("O", "O", 1), los], [1]),
-                    Eq([Op("O", "O", 1), finlos], [1, 2])),
-                (Eq([PJUXT, s, ["b"]], [1]),
-                    Eq([PJUXT, fins, ["b"]], [1, 2])),
-                (Eq([PJUXT, s, ["b"]], [1]),
-                    Eq([PJUXT, fins, ["b"]], [1, 2])),
-                (Eq([PJUXT, ["b"], s], [2]),
-                    Eq([PJUXT, ["b"], fins], [2, 2])),
-                (Eq([PJUXT, ["b"], los], [2]),
-                    Eq([PJUXT, ["b"], finlos], [2, 2])),
+                (Eq([Op("O", 1), s], [1]),
+                    Eq([Op("O", 1), fins], [1, 2])),
+                (Eq([Op("O", 1), los], [1]),
+                    Eq([Op("O", 1), finlos], [1, 2])),
+                (Eq([PJuxt(), s, ["b"]], [1]),
+                    Eq([PJuxt(), fins, ["b"]], [1, 2])),
+                (Eq([PJuxt(), s, ["b"]], [1]),
+                    Eq([PJuxt(), fins, ["b"]], [1, 2])),
+                (Eq([PJuxt(), ["b"], s], [2]),
+                    Eq([PJuxt(), ["b"], fins], [2, 2])),
+                (Eq([PJuxt(), ["b"], los], [2]),
+                    Eq([PJuxt(), ["b"], finlos], [2, 2])),
             )
             ce = CompareEqs(db)
-            ce.assert_equality(fnone, is_method=False)
-            ce.assert_equality(fy, is_method=False)
+            ce.assert_equality(fnone_gtor(spos), is_method=False)
+            ce.assert_equality(fy_gtor(spos), is_method=False)
 
-            for finop in (o for o in ALL_SCRIPT_OPS_LIST
-                          if o.n_args > 2 and test_is_scriptop_with(op_cn, o)):
-                # Test already scripts-blocks when new script is really
-                # inserted
-                op = test_downgraded_scriptop_given_codename(finop, op_cn)
-                new_script_ord = test_which_ord_is_script(finop, op_cn)
-                check = test_downgraded_scriptop_given_n(finop, new_script_ord)
-                # Just a consistency check due to the lack of auxiliary tests
-                self.assertEqual(op, check)
-                if op.type_ == "loscript":
-                    s = [op, op0vs] + [["x"]] * (op.n_args - 1)
-                    fins = [finop, op0vs] + [["x"]] * (finop.n_args - 1)
+            # Test scripts-blocks when a new script is (really) inserted
+            for finop in (o for o in SCR_OPS_LIST
+                          if o._n_args > 2 and o._scripts[spos]):
+                tpl = tuple(k for k, v in finop.valid_scripts_items()
+                            if v and k is not spos)
+                op = ScriptOp(finop.is_lo(), *tpl)
+                new_script_ord = finop.spos2ord(spos)
+                if op.is_lo():
+                    s = [op, los] + [["x"]] * (op._n_args - 1)
+                    fins = [finop, los] + [["x"]] * (finop._n_args - 1)
                 else:
-                    s = [op, ["base"]] + [["x"]] * (op.n_args - 1)
-                    fins = [finop, ["base"]] + [["x"]] * (finop.n_args - 1)
+                    s = [op, ["base"]] + [["x"]] * (op._n_args - 1)
+                    fins = [finop, ["base"]] + [["x"]] * (finop._n_args - 1)
 
                 db = (
-                    (Eq(s, [1]), Eq(fins, [new_script_ord + 1])),
-                    (Eq([Op("O", "O", 1), s], [1, 1]),
-                        Eq([Op("O", "O", 1), fins], [1, new_script_ord + 1])),
-                    (Eq([PJUXT, s, ["a"]], [1, 1]),
-                        Eq([PJUXT, fins, ["a"]], [1, new_script_ord + 1])),
-                    (Eq([PJUXT, ["a"], s], [2, 1]),
-                        Eq([PJUXT, ["a"], fins], [2, new_script_ord + 1])),
+                    (Eq(s, [1]), Eq(fins, [new_script_ord])),
+                    (Eq([Op("O", 1), s], [1, 1]),
+                        Eq([Op("O", 1), fins], [1, new_script_ord])),
+                    (Eq([PJuxt(), s, ["a"]], [1, 1]),
+                        Eq([PJuxt(), fins, ["a"]], [1, new_script_ord])),
+                    (Eq([PJuxt(), ["a"], s], [2, 1]),
+                        Eq([PJuxt(), ["a"], fins], [2, new_script_ord])),
                 )
 
                 ce = CompareEqs(db)
-                ce.assert_equality(fnone, is_method=False)
-                ce.assert_equality(fy, is_method=False)
+                ce.assert_equality(fnone_gtor(spos), is_method=False)
+                ce.assert_equality(fy_gtor(spos), is_method=False)
 
-                # Test bases which already have requested script
-                # (not exhaustive)
-                for i in (i for i in range(1, finop.n_args)
-                          if i != new_script_ord):
-                    op = test_downgraded_scriptop_given_n(finop, i)
-                    prev_script_ord = test_which_ord_is_script(op, op_cn)
-                    if op.type_ == "loscript":
-                        s = [op, op0vs] + [["x"]] * (op.n_args - 1)
-                    else:
-                        s = [op, ["base"]] + [["x"]] * (op.n_args - 1)
-                    db = (
-                        (Eq(s, [1]), Eq(s, [1])),
-                        (Eq([Op("O", "O", 1), s], [1, 1]),
-                            Eq([Op("O", "O", 1), s], [1, 1])),
-                        (Eq([PJUXT, s, ["a"]], [1, 1]),
-                            Eq([PJUXT, s, ["a"]], [1, 1])),
-                        (Eq([PJUXT, ["a"], s], [2, 1]),
-                            Eq([PJUXT, ["a"], s], [2, 1])),
-                    )
+            # Test bases which already have requested script
+            for op in SCR_OPS_LIST:
+                if not op._scripts[spos]:
+                    continue
+                scr_ord = op.spos2ord(spos)
+                if op.is_lo():
+                    s = [op, los] + [["x"]] * (op._n_args - 1)
+                else:
+                    s = [op, ["base"]] + [["x"]] * (op._n_args - 1)
+                db = (
+                    (Eq(s, [1]), Eq(s, [1])),
+                    (Eq([Op("O", 1), s], [1, 1]),
+                        Eq([Op("O", 1), s], [1, 1])),
+                    (Eq([PJuxt(), s, ["a"]], [1, 1]),
+                        Eq([PJuxt(), s, ["a"]], [1, 1])),
+                    (Eq([PJuxt(), ["a"], s], [2, 1]),
+                        Eq([PJuxt(), ["a"], s], [2, 1])),
+                )
 
-                ce = CompareEqs(db)
+            ce = CompareEqs(db)
 
-                def f(eq):
-                    retval = insert_script(eq.idx, eq, *scr_dict[op_cn])
-                    self.assertEqual(retval, prev_script_ord + 1)
-                    retval = insert_script(eq.idx, eq, *scr_dict[op_cn], ["y"])
-                    self.assertEqual(retval, prev_script_ord + 1)
-                    return eq
-                ce.assert_equality(f, is_method=False)
+            def f(eq):
+                retval = insert_script(eq.idx, eq, spos)
+                self.assertEqual(retval, scr_ord)
+                retval = insert_script(eq.idx, eq, spos, ["y"])
+                self.assertEqual(retval, scr_ord)
+                return eq
+            ce.assert_equality(f, is_method=False)
 
         # Tests bases which requested script is not compatible with current lop
-        for op in SCRIPT_OPS_LIST:
-            for op_cn in ("under", "over"):
+        for op in CORN_SCR_OPS_LIST:
+            for spos in VERT_SCR_POS_TUPLE:
                 def fnone(eq):
-                    retval = insert_script(eq.idx, eq, *scr_dict[op_cn])
+                    retval = insert_script(eq.idx, eq, spos)
                     self.assertIsInstance(retval, Idx)
                     self.assertEqual(eq(retval), [PVOID])
                     eq._set(["x"], retval)
@@ -690,34 +674,35 @@ class ScriptOpsTests(unittest.TestCase):
                     return eq
 
                 def fy(eq):
-                    retval = insert_script(eq.idx, eq, *scr_dict[op_cn], ["y"])
+                    retval = insert_script(eq.idx, eq, spos, ["y"])
                     self.assertIsInstance(retval, Idx)
                     self.assertEqual(eq(retval), ["y"])
                     eq._set(["x"], retval)
                     eq.idx[:] = retval
                     return eq
 
-                new_op = eval(op_cn.upper())
-                s = [op, ["a"]] + [["z"]] * (op.n_args - 1)
-                fins = [op, [new_op, ["a"], ["x"]]] + [["z"]] * (op.n_args - 1)
+                new_op = ScriptOp(False, spos)
+                s = [op, ["a"]] + [["z"]] * (op._n_args - 1)
+                fins = [op, [new_op, ["a"],
+                             ["x"]]] + [["z"]] * (op._n_args - 1)
                 db = (
                     (Eq(s, [1]), Eq(fins, [1, 2])),
-                    (Eq([Op("O", "O", 1), s], [1, 1]),
-                        Eq([Op("O", "O", 1), fins], [1, 1, 2])),
-                    (Eq([PJUXT, s, ["a"]], [1, 1]),
-                        Eq([PJUXT, fins, ["a"]], [1, 1, 2])),
-                    (Eq([PJUXT, ["a"], s], [2, 1]),
-                        Eq([PJUXT, ["a"], fins], [2, 1, 2])),
+                    (Eq([Op("O", 1), s], [1, 1]),
+                        Eq([Op("O", 1), fins], [1, 1, 2])),
+                    (Eq([PJuxt(), s, ["a"]], [1, 1]),
+                        Eq([PJuxt(), fins, ["a"]], [1, 1, 2])),
+                    (Eq([PJuxt(), ["a"], s], [2, 1]),
+                        Eq([PJuxt(), ["a"], fins], [2, 1, 2])),
 
                 )
                 ce = CompareEqs(db)
                 ce.assert_equality(fnone, is_method=False)
                 ce.assert_equality(fy, is_method=False)
 
-        for op in SETSCRIPT_OPS_LIST:
-            for op_cn in ("lsub", "sub", "lsup", "sup"):
+        for op in VERT_SCR_OPS_LIST:
+            for spos in CORN_SCR_POS_TUPLE:
                 def fnone(eq):
-                    retval = insert_script(eq.idx, eq, *scr_dict[op_cn])
+                    retval = insert_script(eq.idx, eq, spos)
                     self.assertIsInstance(retval, Idx)
                     self.assertEqual(eq(retval), [PVOID])
                     eq._set(["x"], retval)
@@ -725,24 +710,24 @@ class ScriptOpsTests(unittest.TestCase):
                     return eq
 
                 def fy(eq):
-                    retval = insert_script(eq.idx, eq, *scr_dict[op_cn], ["y"])
+                    retval = insert_script(eq.idx, eq, spos, ["y"])
                     self.assertIsInstance(retval, Idx)
                     self.assertEqual(eq(retval), ["y"])
                     eq._set(["x"], retval)
                     eq.idx[:] = retval
                     return eq
 
-                new_op = eval(op_cn.upper())
-                s = [op, ["a"]] + [["z"]] * (op.n_args - 1)
-                fins = [op, [new_op, ["a"], ["x"]]] + [["z"]] * (op.n_args - 1)
+                new_op = ScriptOp(False, spos)
+                s = [op, ["a"]] + [["z"]] * (op._n_args - 1)
+                fins = [op, [new_op, ["a"], ["x"]]] + [["z"]] * (op._n_args - 1)
                 db = (
                     (Eq(s, [1]), Eq(fins, [1, 2])),
-                    (Eq([Op("O", "O", 1), s], [1, 1]),
-                        Eq([Op("O", "O", 1), fins], [1, 1, 2])),
-                    (Eq([PJUXT, s, ["a"]], [1, 1]),
-                        Eq([PJUXT, fins, ["a"]], [1, 1, 2])),
-                    (Eq([PJUXT, ["a"], s], [2, 1]),
-                        Eq([PJUXT, ["a"], fins], [2, 1, 2])),
+                    (Eq([Op("O", 1), s], [1, 1]),
+                        Eq([Op("O", 1), fins], [1, 1, 2])),
+                    (Eq([PJuxt(), s, ["a"]], [1, 1]),
+                        Eq([PJuxt(), fins, ["a"]], [1, 1, 2])),
+                    (Eq([PJuxt(), ["a"], s], [2, 1]),
+                        Eq([PJuxt(), ["a"], fins], [2, 1, 2])),
 
                 )
                 ce = CompareEqs(db)
@@ -750,15 +735,15 @@ class ScriptOpsTests(unittest.TestCase):
                 ce.assert_equality(fy, is_method=False)
 
     def test_remove_script_2args(self):
-        for op in (op for op in ALL_SCRIPT_OPS_LIST if op.n_args == 2):
+        for op in (op for op in SCR_OPS_LIST if op._n_args == 2):
             db = (
-                (Eq([op] + [["x"]] * op.n_args, [2]), Eq(["x"])),
-                (Eq([Op("O", "O", 1), [op] + [["x"]] * op.n_args], [1, 2]),
-                    Eq([Op("O", "O", 1), ["x"]], [1])),
-                (Eq([PJUXT, [op] + [["x"]] * op.n_args, ["y"]], [1, 2]),
-                    Eq([PJUXT, ["x"], ["y"]], [1])),
-                (Eq([PJUXT, ["y"], [op] + [["x"]] * op.n_args], [2, 2]),
-                    Eq([PJUXT, ["y"], ["x"]], [2])),
+                (Eq([op] + [["x"]] * op._n_args, [2]), Eq(["x"])),
+                (Eq([Op("O", 1), [op] + [["x"]] * op._n_args], [1, 2]),
+                    Eq([Op("O", 1), ["x"]], [1])),
+                (Eq([PJuxt(), [op] + [["x"]] * op._n_args, ["y"]], [1, 2]),
+                    Eq([PJuxt(), ["x"], ["y"]], [1])),
+                (Eq([PJuxt(), ["y"], [op] + [["x"]] * op._n_args], [2, 2]),
+                    Eq([PJuxt(), ["y"], ["x"]], [2])),
             )
 
         def fsb(eq):
@@ -772,6 +757,7 @@ class ScriptOpsTests(unittest.TestCase):
             retval = remove_script(eq.idx, eq, eq.idx[:-1] + [1])
             eq.idx[:] = retval
             return eq
+
         def frem(eq):
             # Refindex pointing to removed script
             retval = remove_script(eq.idx, eq, eq.idx[:-1] + [2])
@@ -782,25 +768,27 @@ class ScriptOpsTests(unittest.TestCase):
         ce.assert_equality(fsb, is_method=False)
         ce.assert_equality(fbase, is_method=False)
 
-        for op in (op for op in ALL_SCRIPT_OPS_LIST if op.n_args == 2):
+        for op in (op for op in SCR_OPS_LIST if op._n_args == 2):
             db = (
-                (Eq([op] + [["x"]] * op.n_args, [2]), Eq(["x"])),
-                (Eq([Op("O", "O", 1), [op] + [["x"]] * op.n_args], [1, 2]),
-                    Eq([Op("O", "O", 1), ["x"]])),
-                (Eq([PJUXT, [op] + [["x"]] * op.n_args, ["y"]], [1, 2]),
-                    Eq([PJUXT, ["x"], ["y"]])),
-                (Eq([PJUXT, ["y"], [op] + [["x"]] * op.n_args], [2, 2]),
-                    Eq([PJUXT, ["y"], ["x"]])),
+                (Eq([op] + [["x"]] * op._n_args, [2]), Eq(["x"])),
+                (Eq([Op("O", 1), [op] + [["x"]] * op._n_args], [1, 2]),
+                    Eq([Op("O", 1), ["x"]])),
+                (Eq([PJuxt(), [op] + [["x"]] * op._n_args, ["y"]], [1, 2]),
+                    Eq([PJuxt(), ["x"], ["y"]])),
+                (Eq([PJuxt(), ["y"], [op] + [["x"]] * op._n_args], [2, 2]),
+                    Eq([PJuxt(), ["y"], ["x"]])),
             )
             ce = CompareEqs(db)
             ce.assert_equality(frem, is_method=False, exclude_idx=True)
 
     def test_remove_script_3argsormore(self):
-        for op in (op for op in ALL_SCRIPT_OPS_LIST if op.n_args > 2):
-            end = op.n_args + 1
+        for op in (op for op in SCR_OPS_LIST if op._n_args > 2):
+            end = op._n_args + 1
             args = [[str(n)] for n in range(1, end)]
             for arg in range(2, end):
-                finop = test_downgraded_scriptop_given_n(op, arg - 1)
+                tpl = tuple(k for k, v in op.valid_scripts_items() if
+                            v and arg != op.spos2ord(k))
+                finop = ScriptOp(op.is_lo(), *tpl)
                 finargs = args[:]
                 del finargs[arg - 1]
                 for oarg in (a for a in range(2, end) if a != arg):
@@ -824,14 +812,14 @@ class ScriptOpsTests(unittest.TestCase):
                     db = (
                         (Eq([op] + args, [arg]),
                             Eq([finop] + finargs, [finoarg])),
-                        (Eq([Op("O", "O", 1), [op] + args], [1, arg]),
-                            Eq([Op("O", "O", 1), [finop] + finargs],
+                        (Eq([Op("O", 1), [op] + args], [1, arg]),
+                            Eq([Op("O", 1), [finop] + finargs],
                                 [1, finoarg])),
-                        (Eq([PJUXT, [op] + args, ["y"]], [1, arg]),
-                            Eq([PJUXT, [finop] + finargs, ["y"]],
+                        (Eq([PJuxt(), [op] + args, ["y"]], [1, arg]),
+                            Eq([PJuxt(), [finop] + finargs, ["y"]],
                                 [1, finoarg])),
-                        (Eq([PJUXT, ["y"], [op] + args], [2, arg]),
-                            Eq([PJUXT, ["y"], [finop] + finargs],
+                        (Eq([PJuxt(), ["y"], [op] + args], [2, arg]),
+                            Eq([PJuxt(), ["y"], [finop] + finargs],
                                 [2, finoarg])),
                     )
                     ce = CompareEqs(db)
@@ -844,39 +832,42 @@ class ScriptOpsTests(unittest.TestCase):
             eq.idx = retval
             return eq
 
-        nonlo_list = SETSCRIPT_OPS_LIST + SCRIPT_OPS_LIST
-        for op_in in (o for o in nonlo_list if o.n_args == 2):
-            for op in nonlo_list:
+        for op_in in VERT_SCR_OPS_LIST + CORN_SCR_OPS_LIST:
+            if op_in._n_args != 2:
+                continue
+            for op in VERT_SCR_OPS_LIST + CORN_SCR_OPS_LIST:
                 db = (
                     (Eq([op, [op_in, ["x"], ["x"]]]
-                        + [["y"]] * (op.n_args -1), [1, 2]),
-                        Eq([op, ["x"]] + [["y"]] * (op.n_args - 1), [1])),
+                        + [["y"]] * (op._n_args - 1), [1, 2]),
+                        Eq([op, ["x"]] + [["y"]] * (op._n_args - 1), [1])),
                 )
 
                 ce = CompareEqs(db)
                 ce.assert_equality(fbase, is_method=False)
 
-        op0vs = Op("O", "O", 0, "vs")
-        for loop_in in (o for o in LOSCRIPT_OPS_LIST if o.n_args == 2):
-            for op in nonlo_list:
-                finloop = test_equivalent_op(op)[0]
+        for loop_in in LO_SCR_OPS_LIST:
+            if loop_in._n_args != 2:
+                continue
+            for op in VERT_SCR_OPS_LIST + CORN_SCR_OPS_LIST:
+                tpl = tuple(k for k, v in op.valid_scripts_items() if v)
+                finloop = ScriptOp(True, *tpl)
 
                 def frem(eq):
                     retval = remove_script(eq.idx, eq, eq.idx[:-1] + [2])
                     self.assertEqual(retval, -1)
                     return eq
                 db = (
-                    (Eq([op, [loop_in, [op0vs], ["a"]]]
-                        + [["y"]] * (op.n_args - 1),
-                            [1, 2]),
-                        Eq([finloop, [op0vs]]
-                           + [["y"]] * (op.n_args - 1), [1])),
+                    (Eq([op, [loop_in, [ps_lo], ["a"]]]
+                        + [["y"]] * (op._n_args - 1),
+                        [1, 2]),
+                        Eq([finloop, [ps_lo]]
+                           + [["y"]] * (op._n_args - 1), [1])),
                 )
 
                 ce = CompareEqs(db)
                 ce.assert_equality(fbase, is_method=False)
                 ce.assert_equality(frem, is_method=False, exclude_idx=True)
-                for arg in range(1, op.n_args + 1):
+                for arg in range(1, op._n_args + 1):
                     def farg(eq):
                         retval = remove_script(eq.idx, eq, eq.idx[:-2] + [arg])
                         self.assertEqual(retval, eq.idx[:-2] + [arg])
@@ -884,28 +875,32 @@ class ScriptOpsTests(unittest.TestCase):
                     ce.assert_equality(farg, is_method=False, exclude_idx=True)
 
     def test_remove_script_extrefindices(self):
-        for op in ALL_SCRIPT_OPS_LIST:
-            for i in range(2, op.n_args + 1):
-                if op.type_ == "loscript":
-                    op0vs = [Op("O", "O", 0, "vs")]
-                    if op.n_args == 2:
-                        s = [op, op0vs[:], ["x"]]
-                        fs = op0vs[:]
+        s_lo = [ps_lo]
+        for op in SCR_OPS_LIST:
+            for i in range(2, op._n_args + 1):
+                if op.is_lo():
+                    if op._n_args == 2:
+                        s = [op, s_lo[:], ["x"]]
+                        fs = s_lo[:]
                     else:
-                        finop = test_downgraded_scriptop_given_n(op, i - 1)
-                        s = [op, op0vs[:]] + [["x"]] * (op.n_args - 1)
-                        fs = [finop, op0vs[:]] + [["x"]] * (finop.n_args - 1)
+                        tpl = tuple(k for k, v in op.valid_scripts_items()
+                                    if v and i != op.spos2ord(k))
+                        finop = ScriptOp(op.is_lo(), *tpl)
+                        s = [op, s_lo[:]] + [["x"]] * (op._n_args - 1)
+                        fs = [finop, s_lo[:]] + [["x"]] * (finop._n_args - 1)
                 else:
-                    if op.n_args == 2:
+                    if op._n_args == 2:
                         s = [op, ["base"], ["x"]]
                         fs = ["base"]
                     else:
-                        finop = test_downgraded_scriptop_given_n(op, i - 1)
-                        s = [op, ["base"]] + [["x"]] * (op.n_args - 1)
-                        fs = [finop, ["base"]] + [["x"]] * (finop.n_args - 1)
+                        tpl = tuple(k for k, v in op.valid_scripts_items()
+                                    if v and i != op.spos2ord(k))
+                        finop = ScriptOp(op.is_lo(), *tpl)
+                        s = [op, ["base"]] + [["x"]] * (op._n_args - 1)
+                        fs = [finop, ["base"]] + [["x"]] * (finop._n_args - 1)
                 db = (
-                    (Eq([PJUXT, s, ["b"]], [1, i]),
-                        Eq([PJUXT, fs,  ["b"]])),
+                    (Eq([PJuxt(), s, ["b"]], [1, i]),
+                        Eq([PJuxt(), fs,  ["b"]])),
                 )
 
                 def f2(eq):
@@ -915,25 +910,23 @@ class ScriptOpsTests(unittest.TestCase):
                 ce = CompareEqs(db)
                 ce.assert_equality(f2, is_method=False, exclude_idx=True)
 
-        nonlo_list = SETSCRIPT_OPS_LIST + SCRIPT_OPS_LIST
-        for loop_in in (o for o in LOSCRIPT_OPS_LIST if o.n_args == 2):
-            for op in nonlo_list:
-                finop = test_equivalent_op(op)[0]
+        for loop_in in (o for o in LO_SCR_OPS_LIST if o._n_args == 2):
+            for op in VERT_SCR_OPS_LIST + CORN_SCR_OPS_LIST:
+                finop = equiv_loop(op)
 
                 def f2(eq):
                     self.assertEqual(remove_script(eq.idx, eq, [2]), [2])
                     return eq
 
-                op0vs = Op("O", "O", 0, "vs")
                 db = (
-                    (Eq([op, [loop_in, [op0vs], ["a"]]]
-                        + [["y"]] * (op.n_args - 1), [1, 2]),
-                        Eq([finop, [op0vs]]
-                           + [["y"]] * (finop.n_args - 1))),
+                    (Eq([op, [loop_in, s_lo, ["a"]]]
+                        + [["y"]] * (op._n_args - 1), [1, 2]),
+                        Eq([finop, s_lo] + [["y"]] * (finop._n_args - 1))),
                 )
 
                 ce = CompareEqs(db)
                 ce.assert_equality(f2, is_method=False, exclude_idx=True)
+
 
 if __name__ == '__main__':
     unittest.main()

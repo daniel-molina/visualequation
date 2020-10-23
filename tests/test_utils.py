@@ -12,34 +12,49 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import unittest
+from itertools import combinations
 
-from copy import deepcopy
-from visualequation.dirsel import Dir
 from visualequation.ops import *
-from visualequation.eqcore import EditableEq
+from visualequation.eqcore import EqCore
 from visualequation.scriptops import *
 
-op0vs = [Op("O", "O", 0, "vs")]
 
-class Eq(EditableEq):
+class Eq(EqCore):
+    """Dummy class to avoid printing debugging messages when testing."""
+
     DEFAULT_METHOD_RETVAL = 88
 
-    """Dummy class to avoid debugging messages when testing."""
-    def __init__(self, eq0=None, sel_index0=None, dir0=None):
-        super().__init__(eq0, sel_index0, dir0, debug=False)
+    def __init__(self, eq=None, idx=None, selm=SelMode.LCURSOR, ovrwrt=False):
+        super().__init__(eq, idx, selm, ovrwrt, debug=False)
 
     def default_eq(self):
         self[:] = [PVOID]
         self.idx[:] = []
-        self.dir = Dir.V
+        self.selm = SelMode.LCURSOR
+        self.ovrwrt = False
         return self.DEFAULT_METHOD_RETVAL
 
-SCRIPT_OPS_LIST = [op for op in SCRIPT_OP2ID_DICT.keys() if op is not None]
-SETSCRIPT_OPS_LIST \
-    = [op for op in SETSCRIPT_OP2ID_DICT.keys() if op is not None]
-LOSCRIPT_OPS_LIST \
-    = [op for op in LOSCRIPT_OP2ID_DICT.keys() if op is not None]
-ALL_SCRIPT_OPS_LIST = SCRIPT_OPS_LIST + SETSCRIPT_OPS_LIST + LOSCRIPT_OPS_LIST
+
+ps_lo = PseudoSymb("L", lo_base=True)
+ps = PseudoSymb("u")
+SUP = ScriptOp(False, ScriptPos.RSUP)
+
+LO_SCR_OPS_LIST = []
+for n in range(1, len(ScriptPos) + 1):
+    for tpl in combinations(ScriptPos, n):
+        LO_SCR_OPS_LIST.append(ScriptOp(True, *tpl))
+
+VERT_SCR_OPS_LIST = []
+for n in range(1, len(VERT_SCR_POS_TUPLE) + 1):
+    for tpl in combinations(VERT_SCR_POS_TUPLE, n):
+        VERT_SCR_OPS_LIST.append(ScriptOp(False, *tpl))
+
+CORN_SCR_OPS_LIST = []
+for n in range(1, len(CORN_SCR_POS_TUPLE) + 1):
+    for tpl in combinations(CORN_SCR_POS_TUPLE, n):
+        CORN_SCR_OPS_LIST.append(ScriptOp(False, *tpl))
+
+SCR_OPS_LIST = CORN_SCR_OPS_LIST + VERT_SCR_OPS_LIST + LO_SCR_OPS_LIST
 
 NO_EQ_MSG = "No Eqs are available for comparison"
 NoEqError = ValueError(NO_EQ_MSG)
@@ -47,12 +62,11 @@ NON_EQUAL_EQ_MSG = "Eqs do not match"
 NonEqualEqError = ValueError(NON_EQUAL_EQ_MSG)
 NON_EQUAL_IDX_MSG = "Indices do not match"
 NonEqualIdxError = ValueError(NON_EQUAL_IDX_MSG)
-NON_EQUAL_DIR_MSG = "Dirs do not match"
-NonEqualDirError = ValueError(NON_EQUAL_DIR_MSG)
 NON_EQUAL_RETURN_MSG = "Returned values do not match"
 NoneEqualReturnError = ValueError(NON_EQUAL_RETURN_MSG)
 WRONG_NUMBER_ARGS_MSG = "Wrong number of arguments"
 WrongNumberArgsError = TypeError(WRONG_NUMBER_ARGS_MSG)
+
 
 class CompareEqs:
     """A class to compare equations.
@@ -84,7 +98,7 @@ class CompareEqs:
         if force_subeq:
             self.eq_in.append(Subeq(eq_in))
             self.eq_out.append(Subeq(eq_out))
-        elif not isinstance(eq_in, EditableEq):
+        elif not isinstance(eq_in, EqCore):
             self.eq_in.append(Eq(eq_in))
             self.eq_out.append(Eq(eq_out))
         else:
@@ -102,7 +116,7 @@ class CompareEqs:
         if force_subeq:
             self.eq_in.extend((Subeq(e) for e in many_eq_in))
             self.eq_out.extend((Subeq(e) for e in many_eq_out))
-        elif not isinstance(many_eq_in[0], EditableEq):
+        elif not isinstance(many_eq_in[0], EqCore):
             self.eq_in.extend((Eq(e) for e in many_eq_in))
             self.eq_out.extend((Eq(e) for e in many_eq_out))
         else:
@@ -134,8 +148,8 @@ class CompareEqs:
 
         def eq2text(eq):
             eq_srepr = str(eq)
-            if isinstance(eq, EditableEq):
-                tail_str = str(eq.idx) + ", " + eq.dir.name
+            if isinstance(eq, EqCore):
+                tail_str = str(eq.idx) + ", " + ("OVR" if eq.ovrwrt else "INS")
             else:
                 tail_str = ""
 
@@ -169,7 +183,7 @@ class CompareEqs:
               l_correct, "\033[0m")
 
     def assert_equality(self, fun=None, is_method=True, inversely=False,
-                        exclude_eq=False, exclude_idx=False, exclude_dir=False,
+                        exclude_eq=False, exclude_idx=False,
                         exclude_retvals=False, debug=True):
         if not self.eq_in or not self.eq_out:
             raise NoEqError
@@ -214,7 +228,7 @@ class CompareEqs:
                                              other_eqs, correct_eqs, inversely)
                 raise NonEqualEqError
 
-        if isinstance(correct_eqs[0], EditableEq) and not exclude_idx:
+        if isinstance(correct_eqs[0], EqCore) and not exclude_idx:
             if not all(map(lambda s, p: s.idx == p.idx,
                            correct_eqs, calc_eqs)):
                 if debug:
@@ -224,17 +238,6 @@ class CompareEqs:
                                              correct_eqs[e[0]].idx,
                                              other_eqs, correct_eqs, inversely)
                 raise NonEqualIdxError
-
-        if isinstance(correct_eqs[0], EditableEq) and not exclude_dir:
-            if not all(map(lambda s, p: s.dir is p.dir,
-                           correct_eqs, calc_eqs)):
-                if debug:
-                    e = next((i, s) for i, s in enumerate(calc_eqs) \
-                         if s.dir != correct_eqs[i].dir)
-                    self.print_debug_message(e[0], e[1].dir,
-                                             correct_eqs[e[0]].dir,
-                                             other_eqs, correct_eqs, inversely)
-                raise NonEqualDirError
 
         if is_method and not exclude_retvals and self.expected_retvals:
             if self.expected_retvals != retvals:
@@ -260,7 +263,7 @@ class CompareEqsTests(unittest.TestCase):
         self.assertEqual(len(ce.eq_out), 4)
         for s in ce.eq_in + ce.eq_out:
             self.assertIsInstance(s, Subeq)
-            self.assertNotIsInstance(s, EditableEq)
+            self.assertNotIsInstance(s, EqCore)
 
         ce = CompareEqs()
         ce.add_pair(Eq(["a"]), Eq(None))
@@ -272,21 +275,21 @@ class CompareEqsTests(unittest.TestCase):
         self.assertEqual(len(ce.eq_in), 4)
         self.assertEqual(len(ce.eq_out), 4)
         for s in ce.eq_in + ce.eq_out:
-            self.assertIsInstance(s, EditableEq)
+            self.assertIsInstance(s, EqCore)
 
         ce.add_pair(["b"], [PVOID])
         for s in ce.eq_in + ce.eq_out:
-            self.assertIsInstance(s, EditableEq)
+            self.assertIsInstance(s, EqCore)
 
     def test_add_many(self):
         ce = CompareEqs()
-        l1 = (["a"], ["b"], [PVOID], [PJUXT, ["a"], ["b"]])
-        l2 = (["x"], ["y"], [TVOID], [TJUXT, ["x"], ["y"]])
+        l1 = (["a"], ["b"], [PVOID], [PJuxt(), ["a"], ["b"]])
+        l2 = (["x"], ["y"], [ps], [TJuxt(), ["x"], ["y"]])
         ce.add_many(l1, l2)
         for eqs in (ce.eq_in, ce.eq_out):
             for pos, s in enumerate(eqs):
                 self.assertEqual(ce.eq_in[pos], l1[pos])
-                self.assertIsInstance(s, EditableEq)
+                self.assertIsInstance(s, EqCore)
 
         ce = CompareEqs()
         ce.add_many(l1, l2, force_subeq=True)
@@ -294,26 +297,26 @@ class CompareEqsTests(unittest.TestCase):
             for pos, s in enumerate(eqs):
                 self.assertEqual(ce.eq_in[pos], l1[pos])
                 self.assertIsInstance(s, Subeq)
-                self.assertNotIsInstance(s, EditableEq)
+                self.assertNotIsInstance(s, EqCore)
 
     def test_add_unzipping(self):
         db = (
             (["q"], ["x"]),
-            ([PJUXT, ["a"], [TVOID]], [PVOID]),
-            ([SUP, ["x"], ["b"]], [Op("O", "O")]),
+            ([PJuxt(), ["a"], [ps]], [PVOID]),
+            ([SUP, ["x"], ["b"]], [ps]),
         )
         ce = CompareEqs()
         ce.add_unzipping(db)
         for pos, eq_pair in enumerate(db):
             self.assertEqual(ce.eq_in[pos], db[pos][0])
             self.assertEqual(ce.eq_out[pos], db[pos][1])
-            self.assertIsInstance(ce.eq_in[pos], EditableEq)
-            self.assertIsInstance(ce.eq_out[pos], EditableEq)
+            self.assertIsInstance(ce.eq_in[pos], EqCore)
+            self.assertIsInstance(ce.eq_out[pos], EqCore)
 
         db = (
             (["q"], ["x"]),
-            ([PJUXT, ["a"], [TVOID]], [PVOID]),
-            ([SUP, ["x"], ["b"]], [Op("O", "O")]),
+            ([PJuxt(), ["a"], [ps]], [PVOID]),
+            ([SUP, ["x"], ["b"]], [ps]),
         )
         ce = CompareEqs()
         ce.add_unzipping(db, force_subeq=True)
@@ -322,51 +325,51 @@ class CompareEqsTests(unittest.TestCase):
             self.assertEqual(ce.eq_out[pos], db[pos][1])
             self.assertIsInstance(ce.eq_in[pos], Subeq)
             self.assertIsInstance(ce.eq_out[pos], Subeq)
-            self.assertNotIsInstance(ce.eq_in[pos], EditableEq)
-            self.assertNotIsInstance(ce.eq_out[pos], EditableEq)
+            self.assertNotIsInstance(ce.eq_in[pos], EqCore)
+            self.assertNotIsInstance(ce.eq_out[pos], EqCore)
 
     def test_init(self):
         db = (
             (Eq(["q"]), Eq(["x"])),
-            (Eq([PJUXT, ["a"], [TVOID]]), Eq([PVOID])),
-            (Eq([SUP, ["x"], ["b"]]), Eq([Op("O", "O")])),
+            (Eq([PJuxt(), ["a"], [ps]]), Eq([PVOID])),
+            (Eq([SUP, ["x"], ["b"]]), Eq([ps])),
         )
         ce = CompareEqs(db)
         for pos, eq_pair in enumerate(db):
             self.assertEqual(ce.eq_in[pos], db[pos][0])
             self.assertEqual(ce.eq_out[pos], db[pos][1])
-            self.assertIsInstance(ce.eq_in[pos], EditableEq)
-            self.assertIsInstance(ce.eq_out[pos], EditableEq)
+            self.assertIsInstance(ce.eq_in[pos], EqCore)
+            self.assertIsInstance(ce.eq_out[pos], EqCore)
 
-        l1 = (["a"], ["b"], [PVOID], [PJUXT, ["a"], ["b"]])
-        l2 = (["x"], ["y"], [TVOID], [TJUXT, ["x"], ["y"]])
+        l1 = (["a"], ["b"], [PVOID], [PJuxt(), ["a"], ["b"]])
+        l2 = (["x"], ["y"], [ps], [TJuxt(), ["x"], ["y"]])
         ce = CompareEqs(l1, l2)
         for eqs in (ce.eq_in, ce.eq_out):
             for pos, s in enumerate(eqs):
                 self.assertEqual(ce.eq_in[pos], l1[pos])
-                self.assertIsInstance(s, EditableEq)
+                self.assertIsInstance(s, EqCore)
 
-        l1 = (["a"], ["b"], [PVOID], [PJUXT, ["a"], ["b"]])
-        l2 = (["x"], ["y"], [TVOID], [TJUXT, ["x"], ["y"]])
+        l1 = (["a"], ["b"], [PVOID], [PJuxt(), ["a"], ["b"]])
+        l2 = (["x"], ["y"], [ps], [TJuxt(), ["x"], ["y"]])
         ce = CompareEqs(l1, l2, force_subeq=True)
         for eqs in (ce.eq_in, ce.eq_out):
             for pos, s in enumerate(eqs):
                 self.assertEqual(ce.eq_in[pos], l1[pos])
                 self.assertIsInstance(s, Subeq)
-                self.assertNotIsInstance(s, EditableEq)
+                self.assertNotIsInstance(s, EqCore)
 
     def test_assert_equality(self):
-        l1 = ([PJUXT, ["a"], ["f"], ["r"]], [PJUXT, ["a"], ["b"]])
+        l1 = ([PJuxt(3), ["a"], ["f"], ["r"]], [PJuxt(), ["a"], ["b"]])
         ce = CompareEqs(l1, l1)
         ce.assert_equality(debug=False, is_method=False)
 
-        l2 = ([PJUXT, ["a"], ["f"], ["r"]], [TJUXT, ["x"], ["y"]])
+        l2 = ([PJuxt(3), ["a"], ["f"], ["r"]], [TJuxt(), ["x"], ["y"]])
         ce = CompareEqs(l1, l2)
         with self.assertRaises(ValueError) as cm:
             ce.assert_equality(debug=False, is_method=False)
         self.assertEqual(cm.exception.args[0], NON_EQUAL_EQ_MSG)
 
-        f = lambda s: [PJUXT, s, ["o"]]
+        f = lambda s: [PJuxt(), s, ["o"]]
         ce = CompareEqs(l1, l2, force_subeq=True)
         with self.assertRaises(ValueError) as cm:
             ce.assert_equality(f, debug=False, is_method=False)
@@ -375,55 +378,44 @@ class CompareEqsTests(unittest.TestCase):
         ce = CompareEqs(l1, l1)
         ce.assert_equality(debug=False, is_method=False)
 
-        f = lambda eq: Eq(eq, [1])
+        f = lambda eq: Eq(eq, [2])
         ce.assert_equality(f, debug=False, is_method=False, exclude_idx=True)
         with self.assertRaises(ValueError) as cm:
             ce.assert_equality(f, debug=False, is_method=False)
         self.assertEqual(cm.exception.args[0], NON_EQUAL_IDX_MSG)
 
-        f = lambda eq: Eq(eq, eq.idx, Dir.O)
-        ce.assert_equality(f, debug=False, is_method=False, exclude_dir=True)
-        with self.assertRaises(ValueError) as cm:
-            ce.assert_equality(f, debug=False, is_method=False)
-        self.assertEqual(cm.exception.args[0], NON_EQUAL_DIR_MSG)
+        f = lambda eq: Eq(eq, eq.idx)
+        ce.assert_equality(f, debug=False, is_method=False)
 
         # Inverses
-        ce = CompareEqs(list(map(lambda s: Eq(s, None, Dir.R), l1)),
-                        list(map(lambda s: Eq(s, None, Dir.L), l1)))
-        f = lambda eq: Eq(eq, eq.idx, Dir.L)
+        ce = CompareEqs(list(map(lambda s: Eq(s, None), l1)),
+                        list(map(lambda s: Eq(s, None), l1)))
+        f = lambda eq: Eq(eq, eq.idx)
         ce.assert_equality(f, debug=False, is_method=False)
-        ce.assert_equality(f, debug=False, inversely=True, is_method=False,
-                           exclude_dir=True)
-        with self.assertRaises(ValueError) as cm:
-            ce.assert_equality(f, debug=False, inversely=True, is_method=False)
-        self.assertEqual(cm.exception.args[0], NON_EQUAL_DIR_MSG)
 
-        f = lambda eq: Eq(eq, eq.idx, Dir.R)
+        f = lambda eq: Eq(eq, eq.idx)
         ce.assert_equality(f, debug=False, inversely=True, is_method=False)
-        with self.assertRaises(ValueError) as cm:
-            ce.assert_equality(f, debug=False, is_method=False)
-        self.assertEqual(cm.exception.args[0], NON_EQUAL_DIR_MSG)
 
     def test_assert_equality_methods(self):
-        l1 = ([PJUXT, ["a"], ["f"], ["r"]], [PJUXT, ["a"], ["b"]])
-        ce = CompareEqs([Eq(s, None, Dir.R) for s in l1],
+        l1 = ([PJuxt(), ["a"], ["f"], ["r"]], [PJuxt(), ["a"], ["b"]])
+        ce = CompareEqs([Eq(s, None) for s in l1],
                         [Eq()]*len(l1))
         ce.assert_equality(Eq.default_eq, debug=False)
 
-        ce = CompareEqs([Eq(s, None, Dir.R) for s in l1],
+        ce = CompareEqs([Eq(s, None) for s in l1],
                         [Eq()]*len(l1), [12]*len(l1))
         ce.assert_equality(Eq.default_eq, debug=False, exclude_retvals=True)
         with self.assertRaises(ValueError) as cm:
             ce.assert_equality(Eq.default_eq, debug=False)
         self.assertEqual(cm.exception.args[0], NON_EQUAL_RETURN_MSG)
 
-        ce = CompareEqs([Eq(s, None, Dir.R) for s in l1],
+        ce = CompareEqs([Eq(s, None) for s in l1],
                         [Eq()]*len(l1), [Eq.DEFAULT_METHOD_RETVAL]*len(l1))
         ce.assert_equality(Eq.default_eq, debug=False)
 
         db = (
-            [[PJUXT, ["a"], ["f"], ["r"]], [PVOID], 1],
-            [[PJUXT, ["a"], ["b"]], [PVOID], 1],
+            [[PJuxt(), ["a"], ["f"], ["r"]], [PVOID], 1],
+            [[PJuxt(), ["a"], ["b"]], [PVOID], 1],
         )
         ce = CompareEqs(db)
         with self.assertRaises(ValueError) as cm:
