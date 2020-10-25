@@ -199,7 +199,8 @@ class Subeq(list):
             return repr(elem)
         if not len(elem):
             return "[]"
-        s_str = "[" + repr(elem[0])
+        # Do not assume that first element is a Op even if len > 1.
+        s_str = "[" + cls._repr_aux(elem[0])
         for e in elem[1:]:
             s_str += ", " + cls._repr_aux(e)
         return s_str + "]"
