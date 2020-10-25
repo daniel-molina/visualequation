@@ -162,7 +162,7 @@ class Idx(list):
         """Return index of left par of a subeq.
 
         Return -2 if pointed subeq is not a par.
-        Return -1 if pointed subeq is a 1st par or lop.
+        Return -1 if pointed subeq is a 1st par.
         """
         if not self:
             if set:
@@ -180,10 +180,25 @@ class Idx(list):
             raise NoCoParError
         self[-1] -= 1
 
+    def prevord(self):
+        """Return the ordinal of previous parameter.
+
+        Return -2 if pointed subeq is not a par.
+        Return -1 if pointed subeq is a 1st par.
+        """
+        if not self:
+            return -2
+
+        ord = self[-1]
+        if ord == 0:
+            raise LopError
+
+        return ord - 1 if ord != 1 else -1
+
     def nextpar(self, n_pars: Optional[int] = None, set=False):
         """Return index of next co-parameter.
 
-        If *self* is [], -2 is returned.
+        If *self* is Idx([]), -2 is returned.
         If index point to last par (*n_pars*-th), -1 is returned.
         If *n_pars* is None, it is assumed that next parameter exists.
         """
@@ -208,6 +223,28 @@ class Idx(list):
         if ord == n_pars:
             raise NoCoParError
         self[-1] += 1
+
+    def nextord(self, n_pars: Optional[int] = None):
+        """Return the ordinal of next parameter.
+
+        If *n_pars* is None, it is assumed that next parameter exists.
+
+        If *self* is Idx([]), -2 is returned.
+        If index point to last par (*n_pars*-th), -1 is returned.
+        """
+        if not self:
+            return -2
+
+        ord = self[-1]
+
+        if ord == 0:
+            raise LopError
+        if n_pars is not None and ord > n_pars:
+            raise InconsistentParsError
+
+        if n_pars is None or ord < n_pars:
+            return ord + 1
+        return -1
 
     def level(self):
         """Return the nesting level of pointed subeq."""

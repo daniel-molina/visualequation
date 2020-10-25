@@ -389,8 +389,8 @@ subequations:
     cannot manage.
 1.  Other cases?
 
-The next definitions specify the terminology used to prohibit certain
-subequations of an equation to be selected.
+Next definitions specify the terminology used to prohibit certain subequations 
+of an equation to be selected.
 
 > **Note**:
 > 
@@ -574,8 +574,8 @@ A **juxted** is a parameter of a juxt.
 >
 >   `(JUXT4, A, B, C, D)`
 
-> **Note**: In current VE implementation, non-last juxteds cannot be pointed to
-> the right with the cursor. Rest of subeqs can.
+> **Note**: In current VE implementation, non-last juxteds and PVOIDS cannot be
+> pointed to the right. Rest of subeqs can.
 
 Two juxteds are **cojuxteds** if they are juxteds of the same juxt-block.
 

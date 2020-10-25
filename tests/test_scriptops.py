@@ -17,10 +17,10 @@ from tests.test_utils import *
 def equiv_loop(op1: ScriptOp, op2: Optional[ScriptOp] = None):
     """Return an FULL ScriptOp with exactly the same ScriptPos than input
     combined."""
-    tpl = tuple(k for k, v in op1.valid_scripts_items() if v)
-    if op2 is not None:
-        tpl += tuple(k for k, v in op2.valid_scripts_items() if v)
-    return ScriptOp(True, *tpl)
+    if op2 is None:
+        return ScriptOp(True, *op1.valid_scripts_keys(True))
+    return ScriptOp(True, *op1.valid_scripts_keys(True),
+                    *op2.valid_scripts_keys(True))
 
 
 class ScriptOpsTests(unittest.TestCase):
@@ -53,8 +53,7 @@ class ScriptOpsTests(unittest.TestCase):
         for op in VERT_SCR_OPS_LIST + CORN_SCR_OPS_LIST:
             n_single_ops += 1
 
-            tpl = tuple(k for k, v in op.valid_scripts_items() if v)
-            new_op = ScriptOp(True, *tpl)
+            new_op = ScriptOp(True, *op.valid_scripts_keys(True))
             db = (
                 (Eq(["a"]), Eq(["a"], [])),
                 (Eq([op] + [["x"]] * op._n_args),
@@ -146,8 +145,7 @@ class ScriptOpsTests(unittest.TestCase):
 
         p = [PJuxt(), ["a"], ["b"]]
         for op in VERT_SCR_OPS_LIST + CORN_SCR_OPS_LIST:
-            tpl = tuple(k for k, v in op.valid_scripts_items() if v)
-            e_op = ScriptOp(True, *tpl)
+            e_op = ScriptOp(True, *op.valid_scripts_keys(True))
 
             db = (
                 (Eq([PJuxt(op._n_args)] + [["x"]] * op._n_args, []),
@@ -236,12 +234,11 @@ class ScriptOpsTests(unittest.TestCase):
                 sb_v_c = [op_vert] + [[op_corn] + [p] * op_corn._n_args] \
                          + [p] * (op_vert._n_args - 1)
 
-                tpl_v = tuple(k for k, v in op_vert.valid_scripts_items() if v)
-                tpl_c = tuple(k for k, v in op_corn.valid_scripts_items() if v)
+                e_op = ScriptOp(True, *op_vert.valid_scripts_keys(True),
+                                *op_corn.valid_scripts_keys(True))
+                e_op_vert = ScriptOp(True, *op_vert.valid_scripts_keys(True))
+                e_op_corn = ScriptOp(True, *op_corn.valid_scripts_keys(True))
 
-                e_op = ScriptOp(True, *tpl_v, *tpl_c)
-                e_op_vert = ScriptOp(True, *tpl_v)
-                e_op_corn = ScriptOp(True, *tpl_c)
                 sb_e = [e_op] + [p] * e_op._n_args
                 sb_e_scr = [e_op_corn] + [[op_vert] + [p] * op_vert._n_args] \
                            + [p] * (op_corn._n_args - 1)
@@ -608,9 +605,9 @@ class ScriptOpsTests(unittest.TestCase):
             # Test scripts-blocks when a new script is (really) inserted
             for finop in (o for o in SCR_OPS_LIST
                           if o._n_args > 2 and o._scripts[spos]):
-                tpl = tuple(k for k, v in finop.valid_scripts_items()
-                            if v and k is not spos)
-                op = ScriptOp(finop.is_lo(), *tpl)
+                op = ScriptOp(finop.is_lo(),
+                              *(k for k in finop.valid_scripts_keys(True)
+                               if k is not spos))
                 new_script_ord = finop.spos2ord(spos)
                 if op.is_lo():
                     s = [op, los] + [["x"]] * (op._n_args - 1)
@@ -786,9 +783,9 @@ class ScriptOpsTests(unittest.TestCase):
             end = op._n_args + 1
             args = [[str(n)] for n in range(1, end)]
             for arg in range(2, end):
-                tpl = tuple(k for k, v in op.valid_scripts_items() if
-                            v and arg != op.spos2ord(k))
-                finop = ScriptOp(op.is_lo(), *tpl)
+                finop = ScriptOp(op.is_lo(),
+                                 *(k for k in op.valid_scripts_keys(True)
+                                   if arg != op.spos2ord(k)))
                 finargs = args[:]
                 del finargs[arg - 1]
                 for oarg in (a for a in range(2, end) if a != arg):
@@ -849,8 +846,7 @@ class ScriptOpsTests(unittest.TestCase):
             if loop_in._n_args != 2:
                 continue
             for op in VERT_SCR_OPS_LIST + CORN_SCR_OPS_LIST:
-                tpl = tuple(k for k, v in op.valid_scripts_items() if v)
-                finloop = ScriptOp(True, *tpl)
+                finloop = ScriptOp(True, *op.valid_scripts_keys(True))
 
                 def frem(eq):
                     retval = remove_script(eq.idx, eq, eq.idx[:-1] + [2])
@@ -883,9 +879,10 @@ class ScriptOpsTests(unittest.TestCase):
                         s = [op, s_lo[:], ["x"]]
                         fs = s_lo[:]
                     else:
-                        tpl = tuple(k for k, v in op.valid_scripts_items()
-                                    if v and i != op.spos2ord(k))
-                        finop = ScriptOp(op.is_lo(), *tpl)
+                        finop = ScriptOp(op.is_lo(),
+                                         *(k for k
+                                           in op.valid_scripts_keys(True)
+                                           if i != op.spos2ord(k)))
                         s = [op, s_lo[:]] + [["x"]] * (op._n_args - 1)
                         fs = [finop, s_lo[:]] + [["x"]] * (finop._n_args - 1)
                 else:
@@ -893,9 +890,10 @@ class ScriptOpsTests(unittest.TestCase):
                         s = [op, ["base"], ["x"]]
                         fs = ["base"]
                     else:
-                        tpl = tuple(k for k, v in op.valid_scripts_items()
-                                    if v and i != op.spos2ord(k))
-                        finop = ScriptOp(op.is_lo(), *tpl)
+                        finop = ScriptOp(op.is_lo(),
+                                         *(k for k
+                                           in op.valid_scripts_keys(True)
+                                           if i != op.spos2ord(k)))
                         s = [op, ["base"]] + [["x"]] * (op._n_args - 1)
                         fs = [finop, ["base"]] + [["x"]] * (finop._n_args - 1)
                 db = (

@@ -332,13 +332,15 @@ class ScriptOp(Op):
             return (self._scripts[ScriptPos(num)] for num in (3, 6))
         return (self._scripts[ScriptPos(num)] for num in (2, 4, 5, 7))
 
-    def valid_scripts_keys(self):
+    def valid_scripts_keys(self, only_used=False):
         """Return an iterator through valid _scripts keys, in order.
 
         .. note::
             Valid script are not those which are present, but those allowed by
             the ScriptOpSubtype.
         """
+        if only_used:
+            return (k for k, v in self._scripts.items() if v)
         if self.is_lo():
             return self._scripts.keys()
         if self.is_vert():
