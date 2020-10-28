@@ -80,7 +80,7 @@ For example, to introduce 3 ten times you can type: `M-1 0 M-g 3`.
 to operation associated to keybinding `C-f`. If no number is added after
 `M--`, -1 is passed implicitly.
 
-## Selection-independent operations
+## Global operations
 
 **Saved equations** can be accessed like previous commands on the history of a
 shell. In addition, saved equations can have an associated name, categories
@@ -95,6 +95,20 @@ intended to use. There are a lot of different commands to save equations.
 
 Details on shell-like operations.
 
+### Help (F1)
+### Select previous/next equation (C-UP/C-DOWN)
+Select a contiguous equation.
+### Go to first/last equation (C-HOME/C-END)
+### Create new eq after current one (RETURN)
+### Transpose eq with previous/next equation (M-UP/M-DOWN)
+Exchange positions of contiguous equations.
+### Move screen up/down (PAGEUP/PAGEDOWN)
+### Increase/Decrease size of equations (C-+/C--)
+
+### New tab (C-t)
+### Close tab (C-w)
+### Close all tabs (S-C-w)
+
 ### Quit (C-q)
 Exit Visual Equation with a confirmation dialog.
 
@@ -106,29 +120,6 @@ Exit Visual Equation with a confirmation dialog.
 Exit Visual Equation if equation is a PVOID, discarding the kill ring and the
 undo list. It never asks for confirmation to quit.
 
-### Export equations (C-e)
-Export all equation (saved or not) to images, specifying its size, format
-and other details.
-
-It is possible to recover equations for further edition from exported equations
-in PNG and PDF format.
-
-### Export current equation (S-C-e)
-Export only equation being edited
-
-### Save as... (S-C-s)
-This is desktop-like operation but it is placed in this section to help the
-reader have a big picture.
-
-Save with a graphical interface current equation as a new equation at
-the end of the history, possibly specifying a name and categories.
-
-### Save (C-s)
-This is desktop-like operation but it is placed in this section to help the
-reader have a big picture.
-
-If equation being edited was never saved, this command is equivalent to
-save_as. Else, it overwrites previously saved version of equation.
 ### Open equation (C-o)
 This is desktop-like operation but it is placed in this section to help the
 reader have a big picture.
@@ -155,6 +146,33 @@ reader have a big picture.
 It ask the user if it is desired to save current equations. In the positive
 case, the usual dialog to save equation is presented. After that, a new empty 
 equation is presented for edition.
+
+### Export equations (C-e)
+Export all equation (saved or not) to images, specifying its size, format
+and other details.
+
+It is possible to recover equations for further edition from exported equations
+in PNG and PDF format.
+
+### Export current equation (S-C-e)
+Export only equation being edited
+
+### Save as... (S-C-s)
+This is desktop-like operation but it is placed in this section to help the
+reader have a big picture.
+
+Save with a graphical interface current equation as a new equation at
+the end of the history, possibly specifying a name and categories.
+
+### Save (C-s)
+This is desktop-like operation but it is placed in this section to help the
+reader have a big picture.
+
+If equation being edited was never saved, this command is equivalent to
+save_as. Else, it overwrites previously saved version of equation.
+
+### Print (C-p)
+
 
 ### Accept line ()
 This a non-windowed version of *Save as...*.
@@ -336,17 +354,6 @@ Effect of pressing LEFT/RIGHT:
 They change selection according to specific subeq being selected. Typical case
 is to move from numerator to denominator (and the other way around).
 
-## Global operations
-### Help (F1)
-### Select previous/next equation (C-UP/C-DOWN)
-Select a contiguous equation.
-### Go to first/last equation (C-HOME/C-END)
-### Create new eq after current one (RETURN)
-### Transpose eq with previous/next equation (M-UP/M-DOWN)
-Exchange positions of contiguous equations.
-### Move screen up/down (PAGEUP/PAGEDOWN)
-### Increase/Decrease size of equations (C-+/C--)
-
 ## Selection-size operations
 Operations in this section act on subequations which sizes are related to the
 size of current selection. For example the selection itself, its mates,
@@ -485,7 +492,7 @@ respected even if it collides with an important shortcut of readline.
 Select usupeq if it exists. Do not change dir unless it is V. In that case, set
 R. It resembles the GUI notion of using SHIFT to extend current selection.
 
-#### Select first param (M-w)
+#### Select first param ()
 Select first 1-ulevel usubeq of selection if it exists and is selectable.
 
 Do not change dir unless required by a PVOID.
@@ -494,14 +501,14 @@ also that DOWN does not always go to the start of the next line. Of course,
 SHIFT-DOWN per se would extend selection and not shrink it in reasonable text
 editors.
 
-#### Select last param (C-w)
+#### Select last param ()
 Select last 1-ulevel usubeq of selection, if it exists and is selectable.
 Do not change dir unless required by a PVOID.
 
-#### Select juxted to the left of usupeq (S-M-w)
+#### Select juxted to the left of usupeq ()
 Select juxted to the left of usupeq. If it does not exist, select usupeq.
 
-#### Select juxted to the right of usupeq (S-C-w)
+#### Select juxted to the right of usupeq ()
 Select juxted to the right of usupeq. If it does not exist, create a TVOID.
 
 
@@ -677,16 +684,16 @@ Marginal cases:
 #### Pull (S-C-SPACE)
 Counter-part of *Push*.
 
-#### Transmute with supeq (S-C-t)
+#### Transmute with supeq ()
 If selection is a block B and has a supeq SUP, exchange lop-B and lop-SUP,
 removing excess of parameters and including PVOIDs as needed.
 
-#### Transmute with first par (M-t)
+#### Transmute with first par ()
 If selection is a block B and its first parameter is a block BSUB, exchange
 lop-B and lop-BSUB, removing excess of parameters and including PVOIDs as 
 needed.
 
-#### Transmute with last par (C-t)
+#### Transmute with last par ()
 If selection is a block B and its last parameter is a block BSUB, exchange
 lop-B and lop-BSUB, removing excess of parameters and including PVOIDs as 
 needed.
@@ -701,18 +708,18 @@ Remove the whole equation. Undo command would restore previous eq.
 If supeq is a juxted, vanish it (with all its subeqs). Else, replace it with a
 PVOID.
 
-#### Delete last param (C-h)
+#### Delete last param (C-u)
 Delete last param.
 
-#### Delete first param (M-h)
+#### Delete first param (M-u)
 Delete first param.
 
-#### Kill line restricted (Unbounded)
+#### Kill line restricted ()
 If whole equation E is a juxt-block, remove every juxted of E to the right
 of the cursor. Killed juxteds are saved on the kill-ring.
 
 With a negative argument, kill any subequation before cursor.
-#### Backward kill line restricted (Unbounded)
+#### Backward kill line restricted ()
 Counter-part of *Kill line restricted*.
 
 > **Note**: Default readline keybinding is undesired (C-x Rubout), so
@@ -770,7 +777,7 @@ With a positive numeric argument n, it acts on the n-ulevel usupeq of
 selection. With a non-positive numerical argument -n, it acts on the n-ulevel 
 usubeq of selection (M-0 C-h is identical to SHIFT-BACKSPACE).
 
-#### Recursively void block (S-C-h)
+#### Recursively void block (S-C-u)
 *   If selection is a symbol, do nothing.
 *   Else, substitute every symbol of selection (included symbols of parameters
     of selection if they are blocks, and so on) with PVOIDs.
@@ -779,7 +786,7 @@ usubeq of selection (M-0 C-h is identical to SHIFT-BACKSPACE).
 > keybinding including "\\", contrary to the previous case, but it seems the
 > most appropriate naming.
 
-#### Recursively void supeq (S-M-h)
+#### Recursively void supeq (S-M-u)
 Identical to *recursively void block*, but applied to the usupeq of selection
 instead.
 
@@ -799,29 +806,22 @@ With a positive numeric argument n, it acts on the n-ulevel usupeq of
 selection. With a non-positive numerical argument -n, it acts on the n-ulevel 
 usubeq of selection (M-0 M-w is identical to SHIFT-DEL).
 
-#### Uppercase (C-u)
-Uppercase every possible symbol of selection.
+#### Uppercase (In text mode: C-u)
+Uppercase letter to the right of the cursor.
 
-#### Lowercase (C-l)
-Lowercase every possible symbol of selection.
+#### Lowercase (In text mode: C-l)
+Lowercase letter to the right of the cursor.
 
-#### Uppercase supeq (M-u)
-Uppercase every symbol which has sense (Latin and Greek letters) included in
-selection and every mate to the right contained in the supeq of selection. If
-supeq does not exists, just in selection.
-With a numeric argument, certain mates of the supeq of selection are included.
+#### Uppercase word (In text mode: M-u)
+Uppercase every letter in supeq.
 
-#### Lowercase supeq (M-l)
-Counterpart of *Upcase supeq*.
+#### Lowercase word (In text mode: M-l)
+Lowercase every letter in supeq.
 
-#### Capitalize (S-C-u)
+#### Capitalize word (In text mode: S-C-u)
 Capitalize the first symbol which has sense of selection.
 
-#### Capitalize supeq (S-M-u)
-Capitalize the first symbol which has sense of supeq.
-
-#### Switch case (S-C-l)
-#### Switch case supeq (S-M-l)
+#### Switch case (In text mode: S-C-l)
 
 ## Gsymb-size operations
 Operations in this section act on subequations which are gsybs of supeqs of
@@ -1019,19 +1019,17 @@ Reduce a region "without" subequations or delete it.
 > That way there is no need of a non-user op. It may be also a property as
 > color.
 >
-### Subscripts/superscripts/both (C-b/C-p/S-C-b)
+### Subscripts/superscripts/both (C-l/C-h/S-C-l)
 Include an empty subscript or superscript, or select it if it already exists.
 If both are specified, the subscript is selected.
 
-> **Note**: 'b' stands for 'suBscript' or 'Both'. 'p' stands for 'suPerscript'.
+> **Note**: 'l' stands for 'low'. 'h' stands for 'high'.
 
-### Backward subscripts/superscripts/both (S-M-C-b/S-M-C-p/S-C-p)
+### Backward subscripts/superscripts/both (S-M-C-l/S-M-C-h/S-C-h)
 Include an empty backward sub/super-script, or select it if it already exists.
 If both are specified, the backward subscript is selected.
 
-> **Note**: 'p' is a reversed 'b' someway...
-
-### Undersets/oversets/both/all (M-b/M-p/S-M-b/S-M-p)
+### Undersets/oversets/both/all (M-l/M-h/S-M-l/S-M-h)
 Add an under or over-set (a subequation exactly under/over another
 subequation), or select it if it already exists. If both are specified, the
 underset is selected. If all are specified, the backward subscript is selected.
@@ -1097,6 +1095,10 @@ A digit modifies the number of equations.
 > **Mnemonic**: '+' and '*' stand for big operators. '-' reduces something,
 > in this case the size of the operators.
 ### Font colors (Idea: M-&, M-C-&)
+### Bold (C-b, M-b)
+Switch bold to symbol (C-b) or supeq (M-b). 
+### Mathbb (S-C-b, S-M-b)
+Switch mathbb to symbol (S-C-b) or supeq (S-M-b). 
 ### Background colors (Idea: C-!, M-!)
 > **Mnemonic**: '!' indicates something important. Background colors increase
 > importance of an equation. 
