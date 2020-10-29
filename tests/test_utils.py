@@ -35,9 +35,19 @@ class Eq(EqCore):
         return self.DEFAULT_METHOD_RETVAL
 
 
-ps_lo = PseudoSymb("L", lo_base=True)
-ps = PseudoSymb("u")
-SUP = ScriptOp(False, ScriptPos.RSUP)
+LH = SelMode.LHIGHLIGHTED
+RH = SelMode.RHIGHLIGHTED
+LC = SelMode.LCURSOR
+RC = SelMode.RCURSOR
+PS_LO = PseudoSymb("L", lo_base=True)
+PS = PseudoSymb("u")
+OP = Op("O", 1)
+RSUP = ScriptOp(False, ScriptPos.RSUP)
+RSUB = ScriptOp(False, ScriptPos.RSUB)
+CSUP = ScriptOp(False, ScriptPos.CSUP)
+LORSUP = ScriptOp(True, ScriptPos.RSUP)
+LORSUB = ScriptOp(True, ScriptPos.RSUB)
+LOCSUPRSUP = ScriptOp(True, ScriptPos.CSUP, ScriptPos.RSUP)
 
 LO_SCR_OPS_LIST = []
 for n in range(1, len(ScriptPos) + 1):
@@ -56,14 +66,17 @@ for n in range(1, len(CORN_SCR_POS_TUPLE) + 1):
 
 SCR_OPS_LIST = CORN_SCR_OPS_LIST + VERT_SCR_OPS_LIST + LO_SCR_OPS_LIST
 
+
 NO_EQ_MSG = "No Eqs are available for comparison"
 NoEqError = ValueError(NO_EQ_MSG)
 NON_EQUAL_EQ_MSG = "Eqs do not match"
 NonEqualEqError = ValueError(NON_EQUAL_EQ_MSG)
 NON_EQUAL_IDX_MSG = "Indices do not match"
 NonEqualIdxError = ValueError(NON_EQUAL_IDX_MSG)
+NON_EQUAL_SEL_MSG = "SelModes do not match"
+NonEqualSelError = ValueError(NON_EQUAL_SEL_MSG)
 NON_EQUAL_RETURN_MSG = "Returned values do not match"
-NoneEqualReturnError = ValueError(NON_EQUAL_RETURN_MSG)
+NonEqualReturnError = ValueError(NON_EQUAL_RETURN_MSG)
 WRONG_NUMBER_ARGS_MSG = "Wrong number of arguments"
 WrongNumberArgsError = TypeError(WRONG_NUMBER_ARGS_MSG)
 
@@ -148,10 +161,17 @@ class CompareEqs:
 
         def eq2text(eq):
             eq_srepr = str(eq)
+            tail_str = ""
             if isinstance(eq, EqCore):
-                tail_str = str(eq.idx) + ", " + ("OVR" if eq.ovrwrt else "INS")
-            else:
-                tail_str = ""
+                tail_str += str(eq.idx)
+                if eq.is_lcur():
+                    tail_str += ", LC"
+                elif eq.is_rcur():
+                    tail_str += ", RC"
+                elif eq.is_lhl():
+                    tail_str += ", LH"
+                elif eq.is_rhl():
+                    tail_str += ", RH"
 
             others_len = 1  # ","
             data_len = len(eq_srepr + tail_str)
@@ -184,7 +204,7 @@ class CompareEqs:
 
     def assert_equality(self, fun=None, is_method=True, inversely=False,
                         exclude_eq=False, exclude_idx=False,
-                        exclude_retvals=False, debug=True):
+                        exclude_selm=False, exclude_retvals=False, debug=True):
         if not self.eq_in or not self.eq_out:
             raise NoEqError
 
@@ -232,12 +252,23 @@ class CompareEqs:
             if not all(map(lambda s, p: s.idx == p.idx,
                            correct_eqs, calc_eqs)):
                 if debug:
-                    e = next((i, s) for i, s in enumerate(calc_eqs) \
-                          if s.idx != correct_eqs[i].idx)
+                    e = next((i, s) for i, s in enumerate(calc_eqs)
+                             if s.idx != correct_eqs[i].idx)
                     self.print_debug_message(e[0], e[1].idx,
                                              correct_eqs[e[0]].idx,
                                              other_eqs, correct_eqs, inversely)
                 raise NonEqualIdxError
+
+        if isinstance(correct_eqs[0], EqCore) and not exclude_selm:
+            if not all(map(lambda s, p: s.selm is p.selm,
+                           correct_eqs, calc_eqs)):
+                if debug:
+                    e = next((i, s) for i, s in enumerate(calc_eqs)
+                             if s.selm is not correct_eqs[i].selm)
+                    self.print_debug_message(e[0], e[1].selm,
+                                             correct_eqs[e[0]].selm,
+                                             other_eqs, correct_eqs, inversely)
+                raise NonEqualSelError
 
         if is_method and not exclude_retvals and self.expected_retvals:
             if self.expected_retvals != retvals:
@@ -247,10 +278,18 @@ class CompareEqs:
                     e = next((i, v) for i, v in enumerate(b) if v != a[i])
                     self.print_debug_message(e[0], e[1], a[e[0]],
                                              other_eqs, correct_eqs, inversely)
-                raise NoneEqualReturnError
+                raise NonEqualReturnError
 
 
 class CompareEqsTests(unittest.TestCase):
+    def test_scr_lists(self):
+        n_scripts = 15
+        n_setscripts = 3
+        n_loscripts = 63
+        self.assertEqual(n_scripts, len(CORN_SCR_OPS_LIST))
+        self.assertEqual(n_setscripts, len(VERT_SCR_OPS_LIST))
+        self.assertEqual(n_loscripts, len(LO_SCR_OPS_LIST))
+
     def test_add_pair(self):
         ce = CompareEqs()
         ce.add_pair(["a"], None, force_subeq=True)
@@ -284,7 +323,7 @@ class CompareEqsTests(unittest.TestCase):
     def test_add_many(self):
         ce = CompareEqs()
         l1 = (["a"], ["b"], [PVOID], [PJuxt(), ["a"], ["b"]])
-        l2 = (["x"], ["y"], [ps], [TJuxt(), ["x"], ["y"]])
+        l2 = (["x"], ["y"], [PS], [TJuxt(), ["x"], ["y"]])
         ce.add_many(l1, l2)
         for eqs in (ce.eq_in, ce.eq_out):
             for pos, s in enumerate(eqs):
@@ -302,8 +341,8 @@ class CompareEqsTests(unittest.TestCase):
     def test_add_unzipping(self):
         db = (
             (["q"], ["x"]),
-            ([PJuxt(), ["a"], [ps]], [PVOID]),
-            ([SUP, ["x"], ["b"]], [ps]),
+            ([PJuxt(), ["a"], [PS]], [PVOID]),
+            ([RSUP, ["x"], ["b"]], [PS]),
         )
         ce = CompareEqs()
         ce.add_unzipping(db)
@@ -315,8 +354,8 @@ class CompareEqsTests(unittest.TestCase):
 
         db = (
             (["q"], ["x"]),
-            ([PJuxt(), ["a"], [ps]], [PVOID]),
-            ([SUP, ["x"], ["b"]], [ps]),
+            ([PJuxt(), ["a"], [PS]], [PVOID]),
+            ([RSUP, ["x"], ["b"]], [PS]),
         )
         ce = CompareEqs()
         ce.add_unzipping(db, force_subeq=True)
@@ -331,8 +370,8 @@ class CompareEqsTests(unittest.TestCase):
     def test_init(self):
         db = (
             (Eq(["q"]), Eq(["x"])),
-            (Eq([PJuxt(), ["a"], [ps]]), Eq([PVOID])),
-            (Eq([SUP, ["x"], ["b"]]), Eq([ps])),
+            (Eq([PJuxt(), ["a"], [PS]]), Eq([PVOID])),
+            (Eq([RSUP, ["x"], ["b"]]), Eq([PS])),
         )
         ce = CompareEqs(db)
         for pos, eq_pair in enumerate(db):
@@ -342,7 +381,7 @@ class CompareEqsTests(unittest.TestCase):
             self.assertIsInstance(ce.eq_out[pos], EqCore)
 
         l1 = (["a"], ["b"], [PVOID], [PJuxt(), ["a"], ["b"]])
-        l2 = (["x"], ["y"], [ps], [TJuxt(), ["x"], ["y"]])
+        l2 = (["x"], ["y"], [PS], [TJuxt(), ["x"], ["y"]])
         ce = CompareEqs(l1, l2)
         for eqs in (ce.eq_in, ce.eq_out):
             for pos, s in enumerate(eqs):
@@ -350,7 +389,7 @@ class CompareEqsTests(unittest.TestCase):
                 self.assertIsInstance(s, EqCore)
 
         l1 = (["a"], ["b"], [PVOID], [PJuxt(), ["a"], ["b"]])
-        l2 = (["x"], ["y"], [ps], [TJuxt(), ["x"], ["y"]])
+        l2 = (["x"], ["y"], [PS], [TJuxt(), ["x"], ["y"]])
         ce = CompareEqs(l1, l2, force_subeq=True)
         for eqs in (ce.eq_in, ce.eq_out):
             for pos, s in enumerate(eqs):

@@ -194,15 +194,15 @@ class Subeq(list):
         return s_str + "]"
 
     @classmethod
-    def _repr_aux(cls, elem):
+    def _repr_elem(cls, elem):
         if not isinstance(elem, Subeq):
             return repr(elem)
         if not len(elem):
             return "[]"
         # Do not assume that first element is a Op even if len > 1.
-        s_str = "[" + cls._repr_aux(elem[0])
+        s_str = "[" + cls._repr_elem(elem[0])
         for e in elem[1:]:
-            s_str += ", " + cls._repr_aux(e)
+            s_str += ", " + cls._repr_elem(e)
         return s_str + "]"
 
     def __repr__(self):
@@ -214,7 +214,7 @@ class Subeq(list):
         """
         if not self:
             return "Subeq()"
-        return "Subeq(" + self._repr_aux(self) + ")"
+        return "Subeq(" + self._repr_elem(self) + ")"
 
     def append(self, value: Union['Subeq', str, PseudoSymb]):
         if not isinstance(value, (Subeq, PseudoSymb, str)):

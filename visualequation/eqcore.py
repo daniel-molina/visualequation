@@ -12,19 +12,21 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-"""An interface to safely edit an equation."""
+"""Most important operations to edit an eq.
 
-from copy import deepcopy
+It is intended to be polished by a safer interface so the application does not
+need to call these methods directly.
+"""
 
-from . import eqdebug
 from .subeqs import Subeq
 from .idx import Idx
 from .ops import *
-from . import scriptops
+from .scriptops import insert_script, remove_script, update_scriptblock, \
+    is_base
 from . import simpleeqcreator
-#from .symbols import utils
 
-class EditableEq(Subeq):
+
+class EqCore(Subeq):
     """Class to edit an equation.
 
     .. note::
@@ -38,380 +40,390 @@ class EditableEq(Subeq):
 
     Responsibilities:
 
-        *   Methods of this class introduce TVOIDs and delete/transform them
-            if appropriated.
+        *   Methods of this class change self.selm if appropriated.
 
     Implementation note:
         This is a large class and it is easy to get lost. Let's try to respect
         the following conventions.
 
-            *   Methods starting with underscore (_), apart from being used
-                only by other methods of this class, they should not modify
-                other attributes than self.eq. Instead, they can return
-                useful information as the self.idx and self.dir that should be
-                set under a typical use of the method.
+            *   Methods starting with underscore (_), apart from being expected
+                to be used in a controlled way, they should not modify other
+                attributes than self.eq. To mitigate this limitation, they can
+                return useful information as the expected self.idx and
+                self.selm that should be set under a typical use of the method.
 
             *   Methods not starting with underscore are intended to be safe
-                to call independently of the input. They should set any
-                property of this class so the method performs an operation
-                completely.
+                to call independently of the input. They should set those
+                property of this class such that the method is autonomous.
 
-            *   Indices argument names will be similar to the string 'index'.
-                Indices used in the code will be similar to the string 'idx',
-                unless code does a trivial use of an index argument so it is
-                considerer simpler to reuse the unmodified index parameter.
-                An index parameter with value of -1 means 'use self.idx'.
-                In any other case, it will be understood as a valid argument of
-                Idx-ctor.
+            *   Argument names referring to indices will be based on the word
+                'index'.
+                Indices defined in the code will be based on the word 'idx'.
+                When code does a trivial use of an index argument, it is OK
+                to reuse the unmodified index parameter if it is safe to do
+                so (remember that special values, such as -1, may be passed).
+
+            *   An index parameter with value of -1 means 'use self.idx'.
+                In any other case, it will be understood as a valid argument to
+                initialize a Idx.
 
         Definitions:
 
-            *   A method which acts on the indicated index if:
-
-                *   Index points to a non-usubeq, or
-                *   Index points to a usubeq which 1-level supeq is a usubeq.
-                and, on the contrary, acts over the biggest supeq having
-                pointed index as urepr, is known as a 'supeq-checker'.
-
             *   A method which assures that returned or set index points always
-                to an usubeq is known as a 'final-idx-checker'.
+                to an usubeq with correct selm is known as a
+                'final-sel-checker'.
 
             *   A method which assures that operation will not change a base
                 without correcting the correspondent script op is known as a
                 'base-checker'.
     """
-    def __init__(self, eq0=None, sel_index0=None, ovrwrt=False, debug=True):
-        super().__init__(deepcopy(eq0))
+    def __init__(self, eq: Optional[list] = None, idx: Optional[list] = None,
+                 selm: SelMode = SelMode.LCURSOR,
+                 ovrwrt: bool = False, debug: bool = True):
+        super().__init__(deepcopy(eq))
         # The index of current subeq being selected.
-        if sel_index0 is not None:
-            self.idx = Idx(sel_index0)
-        elif self.is_gopb():
+        if idx is not None:
+            self.idx = Idx(idx)
+        elif self.is_perm_jb():
             self.idx = Idx(1)
         else:
             self.idx = Idx()
-        # Flag for overwrite mode
+        self.selm = selm
         self.ovrwrt = ovrwrt
         self.debug = debug
 
-    def __repr__(self):
-        return "EditableEq(" + self._repr_aux(self) + ", " + str(self.idx) \
-                + ", " + repr(self.ovrwrt) + ", " + repr(self.debug) + ")"
+    def _repr_aux(self):
+        s_repr = self._repr_elem(self) + ", " + str(self.idx) \
+                 + ", " + str(self.selm)
+        if self.ovrwrt:
+            s_repr += ", ovrwrt=True"
+        if not self.debug:
+            s_repr += ", debug=False"
+        return s_repr
 
-    def _safe_idx_arg(self, index):
-        """Return a copy of self.idx if index is -1. Else, a new index build
-         as Idx(index)."""
+    def __repr__(self):
+        return "EqCore(" + self._repr_aux(self) + ")"
+
+    def _idx_arg(self, index=-1):
+        """Return an Idx based on passed value.
+
+        If *index* is -1, a copy of self.idx is returned.
+        Else, Idx(*index*) is returned.
+        """
         return self.idx[:] if index == -1 else Idx(index)
 
-    def _safe_refidx_arg(self, refindex, index=-1):
-        """Return _safe_idx_arg(index) if refindex is -2.
+    def _refidx_arg(self, refindex=-2, index=-1):
+        """Return an Idx bassed on passed value (suited for refindices).
 
-        Else, _safe_idx_arg(refindex), so value -1 or None have meanings for
-        both parameters.
+        If *refindex* is -2, return _safe_idx_arg(*index*).
+        Else, return _safe_idx_arg(*refindex*).
+
+        .. note::
+            *refindex in (-1, None) are valid values.
         """
         if refindex == -2:
-            return self._safe_idx_arg(index)
-        else:
-            return self._safe_idx_arg(refindex)
+            return self._idx_arg(index)
+        return self._idx_arg(refindex)
 
-    def _safe_subeq_arg(self, subeq=0, index=-1):
+    def _subeq_arg(self, subeq=0, index=-1):
         """Return a deepcopy of a subequation.
 
         If *subeq* is not 0, return a Subeq constructed with a deepcopy of
         *subeq*.
 
-        Elif *index* is not -1, return a deepcopy of self(index).
+        Elif *index* is -1, return a deepcopy of self(self.idx).
 
-        Else, return a deepcopy of self(self.idx).
+        Else, return a deepcopy of self(index).
         """
         if subeq != 0:
-            return Subeq(deepcopy(subeq))
+            return deepcopy(Subeq(subeq))
         if index != -1:
             return deepcopy(self(index))
         return deepcopy(self(self.idx))
 
     def _set(self, elem, index=-1):
-        """A 'hard' replacement. If replacement is a JUXT-block, it will be
-        replaced as a whole.
+        """A 'hard' replacement.
 
-            *   Not a supeq-checker
-            *   Not a final-idx-checker
+        If replacement is a JUXT-block, it will be replaced as a whole.
+
+            *   Not a final-sel-checker
             *   Not a base-checker
 
         Replacement is always done in pointed subeq.
         """
-        idx = self._safe_idx_arg(index)
-        self(idx)[:] = deepcopy(elem)
+        self(index if index != -1 else self.idx)[:] = deepcopy(elem)
+
+    def is_hl(self):
+        """Return whether pointed subeq is highlighted."""
+        return self.selm in (SelMode.RHIGHLIGHTED, SelMode.LHIGHLIGHTED)
+
+    def is_cur(self):
+        """Return whether pointed subeq displays a cursor."""
+        return self.selm in (SelMode.RCURSOR, SelMode.LCURSOR)
+
+    def is_rhl(self):
+        return self.selm is SelMode.RHIGHLIGHTED
+
+    def is_lhl(self):
+        return self.selm is SelMode.LHIGHLIGHTED
+
+    def is_rcur(self):
+        return self.selm is SelMode.RCURSOR
+
+    def is_lcur(self):
+        return self.selm is SelMode.LCURSOR
+
+    def is_r(self):
+        return self.selm in (SelMode.RCURSOR, SelMode.RHIGHLIGHTED)
+
+    def is_l(self):
+        return self.selm in (SelMode.LCURSOR, SelMode.LHIGHLIGHTED)
+
+    def _correctly_point(self, index=-1, right_pref=False):
+        """Return a valid index and SelMode.
+
+            *   Implements final-sel-checker
+            *   base-checker.
+        """
+        idx = self._idx_arg(index)
+        s = self(idx)
+        if s.is_perm_jb():
+            if right_pref:
+                return idx + [s.last_par_ord()], SelMode.RCURSOR
+            return idx + [1], SelMode.LCURSOR
+        if not right_pref or s.is_pvoid():
+            return idx, SelMode.LCURSOR
+        if self.is_nonlastjuxted(idx):
+            return idx.nextpar(), SelMode.LCURSOR
+        return idx, SelMode.RCURSOR
 
     def _condtly_correct_scriptop(self, newbase, index=-1, refindex=-2):
         """Correct a script-block if index points to a base and it is needed.
 
-            *   Not a supeq-checker
-            *   Not a final-idx-checker
+            *   Not a final-sel-checker
+            *   Implements base-checker
 
-        This function is used by those methods with the tag: base-checker.
+        This function should used by those methods with the tag: base-checker.
+
+        Return an updated *refindex*.
 
         :param newbase: The new subeq which will be in pointed subeq.
-        :param index: Index of the element which may be a base. -1 -> self.idx.
-        :param refindex: Index to return after operation. -2 -> *index*.
+        :param index: Index of the element which may be a base.
+        :param refindex: Index to return after operation.
         """
-        idx_base = self._safe_idx_arg(index)
-        refidx = self._safe_refidx_arg(refindex, index)
-        if scriptops.is_base(self, idx_base):
-            return scriptops.update_scriptblock(Subeq(newbase), self,
-                                                idx_base[:-1], refidx)
-        return Idx(refidx)
-
-    def _biggest_subeq_same_urepr(self, index=-1, retidx=False):
-        """If pointed subeq is a GOP-par, return the GOP-block.
-        Else, return pointing subeq.
-
-            *   Not a final-idx-checker
-            *   Not a base-checker
-
-        This function is used by methods with the tag: supeq-checker.
-        """
-        idx = self._safe_idx_arg(index)
-        retval = self.biggest_supeq_with_urepr(idx, retidx)
-        if retval == -1:
-            return idx if retidx else self(idx)
-        return retval
+        idx_base = self._idx_arg(index)
+        refidx = self._refidx_arg(refindex, index)
+        if is_base(self, idx_base):
+            return update_scriptblock(Subeq(newbase), self,
+                                      idx_base[:-1], refidx)
+        return refidx
 
     def _rinsert(self, subeq, index=-1):
         """Insert a subeq to the right.
 
-        *   Not a supeq-checker
-        *   Not a final-idx-checker
+        *   Not a final-sel-checker
         *   base-checker
 
-        It returns index of _pointed subeq_ after the insertion. Index of
-        _inserted subeq_ is retval[:-1] + [retval[-1] + 1].
+        Return index of _inserted subeq_. Index of originally _pointed subeq_
+        after insertion is retval.prevpar().
 
         .. note::
-
             It does not care about the particular form of inserted subeq.
+        .. note::
+            Pointed subeq must not be a juxt-block.
         """
-        idx = self._safe_idx_arg(index)
-        s_new = self._safe_subeq_arg(subeq)
-        sel = self(idx)
+        idx = self._idx_arg(index)
+        s_new = self._subeq_arg(subeq)
+        s = self(idx)
         sup = self.supeq(idx)
         if sup != -2 and sup.is_perm_jb():
-            # Case: pointed subeq is a juxted (included being also juxt-block)
+            # Case: pointed subeq is a juxted
             # Note: Checked in Python doc that insertions after len(L)-1 are
-            # allowed
-            sup.insert(idx[-1] + 1, s_new)
+            # legitimate
+            idx.nextpar(set=True)
+            sup.insert(idx[-1], s_new)
+            sup[0].current_n += 1
             return idx
 
-        if sel.is_perm_jb():
-            # Case: pointed subeq is a juxt-block JB and is not a juxted
-            # => Equivalent to have last juxted of JB pointed
-            sel.append(s_new)
-            return idx
-
-        # Case: pointed subeq is a non-juxt-block and is not a juxted
-        sel[:] = [PJUXT] + [sel[:]] + [s_new]
-        return self._condtly_correct_scriptop(sel, idx, idx + [1])
+        # Case: pointed subeq is not a juxted
+        s[:] = [PJuxt()] + [s[:], s_new]
+        return self._condtly_correct_scriptop(s, idx, idx + [2])
 
     def _rinsert_integrating(self, juxtblock, index=-1):
         """Integrate juxteds of a jb to the right of pointed subeq.
 
-        *   Not a supeq-checker
-        *   Not a final-idx-checker
+        *   Not a final-sel-checker
         *   base-checker
 
-        It returns the pointing index updated after the insertion.
+        Return the index of _last introduced juxted_ (integrated or not).
+
+        Index of _pointed subeq_ after insertion is:
+        retval[:-1] + [retval[ -1] - len(*juxtblock*) + 1].
 
         .. note::
-
             *juxtblock* must be a juxt-block.
+        .. note::
+            Pointed subeq must not be a juxt-block.
         """
-        idx = self._safe_idx_arg(index)
-        jb = self._safe_subeq_arg(juxtblock)
+        idx = self._idx_arg(index)
+        jb = self._subeq_arg(juxtblock)
 
         sup = self.supeq(idx)
         s = self(idx)
-        if sup.is_jb():
-            sup[:] = sup[:idx[-1] + 1] + jb[1:] + sup[idx[-1] + 1:]
-            return idx
-        else:
-            s[:] = [PJUXT] + s[:] + jb[1:]
-            return idx + [1]
+        if sup == -2 or not sup.is_jb():
+            s[:] = [PJuxt(len(jb))] + [s[:]] + jb[1:]
+            return idx + [len(jb)]
+
+        sup[:] = sup[:idx.nextord()] + jb[1:] + sup[idx.nextord():]
+        sup[0].current_n += len(jb) - 1
+        return idx[:-1] + [idx[-1] + len(jb) - 1]
 
     def _linsert(self, subeq, index=-1):
         """Insert a subeq to the left.
 
-        *   Not a supeq-checker
-        *   Not a final-idx-checker
+        *   Not a final-sel-checker
         *   base-checker
 
         It returns index of _pointed subeq_ after the insertion. Index of
-        _inserted subeq_ is retval[:-1] + [retval[-1] - 1].
+        _inserted subeq_ is retval.prevpar().
 
         .. note::
-
             It does not care about the particular form of inserted subeq.
+        .. note::
+            Pointed subeq must not be a juxt-block.
         """
-        idx = self._safe_idx_arg(index)
-        s_new = self._safe_subeq_arg(subeq)
-        if s_new.is_perm_jb():
-            s_new[0] = TJUXT
+        idx = self._idx_arg(index)
+        s_new = self._subeq_arg(subeq)
 
-        sel = self(idx)
+        s = self(idx)
         sup = self.supeq(idx)
         if sup != -2 and sup.is_perm_jb():
-            # Case: pointed subeq is a juxted (included being also juxt-block)
+            # Case: pointed subeq is a juxted
             # Note: Checked in doc that insertions after len(L)-1 are allowed
             sup.insert(idx[-1], s_new)
-            return idx
+            sup[0].current_n += 1
+            return idx.nextpar()
 
-        if sel.is_perm_jb():
-            # Case: pointed subeq is a juxt-block but not a juxted
-            sel.insert(1, s_new)
-            return idx + [1]
-
-        # Case: pointed subeq is a non-juxt-block and is not a juxted
-        sel[:] = [PJUXT] + [s_new] + [sel[:]]
-        return self._condtly_correct_scriptop(sel, idx, idx + [1])
+        # Case: pointed subeq is not a juxted
+        s[:] = [PJuxt()] + [s_new, s[:]]
+        return self._condtly_correct_scriptop(s, idx, idx + [2])
 
     def _linsert_integrating(self, juxtblock, index=-1):
         """Integrate juxteds of a jb to the left of pointed subeq.
 
-        *   Not a supeq-checker
-        *   Not a final-idx-checker
+        *   Not a final-sel-checker
         *   base-checker
 
         It returns index of _pointed subeq_ after the insertion.
+        Index of last integrated juxted is retval.prevpar().
 
         .. note::
-
             *juxtblock* must be a juxt-block.
+        .. note::
+            Pointed subeq must not be a juxt-block.
         """
-        idx = self._safe_idx_arg(index)
-        jb = self._safe_subeq_arg(juxtblock)
+        idx = self._idx_arg(index)
+        jb = self._subeq_arg(juxtblock)
 
         sup = self.supeq(idx)
         s = self(idx)
-        if sup.is_jb():
-            sup[:] = sup[:idx[-1]] + jb[1:] + sup[idx[-1]:]
-            return idx
-        else:
-            s[:] = [PJUXT] + jb[1:] + s[:]
+        if sup == -2 or not sup.is_jb():
+            s[:] = [PJuxt(len(jb))] + jb[1:] + [s[:]]
             return idx + [len(jb)]
 
-    def _replace_integrating(self, repl, index=-1):
-        """Replace a subequation integrating juxteds if appropriated.
+        sup[:] = sup[:idx[-1]] + jb[1:] + sup[idx[-1]:]
+        sup[0].current_n += len(jb) - 1
+        return idx[:-1] + [idx[-1] + len(jb) - 1]
 
-        *   supeq-checker
-        *   Not a final-idx-checker
+    def _replace_integrating(self, juxtblock, index=-1):
+        """Replace a subequation with juxteds of a juxt-block.
+
+        *   Not a final-sel-checker
         *   base-checker
 
-        .. note::
-            *   To replace current selection you should use _replace.
+        If pointed subeq is not a juxted, it is replaced by *juxtblock*.
+        In particular, the type of the *juxtblock* is not modified (t/p-juxt).
 
-        If *repl* is a PJUXT-block JB and actual subeq being replaced is a
-        juxted of a juxt-block EJB, juxteds of JB are integrated as juxteds of
-        EJB. Else, it is a normal replacement (which includes the case *repl*
-        being a TJUXT-block)
+        If pointed subeq is a juxted, it is replaced by every juxted included
+        in *juxtblock*.
 
-        This method should not be used just to replace actual selection
-        because it always integrates if appropriated, never does PJUXT-block ->
-        TJUXT-block.
+        Return an index and a bool:
 
-        Return an index and a boolean:
-            *   If *repl* is a PJUXT-block and its juxteds are integrated,
-                returned index is the one of the last juxted and boolean is
-                True. It is assured that index of first juxted coincides with
+            *   If juxteds of *juxtblock* are effectively integrated, the
+                index of the last juxted of *juxtblock* in eq is returned.
+                Bool will be True.
+                Note: It is assured that index of first juxted coincides with
                 pointing index since eq structure is not modified in this case.
-            *   Else, index will point to *repl* and boolean will be False.
+            *   Else, index will point to *juxtblock* and bool will be False.
         """
-        # Choose correct subeq to replace
-        idx = self._biggest_subeq_same_urepr(index, True)
-        s_repl = self._safe_subeq_arg(repl)
+
+        idx = self._idx_arg(index)
+        r = self._subeq_arg(juxtblock)
 
         sup = self.supeq(idx)
-        s = sup[idx[-1]] if sup != -2 else self(idx)
+        s = self(idx)
 
-        if not s_repl.is_perm_jb() or sup == -2 or not sup.is_perm_jb():
+        if sup == -2 or not sup.is_jb():
             # Case: No juxteds are integrated
-            s[:] = s_repl
-            return self._condtly_correct_scriptop(s_repl, idx), False
+            s[:] = r
+            return self._condtly_correct_scriptop(r, idx), False
 
         # Case: some juxteds will be integrated
-        sup[:] = sup[:idx[-1]] + s_repl[1:] + sup[idx[-1] + 1:]
-        return idx[:-1] + [len(s_repl) - 2], True
+        sup[:] = sup[:idx[-1]] + r[1:] + sup[idx[-1] + 1:]
+        sup[0].current_n += len(r) - 2
+        return idx[:-1] + [idx[-1] + len(r) - 2], True
 
-    def _replace(self, subeq, index=-1):
-        """Replace pointed subeq, or supeq if pointed one is a GOP-param.
+    def _replace(self, repl, index=-1):
+        """Replace pointed subeq.
 
-        *   supeq-checker
-        *   final-idx-checker
+        *   Not a final-sel-checker
         *   base-checker
 
-        It does not care about juxts stuff, only GOP-pars.
-
-        Return expected index to be selected in the case that pointed subeq
-        represents current selection.
-
-        .. note::
-            It is expected to be called in overwrite mode or when inserting if
-            selection is a [PVOID].
+        Return pointing index after the operation.
         """
-        idx = self._biggest_subeq_same_urepr(index, True)
 
-        # Correct script op if needed in the case that idx points to a base
-        new_idx = self._condtly_correct_scriptop(subeq, idx, idx)
-
-        # Replace
-        self._set(subeq, new_idx)
-
-        # Select the urepr of replacement
-        return self.urepr(new_idx, True)
+        r = self._subeq_arg(repl)
+        new_idx = self._condtly_correct_scriptop(r, index, index)
+        self._set(r, new_idx)
+        return new_idx
 
     def _replace_by_pvoid(self, idx=-1):
-        """Replace pointed subeq, or supeq if pointed subeq is a GOP-par, by
-        a PVOID.
+        """Replace pointed subeq by a PVOID.
 
-        *   supeq-checker
-        *   final-idx-checker
+        *   Not a final-sel-checker
         *   base-checker
 
-        It returns the index of inserted PVOID.
+        Return the index of inserted PVOID.
         """
         return self._replace([PVOID], idx)
 
     def _vanish_juxted(self, reljuxted=0, index=-1):
         """Vanish pointed juxted or a cojuxted. It removes the juxt op if only
-        one juxted is left in the juxt-block.
+        two juxted are present before the operation.
 
-        *   Not a supeq-checker
-        *   final-idx-checker
+        *   final-sel-checker
         *   base-checker
 
         If *reljuxted* == n != 0, it vanishes the |n|-th juxted to the right or
         left of pointed juxted depending whether n is positive or negative,
-        respectively. Caller must check by itself that referred juxted
-        exists.
+        respectively. Caller must check by itself that referred juxted exists.
 
-        Return:
+        Return expected index and SelMode if pointed subeq was selected. In
+        particular:
 
-            *   If *reljuxted* != 0, returned value is the final index of
-                the pointed (and non-vanished) juxted.
-            *   Elif pointed juxted is not a last juxted, the index expected to
-                be selected (that is, the final index of the juxted to the
-                right of the vanished one before the vanishing, which results
-                in its position).
-            *   Else, the final index of the juxted to the left before the
-                vanishing. Note that in typical cases this method should not be
-                used to remove last juxteds, being a replacement by TVOID or
-                just doing nothing the appropriated action.
+            *   If *reljuxted* != 0, return value is current selection
+                unmodified except for structure corrections of eq.
+            *   Elif pointed juxted is not a last juxted, the index of the
+                juxted originally to the right of the vanished one and
+                SelMode.LCURSOR.
+            *   Else, the index of the juxted originally to the left of the
+                vanished one and SelMode.RCURSOR (independently of self.selm).
 
-        Return value will have a consistent behavior when several juxteds are
-        vanished by pressing successive times DEL or BACKSPACE.
+        Return value is intended to have an intuitive behavior when several
+        juxteds are vanished by pressing successive times DEL or BACKSPACE.
 
         .. note::
-
-            *   It works also if pointed juxted is not a usubeq.
-            *   It does not check supeqs. Pointed subeq MUST be a juxted.
-            *   It does NOT implement TVOID management.
+            It does not check supeqs. Pointed subeq MUST be a juxted.
 
         .. note::
             Even if no PVOIDs should appear to the user as juxteds, they can be
@@ -421,142 +433,82 @@ class EditableEq(Subeq):
         .. note::
             Implementation notes:
 
-                *   Do NOT use here any supeq-checker method => Use _set, e.g..
-                *   Pointed subeq cannot be a base because it must be a juxted,
-                    but its juxt-block can.
-                *   It has no sense to vanish juxteds inside GOP-blocks since
-                    they cannot be selected.
+                *   Pointed subeq cannot be a base because it must be a juxted
+                    and juxted cannot be bases, but the juxt-block can.
         """
         # Pointed juxted
-        pointed_idx = self._safe_idx_arg(index)
+        pointed_idx = self._idx_arg(index)
         # Juxted to delete (may be pointed juxted)
         del_idx = pointed_idx[:-1] + [pointed_idx[-1] + reljuxted]
-        juxtblock = self.supeq(del_idx)
+        jb = self.supeq(del_idx)
 
-        if len(juxtblock) == del_idx[-1] + 1:
-            # Case: Vanish last juxted
-            # Note: Usually inappropriate when reljuxted == 0 (read docstring)
-            if len(juxtblock) > 3:
-                del juxtblock[-1]
+        if len(jb) == del_idx[-1] + 1:
+            # Case: Vanish a last juxted
+            if len(jb) > 3:
+                del jb[-1]
+                jb[0].current_n -= 1
                 retidx = pointed_idx
                 if reljuxted == 0:
-                    # Select juxted to the left
                     retidx[-1] -= 1
             else:
-                juxtblock[:] = deepcopy(juxtblock[1])
-                retidx = self._condtly_correct_scriptop(juxtblock,
-                                                        del_idx[:-1])
+                jb[:] = deepcopy(jb[1])
+                retidx = self._condtly_correct_scriptop(jb, del_idx[:-1])
 
-            return self.urepr(retidx, True)
+            return retidx, SelMode.RCURSOR
 
         if del_idx[-1] == 1:
             # Case: Vanish first juxted
-            if len(juxtblock) > 3:
-                del juxtblock[1]
-                # Select juxted to the right
+            if len(jb) > 3:
+                del jb[1]
+                jb[0].current_n -= 1
                 retidx = pointed_idx
                 if reljuxted != 0:
                     retidx[-1] -= 1
             else:
-                juxtblock[:] = deepcopy(juxtblock[2])
-                retidx = self._condtly_correct_scriptop(juxtblock,
-                                                     pointed_idx[:-1])
+                jb[:] = deepcopy(jb[2])
+                retidx = self._condtly_correct_scriptop(jb, pointed_idx[:-1])
 
-            return self.urepr(retidx, True)
+            return retidx, SelMode.LCURSOR
         # Case: Intermediate juxted
-        del juxtblock[del_idx[-1]]
+        del jb[del_idx[-1]]
+        jb[0].current_n -= 1
         retidx = pointed_idx
         if reljuxted < 0:
             retidx[-1] -= 1
 
-        return self.urepr(retidx, True)
+        return retidx, SelMode.LCURSOR
 
-    def _dissolve_subjb(self, refindex=None, index=-1):
-        """Integrate nested juxteds of pointed juxt-block JB as juxteds of its
-        supeq.
-
-        *   Not a supeq-checker
-        *   Not a final idx-checker
-        *   base-checker (never checked because no base can be involved)
-
-        Return index *refindex* after the operation. It MUST NOT be equal to
-        index of JB, but it can be the index of a juxted of JB or their
-        subequations.
-
-        .. note::
-            It is assumed that the requirements are satisfied.
-        """
-        refidx = self._safe_idx_arg(refindex)
-        idx = self._safe_idx_arg(index)
-        ext_jb = self.supeq(idx)
-        jb_ord = idx[-1]
-        jb = ext_jb[jb_ord]
-        jb_level = len(idx)
-        jb_n_pars = len(jb) - 1
-
-        ext_jb[jb_ord:jb_ord + 1] = jb[1:]
-
-        if not refidx:
-            return []
-        elif refidx[:jb_level - 1] != idx[:jb_level - 1] \
-                or refidx[jb_level - 1] < idx[jb_level - 1]:
-            return refidx
-        elif refidx[jb_level - 1] == idx[jb_level - 1]:
-            return idx[:-1] \
-                   + [jb_ord + refidx[jb_level] - 1] \
-                   + refidx[jb_level + 1:]
-        else:
-            return idx[:-1] \
-                   + [refidx[jb_level - 1] + jb_n_pars - 1] \
-                   + refidx[jb_level:]
-
-    def _dissolve_tvoid(self, refindex, index=-1):
-        """Remove a TVOID and return updated refindex.
-
-        *refindex* must not be the index of pointed TVOID. If *refindex* points
-        to the juxt-block of TVOID and it has only two juxteds, return value is
-        equivalent to pass the index of the only cojuxted of TVOID.
-        """
-        refidx = self._safe_idx_arg(refindex)
-        idx = self._safe_idx_arg(index)
-        closest_juxted_idx_old = idx[:-1] + [idx[-1] - 1]
-        closest_juxted_idx = self._vanish_juxted(1, closest_juxted_idx_old)
-        if closest_juxted_idx == closest_juxted_idx_old \
-                or refidx[:len(idx)] != closest_juxted_idx_old:
-            return refidx
-        del refidx[len(idx) - 1]
-        return refidx
+    # Not tested from here!
 
     def _flat(self, index=-1):
-        """Dissolve pointed block B while leaving its non-PVOID pars joined
-        by a juxt-block if necessary. If every param is PVOID, block B is
-        vanished if it was a juxted or replaced by PVOID if it was a
-        non-juxted.
+        """Remove lop of pointed block, joining its non-PVOID pars in a jb.
 
-        *   Not a supeq-checker, quite the opposite.
-        *   final-idx-checker
+        If pointed subeq is not a block or it is a juxt-block, nothing is done.
+
+        If every param of pointed block B is a PVOID:
+
+            *   If B is is a juxted, B is vanished.
+            *   Else, B is replaced by a PVOID.
+
+        *   final-sel-checker
         *   base-checker
 
-        .. note::
-            When a final juxted is vanished, no TVOID is included and return
-            value (provided by _vanish_juxted) is probably unuseful.
-
-        *index* can point to any subeq, not necessarily a usubeq. If pointed
-        subeq is a GOP-block, it acts on its parameter.
-
-       It returns an updated *index* and a boolean indicating whether some
-       operation was applied to the equation.
+        Return an updated *index* and selm or None (None means that no
+        operation was applied).
 
         .. note::
-            No operation is applied if what is pointed is:
+            Probably the caller does not want to call this method on individual
+            juxteds if they are not highlighted and instead, use this method
+            on every juxted. However, that is up to the caller.
 
-                *   A symbol (or 0-args op), or
-                *   A juxt-block.
+        .. note::
+            A tjuxt-block is created when selection is highlighted and subeq to
+            replace is a a pjuxt-block.
         """
-        idx = self.urepr(self._safe_idx_arg(index), True)
+        idx = self._idx_arg(index)
         s = self(idx)
         if len(s) == 1 or s.is_jb():
-            return self.urepr(idx, True), False
+            return
 
         # From here, s is a block different than a juxt block
         repl_c = simpleeqcreator.SimpleEqCreator()
@@ -564,85 +516,99 @@ class EditableEq(Subeq):
         repl = repl_c.get_eq()
         n_insertions = repl_c.n_inserted_subeqs()
 
-        if n_insertions == 0 and self.is_juxted(idx):
-            # Case: Every param of lop-s was a PVOID and s is a juxted
-            return self._vanish_juxted(0, idx), True
+        if n_insertions == 0:
+            if self.is_juxted(idx):
+                # Case: Every param of lop-s was a PVOID and s is a juxted
+                return self._vanish_juxted(0, idx)
+            else:
+                return self._replace_by_pvoid(idx), SelMode.LCURSOR
 
-        s[:] = repl[:]
-        if self.is_juxted(idx) and s.is_perm_jb():  # s == self(idx)
-            s[0] = TJUXT
-        new_idx = self._condtly_correct_scriptop(s, idx)
-        return self.urepr(new_idx, True), True
+        # Note: repl cannot be a tjuxt-block
+        if self.is_juxted(idx) and repl.is_perm_jb():  # s == self(idx)
+            if self.is_hl():
+                # Case: Selection is a juxted, highlighted and repl is a pjb.
+                repl[0] = repl[0].equiv_tjuxt()
+                return self._replace(repl, idx), self.selm
+            # Case: Selection is a juxted, not highlighted and repl is a pjb.
+            ret_idx = self._replace_integrating(repl, idx)[0]
+            if self.is_rcur():
+                return ret_idx, self.selm
+            # Note: idx points to 1st juxted (_replace_integrating doc)
+            return idx, self.selm
 
-    def _flat_out(self, index=-1):
-        """Remove leading operator and leave params (joined in a juxt-block if
-        necessary).
+        if self.is_juxted(idx):
+            # Case: Selection is a juxted and repl is not a jb.
+            return self._replace(repl, idx), self.selm
 
-        *   supeq-checker
-        *   final-idx-checker
+        if self.is_hl() and repl.is_perm_jb():
+            # Case: selection is not a juxted, is highlighted and repl is a pjb
+            repl[0] = repl[0].equiv_tjuxt()
+            return self._replace(repl, idx), self.selm
+
+        if repl.is_perm_jb():
+            # Case: selection is not a juxted, is not highlighted and repl is a
+            # pjb
+            ret_idx = self._replace(repl, idx)
+            return self._correctly_point(ret_idx, self.is_r())
+
+        # Case: selection is not a juxted, is not highlighted and repl is
+        # not a pjb
+        return self._replace(repl, idx), self.selm
+
+    def _flat_supeq(self, index=-1):
+        """Remove leading operator of supeq, joining its params in a jb.
+
+        *   final-sel-checker
         *   base-checker
 
-        .. note::
-            When a final juxted is vanished, no TVOID is included and return
-            value (provided by _vanish_juxted) is probably unuseful.
+        It returns an updated *index* and SelMode supposing that it acts on
+        current selection. If no operation is applied, None is returned
+        instead.
 
-        It returns an updated *index* and a boolean indicating whether some
-        operation was applied to the equation.
+        Behaviour: Consider pointed subeq S.
 
-        Rules:
+            *   If its supeq does not exist, nothing is done.
+            *   Else, consider its supeq SUP:
 
-        Consider eff_s be pointed subeq or its supeq if pointed subeq is a
-        GOP-par. Let eff_idx be the index of eff_s.
+                *   If every param of lop-SUP is a PVOID:
 
-            *   If every param of lop-eff_s is a PVOID:
+                    *   If SUP is a juxted, SUP is vanished
+                    *   Else, SUP is replaced by a PVOID.
 
-                *   If eff_s is a juxted, eff_s is vanished
-                *   Else, eff_s is replaced by a PVOID.
-
-            *   Elif eff_s is a juxted, vanish any juxted equal to PVOID.
-            *   Else, replace the eff_s with any non-PVOID param, joined
-                together by a juxt-block if necessary.
-
-        .. note::
-
-            *   It is expected that no supeq is a TJUXT-block.
-            *   It does not matter if pointed subeq is a GOP-par or GOP-block,
-                the result is equivalent.
-            *   It works fine with TVOIDs (which should be always selected and
-                be juxteds).
+                *   Elif SUP is a juxted, vanish any cojuxted equal to PVOID
+                    (legacy behaviour).
+                *   Else, replace SUP with any non-PVOID param of lop-SUP,
+                    being params joined together by a pjuxt-block if necessary.
 
         Implementation notes:
 
-            *   There should not be PVOIDs in juxt-blocks, but supported by
+            *   There should not be PVOIDs in juxt-blocks, but it works by
                 now.
-            *   It is possible that some methods currently relay on that
-                behavior.
-            *   Code is still complex, that should be fixed.
+            *   Code is complex. That should be fixed.
         """
-        idx = self._biggest_subeq_same_urepr(index, True)
+        idx = self._idx_arg(index)
         if not idx:
-            return self.urepr(idx, True), False
+            return
 
-        # From here:
-        #   1. Supeq of idx exists, and
-        #   2. Supeq of idx is a usubeq
+        # From here, supeq of idx exists
         sup_idx = idx[:-1]
         sup = self(sup_idx)
         n_void_pars = sup[1:].count([PVOID])
         n_non_void_pars = len(sup) - n_void_pars - 1
-        if not n_void_pars and sup.is_perm_jb():
-            return self.urepr(idx, True), False
+        if n_void_pars == 0 and sup.is_perm_jb():
+            # Case: A juxted is selected and no co-juxted is PVOID
+            return None
 
-        if not n_non_void_pars:
+        if n_non_void_pars == 0:
             # Case: Every param of lop-sup is a PVOID
             if self.is_juxted(sup_idx):
                 # Subcase: sup is a juxted
-                return self._vanish_juxted(0, sup_idx), True
+                return self._vanish_juxted(0, sup_idx)
 
             # Subcase: sup is not a juxted
             sup[:] = [PVOID]
             ret_idx = self._condtly_correct_scriptop(sup, sup_idx, sup_idx)
-            return self.urepr(ret_idx, True), True
+            return ret_idx, SelMode.LCURSOR
 
         # - Build replacement -
         par_ord = idx[-1]
@@ -650,7 +616,7 @@ class EditableEq(Subeq):
         repl_c.extend(sup[1:par_ord], accept_pvoids=False)
         par = deepcopy(sup[par_ord])
         if par.is_perm_jb():
-            par[0] = TJUXT
+            par[0] = par[0].equiv_tjuxt()
         par_pos_in_repl = repl_c.n_inserted_subeqs()
         # If *par* is a PVOID, include it.
         # -> It will be deleted below and a good selection will be chosen
@@ -658,14 +624,16 @@ class EditableEq(Subeq):
         repl_c.extend(sup[par_ord + 1:], accept_pvoids=False)
 
         # - Replace -
-
-        # It is assured that _replace_integrating below will act on sup_idx
-        ret_idx, integrated = self._replace_integrating(repl_c.get_eq(),
-                                                        sup_idx)
+        repl = repl_c.get_eq()
+        if repl.is_jb():
+            ret_idx, integrated = self._replace_integrating(repl, sup_idx)
+        else:
+            integrated = False
+            ret_idx = self._replace(repl, sup_idx)
 
         # - Return useful selection -
 
-        # Note: par was never inserted as a PJUXT-block in repl_c so calling
+        # Note: par was never inserted as a pjuxt-block in repl_c so calling
         # repl_c.get_idx with [] as argument is legitimate
         par_idx_in_repl = repl_c.get_idx([], par_pos_in_repl)
 
@@ -673,77 +641,22 @@ class EditableEq(Subeq):
             # Case: A non-juxted was replaced by repl
             new_idx = ret_idx + par_idx_in_repl
             if par.is_pvoid():
-                return self._vanish_juxted(0, new_idx), True
+                return self._vanish_juxted(0, new_idx)
         elif integrated:
-            # A juxted was replaced by repl and repl was a PJUXT-block, so some
+            # A juxted was replaced by repl and repl was a pjuxt-block, so some
             # juxteds were integrated
             # Note: sup_idx is a valid index for first integrated juxted as
             # documented in _replace_integrating.
             new_idx = sup_idx[:-1] \
                       + [sup_idx[-1] + par_idx_in_repl[0] - 1]
             if par.is_pvoid():
-                return self._vanish_juxted(0, new_idx), True
+                return self._vanish_juxted(0, new_idx)
         else:
             # A juxted was replaced by repl, and repl was not a PJUXT-block
             # Note: It is not possible for a pointed PVOID to match this case
             new_idx = ret_idx
 
-        ret_idx = self.urepr(new_idx, True)
-        return ret_idx, True
-
-    def _group(self, index=-1):
-        """Group a usubeq if necessary.
-
-        *   supeq-checker
-        *   final-idx-checker (guaranteed since passed idx must be an usubeq)
-        *   base-checker (guaranteed because GOP is transparent for script ops)
-
-        Return a boolean indicating whether a GOP was inserted. If True,
-        pointed usubeq is now in pointing index + [1].
-        """
-        idx = self._safe_idx_arg(index)
-        block = self(idx)
-        if not block.isb():
-            # Case: Pointed subeq is a symbol => No GOP must be set
-            return False
-
-        sup = self.supeq(idx)
-        if sup != -2 and sup.is_gopb():
-            # Case: Pointed block is already a GOP-par
-            return False
-
-        block[:] = [GOP, deepcopy(block)]
-        return True
-
-def swap_subeqs(eq, idx1, idx2):
-    """Exchange two non-overlapping subequations.
-
-    The index of the first subequation after the function call, occupying the
-    position of the second subeq before the call, is returned.
-
-    .. note::
-        No direction is considered nor returned.
-
-    .. note::
-        If subequation pointed by idx2 is the argument of a TEMPGROUP, that
-        TEMPGROUP is removed.
-    """
-    end2 = eqqueries.nextsubeq(eq, idx2)
-    end1 = eqqueries.nextsubeq(eq, idx1)
-
-    temp = eq[idx2:end2]
-    eq[idx2:end2] = eq[idx1:end1]
-    eq[idx1:end1] = temp
-    if eq[idx1]:
-        pass
-    return idx2 + (end2 - idx2) - (end1 - idx1)
-
-
-def transpose_neighbours(eq, idx, dir):
-    w2_idx = idx
-
-
-    w1_idx = eqqueries.prev_neighbour(eq, idx)
-    if w1_idx > 0:
-        transpose_helper(self, w1_idx)
+        if self.is_hl():
+            return new_idx, self.selm
+        return self._correctly_point(new_idx, self.is_rcur())
 

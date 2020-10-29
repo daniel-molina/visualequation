@@ -337,16 +337,17 @@ class SubeqTests(unittest.TestCase):
         self.assertEqual(str(Subeq(["2"])), "[2]")
         self.assertEqual(str(Subeq([PVOID])), "[PVOID]")
         self.assertEqual(str(Subeq([PJuxt(2), ["d"], [ps]])),
-                         "[PJuxt, [d], [PseudoSymb]]")
+                         "[PJuxt2, [d], [PseudoSymb]]")
         self.assertEqual(str(Subeq([PJuxt(4, color=ColorProp.BLUE),
                                     ["d"], [ps]])),
-                         "[PJuxt{BLUE}, [d], [PseudoSymb]]")
+                         "[PJuxt2{BLUE}, [d], [PseudoSymb]]")
         self.assertEqual(str(Subeq([PJuxt(font=FontProp.MATHIT), ["d"],
                                     [ps]])),
-                         "[PJuxt{MATHIT}, [d], [PseudoSymb]]")
+                         "[PJuxt2{MATHIT}, [d], [PseudoSymb]]")
 
     def test_repr(self):
         ps = PseudoSymb(r"\omega")
+        OP = Op("O")
         self.assertEqual(repr(Subeq()), "Subeq()")
         self.assertEqual(repr(Subeq([])), "Subeq()")
         self.assertEqual(repr(Subeq(())), "Subeq()")
@@ -377,6 +378,11 @@ class SubeqTests(unittest.TestCase):
         self.assertEqual(repr(Subeq([PJuxt(2), ["d"], ()])),
                          "Subeq([" + repr(PJuxt(2)) + ", ['d'], []])")
 
+        self.assertEqual(repr(Subeq([["a"], ["b"]])), "Subeq([['a'], ['b']])")
+        self.assertEqual(repr(Subeq([[OP, [ps]], ["b"]])),
+                         "Subeq([[" + repr(OP) + ", ["
+                         + repr(ps) + "]], ['b']])")
+
     def test_str(self):
         # Cases using directly a non-dereived PseudoSymb are unintended
         ps = PseudoSymb(r"\omega")
@@ -388,21 +394,21 @@ class SubeqTests(unittest.TestCase):
 
         self.assertEqual(str(Subeq([PVOID])), "[PVOID]")
         self.assertEqual(str(Subeq([PJuxt(2), ["d"], [ps]])),
-                         "[PJuxt, ['d'], [PseudoSymb]]")
+                         "[PJuxt2, ['d'], [PseudoSymb]]")
         self.assertEqual(str(Subeq([PJuxt(2), ["d"], [ps]])),
-                         "[PJuxt, ['d'], [PseudoSymb]]")
+                         "[PJuxt2, ['d'], [PseudoSymb]]")
         self.assertEqual(str(Subeq([PJuxt(2, color=ColorProp.YELLOW),
                                     ["d"], [ps]])),
-                         "[PJuxt{YELLOW}, ['d'], [PseudoSymb]]")
+                         "[PJuxt2{YELLOW}, ['d'], [PseudoSymb]]")
         # Certainly unintended
         self.assertEqual(str(Subeq([PJuxt(2), ["d"], []])),
-                         "[PJuxt, ['d'], []]")
+                         "[PJuxt2, ['d'], []]")
         self.assertEqual(str(Subeq([TJuxt(2, color=ColorProp.YELLOW,
                                           font=FontProp.MATHRM),
                                     ["d"], ()])),
-                         "[TJuxt{YELLOW, MATHRM}, ['d'], []]")
+                         "[TJuxt2{YELLOW, MATHRM}, ['d'], []]")
         self.assertEqual(str(Subeq([TJuxt(2), ["d"], ()])),
-                         "[TJuxt, ['d'], []]")
+                         "[TJuxt2, ['d'], []]")
 
     def test_subeq_bool(self):
         # Note: __bool__ is not overridden in Subeq class

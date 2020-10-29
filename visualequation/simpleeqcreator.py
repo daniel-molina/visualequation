@@ -12,7 +12,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from collections import namedtuple
-from copy import deepcopy
 
 from .subeqs import Subeq
 from .ops import *
@@ -34,14 +33,14 @@ class SimpleEqCreator:
 
     If equation is only initialized, it is equal to initial eq.
 
-    Else, it is a PJUXT-block including any inserted subeq which is not a
-    JUXT-block as a juxted. Juxteds of an inserted PJUXT-block are integrated
+    Else, it is a pjuxt-block including any inserted subeq which is not a
+    juxt-block as a juxted. Juxteds of an inserted pjuxt-block are integrated
     as juxteds of the whole eq.
 
     .. note::
-        If a TJUXT-block is passed, it is integrated as a single juxted. In
-        particular, the TJUXT op will be present in the whole eq. Of course,
-        you should not insert more than one TJUXT-block to be consistent with
+        If a tjuxt-block is passed, it is integrated as a single juxted. In
+        particular, the tjuxt op will be present in the whole eq. Of course,
+        you should not insert more than one tjuxt-block to be consistent with
         visual equation conventions.
     """
 
@@ -71,10 +70,10 @@ class SimpleEqCreator:
         which inserted subeq you refer.
 
         .. note::
-            If inserted subeq was a PJUXT-block, you must not pass *subeq_idx*
-            in ([], [0]) since the original PJUXT was probably discarded and
+            If inserted subeq was a pjuxt-block, you must not pass *subeq_idx*
+            in ([], [0]) since the original pjuxt was probably discarded and
             only one juxt op is present as the lop of the composed eq (this
-            paragraph does not apply if insertion was a TJUXT-block.)
+            paragraph does not apply if insertion was a tjuxt-block.)
         """
         if self.log[subeq_entry].pos < 0:
             return Idx(subeq_idx[:])
@@ -90,11 +89,11 @@ class SimpleEqCreator:
 
         It supposes that eq has been already initialized.
         """
-        # Marginal case: Set initial eq as a juxted if it was not a JUXT-block
+        # Marginal case: Set initial eq as a juxted if it was not a juxt-block
         # self.eq will have only one juxted after this block, but it will have
         # at least 2 when this function returns
         if not self.eq.is_perm_jb():
-            self.eq[:] = [PJUXT, deepcopy(self.eq)]
+            self.eq[:] = [PJuxt(), deepcopy(self.eq)]
             self.log[:] = [self.LogEntry(False, 1)]
 
         # Add new subeq
@@ -105,6 +104,8 @@ class SimpleEqCreator:
         else:
             self.log.append(self.LogEntry(False, next_juxted_pos))
             self.eq.append(deepcopy(subeq))
+
+        self.eq[0].current_n = len(self.eq) - 1
         return Idx(next_juxted_pos)
 
     def append(self, subeq, accept_pvoids=True):

@@ -356,6 +356,9 @@ class PJuxt(Juxt):
     def __repr__(self):
         return "P" + super().__repr__()
 
+    def __str__(self):
+        return "PJuxt" + str(self.current_n) + self._str_pub()
+
     def equiv_tjuxt(self):
         return TJuxt(self.current_n, pp=deepcopy(self.pp))
 
@@ -370,6 +373,9 @@ class PJuxt(Juxt):
 class TJuxt(Juxt):
     def __init__(self, initial_n: int = 2, **kwargs):
         super().__init__(initial_n, **kwargs)
+
+    def __str__(self):
+        return "TJuxt" + str(self.current_n) + self._str_pub()
 
     def __repr__(self):
         return "T" + super().__repr__()

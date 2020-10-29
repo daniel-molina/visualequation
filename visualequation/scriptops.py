@@ -250,17 +250,17 @@ SCRIPTOPS_DICT = {
 
 
 class ScriptOp(Op):
-    def __init__(self, full_subtype, *args, **kwargs):
+    def __init__(self, lo_subtype, *args, **kwargs):
         """Define a ScriptOp by passing needed ScriptPos's as parameters."""
 
-        if not isinstance(full_subtype, bool):
+        if not isinstance(lo_subtype, bool):
             raise TypeError("Parameter full_subtype must be a bool.")
 
         if not args:
             raise ValueError("At least one ScriptPos parameter must be "
                              "provided.")
 
-        if full_subtype:
+        if lo_subtype:
             self._subtype = ScriptOpSubtype.LO
         elif args[0] in VERT_SCR_POS_TUPLE:
             self._subtype = ScriptOpSubtype.VERT
@@ -313,7 +313,7 @@ class ScriptOp(Op):
         return "ScriptOp(" + self._repr_priv() + self._repr_pub() + ")"
 
     def __str__(self):
-        s = "F" if self.is_lo() else ""
+        s = "LO" if self.is_lo() else ""
         for spos, val in self._scripts.items():
             if val:
                 s += spos.name

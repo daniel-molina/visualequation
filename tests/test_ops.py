@@ -413,13 +413,13 @@ class OpsTests(unittest.TestCase):
 
     def test_pjuxt_str(self):
         pj2 = PJuxt()
-        self.assertEqual(str(pj2), "PJuxt")
+        self.assertEqual(str(pj2), "PJuxt2")
         pj9 = PJuxt(9)
-        self.assertEqual(str(pj2), str(pj9))
+        self.assertEqual(str(pj9), "PJuxt9")
         pj9.pp["color"] = ColorProp.BLACK
-        self.assertEqual(str(pj9), "PJuxt{BLACK}")
+        self.assertEqual(str(pj9), "PJuxt9{BLACK}")
         pj9.pp["font"] = FontProp.MATHTT
-        self.assertEqual(str(pj9), "PJuxt{BLACK, MATHTT}")
+        self.assertEqual(str(pj9), "PJuxt9{BLACK, MATHTT}")
 
     def test_tjuxt(self):
         pj = TJuxt()
@@ -490,13 +490,13 @@ class OpsTests(unittest.TestCase):
 
     def test_tjuxt_str(self):
         tj2 = TJuxt()
-        self.assertEqual(str(tj2), "TJuxt")
+        self.assertEqual(str(tj2), "TJuxt2")
         tj9 = TJuxt(9)
-        self.assertEqual(str(tj2), str(tj9))
+        self.assertEqual(str(tj9), "TJuxt9")
         tj9.pp["color"] = ColorProp.BLACK
-        self.assertEqual(str(tj9), "TJuxt{BLACK}")
+        self.assertEqual(str(tj9), "TJuxt9{BLACK}")
         tj9.pp["font"] = FontProp.MATHTT
-        self.assertEqual(str(tj9), "TJuxt{BLACK, MATHTT}")
+        self.assertEqual(str(tj9), "TJuxt9{BLACK, MATHTT}")
 
 
 

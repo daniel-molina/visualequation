@@ -42,7 +42,7 @@ class ScriptOpsTests(unittest.TestCase):
         ce.assert_equality(f, is_method=False)
 
         def f_lo(eq):
-            eq.idx = update_scriptblock([ps_lo], eq)
+            eq.idx = update_scriptblock([PS_LO], eq)
             return eq
 
         def f_nonlo(eq):
@@ -79,7 +79,7 @@ class ScriptOpsTests(unittest.TestCase):
         self.assertEqual(n_single_ops, 15+3)
 
         def f_lo1(eq):
-            eq.idx = update_scriptblock([ps_lo], eq, [1])
+            eq.idx = update_scriptblock([PS_LO], eq, [1])
             return eq
 
         def f_nonlo1(eq):
@@ -138,8 +138,8 @@ class ScriptOpsTests(unittest.TestCase):
                 return eq
             return wrapper
 
-        flo = f_creator([ps_lo], [])
-        flo1 = f_creator([ps_lo], [1])
+        flo = f_creator([PS_LO], [])
+        flo1 = f_creator([PS_LO], [1])
         fnonlo = f_creator(["z"], [])
         fnonlo1 = f_creator(["z"], [1])
 
@@ -219,9 +219,9 @@ class ScriptOpsTests(unittest.TestCase):
 
             return wrapper
 
-        flo = f_creator([ps_lo], [])
-        flo1 = f_creator([ps_lo], [1])
-        flo11 = f_creator([ps_lo], [1, 1])
+        flo = f_creator([PS_LO], [])
+        flo1 = f_creator([PS_LO], [1])
+        flo11 = f_creator([PS_LO], [1, 1])
         fnonlo = f_creator(["z"], [])
         fnonlo1 = f_creator(["z"], [1])
         fnonlo11 = f_creator(["z"], [1, 1])
@@ -416,7 +416,7 @@ class ScriptOpsTests(unittest.TestCase):
                     sub1 = s1([1, n_scr])
                     sub1[:] = k1
                     e_s1 = deepcopy(s1)
-                    update_scriptblock([ps_lo], e_s1, [1, 1])
+                    update_scriptblock([PS_LO], e_s1, [1, 1])
                     e_sub1 = e_s1(1)
                     e_pos_k1 = e_sub1.index(k1)
 
@@ -426,7 +426,7 @@ class ScriptOpsTests(unittest.TestCase):
                     sub2 = s2([1, 1, n_scr])
                     sub2[:] = k2
                     e_s2 = deepcopy(s2)
-                    update_scriptblock([ps_lo], e_s2, [1, 1])
+                    update_scriptblock([PS_LO], e_s2, [1, 1])
                     e_sub2 = e_s2(1)
                     e_pos_k2 = e_sub2.index(k2)
 
@@ -511,7 +511,7 @@ class ScriptOpsTests(unittest.TestCase):
                     sub1 = s1([1, n_set])
                     sub1[:] = k1
                     e_s1 = deepcopy(s1)
-                    update_scriptblock([ps_lo], e_s1, [1, 1])
+                    update_scriptblock([PS_LO], e_s1, [1, 1])
                     e_sub1 = e_s1(1)
                     e_pos_k1 = e_sub1.index(k1)
 
@@ -521,7 +521,7 @@ class ScriptOpsTests(unittest.TestCase):
                     sub2 = s2([1, 1, n_set])
                     sub2[:] = k2
                     e_s2 = deepcopy(s2)
-                    update_scriptblock([ps_lo], e_s2, [1, 1])
+                    update_scriptblock([PS_LO], e_s2, [1, 1])
                     e_sub2 = e_s2(1)
                     e_pos_k2 = e_sub2.index(k2)
 
@@ -579,7 +579,7 @@ class ScriptOpsTests(unittest.TestCase):
             loop = ScriptOp(True, spos)
             s = ["a"]
             fins = [op, ["a"], ["x"]]
-            los = [ps_lo]
+            los = [PS_LO]
             finlos = [loop, los, ["x"]]
 
             db = (
@@ -853,10 +853,10 @@ class ScriptOpsTests(unittest.TestCase):
                     self.assertEqual(retval, -1)
                     return eq
                 db = (
-                    (Eq([op, [loop_in, [ps_lo], ["a"]]]
+                    (Eq([op, [loop_in, [PS_LO], ["a"]]]
                         + [["y"]] * (op._n_args - 1),
                         [1, 2]),
-                        Eq([finloop, [ps_lo]]
+                        Eq([finloop, [PS_LO]]
                            + [["y"]] * (op._n_args - 1), [1])),
                 )
 
@@ -871,7 +871,7 @@ class ScriptOpsTests(unittest.TestCase):
                     ce.assert_equality(farg, is_method=False, exclude_idx=True)
 
     def test_remove_script_extrefindices(self):
-        s_lo = [ps_lo]
+        s_lo = [PS_LO]
         for op in SCR_OPS_LIST:
             for i in range(2, op._n_args + 1):
                 if op.is_lo():
