@@ -18,6 +18,7 @@ It is intended to be polished by a safer interface so the application does not
 need to call these methods directly.
 """
 
+from typing import Union
 from .subeqs import Subeq
 from .idx import Idx
 from .ops import *
@@ -78,7 +79,7 @@ class EqCore(Subeq):
                 'base-checker'.
     """
     def __init__(self, eq: Optional[list] = None, idx: Optional[list] = None,
-                 selm: SelMode = SelMode.LCURSOR,
+                 selm: SelMode = SelMode.LCUR,
                  ovrwrt: bool = False, debug: bool = True):
         super().__init__(deepcopy(eq))
         # The index of current subeq being selected.
@@ -155,29 +156,29 @@ class EqCore(Subeq):
 
     def is_hl(self):
         """Return whether pointed subeq is highlighted."""
-        return self.selm in (SelMode.RHIGHLIGHTED, SelMode.LHIGHLIGHTED)
+        return self.selm in (SelMode.RHL, SelMode.LHL)
 
     def is_cur(self):
         """Return whether pointed subeq displays a cursor."""
-        return self.selm in (SelMode.RCURSOR, SelMode.LCURSOR)
+        return self.selm in (SelMode.RCUR, SelMode.LCUR)
 
     def is_rhl(self):
-        return self.selm is SelMode.RHIGHLIGHTED
+        return self.selm is SelMode.RHL
 
     def is_lhl(self):
-        return self.selm is SelMode.LHIGHLIGHTED
+        return self.selm is SelMode.LHL
 
     def is_rcur(self):
-        return self.selm is SelMode.RCURSOR
+        return self.selm is SelMode.RCUR
 
     def is_lcur(self):
-        return self.selm is SelMode.LCURSOR
+        return self.selm is SelMode.LCUR
 
     def is_r(self):
-        return self.selm in (SelMode.RCURSOR, SelMode.RHIGHLIGHTED)
+        return self.selm in (SelMode.RCUR, SelMode.RHL)
 
     def is_l(self):
-        return self.selm in (SelMode.LCURSOR, SelMode.LHIGHLIGHTED)
+        return self.selm in (SelMode.LCUR, SelMode.LHL)
 
     def _correctly_point(self, index=-1, right_pref=False):
         """Return a valid index and SelMode.
@@ -189,13 +190,43 @@ class EqCore(Subeq):
         s = self(idx)
         if s.is_perm_jb():
             if right_pref:
-                return idx + [s.last_par_ord()], SelMode.RCURSOR
-            return idx + [1], SelMode.LCURSOR
+                return idx + [s.last_par_ord()], SelMode.RCUR
+            return idx + [1], SelMode.LCUR
         if not right_pref or s.is_pvoid():
-            return idx, SelMode.LCURSOR
+            return idx, SelMode.LCUR
         if self.is_nonlastjuxted(idx):
-            return idx.nextpar(), SelMode.LCURSOR
-        return idx, SelMode.RCURSOR
+            return idx.nextpar(), SelMode.LCUR
+        return idx, SelMode.RCUR
+
+    def _dissolve_temp_jb(self, index: Union[list, int] = -1,
+                          refindex: Union[list, int] = -2):
+        """Dissolve a tjuxt-block.
+
+        Return an updated *refindex*.
+
+        .. note::
+            Pointed subeq must be a tjuxt-block.
+
+        .. note::
+            *refindex* cannot be equal to pointing index if associated
+            tjuxt-block is a juxted.
+        """
+        idx = self._idx_arg(index)
+        refidx = self._refidx_arg(refindex, index)
+        tjb = self(idx)
+        if not self.is_juxted(idx):
+            tjb[0] = tjb[0].equiv_pjuxt()
+            return refidx
+
+        if refidx == idx:
+            raise ValueError("refindex cannot point to the tjuxt-block if it "
+                             "is a juxted.")
+        self._replace_integrating(tjb, idx)
+        if refidx[:len(idx)] != idx:
+            return refidx
+        return refidx[:len(idx) - 1] \
+            + [refidx[len(idx) - 1] + refidx[len(idx)] - 1] \
+            + refidx[len(idx) + 1:]
 
     def _condtly_correct_scriptop(self, newbase, index=-1, refindex=-2):
         """Correct a script-block if index points to a base and it is needed.
@@ -454,7 +485,7 @@ class EqCore(Subeq):
                 jb[:] = deepcopy(jb[1])
                 retidx = self._condtly_correct_scriptop(jb, del_idx[:-1])
 
-            return retidx, SelMode.RCURSOR
+            return retidx, SelMode.RCUR
 
         if del_idx[-1] == 1:
             # Case: Vanish first juxted
@@ -468,7 +499,7 @@ class EqCore(Subeq):
                 jb[:] = deepcopy(jb[2])
                 retidx = self._condtly_correct_scriptop(jb, pointed_idx[:-1])
 
-            return retidx, SelMode.LCURSOR
+            return retidx, SelMode.LCUR
         # Case: Intermediate juxted
         del jb[del_idx[-1]]
         jb[0].current_n -= 1
@@ -476,7 +507,7 @@ class EqCore(Subeq):
         if reljuxted < 0:
             retidx[-1] -= 1
 
-        return retidx, SelMode.LCURSOR
+        return retidx, SelMode.LCUR
 
     # Not tested from here!
 
@@ -521,7 +552,7 @@ class EqCore(Subeq):
                 # Case: Every param of lop-s was a PVOID and s is a juxted
                 return self._vanish_juxted(0, idx)
             else:
-                return self._replace_by_pvoid(idx), SelMode.LCURSOR
+                return self._replace_by_pvoid(idx), SelMode.LCUR
 
         # Note: repl cannot be a tjuxt-block
         if self.is_juxted(idx) and repl.is_perm_jb():  # s == self(idx)
@@ -608,7 +639,7 @@ class EqCore(Subeq):
             # Subcase: sup is not a juxted
             sup[:] = [PVOID]
             ret_idx = self._condtly_correct_scriptop(sup, sup_idx, sup_idx)
-            return ret_idx, SelMode.LCURSOR
+            return ret_idx, SelMode.LCUR
 
         # - Build replacement -
         par_ord = idx[-1]

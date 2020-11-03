@@ -16,10 +16,10 @@ from enum import Enum
 
 
 class SelMode(Enum):
-    LCURSOR = -1
-    RCURSOR = 1
-    LHIGHLIGHTED = -2
-    RHIGHLIGHTED = 2
+    LCUR = -1
+    RCUR = 1
+    LHL = -2
+    RHL = 2
 
 
 SUPEQ_ERROR_MSG = "Pointed subeq does not have a supeq"

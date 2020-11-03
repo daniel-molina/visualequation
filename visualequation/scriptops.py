@@ -433,49 +433,45 @@ class ScriptOp(Op):
         if self._scripts[ScriptPos(v + 1)] and spos.value == v + 2:
             return ScriptPos(v + 1)
 
-    def rstep(self, selmode: SelMode, arg_ord: Optional[int] = None):
-        """Return selmode and ordinal of par to select after pressing RIGHT."""
-        self._assert_valid_args(selmode, arg_ord)
+    def rstep(self, arg_ord: Optional[int] = None):
+        self._assert_valid_args(arg_ord)
         if arg_ord is None:
-            return SelMode.LCURSOR, 1
+            return 1
         if arg_ord != 1 and self._script2r(self.ord2spos(arg_ord)) is not None:
-            return SelMode.LCURSOR, arg_ord + 1
+            return arg_ord + 1
 
-    def lstep(self, selmode: SelMode, arg_ord: Optional[int] = None):
-        """Return selmode and ordinal of par to select after pressing LEFT."""
-        self._assert_valid_args(selmode, arg_ord)
+    def lstep(self, arg_ord: Optional[int] = None):
+        self._assert_valid_args(arg_ord)
         if arg_ord is None:
-            return SelMode.RCURSOR, 1
+            return 1
         if arg_ord != 1 and self._script2l(self.ord2spos(arg_ord)) is not None:
             return arg_ord - 1
 
-    def ustep(self, selmode: SelMode, arg_ord: Optional[int] = None):
-        """Return selmode and ordinal of par to select after pressing UP."""
-        self._assert_valid_args(selmode, arg_ord)
+    def ustep(self, arg_ord: Optional[int], selmode: SelMode):
+        self._assert_valid_args(arg_ord, selmode)
         if arg_ord != 1:
             return None
-        if selmode in (SelMode.RCURSOR, SelMode.RHIGHLIGHTED):
+        if selmode in (SelMode.RCUR, SelMode.RHL):
             for pos in (ScriptPos.RSUP, ScriptPos.CSUP, ScriptPos.LSUP):
                 if self._scripts[pos]:
-                    return SelMode.LCURSOR, self.spos2ord(pos)
+                    return self.spos2ord(pos)
         else:
             for pos in (ScriptPos.LSUP, ScriptPos.CSUP, ScriptPos.RSUP):
                 if self._scripts[pos]:
-                    return SelMode.RCURSOR, self.spos2ord(pos)
+                    return self.spos2ord(pos)
 
-    def dstep(self, selmode: SelMode, arg_ord: Optional[int] = None):
-        """Return selmode and ordinal of par to select after pressing DOWN."""
-        self._assert_valid_args(selmode, arg_ord)
+    def dstep(self, arg_ord: Optional[int], selmode: SelMode):
+        self._assert_valid_args(arg_ord, selmode)
         if arg_ord != 1:
             return None
-        if selmode in (SelMode.RCURSOR, SelMode.RHIGHLIGHTED):
+        if selmode in (SelMode.RCUR, SelMode.RHL):
             for pos in (ScriptPos.RSUB, ScriptPos.CSUB, ScriptPos.LSUB):
                 if self._scripts[pos]:
-                    return SelMode.LCURSOR, self.spos2ord(pos)
+                    return self.spos2ord(pos)
         else:
             for pos in (ScriptPos.LSUB, ScriptPos.CSUB, ScriptPos.RSUB):
                 if self._scripts[pos]:
-                    return SelMode.RCURSOR, self.spos2ord(pos)
+                    return self.spos2ord(pos)
 
     def to_json(self):
         scripts_list = [k.value for k, v in self._scripts.items() if v]

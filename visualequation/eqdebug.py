@@ -16,7 +16,6 @@ Functions to debug an equation.
 """
 
 import functools
-import re
 
 from .idx import Idx
 from .ops import *
@@ -25,51 +24,74 @@ from .subeqs import Subeq
 PASSED_MSG = "OK!"
 
 
-def checkeqstructure(bare_eq):
-    """Check validity of an eq according strictly to the formalism of an
-    equation."""
+def checkeqstructure(bare_eq: list):
+    """Check validity of an eq according strictly to the current formalism.
+
+    .. note::
+        *bare_eq* can be a list, not necessarily a Subeq.
+
+    .. note::
+        Type and values of attributes starting with underscore is not checked.
+        They are responsibility of constructors since they are not supposed to
+        be modified later.
+
+    .. note::
+        Structure of indices is not checked, that is managed directly by Idx.
+    """
 
     def helper(s, index=None):
         idx = [] if index is None else index[:]
 
         if not isinstance(s, list):
-            return "Subeq in " + str(idx) + " is not a list."
+            return "Element in " + str(idx) \
+                   + " should be a subeq but is not a list."
 
         if len(s) == 0:
             return "Subeq in " + str(idx) + " has no length."
 
-        if len(s) == 1:
-            if not (isinstance(s[0], str) or isinstance(s[0], Op)):
-                return "Subeq in " + str(idx) \
-                        + " has length 1 and content is not a str or Op."
+        if isinstance(s[0], PseudoSymb):
+            if not isinstance(s[0].pp, PublicProperties):
+                return "Attribute pp of element in " + str(idx + [0]) \
+                       + " is not of type PublicProperties."
 
-            if isinstance(s[0], Op) and s[0].n_args:
+        if len(s) == 1:
+            if not (isinstance(s[0], str) or isinstance(s[0], PseudoSymb)):
                 return "Subeq in " + str(idx) + " has length 1 and content " \
-                    + "is a Op with n_args == " + str(s[0].n_args) + " != 0."
+                        + " is not a str or PseudoSymb."
+
+            if isinstance((s[0]), Op):
+                return "Subeq in " + str(idx) + " has length 1 and content " \
+                        + "is a Op."
 
         if len(s) > 1:
             if not isinstance(s[0], Op):
-                return "Subeq in " + str(idx) + " has len " + str(len(s)) \
+                return "Element in " + str(idx) + " has len " + str(len(s)) \
                        + " > 1 and first element is not an Op."
 
-            if s[0].n_args == 0 or s[0].n_args < -1:
-                return "Op in " + str(idx + [0]) + " is a lop with n_args " \
-                       + "== " + str(s[0].n_args) + " instead of -1 or " \
-                       + "some N > 0."
-
-            if s[0].n_args > 0 and s[0].n_args != len(s) - 1:
+            if s[0]._n_args > 0 and s[0]._n_args != len(s) - 1:
                 return "Subeq in " + str(idx) + " has a lop which expects " \
-                       + str(s[0].n_args) + " != " + str(len(s) - 1) \
+                       + str(s[0]._n_args) + " != " + str(len(s) - 1) \
                        + " parameters."
 
-            # Non-applicable since GOP is the only non-user op.
-            # if s[0] in NONUOPS and s[0].n_args != 1:
-            #     return "Op in " + str(idx + [0]) + " is a non-user Op with " \
-            #            + str(s[0].n_args) + " args."
+            # Juxts
+            if isinstance(s[0], (PJuxt, TJuxt)) \
+                    and not isinstance(s[0].current_n, int):
+                return "Juxt in " + str(idx + [0]) + " has an attribute " \
+                       + "current_n which is not of type int."
 
-            if s[0] in (PJUXT, TJUXT) and len(s) < 3:
+            if isinstance(s[0], (PJuxt, TJuxt)) and s[0].current_n < 2:
+                return "Juxt in " + str(idx) + " has an attribute " \
+                       + "current_n which is smaller than 2."
+
+            if isinstance(s[0], (PJuxt, TJuxt)) \
+                    and s[0].current_n != len(s) - 1:
+                return "Juxt-block in " + str(idx) + " has " \
+                       + str(len(s) - 1) + " juxted(s) but attribute "\
+                       + "current_n of its lop is " + str(s[0].current_n) + "."
+
+            if isinstance(s[0], (PJuxt, TJuxt)) and len(s) < 3:
                 return "Subeq in " + str(idx) + " is a juxt-block which " \
-                       + "only 1 juxted."
+                       + "has only 1 juxted."
 
             # Recursive check.
             for ord in range(1, len(s)):
@@ -82,71 +104,7 @@ def checkeqstructure(bare_eq):
     return helper(bare_eq)
 
 
-def checkidxstructure(idx):
-    if not isinstance(idx, list):
-        return "Index must be a list."
-    if not all(isinstance(ele, int) for ele in idx):
-        return "Not every element is an integer."
-    if not all(ele >= 0 for ele in idx):
-        return "Not every element is non-negative."
-    try:
-        first0pos = idx.index(0)
-        if first0pos != len(idx) - 1:
-            return "Non-last element is 0."
-    except ValueError:
-        pass
-    return PASSED_MSG
-
-
-def checksubeqexistence(idx, bare_eq, onlysubeqs=True):
-    """Check that pointed subequation exists.
-
-    If *onlysubeqs* is True, an index pointing to a lop is an error.
-
-    .. note::
-        Pointing to a lop is the last condition checked: if that is reported,
-        the rest is OK.
-    """
-    if not idx:
-        return PASSED_MSG
-
-    eqref = bare_eq
-    for lev, pos in enumerate(idx):
-        if len(eqref) == 1:
-            return "Subeq in " + str(idx[:lev]) \
-                   + " is a symbol/0-args Op. It cannot be indexed."
-        if pos > len(eqref) - 1:
-            return "Subeq in " + str(idx[:lev]) \
-                   + " has no position " + str(pos) + "."
-
-        eqref = eqref[pos]
-
-    # This must be the last condition
-    if onlysubeqs and idx and not idx[-1]:
-        return "Pointed element is a lop."
-
-    return PASSED_MSG
-
-
-def checkeqidxstructure(idx, bare_eq):
-    """Check of integrity of a pair index-equation."""
-
-    msg = checkidxstructure(idx)
-    if msg != PASSED_MSG:
-        return "Wrong index format: " + msg
-
-    msg = checkeqstructure(bare_eq)
-    if msg != PASSED_MSG:
-        return "Wrong eq format: " + msg
-
-    msg = checksubeqexistence(idx, bare_eq, onlysubeqs=True)
-    if msg != PASSED_MSG:
-        return "Wrong pointed subeq: " + msg
-
-    return PASSED_MSG
-
-
-def checkeqidxrules(eq: Subeq, sel_idx: Idx):
+def checkrules(eq: Subeq, index: Idx, selm: SelMode):
     """Check that an equation satisfy the conditions of current implementation
     of an equation in Visual Equation.
 
@@ -166,81 +124,76 @@ def checkeqidxrules(eq: Subeq, sel_idx: Idx):
         structures: checkstructure function should be called before calling
         this function.
     """
-    # Correct index type
-    if not isinstance(sel_idx, Idx):
-        return "Equation index has type different than Idx."
+    # ---- Check types of passed elements ---
+    if not isinstance(eq, Subeq):
+        return "Equation is not a Subeq."
 
-    # Non-applicable
-    # if NONUOPS != (utils.GOP,):
-    #     return "Current implementation considers GOP, and only GOP, as " \
-    #            "non-user op."
+    if not isinstance(index, Idx):
+        return "Equation index is not an Idx."
 
-    # Selectivity
-    flag = eq.selectivity(sel_idx)
-    if flag == 0:
-        return "Selected subequation is not allowed to be selected. " \
-               "In particular, it is a GOP-block which urepr is selectable."
-    if flag == -1:
-        return "Selected subequation is not allowed to be selected. " \
-               "In particular, it is a GOP-block and GOP-par strict subeq."
-    if flag == -2:
-        return "Selected subequation is not allowed to be selected. " \
-               "In particular, it is a usubeq and GOP-par strict subeq."
+    if not isinstance(selm, SelMode):
+        return "Equation selm is not a SelMode."
 
-    def helper(index=None):
-        idx = Idx(index)
+    # Check that pointed element exists
+    eqref = eq
+    for lev, pos in enumerate(index):
+        if len(eqref) == 1:
+            return "Subeq in " + str(index[:lev]) \
+                   + " is a symbol. It cannot be indexed."
+        if pos > len(eqref) - 1:
+            return "Subeq in " + str(index[:lev]) \
+                   + " has no position " + str(pos) + "."
+
+        eqref = eqref[pos]
+
+    # Check that pointed element is not the first one (the place for a lop)
+    if index and index[-1] == 0:
+        return "The leading element of a Subeq is pointed."
+
+    # ----- Check conditions on pointed subeq -----
+
+    # PVOIDs require LCUR
+    if eq.is_pvoid(index) and selm is not SelMode.LCUR:
+        return "A pvoid is selected and selmode is not LCUR."
+
+    # Tjuxt-blocks require highlighting
+    if eq.is_temp_jb(index) and selm in (SelMode.RCUR, SelMode.LCUR):
+        return "A tjuxt-block is selected and SelMode is " + str(selm) \
+               + "."
+
+    # Pjuxt-blocks cannot be pointed
+    if eq.is_perm_jb(index):
+        return "Subequation supposed to be selected is a pjuxt-block."
+
+    # Non-last juxteds are not compatible with RCUR
+    if eq.is_nonlastjuxted(index) and selm is SelMode.RCUR:
+        return "Value of selm is RCUR and selected subeq " \
+               "is a non-last juxted."
+
+    # ----- End check conditions of pointed subeq -----
+
+    # ----- Check conditions on every subeq ----
+    def helper(i=None):
+        idx = Idx(i)
 
         if len(idx) == 0:
-            supsup = -2
             sup = -2
             s = eq
-        elif len(idx) == 1:
-            supsup = -2
-            sup = eq
-            s = sup[idx[-1]]
         else:
-            supsup = eq(idx[:-2])
-            sup = supsup[idx[-2]]
+            sup = eq(idx[:-1])
             s = sup[idx[-1]]
 
-        # Non-applicable
-        # Rules of faithful operators
-        # if len(s) > 1 and not s.is_usubeq() and s[0].n_args != 1:
-        #     return "Lop in " + str(idx + [0]) \
-        #            + "is a non-user op and accepts "\
-        #            + str(s[0].n_args) + " != 1 parameters."
+        # Tjuxt-blocks must be selected
+        if s.is_temp_jb():
+            if index != idx:
+                return "Subeq in " + str(idx) + " is a tjuxt-block and it " \
+                       + "is not selected."
 
-        # Correct types
-        if not isinstance(s, (Subeq, Op, str)):
-            return "Element " + str(idx) + " is not of type Subeq, Op or str."
+        # pjuxt-blocks cannot be juxteds
+        if s.is_perm_jb() and sup != -2 and sup.is_perm_jb():
+            return "Pjuxt-block in " + str(idx) + " is a juxted."
 
-        # GOP-nesting
-        if supsup != -2 and supsup[0] == GOP and sup[0] == GOP:
-            return "Subeq in " + str(idx) + " is a GOP-par which lop-block " \
-                   + "is itself a GOP-par."
-
-        # GOP-params must be blocks
-        if not s.isb() and sup != -2 and sup[0] == GOP:
-            return "Subeq in " + str(idx) + " is a GOP-par and is a symbol."
-
-        # TJUXTs must be selected
-        if len(s) > 1 and s[0] == TJUXT:
-            if sel_idx != idx:
-                return "There exists a TJUXT-block which is not selected."
-
-        # TJUXTs must be juxteds
-        if s[0] == TJUXT and (sup == -2 or sup[0] != PJUXT):
-            return "TJUXT-blocks must be juxteds."
-
-        # TVOIDs
-        if s.is_tvoid():
-            if sup == -2 or sup[0] != PJUXT or idx[-1] != len(sup) - 1:
-                return "TVOID in " + str(idx) + " is not a last juxted " \
-                       + "of a PJUXT-block."
-            if sel_idx != idx:
-                return "There exists a TVOID which is not selected."
-
-        # PVOIDs
+        # PVOIDs cannot be juxteds
         if s.is_pvoid() and sup != -2 and sup.is_jb():
             return "PVOID in " + str(idx) + " is a juxted."
 
@@ -253,53 +206,37 @@ def checkeqidxrules(eq: Subeq, sel_idx: Idx):
 
         return PASSED_MSG
 
-    return helper(None)
+    return helper()
 
 
-def checkeqidx(eq: Subeq, sel_idx: Idx):
-    msg = checkeqidxstructure(sel_idx, eq)
+def check_edeq(edeq):
+    if type(edeq.uld) != int:
+        return "Attribute uld must be of type int (current type: " \
+            + type(edeq.uld).__name__ + ")."
+
+    if edeq.uld < 0:
+        return "Attribute uld must be positive (current value: " \
+            + repr(edeq.uld) + ")."
+
+    msg = checkeqstructure(edeq)
     if msg != PASSED_MSG:
         return msg
 
-    msg = checkeqidxrules(eq, sel_idx)
-    if msg != PASSED_MSG:
-        return "Wrong implementation: " + msg
-
-    return PASSED_MSG
-
-
-def checksafeeq(seq):
-    msg = checkeqidx(seq, seq.idx)
+    msg = checkrules(edeq, edeq.idx, edeq.selm)
     if msg != PASSED_MSG:
         return msg
-
-    if seq.right_pref is not None and type(seq.right_pref) != bool:
-        return "Wrong right_pref attribute: It must be of type NoneType or " \
-               "bool (current type: " + type(seq.uld).__name__ + ")."
-
-    if type(seq.uld) != int:
-        return "Wrong uld attribute: It must be of type int " \
-               "(current type: " + type(seq.uld).__name__ + ")."
-
-    if seq.uld < 0:
-        return "Wrong uld attribute: It must be positive " \
-               "(current value: " + repr(seq.uld) + ")."
-
-    if type(seq.redundant_lock) != bool:
-        return "Wrong redundant_lock attribute: It must be of type bool " \
-               "(current type: " + type(seq.redundant_lock).__name__ + ")."
 
     return PASSED_MSG
 
 
 HEADER = '\033[95m'
-OKBLUE = '\033[94m'
-OKGREEN = '\033[92m'
+BOLD = '\033[1m'
+UNDERLINE = '\033[4m'
+BLUE = '\033[94m'
+GREEN = '\033[92m'
 WARNING = '\033[93m'
 FAIL = '\033[91m'
 ENDC = '\033[0m'
-BOLD = '\033[1m'
-UNDERLINE = '\033[4m'
 
 
 def debuginit(fun):
@@ -312,12 +249,15 @@ def debuginit(fun):
             return
 
         print(">>>>> Debugging started <<<<<")
-        print(OKBLUE + "\neq: "  + ENDC + BOLD + str(self) + ENDC)
-        print(OKBLUE + "\nidx: " + ENDC + BOLD + str(self.idx) + ENDC
-              + OKBLUE + "\tOvrwrt: " + ENDC
-              + BOLD + repr(self.ovrwrt) + ENDC)
+        print(BLUE + "\neq: " + ENDC + BOLD + str(self) + ENDC)
+        print(
+            BLUE + "\nidx: " + ENDC + BOLD + str(self.idx) + ENDC
+            + BLUE + "\tselm: " + ENDC + BOLD + str(self.selm.name) + ENDC
+            + BLUE + "\tovrwrt: " + ENDC + BOLD + repr(self.ovrwrt) + ENDC
+            + BLUE + "\tuld: " + ENDC + BOLD + repr(self.uld) + ENDC
+        )
 
-        msg = checksafeeq(self)
+        msg = check_edeq(self)
         if msg != PASSED_MSG:
             print(FAIL + "ERROR " + ENDC + "=======> " + BOLD + msg + ENDC)
             # A __init__ must not return something that is not None
@@ -336,7 +276,7 @@ def debug(fun):
             return fun(self, *args, **kwargs)
 
         # Debugging eq and idx
-        msg = checksafeeq(self)
+        msg = check_edeq(self)
         if msg != PASSED_MSG:
             print(FAIL + "ERROR " + ENDC + "=======> " + BOLD + msg + ENDC)
             return -99
@@ -345,17 +285,35 @@ def debug(fun):
                   + BOLD + fun.__name__ + ENDC + ". Executing now...")
 
         retval = fun(self, *args, **kwargs)
-        print(OKBLUE + "\neq: "  + ENDC + BOLD + str(self) + ENDC)
-        print(OKBLUE + "\nidx: " + ENDC + BOLD + str(self.idx) + ENDC
-              + OKBLUE + "\tOvrwrt: " + ENDC
-              + BOLD + repr(self.ovrwrt) + ENDC
-              + ".\tReturn of " + BOLD + fun.__name__ + ENDC + ": "
-              + WARNING + str(retval) + ENDC)
 
-        msg = checksafeeq(self)
+        s_args = ""
+        for arg in args:
+            if isinstance(arg, list) and arg and isinstance(arg[0],
+                                                            PseudoSym):
+                # Do the output more readable
+                s_args += str(Subeq(arg)) + ", "
+            else:
+                s_args += str(arg) + ", "
+        for k, v in kwargs.items():
+            s_args += k + "=" + str(v) + ", "
+        if s_args:
+            s_args = s_args[:-2]
+
+        print(BLUE + "\neq: " + ENDC + BOLD + str(self) + ENDC)
+        print(
+            BLUE + "\nidx: " + ENDC + BOLD + str(self.idx) + ENDC
+            + BLUE + "\tselm: " + ENDC + BOLD + str(self.selm.name) + ENDC
+            + BLUE + "\tovrwrt: " + ENDC + BOLD + repr(self.ovrwrt) + ENDC
+            + BLUE + "\tuld: " + ENDC + BOLD + repr(self.uld) + ENDC + "\n"
+            + WARNING + fun.__name__ + ENDC + "(" + s_args + ") -> "
+            + BOLD + (retval.name if hasattr(retval, "name") else "-") + ENDC
+        )
+
+        msg = check_edeq(self)
         if msg != PASSED_MSG:
             print(FAIL + "ERROR " + ENDC + "=======> " + BOLD + msg + ENDC)
-            return -99
+            print("Forcing quit now because of an error.")
+            quit()
         else:
             print("\nTests passed after call. OK")
 

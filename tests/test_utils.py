@@ -24,21 +24,21 @@ class Eq(EqCore):
 
     DEFAULT_METHOD_RETVAL = 88
 
-    def __init__(self, eq=None, idx=None, selm=SelMode.LCURSOR, ovrwrt=False):
+    def __init__(self, eq=None, idx=None, selm=SelMode.LCUR, ovrwrt=False):
         super().__init__(eq, idx, selm, ovrwrt, debug=False)
 
     def default_eq(self):
         self[:] = [PVOID]
         self.idx[:] = []
-        self.selm = SelMode.LCURSOR
+        self.selm = SelMode.LCUR
         self.ovrwrt = False
         return self.DEFAULT_METHOD_RETVAL
 
 
-LH = SelMode.LHIGHLIGHTED
-RH = SelMode.RHIGHLIGHTED
-LC = SelMode.LCURSOR
-RC = SelMode.RCURSOR
+LH = SelMode.LHL
+RH = SelMode.RHL
+LC = SelMode.LCUR
+RC = SelMode.RCUR
 PS_LO = PseudoSymb("L", lo_base=True)
 PS = PseudoSymb("u")
 OP = Op("O", 1)

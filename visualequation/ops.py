@@ -184,9 +184,30 @@ class PseudoSymb:
     def __hash__(self):
         return hash(self.__dict__)
 
+    @classmethod
+    def from_json(cls, dct):
+        return cls(pp=dct["pp"])
+
 
 class Op(PseudoSymb):
-    """Class for primitive elements of an equation."""
+    """Class for primitive elements of an equation.
+
+    The spatial position of each ordinal should go from left to right with the
+    increase of the ordinal of the argument. When it is not possible to
+    advance to the right, then going down once. It is not strictly followed by
+    ScriptOp, currently.
+
+    Attributes:
+
+        *   _n_args: The number of arguments or -1 for juxts.
+        *   _pref_arg: The ordinal of one argument such that:
+
+            *   It is the argument to enter its block from the left.
+            *   The argument selected by default when the op is inserted
+                without substituting.
+            *   The default argument substituted when the op is inserted
+                substituting.
+    """
 
     def __init__(self, latex_code: str,
                  n_args: int = 1, pref_arg: int = 1, lo_base: bool = False,
@@ -231,7 +252,16 @@ class Op(PseudoSymb):
         """
         return "Op(" + self._repr_priv() + self._repr_pub() + ")"
 
-    def _assert_valid_args(self, selmode: SelMode, arg_ord: Optional[int]):
+    def _assert_valid_args(self, arg_ord: Optional[int],
+                           selmode: SelMode = SelMode.LCUR):
+        """Check that passed argument ordinal and SelMode are valid.
+
+        *arg_ord* or *selmode* with a value of None are valid.
+
+        .. note::
+            If it is not necessary to pass a SelMode to the method, leave
+            *selmode* unset.
+        """
         if not isinstance(selmode, SelMode):
             raise ValueError("Parameter selmode must be a SelMode.")
         if arg_ord is None:
@@ -241,59 +271,65 @@ class Op(PseudoSymb):
         if arg_ord < 1 or arg_ord > self._n_args:
             raise ValueError("Parameter " + str(arg_ord) + " is not valid.")
 
-    def rstep(self, selmode: SelMode, arg_ord: Optional[int] = None):
-        """Return selmode and ordinal of par to select after pressing RIGHT.
+    def rstep(self, arg_ord: Optional[int] = None):
+        """Return ordinal of par to select after pressing RIGHT.
 
-        :param selmode: Current selection mode.
         :param arg_ord: Ordinal of parameter already selected. None means that
                         no parameter is already selected.
         :return: A pair similar to input or None, which means "continue
                  outside".
         """
-        self._assert_valid_args(selmode, arg_ord)
+        self._assert_valid_args(arg_ord)
         if arg_ord is None:
-            return SelMode.LCURSOR, 1
+            return self._pref_arg
         if arg_ord == self._n_args:
             return None
-        return SelMode.LCURSOR, arg_ord + 1
+        return arg_ord + 1
 
-    def lstep(self, selmode: SelMode, arg_ord: Optional[int] = None):
-        """Return selmode and ordinal of par to select after pressing LEFT.
+    def lstep(self, arg_ord: Optional[int] = None):
+        """Return ordinal of par to select after pressing LEFT.
 
-        :param selmode: Current selection mode.
         :param arg_ord: Ordinal of parameter already selected. None means that
                         no parameter is already selected.
         :return: A pair similar to input or None, which means "continue
                  outside".
         """
-        self._assert_valid_args(selmode, arg_ord)
+        self._assert_valid_args(arg_ord)
         if arg_ord is None:
-            return SelMode.RCURSOR, self._n_args
+            return self._n_args
         if arg_ord == 1:
             return None
-        return SelMode.RCURSOR, arg_ord - 1
+        return arg_ord - 1
 
-    def ustep(self, selmode: SelMode, arg_ord: Optional[int] = None):
+    def ustep(self, arg_ord: Optional[int], selmode: SelMode):
         """Return selmode and ordinal of par to select after pressing UP.
 
         :param selmode: Current selection mode.
         :param arg_ord: Ordinal of parameter already selected. None means that
                         no parameter is already selected.
-        :return: A pair similar to input or None, which means "not available".
+        :return: An argument ordinal or None.
         """
-        self._assert_valid_args(selmode, arg_ord)
+        self._assert_valid_args(arg_ord, selmode)
         return None
 
-    def dstep(self, selmode: SelMode, arg_ord: Optional[int] = None):
+    def dstep(self, arg_ord: Optional[int], selmode: SelMode):
         """Return selmode and ordinal of par to select after pressing DOWN.
 
         :param selmode: Current selection mode.
         :param arg_ord: Ordinal of parameter already selected. None means that
                         no parameter is already selected.
-        :return: A pair similar to input or None, which means "not available".
+        :return: An argument ordinal or None.
         """
-        self._assert_valid_args(selmode, arg_ord)
+        self._assert_valid_args(arg_ord, selmode)
         return None
+
+    def _from_to(self, arg_ord: Optional[int], selmode: SelMode,
+                 arg_ord_from: int, arg_ord_to: int):
+        """A helper to avoid writing similar functions by derived classes."""
+        self._assert_valid_args(arg_ord, selmode)
+        if arg_ord != arg_ord_from:
+            return None
+        return arg_ord_to
 
 
 class Juxt(Op):
@@ -304,16 +340,6 @@ class Juxt(Op):
         if initial_n < 2:
             raise ValueError("Parameter initial_n must be bigger than 1.")
         self.current_n = initial_n
-
-    def _assert_valid_args(self, selmode: SelMode, arg_ord: Optional[int]):
-        if not isinstance(selmode, SelMode):
-            raise ValueError("Parameter selmode must be a SelMode.")
-        if arg_ord is None:
-            return
-        if not isinstance(arg_ord, int):
-            raise TypeError("Parameter arg_ord must be an int or None.")
-        if arg_ord < 1 or arg_ord > self.current_n:
-            raise ValueError("Parameter " + str(arg_ord) + " is not valid.")
 
     def __repr__(self):
         """Return a valid string to generate the object.
@@ -330,23 +356,34 @@ class Juxt(Op):
             extra = extra[2:]
         return "Juxt(" + s + extra + ")"
 
-    def rstep(self, selmode: SelMode, arg_ord: Optional[int] = None):
-        """Return selmode and ordinal of par to select after pressing RIGHT."""
-        self._assert_valid_args(selmode, arg_ord)
+    def _assert_valid_args(self, arg_ord: Optional[int],
+                           selmode: SelMode = SelMode.LCUR):
+        if not isinstance(selmode, SelMode):
+            raise ValueError("Parameter selmode must be a SelMode.")
         if arg_ord is None:
-            return SelMode.LCURSOR, 1
+            return
+        if not isinstance(arg_ord, int):
+            raise TypeError("Parameter arg_ord must be an int or None.")
+        if arg_ord < 1 or arg_ord > self.current_n:
+            raise ValueError("Parameter " + str(arg_ord) + " is not valid.")
+
+    def rstep(self, arg_ord: Optional[int] = None):
+        """Return ordinal of par to select after pressing RIGHT."""
+        self._assert_valid_args(arg_ord)
+        if arg_ord is None:
+            return 1
         if arg_ord == self.current_n:
             return None
-        return SelMode.LCURSOR, arg_ord + 1
+        return arg_ord + 1
 
-    def lstep(self, selmode: SelMode, arg_ord: Optional[int] = None):
-        """Return selmode and ordinal of par to select after pressing LEFT."""
-        self._assert_valid_args(selmode, arg_ord)
+    def lstep(self, arg_ord: Optional[int] = None):
+        """Return ordinal of par to select after pressing LEFT."""
+        self._assert_valid_args(arg_ord)
         if arg_ord is None:
-            return SelMode.RCURSOR, self.current_n
+            return self.current_n
         if arg_ord == 1:
             return None
-        return SelMode.RCURSOR, arg_ord - 1
+        return arg_ord - 1
 
 
 class PJuxt(Juxt):
@@ -393,21 +430,70 @@ class TJuxt(Juxt):
 
 class Pvoid(PseudoSymb):
     def __init__(self):
-        super().__init__(r'\oblong')
+        super().__init__(r'\begingroup\color{purple}\oblong\endgroup')
 
     def __str__(self):
         return "PVOID"
 
 
-PVOID = Pvoid()
+class Frac(Op):
+    def __init__(self, **kwargs):
+        super().__init__(r'\frac{{{0}}}{{{1}}}', n_args=2, **kwargs)
 
-# The following PseudoSymbs instances are defined here because they are not
-# supposed to be modified
+    def rstep(self, arg_ord: Optional[int] = None):
+        self._assert_valid_args(arg_ord)
+        if arg_ord is None:
+            return 1
+        return None
+
+    def lstep(self, arg_ord: Optional[int] = None):
+        return self.rstep(arg_ord)
+
+    def ustep(self, arg_ord: Optional[int], selmode: SelMode):
+        return self._from_to(arg_ord, selmode, 2, 1)
+
+    def dstep(self, arg_ord: Optional[int], selmode: SelMode):
+        return self._from_to(arg_ord, selmode, 1, 2)
+
+    def to_json(self):
+        return dict(cls="F", pp=self.pp.to_json())
+
+
+class Sqrt(Op):
+    def __init__(self, **kwargs):
+        super().__init__(r'\sqrt{{{0}}}', n_args=1, **kwargs)
+
+    def to_json(self):
+        return dict(cls="R", pp=self.pp.to_json())
+
+
+class NSqrt(Op):
+    def __init__(self, **kwargs):
+        super().__init__(r'\sqrt[{{{0}}}]{{{1}}}', n_args=2, pref_arg=2,
+                         **kwargs)
+
+    def rstep(self, arg_ord: Optional[int] = None):
+        self._assert_valid_args(arg_ord)
+        if arg_ord is None:
+            return 2
+        return None
+
+    def lstep(self, arg_ord: Optional[int] = None):
+        return self.rstep(arg_ord)
+
+    def ustep(self, arg_ord: Optional[int], selmode: SelMode):
+        return self._from_to(arg_ord, selmode, 2, 1)
+
+    def dstep(self, arg_ord: Optional[int], selmode: SelMode):
+        return self._from_to(arg_ord, selmode, 1, 2)
+
+    def to_json(self):
+        return dict(cls="NR", pp=self.pp.to_json())
+
+
+# The following instances are defined here because they are not supposed to
+# be modified
+PVOID = Pvoid()
 SELARG = PseudoSymb(r'\cdots')
-#PVOID = Op("pvoid", r'\begingroup\color{purple}\oblong\endgroup')
-#TVOID = Op("tvoid", r'\begingroup\color{lightgray}\oblong\endgroup')
-#TVOID = Op("tvoid", r'\oblong')
-#IEDIT = Op("ledit", r'\left\lgroup {0} \right\rmoustache', 1)
-IEDIT = Op(r'\begingroup\color{{blue}}{0}\endgroup', n_args=1)
-OEDIT = Op(r'\left\rmoustache {0} \right\lmoustache', n_args=1)
+
 

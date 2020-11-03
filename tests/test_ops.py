@@ -248,11 +248,11 @@ class OpsTests(unittest.TestCase):
             op = Op("b", n_args)
 
             for sm in SelMode:
-                self.assertEqual(op.rstep(sm, None), (SelMode.LCURSOR, 1))
+                self.assertEqual(op.rstep(sm, None), (SelMode.LCUR, 1))
                 self.assertEqual(op.rstep(sm, n_args), None)
 
                 for n in range(1, n_args):
-                    self.assertEqual(op.rstep(sm, n), (SelMode.LCURSOR, n + 1))
+                    self.assertEqual(op.rstep(sm, n), (SelMode.LCUR, n + 1))
 
                 for n in range(-6, 1):
                     with self.assertRaises(ValueError):
@@ -268,10 +268,10 @@ class OpsTests(unittest.TestCase):
 
             for sm in SelMode:
                 self.assertEqual(op.lstep(sm, 1), None)
-                self.assertEqual(op.lstep(sm, None), (SelMode.RCURSOR, n_args))
+                self.assertEqual(op.lstep(sm, None), (SelMode.RCUR, n_args))
 
                 for n in range(2, n_args+1):
-                    self.assertEqual(op.lstep(sm, n), (SelMode.RCURSOR, n - 1))
+                    self.assertEqual(op.lstep(sm, n), (SelMode.RCUR, n - 1))
 
                 for n in range(-6, 1):
                     with self.assertRaises(ValueError):
@@ -335,11 +335,11 @@ class OpsTests(unittest.TestCase):
             pj = PJuxt(n_args)
 
             for sm in SelMode:
-                self.assertEqual(pj.rstep(sm, None), (SelMode.LCURSOR, 1))
+                self.assertEqual(pj.rstep(sm, None), (SelMode.LCUR, 1))
                 self.assertEqual(pj.rstep(sm, n_args), None)
 
                 for n in range(1, n_args):
-                    self.assertEqual(pj.rstep(sm, n), (SelMode.LCURSOR, n + 1))
+                    self.assertEqual(pj.rstep(sm, n), (SelMode.LCUR, n + 1))
 
                 for n in range(-6, 1):
                     with self.assertRaises(ValueError):
@@ -355,10 +355,10 @@ class OpsTests(unittest.TestCase):
 
             for sm in SelMode:
                 self.assertEqual(pj.lstep(sm, 1), None)
-                self.assertEqual(pj.lstep(sm, None), (SelMode.RCURSOR, n_args))
+                self.assertEqual(pj.lstep(sm, None), (SelMode.RCUR, n_args))
 
                 for n in range(2, n_args+1):
-                    self.assertEqual(pj.lstep(sm, n), (SelMode.RCURSOR, n - 1))
+                    self.assertEqual(pj.lstep(sm, n), (SelMode.RCUR, n - 1))
 
                 for n in range(-6, 1):
                     with self.assertRaises(ValueError):

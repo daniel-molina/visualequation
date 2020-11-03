@@ -25,50 +25,50 @@ class EqCoreTests(unittest.TestCase):
         self.assertEqual(eq, Subeq(None))
         self.assertEqual(eq, Eq([PVOID]))
         self.assertEqual(eq.idx, [])
-        self.assertIs(eq.selm, SelMode.LCURSOR)
+        self.assertIs(eq.selm, SelMode.LCUR)
 
         eq = Eq(["a"])
         self.assertEqual(eq, ["a"])
         self.assertEqual(eq.idx, [])
-        self.assertIs(eq.selm, SelMode.LCURSOR)
+        self.assertIs(eq.selm, SelMode.LCUR)
 
         eq = Eq([PJuxt(), ["e"], [PS]])
         self.assertIsInstance(eq, Subeq)
         self.assertIsInstance(eq, EqCore)
         self.assertEqual(eq.idx, Idx(1))
-        self.assertIs(eq.selm, SelMode.LCURSOR)
+        self.assertIs(eq.selm, SelMode.LCUR)
 
-        eq = Eq([PJuxt(), ["e"], [PS]], [2], SelMode.RCURSOR)
+        eq = Eq([PJuxt(), ["e"], [PS]], [2], SelMode.RCUR)
         self.assertIsInstance(eq, Subeq)
         self.assertIsInstance(eq, EqCore)
         self.assertIsInstance(eq(2), Subeq)
         self.assertNotIsInstance(eq(2), EqCore)
         self.assertEqual(eq.idx, Idx(2))
-        self.assertIs(eq.selm, SelMode.RCURSOR)
+        self.assertIs(eq.selm, SelMode.RCUR)
 
-        eq = Eq([PJuxt(), ["e"], [PS]], [2], SelMode.LHIGHLIGHTED)
+        eq = Eq([PJuxt(), ["e"], [PS]], [2], SelMode.LHL)
         self.assertIsInstance(eq, Subeq)
         self.assertIsInstance(eq, EqCore)
         self.assertIsInstance(eq(2), Subeq)
         self.assertNotIsInstance(eq(2), EqCore)
         self.assertEqual(eq.idx, Idx(2))
-        self.assertIs(eq.selm, SelMode.LHIGHLIGHTED)
+        self.assertIs(eq.selm, SelMode.LHL)
 
-        eq = Eq([PJuxt(), ["e"], [PS]], [2], SelMode.RHIGHLIGHTED)
+        eq = Eq([PJuxt(), ["e"], [PS]], [2], SelMode.RHL)
         self.assertIsInstance(eq, Subeq)
         self.assertIsInstance(eq, EqCore)
         self.assertIsInstance(eq(2), Subeq)
         self.assertNotIsInstance(eq(2), EqCore)
         self.assertEqual(eq.idx, Idx(2))
-        self.assertIs(eq.selm, SelMode.RHIGHLIGHTED)
+        self.assertIs(eq.selm, SelMode.RHL)
 
-        eq = Eq([PJuxt(), ["e"], [PS]], [2], SelMode.LCURSOR)
+        eq = Eq([PJuxt(), ["e"], [PS]], [2], SelMode.LCUR)
         self.assertIsInstance(eq, Subeq)
         self.assertIsInstance(eq, EqCore)
         self.assertIsInstance(eq(2), Subeq)
         self.assertNotIsInstance(eq(2), EqCore)
         self.assertEqual(eq.idx, Idx(2))
-        self.assertIs(eq.selm, SelMode.LCURSOR)
+        self.assertIs(eq.selm, SelMode.LCUR)
 
         eq.idx[:] = [2]
         self.assertIsInstance(eq.idx, Idx)
@@ -83,10 +83,10 @@ class EqCoreTests(unittest.TestCase):
 
         eq = Eq([OP, [PJuxt(), ["e"], [PS]]])
         self.assertEqual(eq.idx, [])
-        self.assertEqual(eq.selm, SelMode.LCURSOR)
-        eq = Eq([OP, [PJuxt(), ["e"], [PS]]], [1, 1], SelMode.LCURSOR)
+        self.assertEqual(eq.selm, SelMode.LCUR)
+        eq = Eq([OP, [PJuxt(), ["e"], [PS]]], [1, 1], SelMode.LCUR)
         self.assertEqual(eq.idx, [1, 1])
-        self.assertEqual(eq.selm,  SelMode.LCURSOR)
+        self.assertEqual(eq.selm, SelMode.LCUR)
 
     def test_idx_arg(self):
         idx = [1]
@@ -202,59 +202,117 @@ class EqCoreTests(unittest.TestCase):
             eq = Eq([PJuxt(), ["e"], [PS]], [1], selm)
             for idx in ([], None):
                 self.assertEqual(eq._correctly_point(idx, False),
-                                 ([1], SelMode.LCURSOR))
+                                 ([1], SelMode.LCUR))
                 self.assertEqual(eq._correctly_point(idx, True),
-                                 ([2], SelMode.RCURSOR))
+                                 ([2], SelMode.RCUR))
             for idx in ([1], Idx(1), -1):
                 self.assertEqual(eq._correctly_point(idx, False),
-                                 ([1], SelMode.LCURSOR))
+                                 ([1], SelMode.LCUR))
                 self.assertEqual(eq._correctly_point(idx, True),
-                                 ([2], SelMode.LCURSOR))
+                                 ([2], SelMode.LCUR))
 
             for idx in ([2], Idx(2)):
                 self.assertEqual(eq._correctly_point(idx, False),
-                                 ([2], SelMode.LCURSOR))
+                                 ([2], SelMode.LCUR))
                 self.assertEqual(eq._correctly_point(idx, True),
-                                 ([2], SelMode.RCURSOR))
+                                 ([2], SelMode.RCUR))
 
         for selm in SelMode:
             eq = Eq([RSUP, ["e"], [PS]], [], selm)
 
             for idx in ([], None, -1):
                 self.assertEqual(eq._correctly_point(idx, False),
-                                 ([], SelMode.LCURSOR))
+                                 ([], SelMode.LCUR))
                 self.assertEqual(eq._correctly_point(idx, True),
-                                 ([], SelMode.RCURSOR))
+                                 ([], SelMode.RCUR))
             for idx in ([1], Idx(1)):
                 self.assertEqual(eq._correctly_point(idx, False),
-                                 ([1], SelMode.LCURSOR))
+                                 ([1], SelMode.LCUR))
                 self.assertEqual(eq._correctly_point(idx, True),
-                                 ([1], SelMode.RCURSOR))
+                                 ([1], SelMode.RCUR))
 
             for idx in ([2], Idx(2)):
                 self.assertEqual(eq._correctly_point(idx, False),
-                                 ([2], SelMode.LCURSOR))
+                                 ([2], SelMode.LCUR))
                 self.assertEqual(eq._correctly_point(idx, True),
-                                 ([2], SelMode.RCURSOR))
+                                 ([2], SelMode.RCUR))
 
             eq = Eq([RSUP, [PVOID], [PVOID]])  # idx == []
 
             for idx in ([], None, -1):
                 self.assertEqual(eq._correctly_point(idx, False),
-                                 ([], SelMode.LCURSOR))
+                                 ([], SelMode.LCUR))
                 self.assertEqual(eq._correctly_point(idx, True),
-                                 ([], SelMode.RCURSOR))
+                                 ([], SelMode.RCUR))
             for idx in ([1], Idx(1)):
                 self.assertEqual(eq._correctly_point(idx, False),
-                                 ([1], SelMode.LCURSOR))
+                                 ([1], SelMode.LCUR))
                 self.assertEqual(eq._correctly_point(idx, True),
-                                 ([1], SelMode.LCURSOR))
+                                 ([1], SelMode.LCUR))
 
             for idx in ([2], Idx(2)):
                 self.assertEqual(eq._correctly_point(idx, False),
-                                 ([2], SelMode.LCURSOR))
+                                 ([2], SelMode.LCUR))
                 self.assertEqual(eq._correctly_point(idx, True),
-                                 ([2], SelMode.LCURSOR))
+                                 ([2], SelMode.LCUR))
+
+    def test_dissolve_temp_jb(self):
+        def f(eq, refidx):
+            new_eq = deepcopy(eq)
+            new_eq.idx[:] = new_eq._dissolve_temp_jb(-1, refidx)
+            return new_eq
+
+        db = (
+            # tjuxt-block is not a juxted
+            (Eq([PJuxt(3), ["a"], [RSUP, ["1"], ["2"]], ["c"]], []),
+                f(Eq([TJuxt(3), ["a"], [RSUP, ["1"], ["2"]], ["c"]]), [])),
+            (Eq([PJuxt(3), ["a"], [RSUP, ["1"], ["2"]], ["c"]], [1]),
+                f(Eq([TJuxt(3), ["a"], [RSUP, ["1"], ["2"]], ["c"]]), [1])),
+            (Eq([PJuxt(3), ["a"], [RSUP, ["1"], ["2"]], ["c"]], [2]),
+                f(Eq([TJuxt(3), ["a"], [RSUP, ["1"], ["2"]], ["c"]]), [2])),
+            (Eq([PJuxt(3), ["a"], [RSUP, ["1"], ["2"]], ["c"]], [3]),
+                f(Eq([TJuxt(3), ["a"], [RSUP, ["1"], ["2"]], ["c"]]), [3])),
+            (Eq([PJuxt(3), ["a"], [RSUP, ["1"], ["2"]], ["c"]], [2, 1]),
+                f(Eq([TJuxt(3), ["a"], [RSUP, ["1"], ["2"]], ["c"]]), [2, 1])),
+            (Eq([PJuxt(3), ["a"], [RSUP, ["1"], ["2"]], ["c"]], [2, 2]),
+                f(Eq([TJuxt(3), ["a"], [RSUP, ["1"], ["2"]], ["c"]]), [2, 2])),
+
+            (Eq([OP, [PJuxt(), ["a"], [OP, ["x"]]]], []),
+                f(Eq([OP, [TJuxt(), ["a"], [OP, ["x"]]]], [1]), [])),
+            (Eq([OP, [PJuxt(), ["a"], [OP, ["x"]]]], [1, 1]),
+                f(Eq([OP, [TJuxt(), ["a"], [OP, ["x"]]]], [1]), [1, 1])),
+            (Eq([OP, [PJuxt(), ["a"], [OP, ["x"]]]], [1, 2]),
+                f(Eq([OP, [TJuxt(), ["a"], [OP, ["x"]]]], [1]), [1, 2])),
+            (Eq([OP, [PJuxt(), ["a"], [OP, ["x"]]]], [1, 2, 1]),
+                f(Eq([OP, [TJuxt(), ["a"], [OP, ["x"]]]], [1]), [1, 2, 1])),
+            # tjuxt-block is a juxted
+            (Eq([PJuxt(3), ["x"], ["a"], [OP, ["x"]]], []),
+                f(Eq([PJuxt(), ["x"], [TJuxt(), ["a"], [OP, ["x"]]]], [2]),
+                    [])),
+            (Eq([PJuxt(3), ["x"], ["a"], [OP, ["x"]]], [1]),
+                f(Eq([PJuxt(), ["x"], [TJuxt(), ["a"], [OP, ["x"]]]], [2]),
+                    [1])),
+            (Eq([PJuxt(3), ["x"], ["a"], [OP, ["x"]]], [2]),
+                f(Eq([PJuxt(), ["x"], [TJuxt(), ["a"], [OP, ["x"]]]], [2]),
+                    [2, 1])),
+            (Eq([PJuxt(3), ["x"], ["a"], [OP, ["x"]]], [2, 1]),
+                f(Eq([PJuxt(), ["x"], [TJuxt(), ["a"], [OP, ["x"]]]], [2]),
+                    [2, 1, 1])),
+        )
+        ce = CompareEqs(db)
+        ce.assert_equality(inversely=True)
+
+        eq = Eq([PJuxt(), ["x"], [TJuxt(), ["a"], [OP, ["x"]]]], [2])
+        with self.assertRaises(ValueError):
+            eq._dissolve_temp_jb([2], [2])
+        with self.assertRaises(ValueError):
+            eq._dissolve_temp_jb([2], -2)
+        with self.assertRaises(ValueError):
+            eq._dissolve_temp_jb([2], -1)
+        with self.assertRaises(ValueError):
+            eq._dissolve_temp_jb(-1, -2)
+        with self.assertRaises(ValueError):
+            eq._dissolve_temp_jb(-1, -1)
 
     def test_condtly_correct_scriptop(self):
         for eq in (Eq(["a"]), Eq()):
