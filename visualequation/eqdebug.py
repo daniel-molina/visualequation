@@ -289,7 +289,7 @@ def debug(fun):
         s_args = ""
         for arg in args:
             if isinstance(arg, list) and arg and isinstance(arg[0],
-                                                            PseudoSym):
+                                                            PseudoSymb):
                 # Do the output more readable
                 s_args += str(Subeq(arg)) + ", "
             else:

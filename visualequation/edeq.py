@@ -551,9 +551,9 @@ class EdEq(EqCore):
 
                 if is_script(self, self.idx):
                     # Subcase: Remove an empty script
-                    ret_idx = remove_script(self.idx, self,
+                    self.idx[:] = remove_script(self.idx, self,
                                              self.idx[:-1] + [1])
-                    self._change_sel(ret_idx, True)
+                    self._change_sel(self.idx, True)
                     return NewEqState.EQ_MODIFIED
 
             # Subcase: Non-juxted cannot be removed and supeq is not allowed to
@@ -712,19 +712,21 @@ class EdEq(EqCore):
         self._reset_method_attrs()
 
         is_eq_mod = False
-        base_idx = self.idx
+        base_or_scrblock_idx = self.idx
         for pos in args[:-1]:
-            retval = insert_script(base_idx, self, pos)
+            retval = insert_script(base_or_scrblock_idx, self, pos)
             if not isinstance(retval, int):
-                base_idx = retval[:-1]
+                base_or_scrblock_idx = retval[:-1] + [1]
                 is_eq_mod = True
 
-        ret_val = insert_script(base_idx, self, args[-1])
-        if isinstance(ret_val, int):
-            self._change_sel(base_idx + [ret_val], False)
-        else:
+        ret_val = insert_script(base_or_scrblock_idx, self, args[-1])
+        if isinstance(ret_val, Idx):
             self._change_sel(ret_val, False)
             is_eq_mod = True
+        elif ret_val > 0:
+            self._change_sel(base_or_scrblock_idx[:-1] + [ret_val], False)
+        else:
+            self._change_sel(base_or_scrblock_idx + [-ret_val], False)
 
         return NewEqState.EQ_MODIFIED if is_eq_mod else NewEqState.SEL_MODIFIED
 

@@ -245,7 +245,7 @@ SCRIPTOPS_DICT = {
     (False, False, False, False, False, True, False):
         r'\overset{{{1}}}{{{0}}}',
     (False, False, True, False, False, True, False):
-        r'\overset{{{2}}}{{{\underset{{{1}}}{{{0}}}}}}',
+        r'\overset{{{2}}}{{\underset{{{1}}}{{{0}}}}}',
 }
 
 
@@ -450,26 +450,32 @@ class ScriptOp(Op):
     def ustep(self, arg_ord: Optional[int], selmode: SelMode):
         self._assert_valid_args(arg_ord, selmode)
         if arg_ord != 1:
-            return None
+            spos = self.ord2spos(arg_ord)
+            if spos.value > 4:
+                return None
+            return 1
         if selmode in (SelMode.RCUR, SelMode.RHL):
-            for pos in (ScriptPos.RSUP, ScriptPos.CSUP, ScriptPos.LSUP):
+            for pos in (ScriptPos.CSUP, ScriptPos.RSUP, ScriptPos.LSUP):
                 if self._scripts[pos]:
                     return self.spos2ord(pos)
-        else:
-            for pos in (ScriptPos.LSUP, ScriptPos.CSUP, ScriptPos.RSUP):
-                if self._scripts[pos]:
-                    return self.spos2ord(pos)
+
+        for pos in (ScriptPos.CSUP, ScriptPos.LSUP, ScriptPos.RSUP):
+            if self._scripts[pos]:
+                return self.spos2ord(pos)
 
     def dstep(self, arg_ord: Optional[int], selmode: SelMode):
         self._assert_valid_args(arg_ord, selmode)
         if arg_ord != 1:
-            return None
+            spos = self.ord2spos(arg_ord)
+            if spos.value <= 4:
+                return None
+            return 1
         if selmode in (SelMode.RCUR, SelMode.RHL):
-            for pos in (ScriptPos.RSUB, ScriptPos.CSUB, ScriptPos.LSUB):
+            for pos in (ScriptPos.CSUB, ScriptPos.RSUB, ScriptPos.LSUB):
                 if self._scripts[pos]:
                     return self.spos2ord(pos)
         else:
-            for pos in (ScriptPos.LSUB, ScriptPos.CSUB, ScriptPos.RSUB):
+            for pos in (ScriptPos.CSUB, ScriptPos.LSUB, ScriptPos.RSUB):
                 if self._scripts[pos]:
                     return self.spos2ord(pos)
 
@@ -1050,6 +1056,11 @@ def insert_script(index, eq: Subeq, script_pos: ScriptPos,
     If *newscript* is None, a [PVOID] will be used as script, if it did not
     exist.
 
+    .. note::
+        Pointing to a script-block is equivalent to point to a its base, except
+        that return value will be negative instead.
+        Consider that when reading the Rules below.
+
     Rules:
 
         Notation: The term 'minimal' script op refers to the script op which
@@ -1078,10 +1089,17 @@ def insert_script(index, eq: Subeq, script_pos: ScriptPos,
     """
     scr = deepcopy(Subeq(newscript))
     idx = Idx(index)
+    script_op_pointed = False
+    if is_scriptop(eq(idx)[0]):
+        # Case: idx does point to a scriptop
+        idx += [1]
+        script_op_pointed = True
+
     supeq = eq.supeq(idx)
-    if supeq == -2 or not is_scriptop(supeq[0]):
+    s = eq(idx)
+    if supeq == -2 or idx[-1] != 1 or not is_scriptop(supeq[0]):
         # Case: idx does not point to a base
-        baseref = eq if supeq == -2 else supeq[idx[-1]]
+        baseref = eq if supeq == -2 else s
         _insert_initial_script(baseref, script_pos, scr)
         return idx[:] + [2]
 
@@ -1089,13 +1107,16 @@ def insert_script(index, eq: Subeq, script_pos: ScriptPos,
     script = pars.get_script(script_pos)
     if script == -1:
         # Case: Requested script is not compatible with current operator
-        baseref = supeq[idx[-1]]
-        _insert_initial_script(baseref, script_pos, scr)
-        return idx[:] + [2]
+        if script_op_pointed:
+            _insert_initial_script(supeq, script_pos, scr)
+            return idx[:-1] + [2]
+        else:
+            _insert_initial_script(s, script_pos, scr)
+            return idx[:] + [2]
 
     if script is not None:
         # Case: Requested script already exists
-        return pars.spos2argord(script_pos)
+        return pars.spos2argord(script_pos) * (-1 if script_op_pointed else 1)
 
     # Case: Requested script is compatible with current ScriptOpSubtype and
     # script is not present
