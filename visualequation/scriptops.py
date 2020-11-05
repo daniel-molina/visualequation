@@ -1057,9 +1057,12 @@ def insert_script(index, eq: Subeq, script_pos: ScriptPos,
     exist.
 
     .. note::
-        Pointing to a script-block is equivalent to point to a its base, except
-        that return value will be negative instead.
-        Consider that when reading the Rules below.
+        Pointing to a script-block is almost equivalent to point to its base,
+        except:
+
+            *   Selection is preferred to be a base than a script-block,
+                as expected intuitively. This matters in complex setups.
+            *   Return value will be negative if a script-block is considered.
 
     Rules:
 
@@ -1090,19 +1093,18 @@ def insert_script(index, eq: Subeq, script_pos: ScriptPos,
     scr = deepcopy(Subeq([RVOID] if newscript is None else newscript))
     idx = Idx(index)
     script_op_pointed = False
-    if is_scriptop(eq(idx)[0]):
-        # Case: idx does point to a scriptop
+    if not is_base(eq, idx) and is_scriptop(eq(idx)[0]):
+        # Case: idx does point to a scriptop which is not a base
         idx += [1]
         script_op_pointed = True
 
-    supeq = eq.supeq(idx)
-    s = eq(idx)
-    if supeq == -2 or idx[-1] != 1 or not is_scriptop(supeq[0]):
+    if not is_base(eq, idx):
         # Case: idx does not point to a base
-        baseref = eq if supeq == -2 else s
+        baseref = eq if not idx else eq(idx)
         _insert_initial_script(baseref, script_pos, scr)
         return idx[:] + [2]
 
+    supeq = eq.supeq(idx)
     pars = ScriptPars.from_scriptblock(supeq)
     script = pars.get_script(script_pos)
     if script == -1:
@@ -1111,7 +1113,7 @@ def insert_script(index, eq: Subeq, script_pos: ScriptPos,
             _insert_initial_script(supeq, script_pos, scr)
             return idx[:-1] + [2]
         else:
-            _insert_initial_script(s, script_pos, scr)
+            _insert_initial_script(supeq[idx[-1]], script_pos, scr)
             return idx[:] + [2]
 
     if script is not None:
