@@ -725,7 +725,10 @@ class ScriptOpsTests(unittest.TestCase):
 
                 new_op = ScriptOp(False, spos)
                 s = [op, ["a"]] + [["z"]] * (op._n_args - 1)
-                fins1 = [op, [new_op, ["a"], ["x"]]] + [["z"]] * (op._n_args - 1)
+                fins1 = [op, [new_op, ["a"],
+                              ["x"]]] + [["z"]] * (op._n_args - 1)
+                fins0 = [new_op, [op, ["a"]] + [["z"]] * (op._n_args - 1),
+                         ["x"]]
                 db = (
                     (Eq(s, [1]), Eq(fins1, [1, 2])),
                     (Eq([Op("O", 1), s], [1, 1]),
@@ -735,6 +738,13 @@ class ScriptOpsTests(unittest.TestCase):
                     (Eq([PJuxt(), ["a"], s], [2, 1]),
                         Eq([PJuxt(), ["a"], fins1], [2, 1, 2])),
 
+                    (Eq(s, []), Eq(fins0, [2])),
+                    (Eq([Op("O", 1), s], [1]),
+                        Eq([Op("O", 1), fins0], [1, 2])),
+                    (Eq([PJuxt(), s, ["a"]], [1]),
+                        Eq([PJuxt(), fins0, ["a"]], [1, 2])),
+                    (Eq([PJuxt(), ["a"], s], [2]),
+                        Eq([PJuxt(), ["a"], fins0], [2, 2])),
                 )
                 ce = CompareEqs(db)
                 ce.assert_equality(fnone, is_method=False)
