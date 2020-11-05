@@ -286,11 +286,25 @@ class Subeq(list):
             raise NotSubeqError
         return sup
 
+    def is_void(self, index=None, cls=None):
+        s = self(index)
+        if cls is None:
+            cls = Void
+        return len(s) == 1 and isinstance(s[0], cls)
+
+    def is_rvoid(self, index=None):
+        return self(index) == [RVOID]
+
     def is_pvoid(self, index=None):
         return self(index) == [PVOID]
 
-    def all_pvoid(self, index=None):
-        """Return whether every param of block pointed by index is a PVOID.
+    def n_voids(self, index=None, cls=None):
+        """Return the number of voids which are parameters of a lop.
+
+        Pointed subeq must be a block B so the number of voids of lop-B is
+        returned.
+
+        *cls* can be used to specify a particular class of Void.
 
         If pointed subeq is a symbol, -1 is returned.
         """
@@ -300,10 +314,23 @@ class Subeq(list):
         if not s.isb():
             return -1
 
+        n = 0
         for par in s[1:]:
-            if par != [PVOID]:
-                return False
-        return True
+            if par.is_void(cls=cls):
+                n += 1
+        return n
+
+    def all_void(self, index=None, cls=None):
+        """Return whether every param of block pointed by index is a Void.
+
+        If pointed subeq is a symbol, -1 is returned.
+        """
+        s = self(index)
+        if not isinstance(s, Subeq):
+            raise NotSubeqError
+        if not s.isb():
+            return -1
+        return s.n_voids(cls=cls) == len(s) - 1
 
     def isusubeq(self, index=None):
         """Return if a subeq element is an usubeq, including lops."""

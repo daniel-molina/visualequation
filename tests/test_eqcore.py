@@ -658,8 +658,8 @@ class EqCoreTests(unittest.TestCase):
         ce = CompareEqs(db)
         ce.assert_equality(f)
 
-    def test_replace_by_pvoid(self):
-        def f(eq): return eq._replace_by_pvoid()
+    def test_replace_by_void(self):
+        def f(eq): return eq._replace_by_void()
         ipjb = Eq([PJuxt(), ["f"], ["s"]])
         ipjb.idx[:] = []  # Invalid eq
         db = (
@@ -673,10 +673,16 @@ class EqCoreTests(unittest.TestCase):
                 Eq([OP, [PVOID]], [1]), [1]),
             (Eq([RSUP, ["f"], ["s"]], [1]),
                 Eq([RSUP, [PVOID], ["s"]], [1]), [1]),
+            (Eq([RSUP, ["f"], ["s"]], [2]),
+                Eq([RSUP, ["f"], [RVOID]], [2]), [2]),
             (Eq([LORSUP, [PS_LO], ["x"]], [1]),
                 Eq([RSUP, [PVOID], ["x"]], [1]), [1]),
+            (Eq([LORSUP, [PS_LO], ["x"]], [2]),
+                Eq([LORSUP, [PS_LO], [RVOID]], [2]), [2]),
             (Eq([LOCSUPRSUP, [PS_LO], ["x"], ["z"]], [1]),
                 Eq([RSUP, [CSUP, [PVOID], ["x"]], ["z"]], [1]), [1, 1]),
+            (Eq([LOCSUPRSUP, [PS_LO], ["x"], ["z"]], [2]),
+                Eq([LOCSUPRSUP, [PS_LO], [RVOID], ["z"]], [2]), [2]),
         )
         ce = CompareEqs(db)
         ce.assert_equality(f)

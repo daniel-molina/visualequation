@@ -42,7 +42,7 @@ from collections import OrderedDict
 
 from .subeqs import Subeq
 from .idx import Idx, SelMode
-from .ops import Op
+from .ops import Op, RVOID
 
 
 class ScriptOpSubtype(Enum):
@@ -1053,7 +1053,7 @@ def insert_script(index, eq: Subeq, script_pos: ScriptPos,
     Return the index of the inserted script, or its ordinal in the current
     script block if the index already existed.
 
-    If *newscript* is None, a [PVOID] will be used as script, if it did not
+    If *newscript* is None, a [RVOID] will be used as script, if it did not
     exist.
 
     .. note::
@@ -1084,10 +1084,10 @@ def insert_script(index, eq: Subeq, script_pos: ScriptPos,
     :param index: The index of the subeq which will be the base of the script.
     :param eq: An equation.
     :param scrip_pos: Position to insert the script.
-    :param newscript: A subeq with which to initialize script. None means VOID.
+    :param newscript: A subeq with which to initialize script. None means void.
     :return: The index of inserted script. If it already existed, a flag.
     """
-    scr = deepcopy(Subeq(newscript))
+    scr = deepcopy(Subeq([RVOID] if newscript is None else newscript))
     idx = Idx(index)
     script_op_pointed = False
     if is_scriptop(eq(idx)[0]):

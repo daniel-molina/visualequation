@@ -428,12 +428,36 @@ class TJuxt(Juxt):
         return PJuxt(self.current_n, pp=deepcopy(self.pp))
 
 
-class Pvoid(PseudoSymb):
-    def __init__(self):
-        super().__init__(r'\begingroup\color{purple}\oblong\endgroup')
+class Void(PseudoSymb):
+    def __init__(self, **kwargs):
+        super().__init__(r'\oblong', **kwargs)
 
     def __str__(self):
-        return "PVOID"
+        return type(self).__name__.upper()
+
+
+class Pvoid(Void):
+    def __init__(self):
+        super().__init__(color=ColorProp.PURPLE)
+
+    def to_json(self):
+        return dict(cls="PV")
+
+    @classmethod
+    def from_json(cls, dct):
+        return cls()
+
+
+class Rvoid(Void):
+    def __init__(self):
+        super().__init__(color=ColorProp.LIGHTGRAY)
+
+    def to_json(self):
+        return dict(cls="RV")
+
+    @classmethod
+    def from_json(cls, dct):
+        return cls()
 
 
 class Frac(Op):
@@ -467,7 +491,7 @@ class Sqrt(Op):
         return dict(cls="R", pp=self.pp.to_json())
 
 
-class NSqrt(Op):
+class NRoot(Op):
     def __init__(self, **kwargs):
         super().__init__(r'\sqrt[{{{0}}}]{{{1}}}', n_args=2, pref_arg=2,
                          **kwargs)
@@ -494,6 +518,7 @@ class NSqrt(Op):
 # The following instances are defined here because they are not supposed to
 # be modified
 PVOID = Pvoid()
+RVOID = Rvoid()
 SELARG = PseudoSymb(r'\cdots')
 
 

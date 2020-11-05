@@ -556,7 +556,7 @@ class ScriptOpsTests(unittest.TestCase):
             def fnone(eq):
                 retval = insert_script(eq.idx, eq, spos)
                 self.assertIsInstance(retval, Idx)
-                self.assertEqual(eq(retval), [PVOID])
+                self.assertEqual(eq(retval), [RVOID])
                 eq._set(["x"], retval)
                 eq.idx[:] = retval
                 return eq
@@ -665,7 +665,7 @@ class ScriptOpsTests(unittest.TestCase):
                 def fnone(eq):
                     retval = insert_script(eq.idx, eq, spos)
                     self.assertIsInstance(retval, Idx)
-                    self.assertEqual(eq(retval), [PVOID])
+                    self.assertEqual(eq(retval), [RVOID])
                     eq._set(["x"], retval)
                     eq.idx[:] = retval
                     return eq
@@ -710,7 +710,7 @@ class ScriptOpsTests(unittest.TestCase):
                 def fnone(eq):
                     retval = insert_script(eq.idx, eq, spos)
                     self.assertIsInstance(retval, Idx)
-                    self.assertEqual(eq(retval), [PVOID])
+                    self.assertEqual(eq(retval), [RVOID])
                     eq._set(["x"], retval)
                     eq.idx[:] = retval
                     return eq
@@ -751,17 +751,6 @@ class ScriptOpsTests(unittest.TestCase):
                 ce.assert_equality(fy, is_method=False)
 
     def test_remove_script_2args(self):
-        for op in (op for op in SCR_OPS_LIST if op._n_args == 2):
-            db = (
-                (Eq([op] + [["x"]] * op._n_args, [2]), Eq(["x"])),
-                (Eq([Op("O", 1), [op] + [["x"]] * op._n_args], [1, 2]),
-                    Eq([Op("O", 1), ["x"]], [1])),
-                (Eq([PJuxt(), [op] + [["x"]] * op._n_args, ["y"]], [1, 2]),
-                    Eq([PJuxt(), ["x"], ["y"]], [1])),
-                (Eq([PJuxt(), ["y"], [op] + [["x"]] * op._n_args], [2, 2]),
-                    Eq([PJuxt(), ["y"], ["x"]], [2])),
-            )
-
         def fsb(eq):
             # Point with refindex to the supeq, which must always exist
             retval = remove_script(eq.idx, eq, eq.idx[:-1])
@@ -774,17 +763,31 @@ class ScriptOpsTests(unittest.TestCase):
             eq.idx[:] = retval
             return eq
 
+        for op in (op for op in SCR_OPS_LIST if op._n_args == 2):
+            db = (
+                (Eq([op] + [["x"]] * op._n_args, [2]), Eq(["x"])),
+                (Eq([Op("O", 1), [op] + [["x"]] * op._n_args], [1, 2]),
+                    Eq([Op("O", 1), ["x"]], [1])),
+                (Eq([PJuxt(), [op] + [["x"]] * op._n_args, ["y"]], [1, 2]),
+                    Eq([PJuxt(), ["x"], ["y"]], [1])),
+                (Eq([PJuxt(), ["y"], [op] + [["x"]] * op._n_args], [2, 2]),
+                    Eq([PJuxt(), ["y"], ["x"]], [2])),
+            )
+
+            ce = CompareEqs(db)
+            ce.assert_equality(fsb, is_method=False)
+            ce.assert_equality(fbase, is_method=False)
+
         def frem(eq):
             # Refindex pointing to removed script
             retval = remove_script(eq.idx, eq, eq.idx[:-1] + [2])
             # Do check here and do not care about adjusting final idx
             self.assertEqual(retval, -1)
             return eq
-        ce = CompareEqs(db)
-        ce.assert_equality(fsb, is_method=False)
-        ce.assert_equality(fbase, is_method=False)
 
-        for op in (op for op in SCR_OPS_LIST if op._n_args == 2):
+        for op in SCR_OPS_LIST:
+            if op._n_args != 2:
+                continue
             db = (
                 (Eq([op] + [["x"]] * op._n_args, [2]), Eq(["x"])),
                 (Eq([Op("O", 1), [op] + [["x"]] * op._n_args], [1, 2]),

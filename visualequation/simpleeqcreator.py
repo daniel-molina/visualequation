@@ -108,12 +108,12 @@ class SimpleEqCreator:
         self.eq[0].current_n = len(self.eq) - 1
         return Idx(next_juxted_pos)
 
-    def append(self, subeq, accept_pvoids=True):
+    def append(self, subeq, accept_voids=True):
         """Extend current equation, or initialize it.
 
         Return:
 
-            *   If *include_pvoids* is False and subeq is a PVOID, -1.
+            *   If *include_voids* is False and subeq is a void, -1.
             *   Elif *subeq* was not a JUXT-block subeq, the index in eq of
                 *subeq*.
             *   Else, the index of the first juxted of *subeq*.
@@ -137,7 +137,7 @@ class SimpleEqCreator:
             get_idx (with *subeq_entry* equal to 0) to obtain the correct
             value.
         """
-        if not accept_pvoids and subeq.is_pvoid():
+        if not accept_voids and subeq.is_void():
             return -1
 
         if not self.log:
@@ -146,14 +146,14 @@ class SimpleEqCreator:
         else:
             return self._update(subeq)
 
-    def extend(self, subeq_list, accept_pvoids=True):
+    def extend(self, subeq_list, accept_voids=True):
         """Given a list of subeqs, append all of them.
 
         Return the number of inserted subeqs.
         """
         n_inserted_subeqs = 0
         for s in subeq_list:
-            if accept_pvoids or not s.is_pvoid():
+            if accept_voids or not s.is_void():
                 self.append(s)
                 n_inserted_subeqs += 1
         return n_inserted_subeqs

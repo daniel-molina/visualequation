@@ -309,7 +309,7 @@ class EdEq(EqCore):
         """Move to a subequation to the right."""
         self._reset_method_attrs()
 
-        if not self.idx and self.is_pvoid():
+        if not self.idx and self.is_void():
             # Case: Whole eq is empty
             return NewEqState.IDENTICAL
 
@@ -334,15 +334,15 @@ class EdEq(EqCore):
                     self._change_sel(self.idx[:-2], True)
                 else:
                     self._change_sel(self.idx[:-2] + [arg_ord], False)
-        elif not self.isb(self.idx) and not self.is_pvoid(self.idx) \
+        elif not self.isb(self.idx) and not self.is_void(self.idx) \
                 and self.is_lcur():
-            # Case: Selection is a non-juxted non-PVOID symbol with LCUR
+            # Case: Selection is a non-juxted non-void symbol with LCUR
             self._change_sel(self.idx, True)
         elif not self.idx:
-            # Case: Selection is a non-PVOID eq with RCUR
+            # Case: Selection is a (non-void) eq with RCUR
             self._change_sel(self.idx, False)
         else:
-            # Case: Selection is not eq and (non-juxted with RCUR or PVOID)
+            # Case: Selection is not eq and (non-juxted with RCUR or void)
             arg_ord = self(self.idx[:-1])[0].rstep(self.idx[-1])
             if arg_ord is None:
                 self._change_sel(self.idx[:-1], True)
@@ -358,7 +358,7 @@ class EdEq(EqCore):
         """Move to a subequation to the left."""
         self._reset_method_attrs()
 
-        if not self.idx and self.is_pvoid():
+        if not self.idx and self.is_void():
             # Case: Whole eq is empty
             return NewEqState.IDENTICAL
 
@@ -437,14 +437,14 @@ class EdEq(EqCore):
     def _remove_eq_core(self):
         """Helper to remove the whole eq.
 
-        If eq is PVOID, just return IDENTICAL.
+        If eq is a void, just return IDENTICAL.
         Else:
 
             *   Set it to [PVOID].
             *   Set self.idx and self.selm properly.
             *   Return EQ_MODIFIED.
         """
-        if self.is_pvoid():
+        if self.is_void():
             return NewEqState.IDENTICAL
         self.idx[:] = []
         self.selm = SelMode.LCUR
@@ -510,7 +510,7 @@ class EdEq(EqCore):
             if self.is_juxted(self.idx):
                 self.idx, self.selm = self._vanish_juxted(0)
             else:
-                self.idx = self._replace_by_pvoid(self.idx)
+                self.idx = self._replace_by_void(self.idx)
                 self.selm = SelMode.LCUR
             return NewEqState.EQ_MODIFIED
 
@@ -518,7 +518,7 @@ class EdEq(EqCore):
         sup = self.supeq(self.idx)
         if sup == -2:
             # Case: Act on whole eq
-            if self.is_pvoid() or (not forward and self.is_lcur()) \
+            if self.is_void() or (not forward and self.is_lcur()) \
                     or (forward and self.is_rcur()):
                 return NewEqState.IDENTICAL
 
@@ -532,10 +532,10 @@ class EdEq(EqCore):
 
         if not sup.is_perm_jb():
             # Case: s is a non-juxted
-            if sup.all_pvoid():
-                # Subcase: Every par of lop-sup is PVOID
+            if sup.all_void():
+                # Subcase: Every par of lop-sup is a void
                 if not self.is_juxted(sup_idx):
-                    self.idx = self._replace_by_pvoid(sup_idx)
+                    self.idx = self._replace_by_void(sup_idx)
                     self.selm = SelMode.LCUR
                 else:
                     self.idx, self.selm = self._vanish_juxted(0, sup_idx)
@@ -543,9 +543,9 @@ class EdEq(EqCore):
 
             if (forward and self.is_lcur()) or \
                     (not forward and self.is_rcur()):
-                if not s.is_pvoid():
-                    # Subcase: Delete non-PVOID non-juxted
-                    self.idx = self._replace_by_pvoid()
+                if not s.is_void():
+                    # Subcase: Delete non-void non-juxted
+                    self.idx = self._replace_by_void()
                     self.selm = SelMode.LCUR
                     return NewEqState.EQ_MODIFIED
 
@@ -601,15 +601,18 @@ class EdEq(EqCore):
         # TODO?: Flat supeq of pjuxt-block??
         return NewEqState.IDENTICAL
 
-    def _choose_pvoid(self, s: Subeq):
+    def _choose_void(self, s: Subeq):
         """Return the argument ordinal of the lop which should be selected or
-        substituted."""
+        substituted.
+
+        Return None if no argument is useful for that purpose.
+        """
         if s.isb():
-            if s[s[0]._pref_arg].is_pvoid():
+            if s[s[0]._pref_arg].is_void():
                 return s[0]._pref_arg
             else:
                 for par_pos, par in enumerate(s[1:]):
-                    if par == [PVOID]:
+                    if par.is_void():
                         return par_pos + 1
 
     def _overwrite(self, s: Subeq, substituting=False):
@@ -618,14 +621,14 @@ class EdEq(EqCore):
             self._change_sel(ret_idx, True)
             return NewEqState.EQ_MODIFIED
 
-        pvoid_ord = self._choose_pvoid(s)
-        if pvoid_ord is not None and substituting:
-            s[pvoid_ord][:] = self(self.idx)
+        void_ord = self._choose_void(s)
+        if void_ord is not None and substituting:
+            s[void_ord][:] = self(self.idx)
         ret_idx = self._replace(s, self.idx)
 
-        if pvoid_ord is not None:
+        if void_ord is not None:
             self.selm = SelMode.LCUR
-            self.idx += [pvoid_ord]
+            self.idx += [void_ord]
         else:
             self._change_sel(ret_idx, True)
         return NewEqState.EQ_MODIFIED
@@ -645,12 +648,12 @@ class EdEq(EqCore):
         else:
             self.idx[:] = self._rinsert(s)
 
-        pvoid_ord = self._choose_pvoid(s)
-        if pvoid_ord is not None:
-            self.selm = SelMode.LCUR
+        void_ord = self._choose_void(s)
+        if void_ord is not None:
             if self.is_lcur():
                 self.idx.prevpar(set=True)
-            self.idx += [pvoid_ord]
+            self.selm = SelMode.LCUR
+            self.idx += [void_ord]
 
         return NewEqState.EQ_MODIFIED
 
@@ -663,13 +666,13 @@ class EdEq(EqCore):
         .. note::
             *subeq* must be any valid subequation different than:
 
-                *   A pvoid, and
+                *   A void, and
                 *   A tjuxt-block.
 
          .. note::
             To avoid redundant copies, no deep copies of *subeq* are made.
         """
-        assert not isinstance(subeq[0], (TJuxt, Pvoid))
+        assert not isinstance(subeq[0], (TJuxt, Void))
         self._reset_method_attrs()
 
         s = self._subeq_arg(subeq)
@@ -678,7 +681,7 @@ class EdEq(EqCore):
             # Case: Overwrite substituting (even if self.ovrwrt)
             return self._overwrite(s, True)
 
-        if (self.ovrwrt and not self.is_rcur()) or self.is_pvoid(self.idx):
+        if (self.ovrwrt and not self.is_rcur()) or self.is_void(self.idx):
             # Case: Overwrite
             return self._overwrite(s)
 
@@ -686,8 +689,15 @@ class EdEq(EqCore):
         return self._insert_strict(s)
 
     def insert_empty_block(self, op_class: type, *args, **kwargs):
+        """Insert an empty block given the class of its operator.
+
+        This method will take care of inserting the appropriate void (RVOID or
+        PVOID) in each case.
+        """
         op = op_class(*args, **kwargs)
-        return self.insert_subeq([op] + [[PVOID]] * op._n_args)
+        if op_class is not ScriptOp:
+            return self.insert_subeq([op] + [[PVOID]] * op._n_args)
+        return self.insert_subeq([op, [PVOID]] + [[RVOID]] * (op._n_args - 1))
 
     @eq2display
     @eqdebug.debug

@@ -247,63 +247,61 @@ class OpsTests(unittest.TestCase):
         for n_args in range(1, 6):
             op = Op("b", n_args)
 
-            for sm in SelMode:
-                self.assertEqual(op.rstep(sm, None), (SelMode.LCUR, 1))
-                self.assertEqual(op.rstep(sm, n_args), None)
+            self.assertEqual(op.rstep(None), 1)
+            self.assertEqual(op.rstep(n_args), None)
 
-                for n in range(1, n_args):
-                    self.assertEqual(op.rstep(sm, n), (SelMode.LCUR, n + 1))
+            for n in range(1, n_args):
+                self.assertEqual(op.rstep(n), n + 1)
 
-                for n in range(-6, 1):
-                    with self.assertRaises(ValueError):
-                        op.rstep(sm, n)
+            for n in range(-6, 1):
+                with self.assertRaises(ValueError):
+                    op.rstep(n)
 
-                for n in range(n_args+1, n_args+6):
-                    with self.assertRaises(ValueError):
-                        op.rstep(sm, n)
+            for n in range(n_args+1, n_args+6):
+                with self.assertRaises(ValueError):
+                    op.rstep(n)
 
     def test_op_lstep(self):
         for n_args in range(1, 6):
             op = Op("b", n_args)
 
-            for sm in SelMode:
-                self.assertEqual(op.lstep(sm, 1), None)
-                self.assertEqual(op.lstep(sm, None), (SelMode.RCUR, n_args))
+            self.assertEqual(op.lstep(1), None)
+            self.assertEqual(op.lstep(None), n_args)
 
-                for n in range(2, n_args+1):
-                    self.assertEqual(op.lstep(sm, n), (SelMode.RCUR, n - 1))
+            for n in range(2, n_args+1):
+                self.assertEqual(op.lstep(n), n - 1)
 
-                for n in range(-6, 1):
-                    with self.assertRaises(ValueError):
-                        op.lstep(sm, n)
+            for n in range(-6, 1):
+                with self.assertRaises(ValueError):
+                    op.lstep(n)
 
-                for n in range(n_args+1, n_args+6):
-                    with self.assertRaises(ValueError):
-                        op.lstep(sm, n)
+            for n in range(n_args+1, n_args+6):
+                with self.assertRaises(ValueError):
+                    op.lstep(n)
 
     def test_op_ustep_dstep(self):
         for n_args in range(1, 6):
             op = Op("b", n_args)
 
             for sm in SelMode:
-                self.assertIsNone(op.ustep(sm, None))
-                self.assertIsNone(op.dstep(sm, None))
+                self.assertIsNone(op.ustep(None, sm))
+                self.assertIsNone(op.dstep(None, sm))
 
                 for n in range(1, n_args + 1):
-                    self.assertIsNone(op.ustep(sm, n))
-                    self.assertIsNone(op.dstep(sm, n))
+                    self.assertIsNone(op.ustep(n, sm))
+                    self.assertIsNone(op.dstep(n, sm))
 
                 for n in range(-6, 1):
                     with self.assertRaises(ValueError):
-                        print(op.ustep(sm, n))
+                        print(op.ustep(n, sm))
                     with self.assertRaises(ValueError):
-                        print(op.dstep(sm, n))
+                        print(op.dstep(n, sm))
 
                 for n in range(n_args + 1, n_args + 6):
                     with self.assertRaises(ValueError):
-                        print(op.ustep(sm, n))
+                        print(op.ustep(n, sm))
                     with self.assertRaises(ValueError):
-                        print(op.dstep(sm, n))
+                        print(op.dstep(n, sm))
 
     def test_pjuxt(self):
         pj = PJuxt()
@@ -334,39 +332,37 @@ class OpsTests(unittest.TestCase):
         for n_args in range(2, 6):
             pj = PJuxt(n_args)
 
-            for sm in SelMode:
-                self.assertEqual(pj.rstep(sm, None), (SelMode.LCUR, 1))
-                self.assertEqual(pj.rstep(sm, n_args), None)
+            self.assertEqual(pj.rstep(None), 1)
+            self.assertEqual(pj.rstep(n_args), None)
 
-                for n in range(1, n_args):
-                    self.assertEqual(pj.rstep(sm, n), (SelMode.LCUR, n + 1))
+            for n in range(1, n_args):
+                self.assertEqual(pj.rstep(n), n + 1)
 
-                for n in range(-6, 1):
-                    with self.assertRaises(ValueError):
-                        pj.rstep(sm, n)
+            for n in range(-6, 1):
+                with self.assertRaises(ValueError):
+                    pj.rstep(n)
 
-                for n in range(n_args + 1, n_args + 6):
-                    with self.assertRaises(ValueError):
-                        pj.rstep(sm, n)
+            for n in range(n_args + 1, n_args + 6):
+                with self.assertRaises(ValueError):
+                    pj.rstep(n)
 
     def test_pjuxt_lstep(self):
         for n_args in range(2, 6):
             pj = PJuxt(n_args)
 
-            for sm in SelMode:
-                self.assertEqual(pj.lstep(sm, 1), None)
-                self.assertEqual(pj.lstep(sm, None), (SelMode.RCUR, n_args))
+            self.assertEqual(pj.lstep(1), None)
+            self.assertEqual(pj.lstep(None), n_args)
 
-                for n in range(2, n_args+1):
-                    self.assertEqual(pj.lstep(sm, n), (SelMode.RCUR, n - 1))
+            for n in range(2, n_args+1):
+                self.assertEqual(pj.lstep(n), n - 1)
 
-                for n in range(-6, 1):
-                    with self.assertRaises(ValueError):
-                        pj.lstep(sm, n)
+            for n in range(-6, 1):
+                with self.assertRaises(ValueError):
+                    pj.lstep(n)
 
-                for n in range(n_args+1, n_args+6):
-                    with self.assertRaises(ValueError):
-                        pj.lstep(sm, n)
+            for n in range(n_args+1, n_args+6):
+                with self.assertRaises(ValueError):
+                    pj.lstep(n)
 
     def test_pjuxt_repr(self):
         pj = PJuxt()

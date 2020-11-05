@@ -150,34 +150,58 @@ class SubeqTests(unittest.TestCase):
         self.assertFalse(Subeq([OP, [PVOID]]).is_pvoid())
         self.assertTrue(Subeq([OP, [PVOID]]).is_pvoid(1))
 
-    def test_allpvoid(self):
-        self.assertEqual(Subeq([ps]).all_pvoid(), -1)
-        self.assertEqual(Subeq([PVOID]).all_pvoid(), -1)
-        self.assertEqual(Subeq(["eeee"]).all_pvoid(), -1)
-        with self.assertRaises(TypeError):
-            Subeq(["eeee"]).all_pvoid(0)
-        self.assertEqual(Subeq([PJuxt(), ["d"], ["f"]]).all_pvoid(), False)
-        self.assertEqual(Subeq([PJuxt(), ["d"], ["f"]]).all_pvoid(1), -1)
-        self.assertEqual(Subeq([PJuxt(), ["d"], ["f"]]).all_pvoid(2), -1)
+    def test_all_void(self):
+        for s1 in ([ps], [PVOID], [RVOID], ["eeee"]):
+            self.assertEqual(Subeq(s1).all_void(), -1)
 
-        self.assertEqual(Subeq([OP, [PVOID]]).all_pvoid(), True)
-        self.assertEqual(Subeq([Op("O", 2), [PVOID], ["d"]]).all_pvoid(),
-                         False)
+        with self.assertRaises(TypeError):
+            Subeq(["eeee"]).all_void(0)
+
+        for cls in (None, Pvoid, Rvoid):
+            self.assertEqual(Subeq([PJuxt(), ["d"],
+                                    ["f"]]).all_void(cls=cls), False)
+            self.assertEqual(Subeq([PJuxt(), ["d"],
+                                    ["f"]]).all_void(1, cls), -1)
+            self.assertEqual(Subeq([PJuxt(), ["d"],
+                                    ["f"]]).all_void(2, cls), -1)
+
+            self.assertEqual(Subeq([OP, ["d"]]).all_void(cls=cls), False)
+
+        self.assertEqual(Subeq([OP, [PVOID]]).all_void(), True)
+        self.assertEqual(Subeq([OP, [PVOID]]).all_void(cls=Pvoid), True)
+        self.assertEqual(Subeq([OP, [PVOID]]).all_void(cls=Rvoid), False)
+
+        self.assertEqual(Subeq([OP, [RVOID]]).all_void(), True)
+        self.assertEqual(Subeq([OP, [RVOID]]).all_void(cls=Pvoid), False)
+        self.assertEqual(Subeq([OP, [RVOID]]).all_void(cls=Rvoid), True)
+
+        for s1 in ([PVOID], [RVOID]):
+            self.assertEqual(Subeq([Op("O", 2), s1,
+                                    ["d"]]).all_void(), False)
+            self.assertEqual(Subeq([Op("O", 2), s1,
+                                    ["d"]]).all_void(cls=Pvoid), False)
+            self.assertEqual(Subeq([Op("O", 2), s1,
+                                    ["d"]]).all_void(cls=Rvoid), False)
+
+        for s1 in ([PVOID], [RVOID]):
+            for s2 in ([PVOID], [RVOID]):
+                self.assertEqual(
+                    Subeq([Op("O", 2), s1, s2]).all_void(), True)
+                self.assertEqual(
+                    Subeq([Op("O", 3), s1, ["d"], s2]).all_void(), False)
+                self.assertEqual(
+                    Subeq([Op("O", 3), s1, s2, ["g"]]).all_void(), False)
+                self.assertEqual(
+                    Subeq([Op("O", 3), s1, s2, s1]).all_void(), True)
+
         self.assertEqual(
-            Subeq([Op("O", 2), [PVOID], [PVOID]]).all_pvoid(), True)
+            Subeq([Op("O", 3), [PVOID], [RVOID]]).all_void(cls=Pvoid), False)
         self.assertEqual(
-            Subeq([Op("O", 3), [PVOID], ["d"], [PVOID]]).all_pvoid(),
-                         False)
-        self.assertEqual(
-            Subeq([Op("O", 3), [PVOID], ["d"], ["g"]]).all_pvoid(),
-                         False)
-        self.assertEqual(
-            Subeq([Op("O", 3), [PVOID], [PVOID], [PVOID]]).all_pvoid(),
-                         True)
+            Subeq([Op("O", 3), [PVOID], [RVOID]]).all_void(cls=Rvoid), False)
 
         # Unintended
-        self.assertEqual(Subeq([PJuxt(), [PVOID], [PVOID]]).all_pvoid(), True)
-        self.assertTrue(Subeq([PJuxt(), [PVOID], [PVOID]]).all_pvoid(1), -1)
+        self.assertEqual(Subeq([PJuxt(), [PVOID], [RVOID]]).all_void(), True)
+        self.assertTrue(Subeq([PJuxt(), [PVOID], [RVOID]]).all_void(1), -1)
 
     def test_isusubeq(self):
         self.assertTrue(Subeq([PVOID]).isusubeq())

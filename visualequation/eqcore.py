@@ -23,7 +23,7 @@ from .subeqs import Subeq
 from .idx import Idx
 from .ops import *
 from .scriptops import insert_script, remove_script, update_scriptblock, \
-    is_base
+    is_base, is_script
 from . import simpleeqcreator
 
 
@@ -192,7 +192,7 @@ class EqCore(Subeq):
             if right_pref:
                 return idx + [s.last_par_ord()], SelMode.RCUR
             return idx + [1], SelMode.LCUR
-        if not right_pref or s.is_pvoid():
+        if not right_pref or s.is_void():
             return idx, SelMode.LCUR
         if self.is_nonlastjuxted(idx):
             return idx.nextpar(), SelMode.LCUR
@@ -418,14 +418,17 @@ class EqCore(Subeq):
         self._set(r, new_idx)
         return new_idx
 
-    def _replace_by_pvoid(self, idx=-1):
-        """Replace pointed subeq by a PVOID.
+    def _replace_by_void(self, index=-1):
+        """Replace pointed subeq by the correct void (PVOID or RVOID).
 
         *   Not a final-sel-checker
         *   base-checker
 
-        Return the index of inserted PVOID.
+        Return the index of inserted void.
         """
+        idx = self._idx_arg(index)
+        if is_script(self, idx):
+            return self._replace([RVOID], idx)
         return self._replace([PVOID], idx)
 
     def _vanish_juxted(self, reljuxted=0, index=-1):
@@ -457,7 +460,7 @@ class EqCore(Subeq):
             It does not check supeqs. Pointed subeq MUST be a juxted.
 
         .. note::
-            Even if no PVOIDs should appear to the user as juxteds, they can be
+            Even if no voids should appear to the user as juxteds, they can be
             there expecting this method to remove them, as in _flat_out. This
             method will vanish them as with any other subeq.
 
@@ -512,14 +515,14 @@ class EqCore(Subeq):
     # Not tested from here!
 
     def _flat(self, index=-1):
-        """Remove lop of pointed block, joining its non-PVOID pars in a jb.
+        """Remove lop of pointed block, joining its non-void pars in a jb.
 
         If pointed subeq is not a block or it is a juxt-block, nothing is done.
 
-        If every param of pointed block B is a PVOID:
+        If every param of pointed block B is a void:
 
             *   If B is is a juxted, B is vanished.
-            *   Else, B is replaced by a PVOID.
+            *   Else, B is replaced by a void.
 
         *   final-sel-checker
         *   base-checker
@@ -543,16 +546,16 @@ class EqCore(Subeq):
 
         # From here, s is a block different than a juxt block
         repl_c = simpleeqcreator.SimpleEqCreator()
-        repl_c.extend(s[1:], accept_pvoids=False)
+        repl_c.extend(s[1:], accept_voids=False)
         repl = repl_c.get_eq()
         n_insertions = repl_c.n_inserted_subeqs()
 
         if n_insertions == 0:
             if self.is_juxted(idx):
-                # Case: Every param of lop-s was a PVOID and s is a juxted
+                # Case: Every param of lop-s was a void and s is a juxted
                 return self._vanish_juxted(0, idx)
             else:
-                return self._replace_by_pvoid(idx), SelMode.LCUR
+                return self._replace_by_void(idx), SelMode.LCUR
 
         # Note: repl cannot be a tjuxt-block
         if self.is_juxted(idx) and repl.is_perm_jb():  # s == self(idx)
@@ -601,19 +604,19 @@ class EqCore(Subeq):
             *   If its supeq does not exist, nothing is done.
             *   Else, consider its supeq SUP:
 
-                *   If every param of lop-SUP is a PVOID:
+                *   If every param of lop-SUP is a void:
 
                     *   If SUP is a juxted, SUP is vanished
-                    *   Else, SUP is replaced by a PVOID.
+                    *   Else, SUP is replaced by a void.
 
-                *   Elif SUP is a juxted, vanish any cojuxted equal to PVOID
+                *   Elif SUP is a juxted, vanish any cojuxted equal to void
                     (legacy behaviour).
-                *   Else, replace SUP with any non-PVOID param of lop-SUP,
+                *   Else, replace SUP with any non-void param of lop-SUP,
                     being params joined together by a pjuxt-block if necessary.
 
         Implementation notes:
 
-            *   There should not be PVOIDs in juxt-blocks, but it works by
+            *   There should not be voids in juxt-blocks, but it works by
                 now.
             *   Code is complex. That should be fixed.
         """
@@ -624,35 +627,33 @@ class EqCore(Subeq):
         # From here, supeq of idx exists
         sup_idx = idx[:-1]
         sup = self(sup_idx)
-        n_void_pars = sup[1:].count([PVOID])
-        n_non_void_pars = len(sup) - n_void_pars - 1
+        n_void_pars = self.n_voids(sup_idx)
+        n_non_void_pars = len(sup[1:]) - n_void_pars
         if n_void_pars == 0 and sup.is_perm_jb():
-            # Case: A juxted is selected and no co-juxted is PVOID
+            # Case: A juxted is selected and no co-juxted is void
             return None
 
         if n_non_void_pars == 0:
-            # Case: Every param of lop-sup is a PVOID
+            # Case: Every param of lop-sup is a void
             if self.is_juxted(sup_idx):
                 # Subcase: sup is a juxted
                 return self._vanish_juxted(0, sup_idx)
 
             # Subcase: sup is not a juxted
-            sup[:] = [PVOID]
-            ret_idx = self._condtly_correct_scriptop(sup, sup_idx, sup_idx)
-            return ret_idx, SelMode.LCUR
+            return self._replace_by_void(sup_idx), SelMode.LCUR
 
         # - Build replacement -
         par_ord = idx[-1]
         repl_c = simpleeqcreator.SimpleEqCreator()
-        repl_c.extend(sup[1:par_ord], accept_pvoids=False)
+        repl_c.extend(sup[1:par_ord], accept_voids=False)
         par = deepcopy(sup[par_ord])
         if par.is_perm_jb():
             par[0] = par[0].equiv_tjuxt()
         par_pos_in_repl = repl_c.n_inserted_subeqs()
-        # If *par* is a PVOID, include it.
+        # If *par* is a void, include it.
         # -> It will be deleted below and a good selection will be chosen
         repl_c.append(par)
-        repl_c.extend(sup[par_ord + 1:], accept_pvoids=False)
+        repl_c.extend(sup[par_ord + 1:], accept_voids=False)
 
         # - Replace -
         repl = repl_c.get_eq()
@@ -671,7 +672,7 @@ class EqCore(Subeq):
         if not self.is_juxted(ret_idx):
             # Case: A non-juxted was replaced by repl
             new_idx = ret_idx + par_idx_in_repl
-            if par.is_pvoid():
+            if par.is_void():
                 return self._vanish_juxted(0, new_idx)
         elif integrated:
             # A juxted was replaced by repl and repl was a pjuxt-block, so some
@@ -680,11 +681,11 @@ class EqCore(Subeq):
             # documented in _replace_integrating.
             new_idx = sup_idx[:-1] \
                       + [sup_idx[-1] + par_idx_in_repl[0] - 1]
-            if par.is_pvoid():
+            if par.is_void():
                 return self._vanish_juxted(0, new_idx)
         else:
             # A juxted was replaced by repl, and repl was not a PJUXT-block
-            # Note: It is not possible for a pointed PVOID to match this case
+            # Note: It is not possible for a pointed void to match this case
             new_idx = ret_idx
 
         if self.is_hl():
