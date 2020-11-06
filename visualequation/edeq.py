@@ -472,7 +472,7 @@ class EdEq(EqCore):
 
     @eqdebug.debug
     @add2hist
-    def remove_eq(self):
+    def delete_eq(self):
         """Replace the whole eq with a [PVOID]."""
         self._reset_method_attrs()
         return self._remove_eq()
@@ -545,6 +545,20 @@ class EdEq(EqCore):
 
         if not sup.is_perm_jb():
             # Case: s is a non-juxted
+            if self.is_void(self.idx) and is_script(self, self.idx):
+                # Subcase: Remove an empty script, independently of forward
+
+                # Note: It is done firstly to avoid removing every other script
+                # when the rest of pars (including the base) is a void.
+
+                # Advice note:
+                # Script is selected and it is going to be removed.
+                # No need to worry about selection before operation
+                base_idx = remove_script(self.idx, self,
+                                         self.idx[:-1] + [1])
+                self._change_sel(base_idx, True, ignore_sel=True)
+                return NewEqState.EQ_MODIFIED
+
             if sup.all_void():
                 # Subcase: Every par of lop-sup is a void
 
@@ -560,18 +574,6 @@ class EdEq(EqCore):
                 if not s.is_void():
                     # Subcase: Delete non-void non-juxted
                     self._void_sel()
-                    return NewEqState.EQ_MODIFIED
-
-                if is_script(self, self.idx):
-                    # Subcase: Remove an empty script
-
-                    # Advice note:
-                    # Selected script is selected and it is going to be
-                    # removed. No need to worry about selection before
-                    # operation
-                    base_idx = remove_script(self.idx, self,
-                                             self.idx[:-1] + [1])
-                    self._change_sel(base_idx, True, ignore_sel=True)
                     return NewEqState.EQ_MODIFIED
 
             # Subcase: Void cannot be removed and supeq is not allowed to
