@@ -154,12 +154,11 @@ def checkrules(eq: Subeq, index: Idx, selm: SelMode):
 
     # PVOIDs require LCUR
     if eq.is_pvoid(index) and selm is not SelMode.LCUR:
-        return "A pvoid is selected and selmode is not LCUR."
+        return "A pvoid is selected and selm is not LCUR."
 
     # Tjuxt-blocks require highlighting
     if eq.is_temp_jb(index) and selm in (SelMode.RCUR, SelMode.LCUR):
-        return "A tjuxt-block is selected and SelMode is " + str(selm) \
-               + "."
+        return "A tjuxt-block is selected and selm is " + selm.name + "."
 
     # Pjuxt-blocks cannot be pointed
     if eq.is_perm_jb(index):
