@@ -617,10 +617,16 @@ class EdEq(EqCore):
             s[void_ord][:] = self(self.idx)
         ret_idx = self._replace(s, self.idx)
 
-        if void_ord is not None:
-            self._change_sel(self.idx + [void_ord], False, ignore_sel=True)
-        else:
+        if void_ord is None:
             self._change_sel(ret_idx, True, ignore_sel=True)
+        elif substituting:
+            # Advise note: Index must be corrected. Done without _change_sel.
+            # It manages any usubeqs, tjuxt-blocks in particular, not altering
+            # the highlight.
+            self.idx[:] = ret_idx + [void_ord]
+        else:
+            self._change_sel(ret_idx + [void_ord], False, ignore_sel=True)
+
         return NewEqState.EQ_MODIFIED
 
     def _insert_strict(self, s: Subeq):
