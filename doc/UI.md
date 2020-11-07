@@ -362,11 +362,12 @@ subeqs or supeqs if a numeric argument is passed.
 
 > **Reasoning about main advanced keybindings**:
 >
->*  S-TAB/TAB are used in graphical text editors to inrease/remove indentation,
->   but it is also commonly associated to navigate through different fields.
->*  M-LEFT/M-RIGHT are used in graphical text editors to transpose words.
->*  C-LEFT/C-RIGHT are used in graphical text editors to jump matching word
->   boundaries.
+> In common graphical text editor:
+>
+>*  S-TAB/TAB are used to increase/remove indentation, but it is also commonly 
+>   associated to navigate through different fields.
+>*  M-LEFT/M-RIGHT are used to transpose words.
+>*  C-LEFT/C-RIGHT are used to move between word boundaries.
 >*  S-C-LEFT/S-C-RIGHT are used in graphical text editors to select from cursor
 >   to word boundaries.
 >*  C-BACKSPACE/C-DEL are used in graphical text editors to delete from the
@@ -380,13 +381,17 @@ subeqs or supeqs if a numeric argument is passed.
 >   transpose them.
 >*  M-LEFT/M-RIGHT push and pull subeqs to the boundaries of juxt-blocks or
 >   inside/outside blocks.
->*  CONTROL and LEFT/RIGHT are associated to word boundaries.
+>*  CONTROL-LEFT/RIGHT are associated to word boundaries.
 >*  C-LEFT/C-RIGHT selects first/last param.
 >*  S-C-LEFT/S-C-RIGHT increases selection until first/last param.
 >*  C-BACKSPACE/C-DEL deletes from cursor to first/last param.
->*  S-BACKSPACE/S-DEL flats/voids blocks.
->*  S-C-BACKSPACE/S-C-DEL delete from cursor to word boundaries, voiding any
+>*  S-C-BACKSPACE/S-C-DEL delete from cursor to line boundaries, voiding any
 >   subeq that cannot be vanished.
+>
+> In addition:
+>
+>*  S-BACKSPACE/S-DEL flats/voids blocks.
+>
 >
 > Main disparity is that S-C-TAB/C-TAB would fit better M-LEFT/M-RIGHT common
 > usage in graphical text editors.
@@ -622,7 +627,7 @@ right of the cursor.
 If selection is not a juxted, substitute pars of lop-block to the right of the
 cursor by PVOIDs.
 
-If there is nothing to remove, lop-block is flatted.
+If there is nothing to remove, lop-block is flatted (?).
 
 > **Note**: Successive keystrokes of the same class will remember the mate
 > ulevel if needed.
@@ -635,40 +640,29 @@ left of the cursor
 If selection is not a juxted, substitute pars of lop-block to the left of the
 cursor by PVOIDs.
 
+If there is nothing to remove, lop-block is flatted (?).
+
 > **Note**: Successive keystrokes of the same class will remember the mate
 > ulevel if needed.
 
-#### Transpose mate (C-TAB)
+#### Transpose mate (C-TAB/S-C-TAB)
 
-Swap positions of current selection and its mate to the right, leaving original
-selection selected.
+Swap positions of current selection and its mate to the right/left, leaving
+original selection selected.
 
 No direction is changed.
 
-Marginal case: If there is no mate to the right, do nothing.
+Marginal case: If there is no mate in the asked direction, do nothing.
 
 > **Note**: Successive keystrokes of the same class will remember the mate
 > ulevel if needed.
 
-#### Transpose mate backward (S-C-TAB)
+#### Transpose supeq ()
+#### Backward transpose supeq ()
 
-Swap positions of current selection and mate the left, leaving original
-selection selected.
+#### Push right (M-RIGHT)
+Probably to be changed just to move subeq where RIGHT would go if pressed.
 
-No direction is changed.
-
-Marginal cases:
-*   If selection is a TVOID, swap the closest two mates to the left if they 
-    exist. Else, do nothing.
-*   If there is no mate to the left, do nothing.
-
-> **Note**: Successive keystrokes of the same class will remember the mate
-> ulevel if needed.
-
-#### Transpose supeq (M-RIGHT)
-#### Backward transpose supeq (M-LEFT)
-
-#### Push (C-SPACE)
 *   If selection is a last mate, do nothing.
 *   Elif selection is a juxted and has a cojuxted to the right which is a
     gsymb:
@@ -681,7 +675,7 @@ Marginal cases:
         by PVOID, depending whether it is a juxted or not).
     *   Else, move selection to the left of its mate to the right as a juxted.
 
-#### Pull (S-C-SPACE)
+#### Push left (M-LEFT)
 Counter-part of *Push*.
 
 #### Transmute with supeq ()
@@ -779,8 +773,8 @@ usubeq of selection (M-0 C-h is identical to SHIFT-BACKSPACE).
 
 #### Recursively void block (S-C-u)
 *   If selection is a symbol, do nothing.
-*   Else, substitute every symbol of selection (included symbols of parameters
-    of selection if they are blocks, and so on) with PVOIDs.
+*   Else, substitute every juxt-block or non-juxted symbols of selection with
+    PVOIDs, starting from the highest nesting level.
 
 > **Note**: The "recursive" word is used here for the name of the command with
 > keybinding including "\\", contrary to the previous case, but it seems the
@@ -790,10 +784,6 @@ usubeq of selection (M-0 C-h is identical to SHIFT-BACKSPACE).
 Identical to *recursively void block*, but applied to the usupeq of selection
 instead.
 
-With a positive numeric argument n, it acts on the n-ulevel usupeq of
-selection. With a non-positive numerical argument -n, it acts on the n-ulevel 
-usubeq of selection (M-0 SHIFT-M-w is identical to C-\\).
-
 #### Void block (S-C-k)
 *   If selection is a symbol, do nothing.
 *   Else, substitute every parameter of selection (if selection is a block B,
@@ -801,10 +791,6 @@ usubeq of selection (M-0 SHIFT-M-w is identical to C-\\).
 
 #### Void supeq (S-M-k)
 Identical to *void block*, but applied to the usupeq of selection instead.
-
-With a positive numeric argument n, it acts on the n-ulevel usupeq of
-selection. With a non-positive numerical argument -n, it acts on the n-ulevel 
-usubeq of selection (M-0 M-w is identical to SHIFT-DEL).
 
 #### Uppercase (In text mode: C-u)
 Uppercase letter to the right of the cursor.
@@ -912,7 +898,7 @@ use possible-completions instead.
 
 > **Note**: C-i is used by default for 'complete' command in readline. C-i
 > is used in VE as an alternative to C-x.
-### Possible completions (right click and select in menu)
+### Possible completions (C-SPACE/S-C-SPACE, right click and select in menu)
 List in a graphical window the possible variations of the selected subequation.
 You can choose one using the mouse or cursor keys and RETURN, C-j or C-m.
 To abort, use ESC or a key binding associated to abort.
@@ -956,7 +942,7 @@ passed it is inserted literally (`C-g 3` inserts digit 3).
 |---|--------------|--------------|----------------|
 | a | α (alpha)    | A            |                |
 | b | β (beta)     | B            |                |
-| c | χ (xi)       | X            |                |
+| c | χ (chi)      | X            |                |
 | d | δ (delta)    | Δ (Delta)    |                |
 | e | ϵ (epsilon)  | E            | ε (varepsilon) |
 | f | ϕ (phi)      | Φ (Phi)      | φ (varphi)     |
@@ -1019,28 +1005,30 @@ Reduce a region "without" subequations or delete it.
 > That way there is no need of a non-user op. It may be also a property as
 > color.
 >
-### Subscripts/superscripts/both (C-l/C-h/S-C-l)
+### Subscripts/superscripts/both (C-l/C-h/S-C-l, S-C-h)
 Include an empty subscript or superscript, or select it if it already exists.
-If both are specified, the subscript is selected.
+If both are specified, the script associated to the key is selected.
 
 > **Note**: 'l' stands for 'low'. 'h' stands for 'high'.
 
-### Backward subscripts/superscripts/both (S-M-C-l/S-M-C-h/S-C-h)
+### Backward subscripts/superscripts/both (M-b/M-p/S-M-b, S-M-p)
 Include an empty backward sub/super-script, or select it if it already exists.
-If both are specified, the backward subscript is selected.
+If both are specified, the script associated to the key is selected.
 
-### Undersets/oversets/both/all (M-l/M-h/S-M-l/S-M-h)
+> **Note**: 'b' stands for 'sub'. 'p' stands for 'sup'.
+
+### Undersets/oversets/both (M-l/M-h/S-M-l, S-M-h)
 Add an under or over-set (a subequation exactly under/over another
 subequation), or select it if it already exists. If both are specified, the
-underset is selected. If all are specified, the backward subscript is selected.
+the set associated to the key is selected.
 
-### Functions (Idea: C-,, M-,, M-C-,)
+### Functions (Idea: ,)
 First time is cosinus, then sinus then... The symbol version matches every 
 function and the operator versions match functions which can have arguments.
 
 > **Mnemonic**: Arguments of functions are separated by commas where they are
 > presented as a list inside parenthesis.
-### Roots (C-r, Idea: M-r, M-C-r)
+### Square root/Generic root (C-r/S-C-r, Idea: %)
 First time is a square root, next time is generic.
 
 > **Mnemonic**: '%' looks like a generic root with its arguments, only
