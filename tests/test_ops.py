@@ -14,7 +14,7 @@
 import unittest
 from json import dumps, loads, JSONEncoder
 
-from visualequation.ops import *
+from visualequation.eqlib.ops import *
 
 
 class OpsTests(unittest.TestCase):

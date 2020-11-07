@@ -14,8 +14,8 @@
 from copy import copy
 import unittest
 
-from visualequation.subeqs import *
-from visualequation.ops import *
+from visualequation.eqlib.subeqs import *
+from visualequation.eqlib.ops import *
 
 
 class SubeqTests(unittest.TestCase):

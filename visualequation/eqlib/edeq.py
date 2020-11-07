@@ -1,3 +1,16 @@
+#  visualequation is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  visualequation is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 # visualequation is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -16,6 +29,7 @@ from functools import wraps
 from . import eqdebug
 from .eqcore import EqCore
 from .scriptops import *
+from .letters import has_greek_equiv, has_greek_with_variant, Greek
 from .ops import *
 from .eqhist import EqHist
 
@@ -50,6 +64,7 @@ class NewEqState(Enum):
     NO_SUPEQ = auto()
     EMPTY_EQ = auto()
     EMPTY_HIST = auto()
+    INVALID_INPUT = auto()
 
     def smth_happened(self):
         return self in (self.EQ_MODIFIED, self.SEL_MODIFIED)
@@ -687,7 +702,7 @@ class EdEq(EqCore):
         # Case: Insert
         return self._insert_strict(s)
 
-    def insert_from_callable(self, callable_: type, *args, **kwargs):
+    def insert_from_callable(self, callable_, *args, **kwargs):
         """Insert a subeq given a callable and the arguments it needs to
         generate a:
 
@@ -751,6 +766,23 @@ class EdEq(EqCore):
             self._change_sel(base_or_scrblock_idx + [-ret_val], False)
 
         return NewEqState.EQ_MODIFIED if is_eq_mod else NewEqState.SEL_MODIFIED
+
+    def add_greek(self, latin_char: str, upper=False, variant=False):
+        """Insert a Greek letter if combination has sense. Else, do nothing.
+
+        An exception may be raised if values are really unreasonable. However,
+        it is safe to send:
+
+            *   Arbitrary *latin_char* input. In particular, latin characters
+                without Greek equivalence.
+            *   *variant* being True when no variant exists.
+        """
+
+        if not has_greek_equiv(latin_char) or (upper and variant) \
+                or (variant and not has_greek_with_variant(latin_char)):
+            return NewEqState.INVALID_INPUT
+        return self.insert_from_callable(Greek.from_str, latin_char,
+                                         upper, variant)
 
     def stretch_selection(self, forward):
         """Stretch selection, using temporary groups if needed.

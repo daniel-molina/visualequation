@@ -13,9 +13,9 @@
 
 import unittest
 
-from visualequation.idx import *
-from visualequation import ops
-from visualequation.subeqs import Subeq
+from visualequation.eqlib.idx import *
+from visualequation.eqlib import ops
+from visualequation.eqlib.subeqs import Subeq
 
 
 class IdxCore(unittest.TestCase):

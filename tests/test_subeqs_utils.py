@@ -13,8 +13,8 @@
 
 import unittest
 
-from visualequation.subeqs import *
-from visualequation.idx import *
+from visualequation.eqlib.subeqs import *
+from visualequation.eqlib.idx import *
 
 OP = Op("O")
 ps = PseudoSymb(r"\omega")

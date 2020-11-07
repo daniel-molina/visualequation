@@ -14,9 +14,9 @@
 import unittest
 from itertools import combinations
 
-from visualequation.ops import *
-from visualequation.eqcore import EqCore
-from visualequation.scriptops import *
+from visualequation.eqlib.ops import *
+from visualequation.eqlib.eqcore import EqCore
+from visualequation.eqlib.scriptops import *
 
 
 class Eq(EqCore):

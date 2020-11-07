@@ -13,7 +13,7 @@
 
 import unittest
 
-from visualequation.idx import *
+from visualequation.eqlib.idx import *
 
 
 class IdxUtils(unittest.TestCase):
