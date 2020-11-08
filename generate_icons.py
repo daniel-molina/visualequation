@@ -17,7 +17,6 @@
 Run this script before packaging or installing.
 It requires the LaTeX system and imagemagick to be installed.
 """
-import sys
 import os
 import tempfile
 import shutil
@@ -48,26 +47,21 @@ def postprocess(filename):
     try:
         subprocess.call(["mogrify", "-chop", "5x0", filename])
     except OSError:
-        raise SystemExit("Command mogrify was not found. "
-                         + " You need imagemagick installed.")
+        raise SystemExit("Command mogrify was not found "
+                         + "(originally provided by imagemagick).")
 
 
-def code2icon(code, file_output, temp_dir):
-    # Create LaTeX file
-    latex_file = os.path.join(temp_dir, 've.tex')
+def code2icon(code, split_file, file_output, temp_dir):
     dvi_file = os.path.join(temp_dir, 've.dvi')
     log_file = os.path.join(temp_dir, 've.log')
-    with open(LATEX_TEMPLATE, "r") as ftempl:
-        with open(latex_file, "w") as flatex:
-            for line in ftempl:
-                flatex.write(line.replace('%EQ%', edit_expr(code)))
-    # Generate the DVI
     try:
-        subprocess.check_output(["latex", "-interaction=nonstopmode",
-                                 "-halt-on-error",
-                                 "-output-directory=" + temp_dir,
-                                 latex_file])
-    except subprocess.CalledProcessError as error:
+        p = subprocess.Popen(
+            ["latex", "-halt-on-error", "-no-shell-escape",
+             "-jobname=ve", "-fmt=CreateIcons",
+             "-output-directory=" + temp_dir],
+            stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, text=True)
+        p.communicate(split_file[0] + edit_expr(code) + split_file[1])
+    except subprocess.CalledProcessError:
         msg = "Error reported by latex. The equation cannot be generated.\n" \
               + "If you have installed the required packages, it could be " \
               + "an internal error.\nCode:" + code
@@ -96,11 +90,30 @@ if __name__ == '__main__':
     config = configparser.ConfigParser(delimiters=(' ',))
     config.read(ICONS_DEF)
 
+    try:
+        subprocess.check_output(["etex", "-ini",
+                                 "-output-directory=" + temp_dirpath,
+                                 "-jobname=CreateIcons",
+                                 "&latex", "mylatexformat.ltx",
+                                 LATEX_TEMPLATE])
+    except subprocess.CalledProcessError:
+        print("Unknown error reported by etex.\nFinishing execution.")
+        quit()
+    except OSError:
+        print("Command etex was not found. Finishing execution.")
+        quit()
+
+    with open(LATEX_TEMPLATE, "r") as ftempl:
+        full_file = ftempl.read()
+
+    split_file = full_file.split("%EQ%")
+    assert len(split_file) == 2
+
     for index, section in enumerate(config):
         print("Generating icons...", index + 1, "/", len(config))
         for tag, code in config[section].items():
             png_filepath = os.path.join(ICONS_DIR, tag + '.png')
             if not os.path.exists(png_filepath):
-                code2icon(code, png_filepath, temp_dirpath)
+                code2icon(code, split_file, png_filepath, temp_dirpath)
 
     shutil.rmtree(temp_dirpath)
