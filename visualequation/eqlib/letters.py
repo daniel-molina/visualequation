@@ -11,21 +11,79 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-# visualequation is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# visualequation is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""A module to define Latin, Greek and Hebrew letters. Also digits.
+
+.. note::
+    Implementation note: Maybe dicts and tuples could be integrated with icons?
+"""
+
+
+from enum import Enum, auto
 
 from .ops import PseudoSymb
-from visualequation.symbols.utils import *
+from visualequation.icons import icon_class
+
+
+@icon_class
+class GreekE(Enum):
+    ALPHA = auto()
+    BETA = auto()
+    CHI = auto()
+    DELTA = auto()
+    EPSILON = auto()
+    PHI = auto()
+    GAMMA = auto()
+    ETA = auto()
+    IOTA = auto()
+    KAPPA = auto()
+    LAMBDA = auto()
+    MU = auto()
+    NU = auto()
+    OMEGA = auto()
+    PI = auto()
+    THETA = auto()
+    RHO = auto()
+    SIGMA = auto()
+    TAU = auto()
+    UPSILON = auto()
+    XI = auto()
+    PSI = auto()
+    ZETA = auto()
+
+
+@icon_class
+class UGreekE(Enum):
+    DELTA_U0 = auto()
+    PHI_U0 = auto()
+    GAMMA_U0 = auto()
+    LAMBDA_U0 = auto()
+    OMEGA_U0 = auto()
+    PI_U0 = auto()
+    THETA_U0 = auto()
+    SIGMA_U0 = auto()
+    UPSILON_U0 = auto()
+    XI_U0 = auto()
+    PSI_U0 = auto()
+
+
+@icon_class
+class VGreekE(Enum):
+    VAREPSILON = auto()
+    VARPHI = auto()
+    DIGAMMA = auto()
+    VARKAPPA = auto()
+    VARPI = auto()
+    VARTHETA = auto()
+    VARRHO = auto()
+    VARSIGMA = auto()
+
+@icon_class
+class HebrewE(Enum):
+    ALEPH = auto()
+    BETH = auto()
+    DALETH = auto()
+    GIMEL = auto()
+
 
 # If associated tuple has one element, Greek letter has a characteristic
 # capital letter.

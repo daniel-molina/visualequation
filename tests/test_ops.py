@@ -128,9 +128,9 @@ class OpsTests(unittest.TestCase):
         # or certain customization
         psymb = PseudoSymb("b")
         self.assertEqual(str(psymb), "PseudoSymb")
-        psymb.pp["color"] = ColorProp.BLACK
+        psymb.pp["color"] = Color.BLACK
         self.assertEqual(str(psymb), "PseudoSymb{BLACK}")
-        psymb.pp["font"] = FontProp.MATHTT
+        psymb.pp["font"] = Font.MATHTT
         self.assertEqual(str(psymb), "PseudoSymb{BLACK, MATHTT}")
 
     def test_pseudo_symb_repr(self):
@@ -203,9 +203,9 @@ class OpsTests(unittest.TestCase):
         # or certain customization
         op = Op("A")
         self.assertEqual(str(op), "Op")
-        op.pp["color"] = ColorProp.BLACK
+        op.pp["color"] = Color.BLACK
         self.assertEqual(str(op), "Op{BLACK}")
-        op.pp["font"] = FontProp.MATHTT
+        op.pp["font"] = Font.MATHTT
         self.assertEqual(str(op), "Op{BLACK, MATHTT}")
 
     def test_op_repr(self):
@@ -401,9 +401,9 @@ class OpsTests(unittest.TestCase):
                 return PJuxt.from_json(dct)
             return dct
 
-        for pj in (PJuxt(2), PJuxt(5), PJuxt(color=ColorProp.BLUE),
-                   PJuxt(10, color=ColorProp.PINK),
-                   PJuxt(20, color=ColorProp.PINK, font=FontProp.MATHTT)):
+        for pj in (PJuxt(2), PJuxt(5), PJuxt(color=Color.BLUE),
+                   PJuxt(10, color=Color.PINK),
+                   PJuxt(20, color=Color.PINK, font=Font.MATHTT)):
             self.assertEqual(pj, loads(dumps(pj, cls=PJEncoder),
                                        object_hook=from_json))
 
@@ -412,9 +412,9 @@ class OpsTests(unittest.TestCase):
         self.assertEqual(str(pj2), "PJuxt2")
         pj9 = PJuxt(9)
         self.assertEqual(str(pj9), "PJuxt9")
-        pj9.pp["color"] = ColorProp.BLACK
+        pj9.pp["color"] = Color.BLACK
         self.assertEqual(str(pj9), "PJuxt9{BLACK}")
-        pj9.pp["font"] = FontProp.MATHTT
+        pj9.pp["font"] = Font.MATHTT
         self.assertEqual(str(pj9), "PJuxt9{BLACK, MATHTT}")
 
     def test_tjuxt(self):
@@ -478,9 +478,9 @@ class OpsTests(unittest.TestCase):
                 return TJuxt.from_json(dct)
             return dct
 
-        for pj in (TJuxt(2), TJuxt(5), TJuxt(color=ColorProp.BLUE),
-                   TJuxt(10, color=ColorProp.PINK),
-                   TJuxt(20, color=ColorProp.PINK, font=FontProp.MATHTT)):
+        for pj in (TJuxt(2), TJuxt(5), TJuxt(color=Color.BLUE),
+                   TJuxt(10, color=Color.PINK),
+                   TJuxt(20, color=Color.PINK, font=Font.MATHTT)):
             self.assertEqual(pj, loads(dumps(pj, cls=TJEncoder),
                                        object_hook=from_json))
 
@@ -489,9 +489,9 @@ class OpsTests(unittest.TestCase):
         self.assertEqual(str(tj2), "TJuxt2")
         tj9 = TJuxt(9)
         self.assertEqual(str(tj9), "TJuxt9")
-        tj9.pp["color"] = ColorProp.BLACK
+        tj9.pp["color"] = Color.BLACK
         self.assertEqual(str(tj9), "TJuxt9{BLACK}")
-        tj9.pp["font"] = FontProp.MATHTT
+        tj9.pp["font"] = Font.MATHTT
         self.assertEqual(str(tj9), "TJuxt9{BLACK, MATHTT}")
 
 

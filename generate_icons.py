@@ -21,7 +21,11 @@ import os
 import tempfile
 import shutil
 import subprocess
-import configparser
+
+import visualequation.eqlib.letters
+import visualequation.eqlib.symbcatalog
+from visualequation.icons import ICON_ENUMS
+
 
 DPI = 200
 ICONS_DEF = os.path.abspath(os.path.join(os.path.dirname(__file__),
@@ -87,8 +91,8 @@ if __name__ == '__main__':
     if not os.path.exists(ICONS_DIR):
         os.makedirs(ICONS_DIR)
 
-    config = configparser.ConfigParser(delimiters=(' ',))
-    config.read(ICONS_DEF)
+    #config = configparser.ConfigParser(delimiters=(' ',))
+    #config.read(ICONS_DEF)
 
     try:
         subprocess.check_output(["etex", "-ini",
@@ -109,11 +113,11 @@ if __name__ == '__main__':
     split_file = full_file.split("%EQ%")
     assert len(split_file) == 2
 
-    for index, section in enumerate(config):
-        print("Generating icons...", index + 1, "/", len(config))
-        for tag, code in config[section].items():
-            png_filepath = os.path.join(ICONS_DIR, tag + '.png')
+    for index, e in enumerate(ICON_ENUMS):
+        print("Generating icons...", index + 1, "/", len(ICON_ENUMS))
+        for icon in e:
+            png_filepath = os.path.join(ICONS_DIR, icon.name.lower() + '.png')
             if not os.path.exists(png_filepath):
-                code2icon(code, split_file, png_filepath, temp_dirpath)
+                code2icon(icon.latex(), split_file, png_filepath, temp_dirpath)
 
     shutil.rmtree(temp_dirpath)

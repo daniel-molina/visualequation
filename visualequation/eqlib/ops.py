@@ -31,7 +31,21 @@ from enum import Enum, auto
 from .idx import SelMode
 
 
-class ColorProp(Enum):
+class CCls(Enum):
+    ORD = 0  # Symbols with mathcode "8000 will also be included here
+    OP = 1
+    BIN = 2
+    REL = 3
+    OPEN = 4
+    CLOSE = 5
+    PUNCT = 6
+    INNER = 7
+
+    def latex(self):
+        return r"\math" + self.name.lower() + "{{{0}}}"
+
+
+class Color(Enum):
     BLACK = auto()
     BLUE = auto()
     BROWN = auto()
@@ -52,7 +66,8 @@ class ColorProp(Enum):
     WHITE = auto()
     YELLOW = auto()
 
-class FontProp(Enum):
+
+class Font(Enum):
     MATHIT = auto()
     MATHRM = auto()
     MATHBF = auto()
@@ -60,7 +75,7 @@ class FontProp(Enum):
     MATHTT = auto()
 
 
-class StyleProp(Enum):
+class Style(Enum):
     DISPLAY = 1
     CDISPLAY = -1
     TEXT = 2
@@ -70,15 +85,21 @@ class StyleProp(Enum):
     SCRIPTSCRIPT = 4
     CSCRIPTSCRIPT = -4
 
+    def latex(self):
+        if self.value > 0:
+            return "\\" + self.name.lower() + "style"
+        # TODO: cramped styles
+
 
 class PublicProperties(dict):
     # Properties can be None, the default value for each type,
     # associated to particular value that may be also explicitly chosen.
-    TYPES = dict(
-        color=ColorProp,
-        font=FontProp,
-        style=StyleProp,
-    )
+    TYPES = {
+        'ccls': CCls,
+        'color': Color,
+        'font': Font,
+        'style': Style,
+    }
 
     def __init__(self, **kwargs):
         super().__init__(dict.fromkeys(self.TYPES.keys()))
@@ -112,7 +133,7 @@ PSEUDOSYMB_PP_MIXED_ERROR_MSG = "pp must be a PublicProperties"
 
 
 class PseudoSymb:
-    def __init__(self, latex_code: str, lo_base: bool = False,
+    def __init__(self, latex_code: str, char_class: CCls = CCls.ORD,
                  pp: Optional[PublicProperties] = None,
                  **kwargs):
         """Create a PseudoSymb.
@@ -125,9 +146,9 @@ class PseudoSymb:
             raise TypeError("Parameter latex_code must be a str.")
         self._latex_code = latex_code
 
-        if not isinstance(lo_base, bool):
-            raise TypeError("Parameter lo_base must be a bool.")
-        self._lo_base = lo_base
+        if not isinstance(char_class, CCls):
+            raise TypeError("Parameter char_class must be a CCls.")
+        self._ccls = char_class
 
         if pp is not None:
             if not isinstance(pp, PublicProperties):
@@ -150,8 +171,8 @@ class PseudoSymb:
     def _repr_priv(self):
         """Return a string containing the args of private attributes."""
         s_repr = repr(self._latex_code)
-        if self._lo_base:
-            s_repr += ", True"
+        if self._ccls is not CCls.ORD:
+            s_repr += ", " + str(self._ccls)
         return s_repr
 
     def _repr_pub(self):
@@ -210,10 +231,11 @@ class Op(PseudoSymb):
     """
 
     def __init__(self, latex_code: str,
-                 n_args: int = 1, pref_arg: int = 1, lo_base: bool = False,
+                 n_args: int = 1, pref_arg: int = 1,
+                 char_class: CCls = CCls.ORD,
                  pp: Optional[PublicProperties] = None,
                  **kwargs):
-        super().__init__(latex_code, lo_base, pp=pp, **kwargs)
+        super().__init__(latex_code, char_class, pp=pp, **kwargs)
         if not isinstance(n_args, int):
             raise TypeError("Parameter n_args must be an int.")
         if n_args == 0 or n_args < -1:
@@ -238,8 +260,8 @@ class Op(PseudoSymb):
             s_repr += ", " + repr(self._n_args)
         if self._pref_arg != 1:
             s_repr += ", pref_arg=" + repr(self._pref_arg)
-        if self._lo_base:
-            s_repr += ", lo_base=True"
+        if self._ccls is not CCls.ORD:
+            s_repr += ", char_class=" + str(self._ccls)
 
         return s_repr
 
@@ -430,7 +452,7 @@ class TJuxt(Juxt):
 
 class Void(PseudoSymb):
     def __init__(self, **kwargs):
-        super().__init__(r'\oblong', **kwargs)
+        super().__init__(r'\oblong', CCls.BIN, **kwargs)
 
     def __str__(self):
         return type(self).__name__.upper()
@@ -438,7 +460,7 @@ class Void(PseudoSymb):
 
 class Pvoid(Void):
     def __init__(self):
-        super().__init__(color=ColorProp.PURPLE)
+        super().__init__(color=Color.PURPLE)
 
     def to_json(self):
         return dict(cls="PV")
@@ -450,7 +472,7 @@ class Pvoid(Void):
 
 class Rvoid(Void):
     def __init__(self):
-        super().__init__(color=ColorProp.LIGHTGRAY)
+        super().__init__(color=Color.LIGHTGRAY)
 
     def to_json(self):
         return dict(cls="RV")
@@ -462,7 +484,8 @@ class Rvoid(Void):
 
 class Frac(Op):
     def __init__(self, **kwargs):
-        super().__init__(r'\frac{{{0}}}{{{1}}}', n_args=2, **kwargs)
+        super().__init__(r'\frac{{{0}}}{{{1}}}', n_args=2,
+                         char_class=CCls.INNER, **kwargs)
 
     def rstep(self, arg_ord: Optional[int] = None):
         self._assert_valid_args(arg_ord)

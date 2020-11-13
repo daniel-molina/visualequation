@@ -18,11 +18,12 @@ Two types of scripts are considered:
     *   Corner scripts.
     *   Vertical scripts.
 
-A subeq which attribute self._lo_base == True can have any combination of them.
-Else, it can have only scripts of the same type (or corner ones or vertical
-ones). Depending on that, we can classify scripts operators in three subtypes.
+A subeq which self.pp.ccls is CCls.OP or attribute self._char_class is
+CCls.OP can have any combination of them. Else, it can have only scripts of
+the same type (or corner ones or vertical ones). Depending on that, we can
+classify scripts operators in three subtypes.
 
-    *   LO: Script operators for bases which have self._lo_base == True.
+    *   LO: Script operators for bases which are CCls.OP.
     *   VERT: Script operators which only manage vertical scripts.
     *   CORN: Script operators which only manage corner scripts.
 
@@ -42,7 +43,7 @@ from collections import OrderedDict
 
 from .subeqs import Subeq
 from .idx import Idx, SelMode
-from .ops import Op, RVOID
+from .ops import Op, RVOID, CCls
 
 
 class ScriptOpSubtype(Enum):
@@ -74,7 +75,6 @@ class ScriptPos(Enum):
 VERT_SCR_POS_TUPLE = (ScriptPos.CSUB, ScriptPos.CSUP)
 CORN_SCR_POS_TUPLE = (ScriptPos.LSUB, ScriptPos.RSUB,
                       ScriptPos.LSUP, ScriptPos.RSUP)
-
 
 SCRIPTOPS_DICT = {
     # is_lo, lsub, csub, rsub, lsup, csup, rsup
@@ -546,7 +546,8 @@ class ScriptPars(list):
 
         .. note::
             This function only changes script positions being used, it does NOT
-            check whether the base is valid for certain subtype. It does not care
+            check whether the base is valid for certain subtype. It does not
+            care
             about valid bases.
         """
         if len(self) == 3:
@@ -755,8 +756,11 @@ LO2CORN_VERT_DICT = {v: k for k, v in CORN_VERT2LO_DICT.items()}
 LO2VERT_CORN_DICT = {v: k for k, v in VERT_CORN2LO_DICT.items()}
 
 
-def does_require_full(base: Subeq):
-    return not isinstance(base[0], str) and base[0]._lo_base
+def does_require_lo(base: Subeq):
+    return not isinstance(base[0], str) \
+           and (base[0].pp["ccls"] is CCls.OP
+                or (base[0].pp["ccls"] is None
+                    and base[0]._ccls is CCls.OP))
 
 
 def is_scriptop(elem: Union[Subeq, Op], index: Optional[Idx] = None):
@@ -1016,12 +1020,12 @@ def update_scriptblock(nextbase: list, eq: Subeq, index=None, refindex=None):
     if not isinstance(scriptblock[0], ScriptOp):
         return refidx
     if scriptblock[0].is_lo():
-        if does_require_full(nb):
+        if does_require_lo(nb):
             return refidx
         # VERT/CORN (or a combination of both) -> LO
         return _change2nonfull(eq, index, refindex)
 
-    if not does_require_full(nb):
+    if not does_require_lo(nb):
         return refidx
     return _change2full(eq, index, refindex)
 
@@ -1033,7 +1037,7 @@ def _insert_initial_script(baseref: Subeq, script_pos: ScriptPos,
 
     Index of the script will be index of *baseref* plus [2]
     """
-    if does_require_full(baseref):
+    if does_require_lo(baseref):
         subtype = ScriptOpSubtype.LO
     elif script_pos in VERT_SCR_POS_TUPLE:
         subtype = ScriptOpSubtype.VERT
@@ -1164,12 +1168,10 @@ def remove_script(index, eq: Subeq, refindex):
     # Case: Substitute script-block using its base as replacement
     sb[:] = pars[0]
     retval = update_scriptblock(pars[0], eq, idx[:-2], refidx)
-    if idx[:-1] != refidx[:len(idx)-1]:
+    if idx[:-1] != refidx[:len(idx) - 1]:
         return retval
 
-    refidx_tail = refidx[len(idx)-1:]
+    refidx_tail = refidx[len(idx) - 1:]
     if refidx_tail and refidx_tail[0] != 1:
         return -1
     return idx[:-1] + refidx_tail[1:]
-
-

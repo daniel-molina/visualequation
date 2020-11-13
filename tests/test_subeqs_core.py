@@ -338,10 +338,10 @@ class SubeqTests(unittest.TestCase):
         self.assertEqual(str(Subeq([PVOID])), "[PVOID]")
         self.assertEqual(str(Subeq([PJuxt(2), ["d"], [ps]])),
                          "[PJuxt2, [d], [PseudoSymb]]")
-        self.assertEqual(str(Subeq([PJuxt(4, color=ColorProp.BLUE),
+        self.assertEqual(str(Subeq([PJuxt(4, color=Color.BLUE),
                                     ["d"], [ps]])),
                          "[PJuxt2{BLUE}, [d], [PseudoSymb]]")
-        self.assertEqual(str(Subeq([PJuxt(font=FontProp.MATHIT), ["d"],
+        self.assertEqual(str(Subeq([PJuxt(font=Font.MATHIT), ["d"],
                                     [ps]])),
                          "[PJuxt2{MATHIT}, [d], [PseudoSymb]]")
 
@@ -359,15 +359,15 @@ class SubeqTests(unittest.TestCase):
         self.assertEqual(repr(Subeq([PJuxt(2), ["d"], [ps]])),
                          "Subeq([" + repr(PJuxt(2)) + ", ['d'], "
                          + "[" + repr(ps) + "]])")
-        self.assertEqual(repr(Subeq([PJuxt(color=ColorProp.RED), ["d"],
+        self.assertEqual(repr(Subeq([PJuxt(color=Color.RED), ["d"],
                                      [ps]])),
-                         "Subeq([" + repr(PJuxt(2, color=ColorProp.RED))
+                         "Subeq([" + repr(PJuxt(2, color=Color.RED))
                             + ", ['d'], [" + repr(ps) + "]])")
-        self.assertEqual(repr(Subeq([PJuxt(3, color=ColorProp.RED),
+        self.assertEqual(repr(Subeq([PJuxt(3, color=Color.RED),
                                      ["d"], ["e"], [ps]])),
-                         "Subeq([" + repr(PJuxt(3, color=ColorProp.RED))
+                         "Subeq([" + repr(PJuxt(3, color=Color.RED))
                          + ", ['d'], ['e'], [" + repr(ps) + "]])")
-        self.assertEqual(repr(Subeq([PJuxt(3, color=ColorProp.RED),
+        self.assertEqual(repr(Subeq([PJuxt(3, color=Color.RED),
                                      ["d"], ["e"], [ps]])),
                          r"Subeq([PJuxt(3, color=ColorProp.RED), ['d'], "
                          + r"['e'], [PseudoSymb('\\omega')]])")
@@ -397,14 +397,14 @@ class SubeqTests(unittest.TestCase):
                          "[PJuxt2, ['d'], [PseudoSymb]]")
         self.assertEqual(str(Subeq([PJuxt(2), ["d"], [ps]])),
                          "[PJuxt2, ['d'], [PseudoSymb]]")
-        self.assertEqual(str(Subeq([PJuxt(2, color=ColorProp.YELLOW),
+        self.assertEqual(str(Subeq([PJuxt(2, color=Color.YELLOW),
                                     ["d"], [ps]])),
                          "[PJuxt2{YELLOW}, ['d'], [PseudoSymb]]")
         # Certainly unintended
         self.assertEqual(str(Subeq([PJuxt(2), ["d"], []])),
                          "[PJuxt2, ['d'], []]")
-        self.assertEqual(str(Subeq([TJuxt(2, color=ColorProp.YELLOW,
-                                          font=FontProp.MATHRM),
+        self.assertEqual(str(Subeq([TJuxt(2, color=Color.YELLOW,
+                                          font=Font.MATHRM),
                                     ["d"], ()])),
                          "[TJuxt2{YELLOW, MATHRM}, ['d'], []]")
         self.assertEqual(str(Subeq([TJuxt(2), ["d"], ()])),

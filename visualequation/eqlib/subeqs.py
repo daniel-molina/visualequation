@@ -253,9 +253,30 @@ class Subeq(list):
         else:
             return s[0]._latex_code.format(*map(cls.subeq2latex, s[1:]))
 
+    @classmethod
+    def subeq2latexdebug(cls, s, prevstyle: Style):
+        """Return latex code of a valid subeq surrounded by squares."""
+        if len(s) == 1:
+            return s[0]._ccls.latex().format(
+                r"\debbox{pink}{" + prevstyle.latex() + "}{"
+                + s[0]._latex_code + r"}")
+        if isinstance(s[0], Juxt):
+            s_str = cls.subeq2latexdebug(s[1], prevstyle)
+            for par in s[2:]:
+                s_str += " " + cls.subeq2latexdebug(par, prevstyle)
+            return r"\debbox{blue}{" + prevstyle.latex() + "}{" + s_str + "}"
+
+        pars_latex = (cls.subeq2latexdebug(p, prevstyle) for p in s[1:])
+        return s[0]._ccls.latex().format(
+            r"\debbox{red}{" + prevstyle.latex() + "}{"
+            + s[0]._latex_code.format(*pars_latex) + "}")
+
     def latex(self, idx=None):
-        s = self(idx)
-        return self.subeq2latex(s)
+        return r"\debbox{white}{\displaystyle}{" \
+                + self.subeq2latex(self(idx)) + "}"
+
+    def latexdebug(self, idx=None):
+        return self.subeq2latexdebug(self(idx), Style.DISPLAY)
 
     def __call__(self, *args):
         """Get a reference to eq element given its index or specifying the
