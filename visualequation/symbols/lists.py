@@ -11,67 +11,103 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from .symbols import *
-from .constructs import *
-from .delimiters import *
+from visualequation.eqlib.constructs import MathConstruct
+from visualequation.eqlib.letters import *
+from visualequation.eqlib.symbcatalog import *
 from .functions import *
 from .variablesize import *
-from .operators import *
-from .relations import *
-from .arrows import *
 from .text import *
-from .manylines import *
+from visualequation.eqlib.manylines import *
 from .accents import *
+
+
+def f(cls, *args, **kwargs):
+    def g():
+        return cls(*args, **kwargs)
+    return g
+
+
+def f_mc(name):
+    return name, f(MathConstruct, name)
+
+
+MATHCONSTRUCTS = [
+    PanelIcon('frac', Frac),
+    PanelIcon('sqrt', Sqrt),
+    PanelIcon('nsqrt', NRoot),
+    PanelIcon(*f_mc('overline')),
+    PanelIcon(*f_mc('underline')),
+    PanelIcon(*f_mc('widehat')),
+    PanelIcon(*f_mc('widetilde')),
+    PanelIcon(*f_mc('overrightarrow')),
+    PanelIcon(*f_mc('overleftarrow')),
+    PanelIcon(*f_mc('overleftrightarrow')),
+    PanelIcon(*f_mc('underrightarrow')),
+    PanelIcon(*f_mc('underleftarrow')),
+    PanelIcon(*f_mc('underleftrightarrow')),
+    PanelIcon(*f_mc('xrightarrow')),
+    PanelIcon(*f_mc('xleftarrow')),
+    PanelIcon(*f_mc('overbrace')),
+    PanelIcon(*f_mc('underbrace')),
+]
+
+LGREEK = [PanelIcon(g.name.lower(), f(Greek, g)) for g in GreekE]
+UGREEK = [PanelIcon(g.name.lower(), f(Greek, g)) for g in UGreekE]
+VGREEK = [PanelIcon(g.name.lower(), f(Greek, g)) for g in VGreekE]
+HEBREW = [PanelIcon(h.name.lower(), f(Hebrew, h)) for h in HebrewE]
+
+MISC = [PanelIcon(e.name.lower(), f(MiscSimpleSymb, e)) for e
+        in MiscSimpleSymbE]
+ARROWS = [PanelIcon(e.name.lower(), f(RelationArrow, e)) for e
+          in RelationArrowE]
+BINOPS = [PanelIcon(e.name.lower(), f(BinOpSymb, e))
+          for e in BinOpSymbE]
 
 MENUITEMSDATA = []
 ADDITIONAL_LS = []
 
 MENUITEMSDATA.append(MenuItemData(
-    name="tab_symbols",
-    symb_l=LOWER_GREEK + UPPER_GREEK + VAR_GREEK + HEBREW + SYMBOLS1))
+    name="alpha",
+    icon_l=LGREEK + UGREEK + VGREEK + HEBREW + MISC))
+
+# MENUITEMSDATA.append(MenuItemData(
+#     name="frac",
+#     icon_l=MATHCONSTRUCTS))
+
+# ADDITIONAL_LS += SINGLEDELIMITERS
+#
+# MENUITEMSDATA.append(MenuItemData(
+#     name="tab_delimiters",
+#     icon_l=DELIMITERS))
+#
+# MENUITEMSDATA.append(MenuItemData(
+#     name="tab_functions",
+#     icon_l=FUNCTIONS))
+#
+# MENUITEMSDATA.append(MenuItemData(
+#     name="tab_variablesize",
+#     icon_l=VARIABLESIZE))
 
 MENUITEMSDATA.append(MenuItemData(
-    name="tab_constructs",
-    symb_l=MATHCONSTRUCTS))
-
-ADDITIONAL_LS += SINGLEDELIMITERS
+    name="times",
+    icon_l=BINOPS))
 
 MENUITEMSDATA.append(MenuItemData(
-    name="tab_delimiters",
-    symb_l=DELIMITERS))
+    name="rightarrow",
+    icon_l=ARROWS))
 
-MENUITEMSDATA.append(MenuItemData(
-    name="tab_functions",
-    symb_l=FUNCTIONS))
-
-MENUITEMSDATA.append(MenuItemData(
-    name="tab_variablesize",
-    symb_l=VARIABLESIZE))
-
-MENUITEMSDATA.append(MenuItemData(
-    name="tab_someoperators",
-    symb_l=SOMEOPERATORS))
-
-MENUITEMSDATA.append(MenuItemData(
-    name="tab_relations",
-    symb_l=RELATIONS))
-
-MENUITEMSDATA.append(MenuItemData(
-    name="tab_arrows",
-    symb_l=ARROWS))
-
-ADDITIONAL_LS += COLORS
-
-MENUITEMSDATA.append(MenuItemData(
-    name="tab_text",
-    symb_l=TEXT))
-
-ADDITIONAL_LS += MATRIXTYPES
-
-MENUITEMSDATA.append(MenuItemData(
-    name="tab_manylines",
-    symb_l=MANYLINES))
-
-MENUITEMSDATA.append(MenuItemData(
-    name="tab_accents",
-    symb_l=ACCENTS))
+#ADDITIONAL_LS += COLORS
+#
+# MENUITEMSDATA.append(MenuItemData(
+#     name="tab_text",
+#     icon_l=TEXT))
+#
+# ADDITIONAL_LS += MATRIXTYPES
+#
+# MENUITEMSDATA.append(MenuItemData(
+#     name="tab_manylines",
+#     icon_l=MANYLINES))
+#
+# MENUITEMSDATA.append(MenuItemData(
+#     name="tab_accents",
+#     icon_l=ACCENTS))

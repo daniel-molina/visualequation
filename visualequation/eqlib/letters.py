@@ -17,7 +17,7 @@
     Implementation note: Maybe dicts and tuples could be integrated with icons?
 """
 
-
+from typing import Union
 from enum import Enum, auto
 
 from .ops import PseudoSymb
@@ -77,6 +77,7 @@ class VGreekE(Enum):
     VARRHO = auto()
     VARSIGMA = auto()
 
+
 @icon_class
 class HebrewE(Enum):
     ALEPH = auto()
@@ -85,71 +86,55 @@ class HebrewE(Enum):
     GIMEL = auto()
 
 
-# If associated tuple has one element, Greek letter has a characteristic
-# capital letter.
-# Elif second element of associated tuple is None, capital letter of the key
-# must be used for the Greek letter.
-# Else, capital of the second element must be used as capital of the Greek
-# letter.
+# A None value means that Latin letter has no Greek equivalent.
+# Second element of the tuple value represents the capital letter of associated
+# Greek letter. If it is None, the capital letter of the Latin letter is used.
+# Elif it is a str, the string is used instead.
 LATIN_DICT = {
-    'a': ('alpha', None),
-    'b': ('beta', None),
-    'c': ('chi', 'x'),
-    'd': ('delta',),
-    'e': ('epsilon', None),
-    'f': ('phi',),
-    'g': ('gamma',),
-    'h': ('eta', None),
-    'i': ('iota', None),
+    'a': (GreekE.ALPHA, None, None),
+    'b': (GreekE.BETA, None, None),
+    'c': (GreekE.CHI, 'X', None),
+    'd': (GreekE.DELTA, UGreekE.DELTA_U0, None),
+    'e': (GreekE.EPSILON, None, VGreekE.VAREPSILON),
+    'f': (GreekE.PHI, UGreekE.PHI_U0, VGreekE.VARPHI),
+    'g': (GreekE.GAMMA, UGreekE.GAMMA_U0, VGreekE.DIGAMMA),
+    'h': (GreekE.ETA, None, None),
+    'i': (GreekE.IOTA, None, None),
     'j': None,
-    'k': ('kappa', None),
-    'l': ('lambda',),
-    'm': ('mu', None),
-    'n': ('nu', None),
-    'o': ('omega',),
-    'p': ('pi',),
-    'q': ('theta',),
-    'r': ('rho', 'p'),
-    's': ('sigma',),
-    't': ('tau', None),
-    'u': ('upsilon',),
+    'k': (GreekE.KAPPA, None, VGreekE.VARKAPPA),
+    'l': (GreekE.LAMBDA, UGreekE.LAMBDA_U0, None),
+    'm': (GreekE.MU, None, None),
+    'n': (GreekE.NU, None, None),
+    'o': (GreekE.OMEGA, UGreekE.OMEGA_U0, None),
+    'p': (GreekE.PI, UGreekE.PHI_U0, VGreekE.VARPI),
+    'q': (GreekE.THETA, UGreekE.THETA_U0, VGreekE.VARTHETA),
+    'r': (GreekE.RHO, 'P', VGreekE.VARRHO),
+    's': (GreekE.SIGMA, UGreekE.SIGMA_U0, VGreekE.VARSIGMA),
+    't': (GreekE.TAU, None, None),
+    'u': (GreekE.UPSILON, UGreekE.UPSILON_U0, None),
     'v': None,
     'w': None,
-    'x': ('xi',),
-    'y': ('psi',),
-    'z': ('zeta', None),
+    'x': (GreekE.XI, UGreekE.XI_U0, None),
+    'y': (GreekE.PSI, UGreekE.PSI_U0, None),
+    'z': (GreekE.ZETA, None, None),
 }
 
 GREEK_DICT = {v[0]: k for k, v in LATIN_DICT.items() if v is not None}
 
-VGREEK_TPL = (
-    'epsilon',
-    'phi',
-    'gamma',  # Special case, LaTeX code is prefixed with 'di'
-    'kappa',
-    'pi',
-    'theta',
-    'rho',
-    'sigma',
-)
-
-HEBREW_DICT = {
-    'aleph': 'a',
-    'beth': 'b',
-    'daleth': 'd',
-    'gimel': 'g',
-}
+# Note: To be moved to a test
+assert len(GREEK_DICT) == len(GreekE)
 
 
-def has_greek_equiv(c):
+def has_greek_equiv(latin_char):
     """Return whether a Latin character has an equivalent Greek character."""
-    return c in LATIN_DICT and LATIN_DICT[c] is not None
+    return latin_char in LATIN_DICT and LATIN_DICT[latin_char] is not None
 
 
-def has_greek_with_variant(c):
+def has_greek_with_variant(latin_char):
     """Return whether a Latin character has an equivalent Greek letter with
     variant."""
-    return has_greek_equiv(c) and LATIN_DICT[c][0] in VGREEK_TPL
+    return has_greek_equiv(latin_char) \
+        and LATIN_DICT[latin_char][2] is not None
 
 
 class Latin(PseudoSymb):
@@ -189,113 +174,105 @@ class Latin(PseudoSymb):
 
 
 class Greek(PseudoSymb):
-    def __init__(self, greek_letter, upper=False, variant=False, **kwargs):
-        if not isinstance(greek_letter, str):
-            raise TypeError("Parameter greek_letter must be a str.")
-        if greek_letter not in GREEK_DICT:
-            raise ValueError("Parameter greek_letter is not valid.")
+    def __init__(self, greek_letter: GreekE, upper=False, variant=False,
+                 **kwargs):
+        """Only GreekE are allowed so capital letters with no specific LaTeX
+        code can be also managed.
+        """
+        if not isinstance(greek_letter, GreekE):
+            raise TypeError("Parameter greek_letter must be a GreekE.")
+        self._latin = GREEK_DICT[greek_letter]
         if not isinstance(upper, bool):
             raise TypeError("Parameter upper must be a bool.")
         if not isinstance(variant, bool):
             raise TypeError("Parameter variant must be a bool.")
-        if variant and (upper or greek_letter not in VGREEK_TPL):
+        if variant and upper:
+            raise ValueError("Parameters variant and upper are "
+                             "mutually exclusive.")
+        if variant and self.vgreek_latex(self._latin) is None:
             raise ValueError("Specified Greek letter has not a variant.")
-
-        self._latin = GREEK_DICT[greek_letter]
         self._upper = upper
         self._variant = variant
         if upper:
-            latex = self.latex_upper(self._latin)
+            super().__init__(LATIN_DICT[self._latin][1].latex(), **kwargs)
         elif variant:
-            latex = self.latex_variant(self._latin)
+            super().__init__(LATIN_DICT[self._latin][2].latex(), **kwargs)
         else:
-            latex = self.latex_lower(self._latin)
-        super().__init__("\\" + latex, **kwargs)
+            super().__init__(greek_letter.latex(), **kwargs)
 
     @classmethod
-    def latex_lower(cls, latin_letter: str):
-        """Return latex code of the lower case of a Greek letter.
+    def greek_latex(cls, latin_letter: str):
+        """Return LaTeX code of Greek letter associated to a lowercase Latin
+        letter.
 
-        .. note::
-            Backslash is not included.
+        If such Greek letter does not exist, return None.
         """
+        if latin_letter not in LATIN_DICT:
+            return
         v = LATIN_DICT[latin_letter]
-        if v is None:
-            raise ValueError("Specified letter has not a Greek equivalent.")
-        return v[0]
+        if v is not None:
+            return v[0].latex()
 
     @classmethod
-    def latex_upper(cls, latin_letter: str):
-        """Return latex code of the upper case of a Greek letter.
+    def ugreek_latex(cls, latin_letter: str):
+        """Return LaTeX code of the capital Greek letter associated to a
+        lowercase Latin letter.
 
-        .. note::
-            Backslash is not included.
+        If such Greek letter does not exist, return None.
         """
+        if latin_letter not in LATIN_DICT:
+            return
         v = LATIN_DICT[latin_letter]
         if v is None:
-            raise ValueError("Specified letter has not a Greek equivalent.")
-        if len(v) == 1:
-            return v[0].capitalize()
-        elif v[1] is None:
             return latin_letter.upper()
-        else:
-            return v[1].upper()
+        if isinstance(v[1], str):
+            return v[1]
+        return v[1].latex()
 
     @classmethod
-    def latex_variant(cls, latin_letter: str):
-        """Return latex code of the variant of a Greek letter.
+    def vgreek_latex(cls, latin_letter: str):
+        """Return LaTeX code of the variant of a Greek letter associated to a
+        lowercase Latin letter.
 
-        .. note::
-            Backslash is not included.
+        If such Greek letter does not exist, return None.
         """
+        if latin_letter not in LATIN_DICT:
+            return
         v = LATIN_DICT[latin_letter]
-        if v is None:
-            raise ValueError("Specified letter has not a Greek equivalent.")
-        if v[0] not in VGREEK_TPL:
-            raise ValueError("Specified letter does not accept a variant.")
-        if latin_letter == "g":
-            return "digamma"
-        return "var" + v[0]
+        if v is not None and v[2] is not None:
+            return v[2].latex()
 
     def upper(self):
-        self._latex_code = "\\" + self.latex_upper(self._latin)
+        self._latex_code = self.ugreek_latex(self._latin)
         self._upper = True
         self._variant = False
 
     def lower(self):
-        self._latex_code = "\\" + self.latex_lower(self._latin)
+        self._latex_code = self.greek_latex(self._latin)
         self._upper = False
         self._variant = False
 
+    def has_variant(self):
+        return self.vgreek_latex(self._latin) is not None
+
     def variant(self):
-        self._latex_code = "\\" + self.latex_variant(self._latin)
+        latex_code = self.vgreek_latex(self._latin)
+        if latex_code is None:
+            raise ValueError("Requested variant does not exist.")
+        self._latex_code = latex_code
         self._upper = False
         self._variant = True
 
-    def has_variant(self):
-        return GREEK_DICT[self._latin][0] in VGREEK_TPL
-
     @classmethod
-    def from_json(cls, dct):
-        s = dct["s"]
-        return cls(LATIN_DICT[s[0]], s[1:] == "C", s[1:] == "v", pp=dct["pp"])
-
-    def to_json(self):
-        s = self._latin
-        if self._variant:
-            s += "v"
-        elif self._upper:
-            s += "C"
-        return dict(cls="G", s=s, pp=self.pp.to_json())
-
-    @classmethod
-    def from_str(cls, lower_letter: str, upper=False, variant=False, **kwargs):
-        if lower_letter not in LATIN_DICT:
-            raise ValueError("Invalid lower_letter value.")
-        v = LATIN_DICT[lower_letter]
+    def from_str(cls, latin_letter: str, upper=False, variant=False,
+                 **kwargs):
+        """Return an instance of Greek from a string with a lowercase Latin."""
+        if latin_letter not in LATIN_DICT:
+            raise ValueError("Invalid latin_letter value.")
+        v = LATIN_DICT[latin_letter]
         if v is None:
-            raise ValueError("Passed lower_letter has not a Greek equivalent.")
-        return Greek(v[0], upper, variant, **kwargs)
+            raise ValueError("Passed latin_letter has not a Greek equivalent.")
+        return cls(v[0], upper, variant, **kwargs)
 
     @classmethod
     def from_latin(cls, latin: Latin, variant=False, **kwargs):
@@ -310,24 +287,34 @@ class Greek(PseudoSymb):
             raise ValueError("Passed Latin has not a Greek equivalent.")
         return Greek(v[0], latin._upper, variant, **kwargs)
 
+    @classmethod
+    def from_json(cls, dct):
+        s = dct["s"]
+        return cls(LATIN_DICT[s[0]], s[1:] == "U", s[1:] == "V", pp=dct["pp"])
+
+    def to_json(self):
+        s = self._latin
+        if self._variant:
+            s += "V"
+        elif self._upper:
+            s += "U"
+        return dict(cls="G", s=s, pp=self.pp.to_json())
+
 
 class Hebrew(PseudoSymb):
-    def __init__(self, hebrew_letter: str, **kwargs):
-        if not isinstance(hebrew_letter, str):
-            raise TypeError("Parameter hebrew_letter must be a str.")
-        if hebrew_letter not in HEBREW_DICT:
-            raise ValueError("Parameter hebrew_letter is not valid.")
+    def __init__(self, hebrew_letter: HebrewE, **kwargs):
+        if not isinstance(hebrew_letter, HebrewE):
+            raise TypeError("Parameter hebrew_letter must be a HebrewE.")
 
-        super().__init__("\\" + hebrew_letter, **kwargs)
+        self._letter = hebrew_letter
+        super().__init__(hebrew_letter.latex(), **kwargs)
 
     @classmethod
     def from_json(cls, dct):
-        letter = next(k for k, v in HEBREW_DICT.items() if v == dct["c"])
-        return cls(letter, pp=dct["pp"])
+        return cls(HebrewE(dct["n"]), pp=dct["pp"])
 
     def to_json(self):
-        return dict(cls="H", c=HEBREW_DICT[self._latex_code[1:]],
-                    pp=self.pp.to_json())
+        return dict(cls="H", n=self._letter.value, pp=self.pp.to_json())
 
 
 class Digit(PseudoSymb):
