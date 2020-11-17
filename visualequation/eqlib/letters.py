@@ -106,7 +106,7 @@ LATIN_DICT = {
     'm': (GreekE.MU, None, None),
     'n': (GreekE.NU, None, None),
     'o': (GreekE.OMEGA, UGreekE.OMEGA_U0, None),
-    'p': (GreekE.PI, UGreekE.PHI_U0, VGreekE.VARPI),
+    'p': (GreekE.PI, UGreekE.PI_U0, VGreekE.VARPI),
     'q': (GreekE.THETA, UGreekE.THETA_U0, VGreekE.VARTHETA),
     'r': (GreekE.RHO, 'P', VGreekE.VARRHO),
     's': (GreekE.SIGMA, UGreekE.SIGMA_U0, VGreekE.VARSIGMA),
@@ -120,6 +120,10 @@ LATIN_DICT = {
 }
 
 GREEK_DICT = {v[0]: k for k, v in LATIN_DICT.items() if v is not None}
+UGREEK_DICT = {v[1]: k for k, v in LATIN_DICT.items()
+               if v is not None and isinstance(v[1], UGreekE)}
+VGREEK_DICT = {v[2]: k for k, v in LATIN_DICT.items()
+               if v is not None and isinstance(v[2], VGreekE)}
 
 # Note: To be moved to a test
 assert len(GREEK_DICT) == len(GreekE)

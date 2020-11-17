@@ -52,8 +52,10 @@ MATHCONSTRUCTS = [
 ]
 
 LGREEK = [PanelIcon(g.name.lower(), f(Greek, g)) for g in GreekE]
-UGREEK = [PanelIcon(g.name.lower(), f(Greek, g)) for g in UGreekE]
-VGREEK = [PanelIcon(g.name.lower(), f(Greek, g)) for g in VGreekE]
+UGREEK = [PanelIcon(g.name.lower(), f(Greek.from_str, UGREEK_DICT[g], True))
+          for g in UGreekE]
+VGREEK = [PanelIcon(g.name.lower(), f(Greek.from_str, VGREEK_DICT[g],
+                                      False, True)) for g in VGreekE]
 HEBREW = [PanelIcon(h.name.lower(), f(Hebrew, h)) for h in HebrewE]
 
 MISC = [PanelIcon(e.name.lower(), f(MiscSimpleSymb, e)) for e
