@@ -1,0 +1,39 @@
+ve-dvipng
+******
+
+The program in this directory (visualequation/ve-dvipng) is a modification of dvipng
+1.17 to support some functionalities of visualequation and is not inteded to be used 
+directly by the final user, only indirectly through visualequation. It has been named 
+ve-dvipng to state that it is not exactly dvipng but a slightly modified version.
+
+Not modified files have been left intact. Modified files include visualequation license
+notice above original dvipng one.
+
+To install it manually (should be documented better in next releases of
+visualequation), read the INSTALL file. Basically, provided that you have 
+dependencies correctly installed:
+
+    ./configure
+
+or
+
+   ./configure --prefix=/some/path
+
+and
+
+   make
+   make install
+   
+
+About dvipng
+*******
+
+dvipng [1.17] is released under the GNU Lesser General Public License
+version 3, see the COPYING file in the dvipng distribution or
+<http://www.gnu.org/licenses/>.
+
+   Copyright (C) 2002-2014 Jan-AAke Larsson
+
+The website is:
+
+   http://savannah.nongnu.org/projects/dvipng/
