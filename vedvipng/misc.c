@@ -18,7 +18,7 @@
   License along with this program. If not, see
   <http://www.gnu.org/licenses/>.
 
-  Copyright (C) 2002-2015, 2019 Jan-Åke Larsson
+  Copyright (C) 2002-2015, 2019 Jan-ï¿½ke Larsson
 
 ************************************************************************/
 
@@ -68,13 +68,22 @@ bool DecodeArgs(int argc, char ** argv)
 #endif
     programname=argv[0];
   }
+
+  if (argc > 1 && strncmp(argv[1], "VE", 2) == 0)
+  {
+	  i = 2;
+	  option_flags &= ~BE_NONQUIET;
+	  option_flags |= VE_OUTPUT;
+  } else i = 1;
+
   Message(BE_NONQUIET,"This is %s",programname);
   if (option_flags & GIF_OUTPUT)
-    Message(BE_NONQUIET," (%s)", PACKAGE_NAME);
-  Message(BE_NONQUIET," %s Copyright 2002-2015, 2019 Jan-Ake Larsson\n",
-          PACKAGE_VERSION);
+	Message(BE_NONQUIET," (%s)", PACKAGE_NAME);
+  Message(BE_NONQUIET," %s Copyright 2020 Daniel Molina\n"
+		  "(based on dvipng 1.17 by Jan-Ake Larsson)\n",
+		  PACKAGE_VERSION);
 
-  for (i=1; i<argc; i++) {
+  for (; i<argc; i++) {
     if (*argv[i]=='-') {
       char *p=argv[i]+2 ;
       char c=argv[i][1] ;
@@ -510,11 +519,12 @@ bool DecodeArgs(int argc, char ** argv)
 	  }
 #  endif
 #endif
-	  puts ("Copyright (C) 2002-2015, 2019 Jan-Ake Larsson.\n\
-There is NO warranty.  You may redistribute this software\n\
-under the terms of the GNU Lesser General Public License\n\
-version 3, see the COPYING file in the dvipng distribution\n\
-or <http://www.gnu.org/licenses/>.");
+	  puts ("\nCopyright (C) 2020 Daniel Molina.\n"
+"There is NO warranty.  You can redistribute it and/or modify\n"
+"it under the terms of the GNU General Public License as published\n"
+"by the Free Software Foundation, either version 3 of the License,\n"
+"or (at your option) any later version. See the COPYING file or\n"
+"<http://www.gnu.org/licenses/>.");
 	  exit (EXIT_SUCCESS);
 	}
 	if (*p != '0')

@@ -1,10 +1,10 @@
-ve-dvipng
+vedvipng
 ******
 
 The program in this directory (visualequation/ve-dvipng) is a modification of dvipng
 1.17 to support some functionalities of visualequation and is not inteded to be used 
 directly by the final user, only indirectly through visualequation. It has been named 
-ve-dvipng to state that it is not exactly dvipng but a slightly modified version.
+vedvipng to state that it is not exactly dvipng but a slightly modified version.
 
 Not modified files have been left intact. Modified files include visualequation license
 notice above original dvipng one.

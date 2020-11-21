@@ -289,7 +289,7 @@ dviunits SetRule(dviunits a, dviunits b, subpixels hh,subpixels vv)
 
 			/* Visual Equation HACK - START */
 			if (cstack[csp].red == -88) {
-				Message(BE_NONQUIET,"VE: %d %d %d %d %d\n", cstack[csp].blue,
+				Message(VE_OUTPUT,"VE: %d %d %d %d %d\n", cstack[csp].blue,
 						hh, vv-height+1, hh+width-1, vv);
 				/* Visual Equation HACK - END */
 

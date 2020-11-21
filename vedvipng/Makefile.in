@@ -74,21 +74,20 @@ objects = dvipng.o color.o draw.o dvi.o font.o misc.o pk.o \
 	set.o special.o papersiz.o ppagelist.o \
 	vf.o @PSFONTS_O@
 
-# docs commented because dvipng.dvi was making evince-thumbnailer crazy
-all: ve-dvipng # docs
+all: vedvipng # docs
 
 install: @INSTALL_BIN_TARGET@  # @INSTALL_BIN_TARGET@-docs
 
 ####################################### The program
 
-ve-dvipng: $(objects)
-	$(CC) $(LDFLAGS) $(objects) -o ve-dvipng $(LIBS)
+vedvipng: $(objects)
+	$(CC) $(LDFLAGS) $(objects) -o vedvipng $(LIBS)
 
 $(objects): dvipng.h commands.h config.h
 
-install-dvipng: ve-dvipng
+install-dvipng: vedvipng
 	-$(MKINSTALLDIRS) $(DESTDIR)$(bindir)
-	$(INSTALL) ve-dvipng $(DESTDIR)$(bindir)
+	$(INSTALL) vedvipng $(DESTDIR)$(bindir)
 
 install-dvigif: install-dvipng
 #	(cd $(DESTDIR)$(bindir) && rm -f dvigif && $(LN_S) dvipng dvigif)
