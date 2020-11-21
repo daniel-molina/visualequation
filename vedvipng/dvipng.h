@@ -42,6 +42,16 @@
 #define DVIPNG_H
 #include "config.h"
 
+/* Some Visual Equation additions:
+ *
+ * 	*  Security color C = 51 corresponds to c == 0.2 (51 = int(255*0.2 + 0.5)).
+ * 	*  -88 is an invalid red color.
+ * 	*  Key always uses 5 decimals so it does not compromise float precision.
+ */
+#define VE_C255_SECURITY_COLOR 51
+#define VE_R255_INVALID_COLOR -88
+#define VE_MF2KEY(mf) ((int) (mf*1e5+0.5))
+
 #define  STRSIZE         255     /* stringsize for file specifications  */
 
 #define  FIRSTFNTCHAR  0

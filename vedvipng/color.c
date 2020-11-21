@@ -315,9 +315,9 @@ void stringrgb(const char* color,int *r,int *g,int *b)
     if (k)
     	k = NEXTFLOAT255(color);
 
-    if (k == 255 && c == 255) {
-    	*r = -88;
-    	*b = (int) (mf*1e5 + 0.5);  /* (!) Do not compromise float precision.*/
+    if (k == 255 && c == VE_C255_SECURITY_COLOR) {
+    	*r = VE_R255_INVALID_COLOR;
+    	*b = VE_MF2KEY(mf);
     } else {
     	int m = FTO255(mf);
     /* Visual Equation HACK - END   */

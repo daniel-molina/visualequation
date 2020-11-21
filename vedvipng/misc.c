@@ -69,7 +69,7 @@ bool DecodeArgs(int argc, char ** argv)
     programname=argv[0];
   }
 
-  if (argc > 1 && strncmp(argv[1], "VE\0", 3) == 0)
+  if (argc > 1 && strcmp(argv[1], "VE") == 0)
   {
 	  i = 2;
 	  option_flags &= ~BE_NONQUIET;
