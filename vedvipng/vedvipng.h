@@ -48,9 +48,9 @@
  * 	*  -88 is an invalid red color.
  * 	*  Key always uses 5 decimals so it does not compromise float precision.
  */
-#define VE_C255_SECURITY_COLOR 51
-#define VE_R255_INVALID_COLOR -88
-#define VE_MF2KEY(mf) ((int) (mf*1e5+0.5))
+#define VE_SECURITY_COLOR 51
+#define VE_INVALID_COLOR -88
+#define VE_MFTOKEY(mf) ((int) (mf*1e5+0.5))
 
 #define  STRSIZE         255     /* stringsize for file specifications  */
 
@@ -542,6 +542,14 @@ EXTERN int csp INIT(1);
 
 EXTERN struct font_entry* currentfont;
 EXTERN struct dvi_data* dvi INIT(NULL);
+
+/* Visual Equation declaration */
+EXTERN int (**vep)[4];
+EXTERN int veN;
+/* These must be set from Python before calling the function (!). */
+EXTERN char *vedvipngpath;
+EXTERN char *veinputfile;
+EXTERN char *veoutputfile;
 
 #ifdef HAVE_FT2
 EXTERN FT_Library libfreetype INIT(NULL);

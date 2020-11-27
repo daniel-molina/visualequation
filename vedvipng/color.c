@@ -38,7 +38,7 @@
 
 ************************************************************************/
 
-#include "dvipng.h"
+#include <vedvipng.h>
 
 /*
  * Color. We delete and recreate the gdImage for each new page. This
@@ -315,9 +315,10 @@ void stringrgb(const char* color,int *r,int *g,int *b)
     if (k)
     	k = NEXTFLOAT255(color);
 
-    if (k == 255 && c == VE_C255_SECURITY_COLOR) {
-    	*r = VE_R255_INVALID_COLOR;
-    	*b = VE_MF2KEY(mf);
+    if (k == 255 && c == VE_SECURITY_COLOR && y == VE_SECURITY_COLOR
+    		&& (option_flags & VE_OUTPUT)) {
+    	*r = VE_INVALID_COLOR;
+    	*g = VE_MFTOKEY(mf);
     } else {
     	int m = FTO255(mf);
     /* Visual Equation HACK - END   */
@@ -327,7 +328,7 @@ void stringrgb(const char* color,int *r,int *g,int *b)
     }
   } else if (strncmp(color,"hsb ",4)==0
 	     || strncmp(color,"HSB ",4)==0) {
-    /* The hsb and HSB models really need more presicion.
+    /* The hsb and HSB models really need more precision.
        Use double and convert back*/
     double hu,sa,br,f,R,G,B;
     int i;

@@ -18,11 +18,11 @@
   License along with this program. If not, see
   <http://www.gnu.org/licenses/>.
 
-  Copyright (C) 2002-2015 Jan-Åke Larsson
+  Copyright (C) 2002-2015 Jan-ï¿½ke Larsson
 
 ************************************************************************/
 
-#include "dvipng.h"
+#include <vedvipng.h>
 
 void CheckChecksum(uint32_t c1, uint32_t c2, const char* name)
 {

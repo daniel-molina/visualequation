@@ -2,30 +2,46 @@
 
 /************************************************************************
 
-  Part of the dvipng distribution
+  visualequation is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-  This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU Lesser General Public License as
-  published by the Free Software Foundation, either version 3 of the
-  License, or (at your option) any later version.
+  visualequation is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-  This program is distributed in the hope that it will be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-  Lesser General Public License for more details.
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-  You should have received a copy of the GNU Lesser General Public
-  License along with this program. If not, see
-  <http://www.gnu.org/licenses/>.
+  This file incorporates work covered by the following copyright and
+  permission notice:
 
-  Copyright (C) 2002-2015,2019 Jan-Åke Larsson
+        Part of the dvipng distribution
+
+  		This program is free software: you can redistribute it and/or modify
+  		it under the terms of the GNU Lesser General Public License as
+  		published by the Free Software Foundation, either version 3 of the
+  		License, or (at your option) any later version.
+
+  		This program is distributed in the hope that it will be useful, but
+  		WITHOUT ANY WARRANTY; without even the implied warranty of
+  		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  		Lesser General Public License for more details.
+
+  		You should have received a copy of the GNU Lesser General Public
+  		License along with this program. If not, see
+  		<http://www.gnu.org/licenses/>.
+
+  		Copyright (C) 2002-2015 Jan-ï¿½ke Larsson
 
 ************************************************************************/
 
 /* This program translates TeX's DVI-Code into Portable Network Graphics. */
 
 #define MAIN
-#include "dvipng.h"
+#include "vedvipng.h"
 
 #ifdef MIKTEX
 #  define main __cdecl Main
@@ -33,9 +49,16 @@
 /**********************************************************************/
 /*******************************  main  *******************************/
 /**********************************************************************/
-int main(int argc, char ** argv)
+int vedvipng(int vedpi, int output_length, int output[][4])
 {
-  bool parsestdin;
+	if (vedvipngpath == NULL || veinputfile == NULL || veoutputfile == NULL) {
+	    fflush(stdout);
+	    fprintf(stderr, "vedvipng.so: VE parameters are not set.");
+		exit(EXIT_FATAL);
+	}
+	veN = output_length;
+	vep = &output;
+	/*bool parsestdin;*/
 
 #ifdef TIMING
 # ifdef HAVE_GETTIMEOFDAY
@@ -51,8 +74,9 @@ int main(int argc, char ** argv)
   /* setbuf(stderr, NULL); */
 
 #ifdef HAVE_LIBKPATHSEA
+  kpse_set_program_name(vedvipngpath, "dvips");
   /* Use extra paths as used by dvips */
-  kpse_set_program_name(argv[0],"dvips");
+  /* kpse_set_program_name(argv[0],"dvips");  Commented for Visual Equation */
   /* If dvipng is not installed in the texmf tree, and _only_
    * SELFAUTO...  is used in texmf.cnf, kpathsea will not find a)
    * Virtual fonts b) ps2pk.map or psfonts.map c) PostScript fonts
@@ -83,20 +107,35 @@ int main(int argc, char ** argv)
   texlive_gs_init();
 #endif
 
-  initcolor();
-  parsestdin = DecodeArgs(argc, argv);
+	initcolor();
+	/* parsestdin = DecodeArgs(argc, argv); */
+
+	/* Settings options used by Visual Equation */
+	option_flags &= ~BE_NONQUIET;
+	option_flags |= VE_OUTPUT;
+	/* -T tight */
+	x_width_def=-1;
+	y_width_def=-1;
+	/* -D dpi */
+	dpi = vedpi;
+	/* --follow */
+	DVIFollowToggle();
+	/* -o output AND input */
+	dvi = DVIOpen (veinputfile, veoutputfile);
+	ParsePages("-");
 
 #ifdef HAVE_LIBKPATHSEA
+	/* Commented for Visual Equation
   if (user_mfmode)
     if (user_bdpi)
-      kpse_init_prog("DVIPNG", user_bdpi, user_mfmode, "cmr10");
+      kpse_init_prog("VEDVIPNG", user_bdpi, user_mfmode, "cmr10");
     else {
       Warning("--mfmode given without --bdpi");
-      /* this will give a lot of warnings but... */
-      kpse_init_prog("DVIPNG", 300, user_mfmode, "cmr10");
+      // this will give a lot of warnings but...
+      kpse_init_prog("VEDVIPNG", 300, user_mfmode, "cmr10");
     }
-  else
-    kpse_init_prog("DVIPNG", 300, "cx", "cmr10");
+  else */
+    kpse_init_prog("VEDVIPNG", 300, "cx", "cmr10");
 #endif
 
 #ifdef HAVE_FT2
@@ -105,6 +144,7 @@ int main(int argc, char ** argv)
 
   if (dvi!=NULL) DrawPages();
 
+  /* Commented for Visual Equation
   if (parsestdin) {
     char    line[STRSIZE];
 
@@ -118,7 +158,7 @@ int main(int argc, char ** argv)
       printf("%s> ",dvi!=NULL?dvi->name:"");
     }
     printf("\n");
-  }
+  }*/
 
 #ifdef TIMING
 # ifdef HAVE_GETTIMEOFDAY
@@ -142,15 +182,21 @@ int main(int argc, char ** argv)
 
   ClearFonts();
   DVIClose(dvi);
+  /* Fix for Visual Equation */
+  dvi = NULL;
+  /* Unneeded, but it does not harm.*/
+  vep = NULL; veN = -1;
+
   ClearColorNames();
 #ifdef HAVE_FT2
   ClearPSFontMap();
   ClearEncoding();
   ClearSubfont();
   if (libfreetype!=NULL && FT_Done_FreeType(libfreetype))
-    Fatal("an error occured during freetype destruction");
+    Fatal("an error occurred during freetype destruction");
   libfreetype = NULL;
 #endif
 
-  exit(exitcode);
+  /* exit(exitcode);*/
+  return 0;
 }

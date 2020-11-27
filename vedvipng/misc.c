@@ -2,27 +2,43 @@
 
 /************************************************************************
 
-  Part of the dvipng distribution
+  visualequation is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-  This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU Lesser General Public License as
-  published by the Free Software Foundation, either version 3 of the
-  License, or (at your option) any later version.
+  visualequation is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-  This program is distributed in the hope that it will be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-  Lesser General Public License for more details.
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-  You should have received a copy of the GNU Lesser General Public
-  License along with this program. If not, see
-  <http://www.gnu.org/licenses/>.
+  This file incorporates work covered by the following copyright and
+  permission notice:
 
-  Copyright (C) 2002-2015, 2019 Jan-�ke Larsson
+        Part of the dvipng distribution
+
+  		This program is free software: you can redistribute it and/or modify
+  		it under the terms of the GNU Lesser General Public License as
+  		published by the Free Software Foundation, either version 3 of the
+  		License, or (at your option) any later version.
+
+  		This program is distributed in the hope that it will be useful, but
+  		WITHOUT ANY WARRANTY; without even the implied warranty of
+  		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  		Lesser General Public License for more details.
+
+  		You should have received a copy of the GNU Lesser General Public
+  		License along with this program. If not, see
+  		<http://www.gnu.org/licenses/>.
+
+  		Copyright (C) 2002-2015 Jan-�ke Larsson
 
 ************************************************************************/
 
-#include "dvipng.h"
+#include <vedvipng.h>
 #ifdef HAVE_LIBGEN_H
 # include <libgen.h>
 #endif
@@ -69,13 +85,10 @@ bool DecodeArgs(int argc, char ** argv)
     programname=argv[0];
   }
 
-  if (argc > 1 && strcmp(argv[1], "VE") == 0)
-  {
-	  i = 2;
-	  option_flags &= ~BE_NONQUIET;
-	  option_flags |= VE_OUTPUT;
-  } else i = 1;
-
+  /* Visual Equation modification: */
+  option_flags &= ~BE_NONQUIET;
+  option_flags |= VE_OUTPUT;
+  /* This part is currently not printed in any case. */
   Message(BE_NONQUIET,"This is %s",programname);
   if (option_flags & GIF_OUTPUT)
 	Message(BE_NONQUIET," (%s)", PACKAGE_NAME);
@@ -83,7 +96,7 @@ bool DecodeArgs(int argc, char ** argv)
 		  "(based on dvipng 1.17 by Jan-Ake Larsson)\n",
 		  PACKAGE_VERSION);
 
-  for (; i<argc; i++) {
+  for (i=1; i<argc; i++) {
     if (*argv[i]=='-') {
       char *p=argv[i]+2 ;
       char c=argv[i][1] ;

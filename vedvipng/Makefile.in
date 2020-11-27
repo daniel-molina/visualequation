@@ -41,7 +41,7 @@
 PACKAGE_STRING="@PACKAGE_STRING@"
 
 CC = @CC@
-CFLAGS = @CFLAGS@ -Wall
+CFLAGS = @CFLAGS@ -Wall -fPIC
 CPPFLAGS = @CPPFLAGS@ -I.
 LN_S = @LN_S@
 
@@ -54,6 +54,7 @@ VPATH = @srcdir@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 bindir = @bindir@
+libdir = @libdir@
 infodir = @infodir@
 mandir = @mandir@
 datarootdir = @datarootdir@
@@ -70,24 +71,27 @@ TEXIHTML=texi2html
 DVIPS=dvips
 TEXIFILES = dvipng.texi readme.texi install.texi macros.texi dvipng.help
 
-objects = dvipng.o color.o draw.o dvi.o font.o misc.o pk.o \
+#objects = dvipng.o color.o draw.o dvi.o font.o misc.o pk.o \
+
+objects = vedvipng.o color.o draw.o dvi.o font.o misc.o pk.o \
 	set.o special.o papersiz.o ppagelist.o \
 	vf.o @PSFONTS_O@
 
-all: vedvipng # docs
+all: vedvipng.so # docs
 
-install: @INSTALL_BIN_TARGET@  # @INSTALL_BIN_TARGET@-docs
+#install: @INSTALL_BIN_TARGET@  @INSTALL_BIN_TARGET@-docs
+install: @INSTALL_LIB_TARGET@
 
 ####################################### The program
 
-vedvipng: $(objects)
-	$(CC) $(LDFLAGS) $(objects) -o vedvipng $(LIBS)
+vedvipng.so: $(objects)
+	$(CC) -shared $(LDFLAGS) $(objects) -o vedvipng.so $(LIBS)
 
-$(objects): dvipng.h commands.h config.h
+$(objects): vedvipng.h commands.h config.h
 
-install-dvipng: vedvipng
-	-$(MKINSTALLDIRS) $(DESTDIR)$(bindir)
-	$(INSTALL) vedvipng $(DESTDIR)$(bindir)
+install-vedvipng.so: vedvipng.so
+	-$(MKINSTALLDIRS) $(DESTDIR)$(libdir)
+	$(INSTALL) vedvipng.so $(DESTDIR)$(libdir)
 
 install-dvigif: install-dvipng
 #	(cd $(DESTDIR)$(bindir) && rm -f dvigif && $(LN_S) dvipng dvigif)
@@ -151,7 +155,7 @@ test_dvipng.dvi: test_dvipng.tex
 ####################################### The cleaning up
 
 clean:
-	rm -f *.o ve-dvipng *.help *.info* *dvipng.dvi *.aux *.log
+	rm -f *.o vedvipng.so *.help *.info* *dvipng.dvi *.aux *.log
 	rm -f *dvipng*.png *.cp *.fn *.ky *~ \#*\# \
 		*.tp *.vr *.pg *.toc *.tp *.bak *.cps *.kys *.tps \
 		*.fns *.vrs *.pgs *.html *.tmp

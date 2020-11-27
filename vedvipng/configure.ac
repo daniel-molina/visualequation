@@ -40,7 +40,7 @@
 
 # Process this file with autoconf to produce a configure script.
 AC_INIT([vedvipng], [0.1], [lluvia@autistici.org])
-AC_CONFIG_SRCDIR([dvipng.c])
+AC_CONFIG_SRCDIR([vedvipng.c])
 
 AC_ARG_ENABLE(debug,
   AC_HELP_STRING([--disable-debug],[Compile without debug (-d) option]),
@@ -50,7 +50,7 @@ AC_ARG_ENABLE(debug,
     [ enable_debug="yes";
       AC_DEFINE(DEBUG, 1, [Define as 1 to get the debug (-d) option.])])
 AC_ARG_ENABLE(timing,
-  AC_HELP_STRING([--enable-timing],[Output execution time of dvipng]),
+  AC_HELP_STRING([--enable-timing],[Output execution time of vedvipng]),
    [ if test "$enableval" = yes ; then
      AC_DEFINE(TIMING, 1, [Define as 1 to get execution time output.])
      fi ])
@@ -145,13 +145,14 @@ if test "$enable_timing" = "yes"; then
   AC_CHECK_FUNCS([ftime gettimeofday])
 fi
 AC_CHECK_FUNCS([gdImageCreateTrueColor gdImageCreateFromJpeg gdImagePngEx gdImageCreateFromPngPtr gdImageGif FT_Library_Version])
-if test "$ac_cv_func_gdImageGif" = "yes"; then
-   INSTALL_BIN_TARGET="install-dvigif"
-else
-   INSTALL_BIN_TARGET="install-dvipng"
-fi
+#if test "$ac_cv_func_gdImageGif" = "yes"; then
+ #  INSTALL_BIN_TARGET="install-dvigif"
+#else
+#   INSTALL_BIN_TARGET="install-dvipng"
+#fi
+INSTALL_LIB_TARGET="install-vedvipng.so"
 AC_CHECK_FUNCS([texlive_gs_init])
-AC_SUBST(INSTALL_BIN_TARGET)
+AC_SUBST(INSTALL_LIB_TARGET)
 
 # Documentation-related checks
 AC_PATH_PROG(MAKEINFO, makeinfo, :)
@@ -202,7 +203,7 @@ AC_ARG_ENABLE(selfauto-set,
       AC_MSG_RESULT([yes
 ***************************************************************
 texmf.cnf is using \$SELFAUTO... variables. If you are going to
-install dvipng outside the texmf tree, you may need to use
+install vedvipng outside the texmf tree, you may need to use
 --enable-selfauto-set. To find out, do 'make ; make test'. If the test
 is unsuccessful, add the mentioned switch and rebuild.
 ***************************************************************])

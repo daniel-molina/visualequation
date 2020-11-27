@@ -585,7 +585,7 @@ PACKAGE_STRING='vedvipng 0.1'
 PACKAGE_BUGREPORT='lluvia@autistici.org'
 PACKAGE_URL=''
 
-ac_unique_file="dvipng.c"
+ac_unique_file="vedvipng.c"
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>
@@ -628,7 +628,7 @@ KPSEWHICH
 INSTALL_INFO
 MAKEINFO_MACROS
 MAKEINFO
-INSTALL_BIN_TARGET
+INSTALL_LIB_TARGET
 LIBOBJS
 POW_LIB
 FT2_LIBS
@@ -1335,7 +1335,7 @@ Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --disable-debug         Compile without debug (-d) option
-  --enable-timing         Output execution time of dvipng
+  --enable-timing         Output execution time of vedvipng
   --enable-selfauto-set   This option will make the final binary explicitly
                           set the $SELFAUTO... variables to make it look as
                           dvipng is installed in the main texmf tree, even if
@@ -5149,11 +5149,12 @@ _ACEOF
 fi
 done
 
-if test "$ac_cv_func_gdImageGif" = "yes"; then
-   INSTALL_BIN_TARGET="install-dvigif"
-else
-   INSTALL_BIN_TARGET="install-dvipng"
-fi
+#if test "$ac_cv_func_gdImageGif" = "yes"; then
+ #  INSTALL_BIN_TARGET="install-dvigif"
+#else
+#   INSTALL_BIN_TARGET="install-dvipng"
+#fi
+INSTALL_LIB_TARGET="install-vedvipng.so"
 for ac_func in texlive_gs_init
 do :
   ac_fn_c_check_func "$LINENO" "texlive_gs_init" "ac_cv_func_texlive_gs_init"
@@ -5370,14 +5371,14 @@ $as_echo_n "checking for \$SELFAUTO in texmf.cnf... " >&6; }
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes
 ***************************************************************
 texmf.cnf is using \$SELFAUTO... variables. If you are going to
-install dvipng outside the texmf tree, you may need to use
+install vedvipng outside the texmf tree, you may need to use
 --enable-selfauto-set. To find out, do 'make ; make test'. If the test
 is unsuccessful, add the mentioned switch and rebuild.
 ***************************************************************" >&5
 $as_echo "yes
 ***************************************************************
 texmf.cnf is using \$SELFAUTO... variables. If you are going to
-install dvipng outside the texmf tree, you may need to use
+install vedvipng outside the texmf tree, you may need to use
 --enable-selfauto-set. To find out, do 'make ; make test'. If the test
 is unsuccessful, add the mentioned switch and rebuild.
 ***************************************************************" >&6; }

@@ -18,11 +18,11 @@
   License along with this program. If not, see
   <http://www.gnu.org/licenses/>.
 
-  Copyright (C) 2002-2009 Jan-Åke Larsson
+  Copyright (C) 2002-2009 Jan-ï¿½ke Larsson
 
 ************************************************************************/
 
-#include "dvipng.h"
+#include <vedvipng.h>
 
 void LoadFT(int32_t c, struct char_entry * ptr)
 {

@@ -38,8 +38,8 @@
 
 ************************************************************************/
 
-#include "dvipng.h"
 #include <math.h>
+#include <vedvipng.h>
 
 #ifndef HAVE_GDIMAGECREATETRUECOLOR
 #define gdImageColorAllocateAlpha(i,r,g,b,a) gdImageColorAllocate(i,r,g,b)
@@ -288,9 +288,21 @@ dviunits SetRule(dviunits a, dviunits b, subpixels hh,subpixels vv)
 		if ((height>0) && (width>0)) {
 
 			/* Visual Equation HACK - START */
-			if (cstack[csp].red == VE_R255_INVALID_COLOR) {
-				Message(VE_OUTPUT,"VE: %d %d %d %d %d\n", cstack[csp].blue,
-						hh, vv-height+1, hh+width-1, vv);
+			if (cstack[csp].red == VE_INVALID_COLOR
+					&& (option_flags & VE_OUTPUT)) {
+				int n = cstack[csp].green;
+				/* Security measure to avoid corrupting memory. */
+				if (n >= veN)
+				{
+				    fflush(stdout);
+				    fprintf(stderr, "vedvipng.so: Internal error: %d >= %d.",
+				    		n, veN);
+					exit(EXIT_FATAL);
+				}
+				(*vep)[n][0] = hh;
+				(*vep)[n][1] = vv-height+1;
+				(*vep)[n][2] = hh+width-1;
+				(*vep)[n][3] = vv;
 				/* Visual Equation HACK - END */
 
 			} else {

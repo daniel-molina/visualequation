@@ -18,11 +18,11 @@
   License along with this program. If not, see
   <http://www.gnu.org/licenses/>.
 
-  Copyright (C) 2002-2015, 2019 Jan-Åke Larsson
+  Copyright (C) 2002-2015, 2019 Jan-ï¿½ke Larsson
 
 ************************************************************************/
 
-#include "dvipng.h"
+#include <vedvipng.h>
 #ifdef MIKTEX
 # include <gnu-miktex.h>
 # define USLEEP    Sleep
