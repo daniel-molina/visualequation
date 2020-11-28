@@ -31,7 +31,8 @@ About dvipng
 *******
 
 dvipng [1.17] is released under the GNU Lesser General Public License
-version 3 by Jan-AAke Larsson.
+version 3 (its license notices explicitly indicate "[LGPL3] or (at your option)
+any later version") by Jan-AAke Larsson.
 
 The website of the dvipng project is:
 
