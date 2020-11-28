@@ -114,12 +114,12 @@ int vedvipng(int vedpi, int output_length, int output[][4])
 	option_flags &= ~BE_NONQUIET;
 	option_flags |= VE_OUTPUT;
 	/* -T tight */
-	x_width_def=-1;
-	y_width_def=-1;
+	x_width_def = -1;
+	y_width_def = -1;
 	/* -D dpi */
 	dpi = vedpi;
 	/* --follow */
-	DVIFollowToggle();
+	/* DVIFollowToggle(); Disabled because no need */
 	/* -o output AND input */
 	dvi = DVIOpen (veinputfile, veoutputfile);
 	ParsePages("-");
