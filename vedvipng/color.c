@@ -315,8 +315,7 @@ void stringrgb(const char* color,int *r,int *g,int *b)
     if (k)
     	k = NEXTFLOAT255(color);
 
-    if (k == 255 && c == VE_SECURITY_COLOR && y == VE_SECURITY_COLOR
-    		&& (option_flags & VE_OUTPUT)) {
+    if (k == 255 && c == VE_SECURITY_COLOR && y == VE_SECURITY_COLOR) {
     	*r = VE_INVALID_COLOR;
     	*g = VE_MFTOKEY(mf);
     } else {

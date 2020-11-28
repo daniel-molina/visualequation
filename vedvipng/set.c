@@ -288,8 +288,7 @@ dviunits SetRule(dviunits a, dviunits b, subpixels hh,subpixels vv)
 		if ((height>0) && (width>0)) {
 
 			/* Visual Equation HACK - START */
-			if (cstack[csp].red == VE_INVALID_COLOR
-					&& (option_flags & VE_OUTPUT)) {
+			if (cstack[csp].red == VE_INVALID_COLOR) {
 				int n = cstack[csp].green;
 				/* Security measure to avoid corrupting memory. */
 				if (n >= veN)
