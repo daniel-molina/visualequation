@@ -113,6 +113,8 @@ int vedvipng(int vedpi, int output_length, int output[][4])
 	/* Settings options used by Visual Equation */
 	option_flags &= ~BE_NONQUIET;
 	option_flags |= VE_OUTPUT;
+	/* debug = DEBUG_DEFAULT;
+	 debug |= DEBUG_COLOR; */
 	/* -T tight */
 	x_width_def = -1;
 	y_width_def = -1;

@@ -547,9 +547,9 @@ EXTERN struct dvi_data* dvi INIT(NULL);
 EXTERN int (**vep)[4];
 EXTERN int veN;
 /* These must be set from Python before calling the function (!). */
-EXTERN char *vedvipngpath;
-EXTERN char *veinputfile;
-EXTERN char *veoutputfile;
+EXTERN char *vedvipngpath INIT(NULL);
+EXTERN char *veinputfile INIT(NULL);
+EXTERN char *veoutputfile INIT(NULL);
 
 #ifdef HAVE_FT2
 EXTERN FT_Library libfreetype INIT(NULL);
