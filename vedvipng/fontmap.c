@@ -2,23 +2,39 @@
 
 /************************************************************************
 
-  Part of the dvipng distribution
+  visualequation is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-  This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU Lesser General Public License as
-  published by the Free Software Foundation, either version 3 of the
-  License, or (at your option) any later version.
+  visualequation is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-  This program is distributed in the hope that it will be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-  Lesser General Public License for more details.
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-  You should have received a copy of the GNU Lesser General Public
-  License along with this program. If not, see
-  <http://www.gnu.org/licenses/>.
+  This file incorporates work covered by the following copyright and
+  permission notice:
 
-  Copyright (C) 2002-2015 Jan-�ke Larsson
+        Part of the dvipng distribution
+
+  		This program is free software: you can redistribute it and/or modify
+  		it under the terms of the GNU Lesser General Public License as
+  		published by the Free Software Foundation, either version 3 of the
+  		License, or (at your option) any later version.
+
+  		This program is distributed in the hope that it will be useful, but
+  		WITHOUT ANY WARRANTY; without even the implied warranty of
+  		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  		Lesser General Public License for more details.
+
+  		You should have received a copy of the GNU Lesser General Public
+  		License along with this program. If not, see
+  		<http://www.gnu.org/licenses/>.
+
+  		Copyright (C) 2002-2015 Jan-�ke Larsson
 
 ************************************************************************/
 
@@ -129,45 +145,46 @@ struct psfontmap *NewPSFont(struct psfontmap* copyfrom)
 }
 
 static struct psfontmap *SearchPSFontMap(char* fontname,
-					 struct filemmap* search_mmap)
+		struct filemmap* search_mmap)
 {
-  static char *pos=NULL,*end=NULL;
-  static struct filemmap* searching_mmap=NULL;
-  struct psfontmap *entry=NULL;
+	/*static*/ char *pos=NULL,*end=NULL; /* Fixing issue for Visual Equation */
+	/*static*/ struct filemmap* searching_mmap=NULL;
+	struct psfontmap *entry=NULL;
 
-  if (pos==end && search_mmap!=searching_mmap) {
-    searching_mmap=search_mmap;
-    pos=searching_mmap->data;
-    end=searching_mmap->data+searching_mmap->size;
-  }
-  while(pos<end && (entry==NULL || strcmp(entry->tfmname,fontname)!=0)) {
-    while(pos < end
-	  && (*pos=='\r' || *pos=='\n' || *pos==' ' || *pos=='\t'
-	      || *pos=='%' || *pos=='*' || *pos==';' || *pos=='#')) {
-      while(pos < end && *pos!='\r' && *pos!='\n') pos++; /* skip comments/empty rows */
-      pos++;
-    }
-    if (pos < end) {
-      entry=NewPSFont(NULL);
-      entry->line = pos;
-      /* skip <something and quoted entries */
-      while(pos < end && (*pos=='<' || *pos=='"')) {
-	if (*pos=='<')
-	  while(pos < end && *pos!=' ' && *pos!='\t') pos++;
-	else
-	  while(pos < end && *pos!='"') pos++;
-	while(pos < end && (*pos==' ' || *pos=='\t')) pos++;
-      }
-      /* first word is font name */
-      entry->tfmname = newword(&pos,end);
-      while(pos < end && *pos!='\r' && *pos!='\n') pos++;
-      entry->end = pos;
-    }
-    pos++;
-  }
-  if (entry!=NULL && strcmp(entry->tfmname,fontname)!=0)
-    entry=NULL;
-  return(entry);
+	if (pos==end && search_mmap!=searching_mmap) {
+		searching_mmap=search_mmap;
+		pos=searching_mmap->data;
+		end=searching_mmap->data+searching_mmap->size;
+	}
+	while(pos<end && (entry==NULL || strcmp(entry->tfmname,fontname)!=0)) {
+		while(pos < end
+				&& (*pos=='\r' || *pos=='\n' || *pos==' ' || *pos=='\t'
+						|| *pos=='%' || *pos=='*' || *pos==';' || *pos=='#')) {
+			while(pos < end && *pos!='\r' && *pos!='\n')
+				pos++; /* skip comments/empty rows */
+			pos++;
+		}
+		if (pos < end) {
+			entry=NewPSFont(NULL);
+			entry->line = pos;
+			/* skip <something and quoted entries */
+			while(pos < end && (*pos=='<' || *pos=='"')) {
+				if (*pos=='<')
+					while(pos < end && *pos!=' ' && *pos!='\t') pos++;
+				else
+					while(pos < end && *pos!='"') pos++;
+				while(pos < end && (*pos==' ' || *pos=='\t')) pos++;
+			}
+			/* first word is font name */
+			entry->tfmname = newword(&pos,end);
+			while(pos < end && *pos!='\r' && *pos!='\n') pos++;
+			entry->end = pos;
+		}
+		pos++;
+	}
+	if (entry!=NULL && strcmp(entry->tfmname,fontname)!=0)
+		entry=NULL;
+	return(entry);
 }
 
 void ClearPSFontMap(void)
