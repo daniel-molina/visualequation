@@ -300,8 +300,8 @@ dviunits SetRule(dviunits a, dviunits b, subpixels hh,subpixels vv)
 				}
 				(*vep)[n][0] = hh;
 				(*vep)[n][1] = vv-height+1;
-				(*vep)[n][2] = hh+width-1;
-				(*vep)[n][3] = vv;
+				(*vep)[n][2] = hh+width;
+				(*vep)[n][3] = vv+1;
 				DEBUG_PRINT(DEBUG_DVI,("\n  SKIPPED RULE \t%dx%d at (%d,%d)",
 						width, height, hh, vv));
 				/* Visual Equation HACK - END */
