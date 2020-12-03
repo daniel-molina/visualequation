@@ -3,12 +3,20 @@ vedvipng
 
 The program in this directory (visualequation/ve-dvipng) is a modification of
 dvipng 1.17 to support some functionalities of visualequation. It has been 
-named vedvipng to state that it is based in dvipng but it is not identical,
+named vedvipng to state that it is based on dvipng but it is not identical,
 but a slightly modified.
 
 Not modified files (or just modified by a few characters) preserve the original
-license notice identical. Modified files include visualequation license notice 
+license notice unaltered. Modified files include visualequation license notice 
 above the original dvipng license notice.
+
+To simplify the licensing, it was chosen to use the GPL3+ for the modified
+parts of dvipng, but the author of vedvipng has no problem with those
+modifications being used under the original dvipng license (LGPL3+).
+
+
+Installation
+*******
 
 To know the details about installation (should be documented better in next 
 releases of visualequation), read the (unmodified) INSTALL file. In short, 
@@ -25,14 +33,55 @@ and
 
    make
    make install
-   
+
+
+Usage/details
+*******
+
+The final user must not care about vedvipng, only developers. Main difference 
+with resepect to dvipng is that it is being used as a shared library (through 
+Python ctypes) instead of a standalone executable. That simplifies the 
+interface and speeds up the execution a lot (from the second call) so execution
+time becomes negligible compared to execution of "latex" command which must be 
+used before.
+
+It is necessary to set three variables before the first call to the main 
+function called "vedvipng": "vedvipngpath", "veinputfile" and "veoutputfile". 
+That is very easy by using ctypes.
+
+vedvipng does not parse input options since it is used always in the same way. 
+Instead, it gets the output resolution in dpi and an array (and its size) to be
+filled with the coordinates (top-left and bottom-right) of certain fake rules 
+(rectangles of ink) which are marked with a key color (0.2, 0.xxxxx, 0.2, 1) in 
+cmyk space. xxxxxx is an ID for a symbol of the equation associated which 
+bounding box has the same size than the rule and also the index of the array
+element to be filled for that rule. The color is safe because: 1. Colors 
+specified by users can be checked by visualequation, and 2. Black color in cmyk
+space is (c, m, y, 1) with c == m == y == 0. Any other combination of c, m, y
+is also exactly (the same) black, but not used in practice.
+
+Warnings
+******
+vedvipng requires corrections to be used a shared library. In particular.
+
+	*	It makes use of some functions like "strtod" from stdlib which act 
+		differently depending on environment variable LC_NUMERIC. It must be
+		set to "C" or similar to, e.g., understand correctly the string "0.2"
+		as the real number 0.2 and not a 0. Another solution would be to use
+		a specific strtod implementation.
+	*	Some variables are declared static in some dvipng functions. Under
+		different thread conditions, they caused Segmentation Faults. Fixes
+		have been applied for the known problems, but there could be some
+		hidden ones. 
+
 
 About dvipng
 *******
 
 dvipng [1.17] is released under the GNU Lesser General Public License
-version 3 (its license notices explicitly indicate "[LGPL3] or (at your option)
-any later version") by Jan-AAke Larsson.
+version 3 by Jan-AAke Larsson. Even if its README does not indicate the "or 
+later" part, its license notices do: "[LGPL3] or (at your option) any later 
+version". LGPL3+ is also the license stated in the FSF Directory for dvipng.
 
 The website of the dvipng project is:
 
