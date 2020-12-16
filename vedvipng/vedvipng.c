@@ -53,11 +53,16 @@ int vedvipng(int vedpi, int output_length, int output[][4])
 {
 	if (vedvipngpath == NULL || veinputfile == NULL || veoutputfile == NULL) {
 	    fflush(stdout);
-	    fprintf(stderr, "vedvipng.so: VE parameters are not set.");
+	    fprintf(stderr, "vedvipng.so: VE parameters are not set.\n");
 		exit(EXIT_FATAL);
 	}
 	veN = output_length;
 	vep = &output;
+	/* Initialize to -1. This is used to simplify the code and find errors.*/
+	for (int n = 0; n < veN; n++)
+		for (int i = 0; i < 4; i++)
+			(*vep)[n][i] = -1;
+
 	/*bool parsestdin;*/
 
 #ifdef TIMING
@@ -114,12 +119,15 @@ int vedvipng(int vedpi, int output_length, int output[][4])
 	option_flags &= ~BE_NONQUIET;
 	option_flags |= VE_OUTPUT;
 	/* debug = DEBUG_DEFAULT;
-	 debug |= DEBUG_COLOR; */
+	 debug |= DEBUG_COLOR;
+	 debug |= DEBUG_DVI; */
 	/* -T tight */
 	x_width_def = -1;
 	y_width_def = -1;
 	/* -D dpi */
 	dpi = vedpi;
+	/* -bg Transparent */
+	option_flags |= BG_TRANSPARENT_ALPHA;
 	/* --follow */
 	/* DVIFollowToggle(); Disabled because no need */
 	/* -o output AND input */

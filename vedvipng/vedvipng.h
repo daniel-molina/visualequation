@@ -44,13 +44,15 @@
 
 /* Some Visual Equation additions:
  *
- * 	*  Security color C = 51 corresponds to c == 0.2 (51 = int(255*0.2 + 0.5)).
- * 	*  -88 is an invalid red color.
+ * 	*  Color C = 51 corresponds to c == 0.2 (51 = int(255*0.2 + 0.5)).
+ * 	*  Same for colors in {102, 153, 204} which correspond to {0.4, 0.6, 0.8}.
  * 	*  Key always uses 5 decimals so it does not compromise float precision.
  */
-#define VE_SECURITY_COLOR 51
-#define VE_INVALID_COLOR -88
-#define VE_MFTOKEY(mf) ((int) (mf*1e5+0.5))
+#define VE_PRIMARY_CODE 51
+#define VE_SECONDARY_CODE 102
+#define VE_BOX_CODE 153
+#define VE_DUMMY_BOX_CODE 204
+#define VE_F5TOKEY(mf) ((int) (mf*1e5+0.5))
 
 #define  STRSIZE         255     /* stringsize for file specifications  */
 

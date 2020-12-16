@@ -224,53 +224,121 @@ void Gamma(double gamma)
 dviunits SetGlyph(struct char_entry *ptr, int32_t hh,int32_t vv)
 /* gdImageChar can only do monochrome glyphs */
 {
-  int dst_alpha,dst_weight,tot_weight,alpha;
-  int x,y,pos=0;
-  int bgColor,pixelgrey,pixelcolor;
+	int dst_alpha,dst_weight,tot_weight,alpha;
+	int x,y,pos=0;
+	int bgColor,pixelgrey,pixelcolor;
 
-  hh -= ptr->xOffset/shrinkfactor;
-  vv -= ptr->yOffset/shrinkfactor;
-  /* Initialize persistent color cache. Perhaps this should be in
+	hh -= ptr->xOffset/shrinkfactor;
+	vv -= ptr->yOffset/shrinkfactor;
+	/* Initialize persistent color cache. Perhaps this should be in
      color.c? */
-  pixelcolor=gdImageColorResolve(page_imagep,
-				 cstack[csp].red,
-				 cstack[csp].green,
-				 cstack[csp].blue);
-  if (ColorCache[gdAlphaMax]!=pixelcolor) {
-    for( x=1; x<gdAlphaMax; x++ )
-      ColorCache[x]=-1;
-    ColorCache[gdAlphaMax]=pixelcolor;
-  }
-  for( y=0; y<ptr->h; y++) {
-    for( x=0; x<ptr->w; x++) {
-      if (ptr->data[pos]>0) {
-	pixelgrey=gammatable[(int)ptr->data[pos]/2];
-	bgColor = gdImageGetPixel(page_imagep, hh + x, vv + y);
-	if (ColorCache[0]!=bgColor || ColorCache[pixelgrey]==-1) {
-	  DEBUG_PRINT(DEBUG_GLYPH,("\n  GAMMA GREYSCALE: %d -> %d ",
-				   ptr->data[pos]/2,pixelgrey));
-	  alpha = gdAlphaMax-pixelgrey;
-	  dst_alpha = gdImageAlpha(page_imagep,bgColor);
-	  dst_weight = (gdAlphaMax - dst_alpha) * alpha / gdAlphaMax;
-	  tot_weight = pixelgrey + dst_weight;
-	  pixelcolor = gdImageColorResolveAlpha(page_imagep,
-	     (cstack[csp].red*pixelgrey
-	      + gdImageRed(page_imagep,bgColor)*dst_weight)/tot_weight,
-	     (cstack[csp].green*pixelgrey
-	      + gdImageGreen(page_imagep,bgColor)*dst_weight)/tot_weight,
-	     (cstack[csp].blue*pixelgrey
-	      + gdImageBlue(page_imagep,bgColor)*dst_weight)/tot_weight,
-	     alpha*dst_alpha/gdAlphaMax);
-	  if (ColorCache[0]==bgColor)
-	    ColorCache[pixelgrey]=pixelcolor;
-	} else
-	  pixelcolor=ColorCache[pixelgrey];
-	gdImageSetPixel(page_imagep, hh + x, vv + y, pixelcolor);
-      }
-      pos++;
-    }
-  }
-  return(ptr->tfmw);
+
+	/* Visual Equation HACK - START */
+	int csp_ref = csp;
+	if (cstack[csp].red < 0) {
+		int n = cstack[csp].green;
+		int n_ref = cstack[csp].blue;
+
+		/* Security measures */
+		if (cstack[csp].red != -VE_PRIMARY_CODE) {
+			fflush(stdout);
+			fprintf(stderr,
+					"vedvipng.so: Error: Wrong PRIMARY code: %d.",
+					cstack[csp].red);
+			exit(EXIT_FATAL);
+		}
+
+		if (n >= veN || n_ref >= veN) { /* Avoid corrupting memory */
+			fflush(stdout);
+			fprintf(stderr,
+					"vedvipng.so: Error: Wrong ID %d >= %d in PRI/SEC.",
+					n, veN);
+			exit(EXIT_FATAL);
+		}
+		if (n == n_ref) {
+			(*vep)[n][0] = hh;
+			(*vep)[n][1] = vv;
+			(*vep)[n][2] = hh + ptr->w;
+			(*vep)[n][3] = vv + ptr->h;
+
+		} else {
+			/* Save dimensions of the box */
+			(*vep)[n_ref][0] = hh;
+			(*vep)[n_ref][1] = vv;
+			(*vep)[n_ref][2] = hh + ptr->w;
+			(*vep)[n_ref][3] = vv + ptr->h;
+
+			/* Update juxt-block */
+			if ((*vep)[n][0] < 0 || (*vep)[n_ref][0] < (*vep)[n][0])
+				(*vep)[n][0] = hh;
+			if ((*vep)[n][1] < 0 || (*vep)[n_ref][1] > (*vep)[n][1])
+				(*vep)[n][1] = vv;
+			if ((*vep)[n][2] < 0 || (*vep)[n_ref][2] > (*vep)[n][2])
+				(*vep)[n][2] = hh + ptr->w;
+			if ((*vep)[n][3] < 0 || (*vep)[n_ref][3] < (*vep)[n][3])
+				(*vep)[n][3] = vv + ptr->h;
+
+			/* Update csp_ref (used below!) and cstack[csp].blue */
+			while (cstack[csp_ref].red != -VE_SECONDARY_CODE
+					|| cstack[csp_ref].green != n_ref)
+				csp_ref--;
+			cstack[csp].blue = cstack[csp_ref].blue;
+		}
+
+		while (cstack[csp_ref].red < 0) csp_ref--;
+		DEBUG_PRINT(DEBUG_DVI,("\n  SKIPPED %d fake color(s)", csp - csp_ref));
+	}
+
+	/* Visual Equation HACK - END
+	 *
+	 * However, keep in mind that original csp has been replaced in the code
+	 * below by csp_ref)
+	 */
+	pixelcolor=gdImageColorResolve(page_imagep,
+			cstack[csp_ref].red,
+			cstack[csp_ref].green,
+			cstack[csp_ref].blue);
+
+	if (ColorCache[gdAlphaMax]!=pixelcolor) {
+		for( x=1; x<gdAlphaMax; x++ )
+			ColorCache[x]=-1;
+		ColorCache[gdAlphaMax]=pixelcolor;
+	}
+	for( y=0; y<ptr->h; y++) {
+		for( x=0; x<ptr->w; x++) {
+			if (ptr->data[pos]>0) {
+				pixelgrey=gammatable[(int)ptr->data[pos]/2];
+				bgColor = gdImageGetPixel(page_imagep, hh + x, vv + y);
+				if (ColorCache[0]!=bgColor || ColorCache[pixelgrey]==-1) {
+					DEBUG_PRINT(DEBUG_GLYPH, ("\n  GAMMA GREYSCALE: %d -> %d ",
+							ptr->data[pos]/2, pixelgrey));
+					alpha = gdAlphaMax-pixelgrey;
+					dst_alpha = gdImageAlpha(page_imagep, bgColor);
+					dst_weight = (gdAlphaMax - dst_alpha) * alpha / gdAlphaMax;
+					tot_weight = pixelgrey + dst_weight;
+					pixelcolor = gdImageColorResolveAlpha(
+							page_imagep,
+							(cstack[csp_ref].red*pixelgrey
+									+ gdImageRed(page_imagep, bgColor)
+									* dst_weight)/tot_weight,
+									(cstack[csp_ref].green*pixelgrey
+											+ gdImageGreen(page_imagep,bgColor)
+											* dst_weight)/tot_weight,
+											(cstack[csp_ref].blue*pixelgrey
+													+ gdImageBlue(page_imagep,
+															bgColor)
+													* dst_weight)/tot_weight,
+													alpha*dst_alpha/gdAlphaMax);
+					if (ColorCache[0]==bgColor)
+						ColorCache[pixelgrey]=pixelcolor;
+				} else
+					pixelcolor=ColorCache[pixelgrey];
+				gdImageSetPixel(page_imagep, hh + x, vv + y, pixelcolor);
+			}
+			pos++;
+		}
+	}
+	return(ptr->tfmw);
 }
 
 dviunits SetRule(dviunits a, dviunits b, subpixels hh,subpixels vv)
@@ -288,20 +356,50 @@ dviunits SetRule(dviunits a, dviunits b, subpixels hh,subpixels vv)
 		if ((height>0) && (width>0)) {
 
 			/* Visual Equation HACK - START */
-			if (cstack[csp].red == VE_INVALID_COLOR) {
+			if (cstack[csp].red < 0) {
 				int n = cstack[csp].green;
-				/* Security measure to avoid corrupting memory. */
-				if (n >= veN)
-				{
+				int n_ref = cstack[csp].blue;
+
+				/* Manage Dummy boxes */
+				if (cstack[csp].red == -VE_DUMMY_BOX_CODE)
+					return(b);
+
+				/* Security measures */
+
+				if (cstack[csp].red != -VE_BOX_CODE) {
 				    fflush(stdout);
-				    fprintf(stderr, "vedvipng.so: Internal error: %d >= %d.",
+				    fprintf(stderr,
+				    		"vedvipng.so: Error: Wrong code for BOX: %d.\n",
+				    		cstack[csp].red);
+					exit(EXIT_FATAL);
+				}
+
+				/* Avoid corrupting memory */
+				if (n >= veN || n_ref >= veN) {
+				    fflush(stdout);
+				    fprintf(stderr,
+				    		"vedvipng.so: Error: Wrong ID %d >= %d in BOX.\n",
 				    		n, veN);
 					exit(EXIT_FATAL);
 				}
+				/* Save dimensions of the box */
 				(*vep)[n][0] = hh;
 				(*vep)[n][1] = vv-height+1;
 				(*vep)[n][2] = hh+width;
 				(*vep)[n][3] = vv+1;
+
+				/* Updated the supeq if that is a juxt */
+				if (n != n_ref) {
+					if ((*vep)[n_ref][0] < 0 || (*vep)[n][0] < (*vep)[n_ref][0])
+						(*vep)[n_ref][0] = hh;
+					if ((*vep)[n_ref][1] < 0 || (*vep)[n][1] > (*vep)[n_ref][1])
+						(*vep)[n_ref][1] = vv-height+1;
+					if ((*vep)[n_ref][2] < 0 || (*vep)[n][2] > (*vep)[n_ref][2])
+						(*vep)[n_ref][2] = hh+width;
+					if ((*vep)[n_ref][3] < 0 || (*vep)[n][3] < (*vep)[n_ref][3])
+						(*vep)[n_ref][3] = vv+1;
+				}
+
 				DEBUG_PRINT(DEBUG_DVI,("\n  SKIPPED RULE \t%dx%d at (%d,%d)",
 						width, height, hh, vv));
 				/* Visual Equation HACK - END */

@@ -301,8 +301,8 @@ void stringrgb(const char* color,int *r,int *g,int *b)
     *g -= *r*256;
   } else if (strncmp(color,"cmy ",4)==0
 	     || strncmp(color,"cmyk ",5)==0) {
-	float mf;
-    int c,y,k;
+	float mf, yf;
+    int c,k;
     color+=3;
     k=(*color=='k');
     if (k)
@@ -311,15 +311,18 @@ void stringrgb(const char* color,int *r,int *g,int *b)
     /* Visual Equation HACK - START */
     c = NEXTFLOAT255(color);
     mf = NEXTFLOAT(color);
-    y = NEXTFLOAT255(color);
+    yf = NEXTFLOAT(color);
     if (k)
     	k = NEXTFLOAT255(color);
 
-    if (k == 255 && c == VE_SECURITY_COLOR && y == VE_SECURITY_COLOR) {
-    	*r = VE_INVALID_COLOR;
-    	*g = VE_MFTOKEY(mf);
+    if (k == 255 && c > 0) {
+    	*r = -c;
+    	*g = VE_F5TOKEY(mf);
+    	*b = VE_F5TOKEY(yf);
     } else {
     	int m = FTO255(mf);
+    	int y = FTO255(yf);
+
     /* Visual Equation HACK - END   */
 		*r = c+k<255 ? 255-(c+k) : 0;
 		*g = m+k<255 ? 255-(m+k) : 0;

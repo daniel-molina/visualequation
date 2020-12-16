@@ -41,24 +41,34 @@ Usage/details
 The final user must not care about vedvipng, only developers. Main difference 
 with resepect to dvipng is that it is being used as a shared library (through 
 Python ctypes) instead of a standalone executable. That simplifies the 
-interface and speeds up the execution a lot (from the second call) so execution
-time becomes negligible compared to execution of "latex" command which must be 
-used before.
+interface and speeds up execution a lot (after the first call) so execution
+time becomes negligible compared to "latex", which must be run just before.
 
 It is necessary to set three variables before the first call to the main 
 function called "vedvipng": "vedvipngpath", "veinputfile" and "veoutputfile". 
 That is very easy by using ctypes.
 
-vedvipng does not parse input options since it is used always in the same way. 
-Instead, it gets the output resolution in dpi and an array (and its size) to be
-filled with the coordinates (top-left and bottom-right) of certain fake rules 
-(rectangles of ink) which are marked with a key color (0.2, 0.xxxxx, 0.2, 1) in 
-cmyk space. xxxxxx is the ID of a symbol of the equation associated to the
-bounding box which has the same size than the rule. The ID is also the index of
-the array element to be filled for that rule. The color is safe because: 1. 
-Colors specified by users can be checked by visualequation, and 2. Black color
-in cmyk space is (c, m, y, 1) with c == m == y == 0. Any other combination of 
-c, m, y is also exactly (the same) black, but not used in practice.
+vedvipng does not parse original command-line options. Instead, it does always 
+the same: As input, it gets the output resolution in dpi and an array (and its
+size) to be filled with the coordinates (top-left and bottom-right) of the
+rectangles asociated to any subequation. For that, several approaches are used
+depending of the particular subequation. The common trick is to use a key color
+cmyk space (c, m, y, k) where k == 1 and at least c is different than
+0. The color is safe because: 1. Colors specified by users can be checked by 
+visualequation, and 2. Black color in cmyk space is (c, m, y, 1) with c == m ==
+y == 0. Any other combination of c, m, y is also exactly (the same) black, but 
+not used in practice.
+
+c specifies the instruction. Except for "dummy boxes" (which are simply
+ignored), the rest of instructions use the exact form (0.x, 0.yyyyy, 0.zzzzz,
+1) where yyyyy is the ID of the subeq associated to the requested rectangle
+and zzzzz, in the case of being different than xxxxx, is the ID of the 
+juxt-block to which the subeq belongs. The ID is also the index of
+the array element to be filled for that subeq.
+
+Some complexity is used in order to avoid breaking intra-words kerning. For 
+example, TeX put "df" very close and these positions would be in different
+positions if a special command (like color change) is used between them.
 
 Warnings
 ******
