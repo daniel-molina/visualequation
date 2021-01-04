@@ -6,9 +6,22 @@
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amssymb}
+\usepackage{eurosym}
 \usepackage[only,oblong,bignplus,nplus,bigsqcap]{stmaryrd}
 \usepackage{esint}
 \usepackage{tensor}
+\newbox\mybox
+\makeatletter
+\newcommand{\vecolbox}[3]{
+  \setbox\mybox=\hbox{$#1 #3$}
+  \begingroup
+  \color[cmyk]{0.2,#2,1,1}
+  \color@block{\wd\mybox}{\ht\mybox}{\dp\mybox}
+  \endgroup
+  #3
+  %\box\mybox % may be faster, not useful to debug errors
+}
+\makeatother
 \begin{document}
 \begin{displaymath}
 %EQ%

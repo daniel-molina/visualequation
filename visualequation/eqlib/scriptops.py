@@ -38,12 +38,11 @@ classify scripts operators in three subtypes.
 from typing import Optional, Union
 from copy import deepcopy
 from enum import Enum
-from re import sub
 from collections import OrderedDict
 
 from .subeqs import Subeq
 from .idx import Idx, SelMode
-from .ops import Op, RVOID, CCls
+from .ops import Op, RVOID, CCls, primitive
 
 
 class ScriptOpSubtype(Enum):
@@ -249,7 +248,10 @@ SCRIPTOPS_DICT = {
 }
 
 
+@primitive
 class ScriptOp(Op):
+    ABBREV = "SO"
+
     def __init__(self, lo_subtype, *args, **kwargs):
         """Define a ScriptOp by passing needed ScriptPos's as parameters."""
 
@@ -481,7 +483,7 @@ class ScriptOp(Op):
 
     def to_json(self):
         scripts_list = [k.value for k, v in self._scripts.items() if v]
-        return dict(cls="SO", typ=self._subtype.value, scr=scripts_list)
+        return dict(cls=self.ABBREV, typ=self._subtype.value, scr=scripts_list)
 
     @classmethod
     def from_json(cls, dct):

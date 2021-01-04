@@ -20,7 +20,7 @@
 from typing import Union
 from enum import Enum, auto
 
-from .ops import PseudoSymb
+from .ops import PseudoSymb, primitive
 from visualequation.icons import icon_class
 
 
@@ -141,7 +141,10 @@ def has_greek_with_variant(latin_char):
         and LATIN_DICT[latin_char][2] is not None
 
 
+@primitive
 class Latin(PseudoSymb):
+    ABBREV = "L"
+
     def __init__(self, char: str, upper=False, **kwargs):
         if not isinstance(char, str):
             raise TypeError("Parameter char must be a str.")
@@ -159,7 +162,7 @@ class Latin(PseudoSymb):
         return cls(c.lower(), c.isupper(), pp=dct["pp"])
 
     def to_json(self):
-        return dict(cls="L", pp=self.pp.to_json(), c=self._latex_code)
+        return dict(cls=self.ABBREV, pp=self.pp.to_json(), c=self._latex_code)
 
     def upper(self):
         self._latex_code = self._latex_code.upper()
@@ -177,7 +180,10 @@ class Latin(PseudoSymb):
         return Latin(g._latin, g._upper, pp=g.pp)
 
 
+@primitive
 class Greek(PseudoSymb):
+    ABBREV = "G"
+
     def __init__(self, greek_letter: GreekE, upper=False, variant=False,
                  **kwargs):
         """Only GreekE are allowed so capital letters with no specific LaTeX
@@ -302,10 +308,13 @@ class Greek(PseudoSymb):
             s += "V"
         elif self._upper:
             s += "U"
-        return dict(cls="G", s=s, pp=self.pp.to_json())
+        return dict(cls=self.ABBREV, s=s, pp=self.pp.to_json())
 
 
+@primitive
 class Hebrew(PseudoSymb):
+    ABBREV = "H"
+
     def __init__(self, hebrew_letter: HebrewE, **kwargs):
         if not isinstance(hebrew_letter, HebrewE):
             raise TypeError("Parameter hebrew_letter must be a HebrewE.")
@@ -318,10 +327,13 @@ class Hebrew(PseudoSymb):
         return cls(HebrewE(dct["n"]), pp=dct["pp"])
 
     def to_json(self):
-        return dict(cls="H", n=self._letter.value, pp=self.pp.to_json())
+        return dict(cls=self.ABBREV, n=self._letter.value, pp=self.pp.to_json())
 
 
+@primitive
 class Digit(PseudoSymb):
+    ABBREV = "D"
+
     def __init__(self, digit_str, **kwargs):
         if not isinstance(digit_str, str):
             raise TypeError("Parameter digit_str must be a str.")
@@ -334,4 +346,4 @@ class Digit(PseudoSymb):
         return cls(str(dct["n"]), pp=dct["pp"])
 
     def to_json(self):
-        return dict(cls="D", n=int(self._latex_code), pp=self.pp.to_json())
+        return dict(cls=self.ABBREV, n=int(self._latex_code), pp=self.pp.to_json())

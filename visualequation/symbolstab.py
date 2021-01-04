@@ -24,20 +24,22 @@ from PyQt5.QtCore import *
 from .symbols import lists
 from . import commons
 from .errors import ShowError
+from visualequation.eqlib.ops import *
+from visualequation.eqlib.subeqs import Subeq
 
 
 class TabWidget(QTabWidget):
-    def __init__(self, parent, eqlabel):
-        super().__init__(parent)
+    def __init__(self, mwin):
+        super().__init__(mwin)
 
-        self.eqlabel = eqlabel
+        self.eqlabel = mwin.deq
         self.tabs = []
         for index, menuitemdata in enumerate(lists.MENUITEMSDATA):
             self.tabs.append(QWidget())
             icon_path = os.path.join(commons.ICONS_DIR,
-                                     menuitemdata.tag + ".png")
+                                     menuitemdata.name + ".png")
             if not os.path.exists(icon_path):
-                ShowError("Icon " + menuitemdata.tag + " not found.", True)
+                ShowError("Icon " + menuitemdata.name + " not found.", True)
             icon = QIcon(icon_path)
             self.setIconSize(QSize(50, 30))
             self.addTab(self.tabs[index], icon, "")
@@ -46,15 +48,17 @@ class TabWidget(QTabWidget):
             layout = QGridLayout(self)
             row = 0
             column = 0
-            for symb in menuitemdata.symb_l:
+            for icon in menuitemdata.icon_l:
                 label = QLabel('')
-                icon_path = os.path.join(commons.ICONS_DIR, symb.tag + ".png")
+                icon_path = os.path.join(commons.ICONS_DIR, icon.name + ".png")
                 if not os.path.exists(icon_path):
-                    ShowError("Icon " + symb.tag + " not found.", True)
+                    ShowError("Icon " + icon.name + " not found.", True)
                 label.setPixmap(QPixmap(icon_path))
-                cmd = lambda state, code=symb.code: \
-                    self.handle_click(state, code)
-                label.mousePressEvent = cmd
+
+                def f(state, cble=icon.callable):
+                    return self.handle_click(state, cble)
+
+                label.mousePressEvent = f
                 layout.addWidget(label, row, column)
                 label.setAlignment(Qt.AlignCenter)
                 column += 1
@@ -64,9 +68,5 @@ class TabWidget(QTabWidget):
 
             self.tabs[index].setLayout(layout)
 
-    def handle_click(self, event, code):
-        modifiers = QApplication.keyboardModifiers()
-        if modifiers == Qt.ShiftModifier:
-            self.eqlabel.maineq.insert_substituting(code)
-        else:
-            self.eqlabel.maineq.insert(code, 0, 0, )
+    def handle_click(self, event, callable_):
+        self.eqlabel.insert_from_callable(callable_)

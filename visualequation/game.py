@@ -14,12 +14,12 @@
 import random
 
 from .symbols import utils
-from .symbols import symbols, arrows, relations, operators
-from . import eqqueries
+from .symbols import arrows, relations, operators
+from .eqlib import letters
 
 
 def f(expr):
-    return utils.Op(1, r'\textcolor{{magenta}}{{' + expr + '}} {0}')
+    return utils.Op(myname, r'\textcolor{{magenta}}{{' + expr + '}} {0}', 1)
 
 
 ALICE_CONSTRUCTS = [
@@ -41,21 +41,21 @@ ALICE_CONSTRUCTS = [
     f(r'(a\cdot c) b - (a\cdot b) c'),
 ]
 
-ALICE_CONSTRUCTS += [f(i.code) for i in symbols.LOWER_GREEK]
-ALICE_CONSTRUCTS += [f(i.code) for i in symbols.UPPER_GREEK]
-ALICE_CONSTRUCTS += [f(i.code) for i in symbols.VAR_GREEK]
-ALICE_CONSTRUCTS += [f(i.code) for i in symbols.HEBREW]
-ALICE_CONSTRUCTS += [f(i.code) for i in symbols.SYMBOLS1]
+ALICE_CONSTRUCTS += [f(i.code) for i in letters.LGREEK_DICT]
+ALICE_CONSTRUCTS += [f(i.code) for i in letters.UPPER_GREEK]
+ALICE_CONSTRUCTS += [f(i.code) for i in letters.VAR_GREEK]
+ALICE_CONSTRUCTS += [f(i.code) for i in letters.HEBREW]
+ALICE_CONSTRUCTS += [f(i.code) for i in letters.SYMBOLS1]
 ALICE_CONSTRUCTS += [f(i.code) for i in relations.RELATIONS]
 ALICE_CONSTRUCTS += [f(i.code) for i in arrows.ARROWS]
-ALICE_CONSTRUCTS += [f(i.code) for i in operators.SOMEOPERATORS]
+ALICE_CONSTRUCTS += [f(i.code) for i in operators.BINOPS]
 
 
 class Alice:
     def __init__(self):
         self.name = "Alice"
-        self.op = utils.Op(1, r'\textcolor{{magenta}}'
-                           + r'{{\left\lmoustache{{{0}}}\right\rgroup}}')
+        self.op = utils.Op(myname, r'\textcolor{{magenta}}'
+                           + r'{{\left\lmoustache{{{0}}}\right\rgroup}}', 1)
         self.pos = 0
         self.right = True
         # self.try_constructs = 0
@@ -70,13 +70,13 @@ class Alice:
 
     def turn_left(self):
         self.right = False
-        self.op = utils.Op(1, r'\textcolor{{magenta}}'
-                           + r'{{\left\lgroup{{{0}}}\right\rmoustache}}')
+        self.op = utils.Op(myname, r'\textcolor{{magenta}}'
+                           + r'{{\left\lgroup{{{0}}}\right\rmoustache}}', 1)
 
     def turn_right(self):
         self.right = True
-        self.op = utils.Op(1, r'\textcolor{{magenta}}'
-                           + r'{{\left\lmoustache{{{0}}}\right\rgroup}}')
+        self.op = utils.Op(myname, r'\textcolor{{magenta}}'
+                           + r'{{\left\lmoustache{{{0}}}\right\rgroup}}', 1)
 
     def move(self, eq):
         # Force to be inside the equation before updating
@@ -84,8 +84,9 @@ class Alice:
             self.pos = len(eq) - 1
             # Simulate a fall
             self.right = False
-            self.op = utils.Op(1, r'\textcolor{{brown}}'
-                               + r'{{\left\lgroup{{{0}}}\right\lmoustache}}')
+            self.op = utils.Op(myname, r'\textcolor{{brown}}'
+                               + r'{{\left\lgroup{{{0}}}\right\lmoustache}}',
+                               1)
             return
         # Get a moving value
         val = random.randint(-1, 1)

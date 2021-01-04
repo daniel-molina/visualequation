@@ -12,6 +12,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from .utils import *
+from visualequation.eqlib.ops import *
 
 
 def text(parent):
@@ -149,8 +150,8 @@ def color(parent):
     if result == QDialog.Accepted:
         # Surrounding brackets needed to place sub/super-scripts correctly
         # Other possibility: \mathbin{\textcolor{color}{subeq}}
-        return Op(1, r'{{\begingroup\color{{' + dialog.symb_chosen.code
-                  + r'}}{0}\endgroup}}')
+        return Op(myname, r'{{\begingroup\color{{' + dialog.symb_chosen.code
+                  + r'}}{0}\endgroup}}', 1)
     else:
         return None
 
@@ -159,8 +160,8 @@ def colorbox(parent):
     dialog = ChooseElemDialog(parent, _("Choose color"), COLORS, 3)
     result = dialog.exec_()
     if result == QDialog.Accepted:
-        return Op(1, r'\colorbox{{' + dialog.symb_chosen.code
-                  + r'}}{{$\displaystyle {0}$}}')
+        return Op(myname, r'\colorbox{{' + dialog.symb_chosen.code
+                  + r'}}{{$\displaystyle {0}$}}', 1)
     else:
         return None
 

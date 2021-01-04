@@ -15,7 +15,7 @@
 Functions to debug an equation.
 """
 
-import functools
+from functools import wraps
 
 from .idx import Idx
 from .ops import *
@@ -238,12 +238,12 @@ FAIL = '\033[91m'
 ENDC = '\033[0m'
 
 
-def debuginit(fun):
+def debuginit(func):
     """Decorator to debug a __init__ method."""
 
-    @functools.wraps(fun)
+    @wraps(func)
     def wrapper(self, *args, **kwargs):
-        fun(self, *args, **kwargs)
+        func(self, *args, **kwargs)
         if not self.debug:
             return
 
@@ -266,13 +266,13 @@ def debuginit(fun):
     return wrapper
 
 
-def debug(fun):
+def debug(func):
     """Decorator to debug a regular method."""
 
-    @functools.wraps(fun)
+    @wraps(func)
     def wrapper(self, *args, **kwargs):
         if not self.debug:
-            return fun(self, *args, **kwargs)
+            return func(self, *args, **kwargs)
 
         # Debugging eq and idx
         msg = check_edeq(self)
@@ -281,9 +281,9 @@ def debug(fun):
             return -99
         else:
             print("Tests passed before call to "
-                  + BOLD + fun.__name__ + ENDC + ". Executing now...")
+                  + BOLD + func.__name__ + ENDC + ". Executing now...")
 
-        retval = fun(self, *args, **kwargs)
+        retval = func(self, *args, **kwargs)
 
         s_args = ""
         for arg in args:
@@ -304,7 +304,7 @@ def debug(fun):
             + BLUE + "\tselm: " + ENDC + BOLD + str(self.selm.name) + ENDC
             + BLUE + "\tovrwrt: " + ENDC + BOLD + repr(self.ovrwrt) + ENDC
             + BLUE + "\tuld: " + ENDC + BOLD + repr(self.uld) + ENDC + "\n"
-            + WARNING + fun.__name__ + ENDC + "(" + s_args + ") -> "
+            + WARNING + func.__name__ + ENDC + "(" + s_args + ") -> "
             + BOLD + (retval.name if hasattr(retval, "name") else "-") + ENDC
         )
 

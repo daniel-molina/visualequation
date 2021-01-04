@@ -12,6 +12,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from .utils import *
+from visualequation.eqlib.ops import *
 
 
 def variablesize(parent, code):
@@ -56,7 +57,7 @@ def variablesize(parent, code):
 
     (sup, inf), ok = Dialog.get(parent)
     if ok:
-        base = Op(0, code, "vs")
+        base = Op(myname, code, 0, "vs")
         if sup and inf:
             return [SLUNDEROVER, base], 2
         elif sup:
@@ -113,7 +114,7 @@ def integrals(parent, code):
 
     (sup, inf), ok = Dialog.get(parent)
     if ok:
-        base = Op(0, code, "int")
+        base = Op(myname, code, 0, "int")
         if sup and inf:
             return [LIMUNDEROVER, base], 2
         elif sup:

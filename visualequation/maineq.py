@@ -13,13 +13,12 @@
 
 import functools
 import os
-import types
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
-from . import conversions
+from .eqlib import conversions
 from . import eqqueries
 from . import eqhist
 from . import eqsel
@@ -113,7 +112,7 @@ def updatestate(func):
         retval = func(self, *args, **kwargs)
 
         # Display new equation
-        self.eqsel.display()
+        self.eqsel._display()
 
         # Create a new entry in equation history
         self.eqhist.add(self.eqsel)
@@ -141,13 +140,13 @@ class MainEq:
         self.temp_dir = temp_dir
         self.parent = parent
         self.eqsel = eqsel.Selection(self.eq, 0, temp_dir, setpixmap)
-        self.eqsel.display()
+        self.eqsel._display()
         self.eqhist = eqhist.EqHist(self.eqsel)
 
     def new_eq(self):
         self.eq[:] = [utils.NEWARG]
         self.eqsel.idx = 0
-        self.eqsel.display()
+        self.eqsel._display()
         self.eqhist = eqhist.EqHist(self.eqsel)
 
     def open_eq(self, filename=None):
@@ -155,7 +154,7 @@ class MainEq:
         if neweq != None:
             self.eq[:] = list(neweq)
             self.eqsel.idx = 0
-            self.eqsel.display()
+            self.eqsel._display()
             self.eqhist.add(self.eqsel)
 
     def save_eq(self):
@@ -195,12 +194,12 @@ class MainEq:
     def recover_prev_eq(self):
         """ Recover previous equation from the history, if any """
         self.eq[:], self.eqsel.idx, self.eqsel.dir = self.eqhist.get_prev()
-        self.eqsel.display()
+        self.eqsel._display()
 
     def recover_next_eq(self):
         """ Recover next equation from the historial, if any """
         self.eq[:], self.eqsel.idx, self.eqsel.dir = self.eqhist.get_next()
-        self.eqsel.display()
+        self.eqsel._display()
 
     def sel2buffer(self):
         """ Copy block pointed by self.eqsel.idx to self.eq_buffer """

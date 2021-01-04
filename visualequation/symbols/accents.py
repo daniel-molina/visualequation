@@ -12,19 +12,20 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from .utils import *
+from visualequation.eqlib.ops import *
 
 ACCENTS = [
-    PanelIcon('dot', Op(1, r'\dot{{{0}}}')),
-    PanelIcon('ddot', Op(1, r'\ddot{{{0}}}')),
-    PanelIcon('dddot', Op(1, r'\dddot{{{0}}}')),
-    PanelIcon('acute', Op(1, r'\acute{{{0}}}')),
-    PanelIcon('breve', Op(1, r'\breve{{{0}}}')),
-    PanelIcon('grave', Op(1, r'\grave{{{0}}}')),
-    PanelIcon('tilde', Op(1, r'\tilde{{{0}}}')),
-    PanelIcon('bar', Op(1, r'\bar{{{0}}}')),
-    PanelIcon('check', Op(1, r'\check{{{0}}}')),
-    PanelIcon('hat', Op(1, r'\hat{{{0}}}')),
-    PanelIcon('vec', Op(1, r'\vec{{{0}}}')),
+    PanelIcon('dot', Op(r'\dot{{{0}}}', 1)),
+    PanelIcon('ddot', Op(r'\ddot{{{0}}}', 1)),
+    PanelIcon('dddot', Op(r'\dddot{{{0}}}', 1)),
+    PanelIcon('acute', Op(r'\acute{{{0}}}', 1)),
+    PanelIcon('breve', Op(r'\breve{{{0}}}', 1)),
+    PanelIcon('grave', Op(r'\grave{{{0}}}', 1)),
+    PanelIcon('tilde', Op(r'\tilde{{{0}}}', 1)),
+    PanelIcon('bar', Op(r'\bar{{{0}}}', 1)),
+    PanelIcon('check', Op(r'\check{{{0}}}', 1)),
+    PanelIcon('hat', Op(r'\hat{{{0}}}', 1)),
+    PanelIcon('vec', Op(r'\vec{{{0}}}', 1)),
     PanelIcon('imath', r'\imath'),
     PanelIcon('jmath', r'\jmath'),
     PanelIcon('ell', r'\ell'),

@@ -24,76 +24,13 @@ from PyQt5.QtCore import *
 from .. import commons
 
 
-class Op(object):
-    """Class for an equation operator"""
-
-    def __init__(self, name, n_args, latex_code, type_=None):
-        self.name = name
-        self.n_args = n_args
-        self.latex_code = latex_code
-        self.type_ = type_ if type_ is not None else ""
-
-    def __call__(self, args_list):
-        if self.n_args < 0:
-            # Used for (T)JUXTs
-            return " ".join(args_list)
-        return self.latex_code.format(*args_list)
-
-    def __eq__(self, other):
-        if type(self) is type(other):
-            return self.__dict__ == other.__dict__
-        else:
-            return NotImplemented
-
-    def __ne__(self, other):
-        return not self == other
-
-    def __repr__(self):
-        return "Op(" + repr(self.name) + ", " + repr(self.n_args) \
-               + ", " + repr(self.latex_code) + ", " + repr(self.type_) + ")"
-
-    def __str__(self):
-        return self.name
-
-    def __hash__(self):
-        return hash(repr(self))
+class Idx(list):
+    pass
 
 
-PanelIcon = namedtuple('PanelIcon', 'name code')
-MenuItemData = namedtuple('MenuItemData', 'name symb_l')
+PanelIcon = namedtuple('PanelIcon', 'name callable')
+MenuItemData = namedtuple('MenuItemData', 'name icon_l')
 
-# Use these operators in the code, so it will be easy to change their value
-# in next releases
-LDIR = -1   # left direction
-RDIR = 1    # rigth direction
-ODIR = 0    # overwrite mode
-VDIR = 2    # overwrite direction in normal mode
-
-DIR2NAME = {
-    -1: "LDIR",
-    1:  "RDIR",
-    0:  "ODIR",
-    2:  "VDIR",
-}
-
-SELARG = Op("selarg", 0, r'\cdots')
-_VOID = Op("void", 0, r'\begingroup\color{purple}\oblong\endgroup')
-_TVOID = Op("tvoid", 0, r'\begingroup\color{lightgray}\oblong\endgroup')
-
-
-def void(temp=False):
-    return [_TVOID] if temp else [_VOID]
-
-
-REDIT = Op("redit", 1, r'\left\lmoustache {0} \right\rgroup')  # right
-LEDIT = Op("ledit", 1, r'\left\lgroup {0} \right\rmoustache')  # left
-NEDIT = Op("nedit", 1, r'\left\lmoustache {0} \right\rmoustache')  # new
-SEDIT = Op("sedit", 1, r'\left\rmoustache {0} \right\lmoustache')  # substitute
-JUXT = Op("juxt", -1, r'J')
-TJUXT = Op("tjuxt", -1, r'T')
-GOP = Op("gop", 1, r'{0}')
-
-NONUOPS = (GOP,)
 
 # It does NOT include ' ', "'", '^', '\\' and '~'
 # so it is valid for both text and math environments
@@ -133,7 +70,7 @@ class PanelElem(QLabel):
         self.parent = parent
         self.pelem = pelem
         self.setPixmap(QPixmap(os.path.join(commons.ICONS_DIR,
-                                            pelem.name + ".png")))
+                                            pelem._name + ".png")))
         self.setAlignment(Qt.AlignCenter)
 
     def mousePressEvent(self, event):
@@ -157,29 +94,3 @@ class ChooseElemDialog(QDialog):
                 column = 1
                 row += 1
         self.setLayout(layout)
-
-
-# Some useful stuff for testing
-EXOP0 = Op("exop0", 0, "Op0 ")
-EXOP1 = Op("exop1", 1, r"\sqrt{{0}} ")
-EXOP2 = Op("exop2", 2, r"\frac{{0}}{{1}} ")
-EXOP3 = Op("exop3", 3, r"{{0}}_{{1}}^{{2}} ")
-
-EXEQ0 = [EXOP0]
-EXEQ1 = [EXOP1, ["2"]]
-EXEQ2 = [EXOP2, ["a"], ["b"]]
-EXEQ3 = [EXOP3, ["x"], ["0"], ["2"]]
-
-EXEQNN = [EXOP2, ["3"], [EXOP1, ["r"]]]
-
-EXEQGN = [GOP, [EXOP2, ["a"], ["b"]]]
-EXEQNG = [EXOP2, [GOP, ["a"]], ["b"]]
-EXEQGNG = [GOP, [EXOP2, [GOP, ["a"]], ["b"]]]
-EXEQNGN = [EXOP2, [GOP, [EXOP2, ["a"], ["x"]]], ["b"]]
-
-EXEQNJ = [EXOP2, ["3"], [JUXT, ["r"], ["t"]]]
-EXEQJN = [JUXT, [EXOP1, ["x"]], ["s"], ["t"]]
-EXEQJJ = [JUXT, ["2"], [JUXT, ["d"], ["3"]], ["y"]]
-EXEQJNJ = [JUXT, [EXOP2, [JUXT, [EXOP0], ["3"]], ["r"]], ["y"]]
-
-

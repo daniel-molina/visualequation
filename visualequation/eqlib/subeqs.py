@@ -243,41 +243,6 @@ class Subeq(list):
             raise SubeqInsertTypeError
         list.insert(self, pos, value)
 
-    @classmethod
-    def subeq2latex(cls, s):
-        """Return latex code of a valid subeq."""
-        if len(s) == 1:
-            return s[0] if isinstance(s[0], str) else s[0]._latex_code
-        elif s[0]._n_args == -1:
-            return " ".join(map(cls.subeq2latex, s[1:]))
-        else:
-            return s[0]._latex_code.format(*map(cls.subeq2latex, s[1:]))
-
-    @classmethod
-    def subeq2latexdebug(cls, s, prevstyle: Style):
-        """Return latex code of a valid subeq surrounded by squares."""
-        if len(s) == 1:
-            return s[0]._ccls.latex().format(
-                r"\debbox{pink}{" + prevstyle.latex() + "}{"
-                + s[0]._latex_code + r"}")
-        if isinstance(s[0], Juxt):
-            s_str = cls.subeq2latexdebug(s[1], prevstyle)
-            for par in s[2:]:
-                s_str += " " + cls.subeq2latexdebug(par, prevstyle)
-            return r"\debbox{blue}{" + prevstyle.latex() + "}{" + s_str + "}"
-
-        pars_latex = (cls.subeq2latexdebug(p, prevstyle) for p in s[1:])
-        return s[0]._ccls.latex().format(
-            r"\debbox{red}{" + prevstyle.latex() + "}{"
-            + s[0]._latex_code.format(*pars_latex) + "}")
-
-    def latex(self, idx=None):
-        return r"\debbox{white}{\displaystyle}{" \
-                + self.subeq2latex(self(idx)) + "}"
-
-    def latexdebug(self, idx=None):
-        return self.subeq2latexdebug(self(idx), Style.DISPLAY)
-
     def __call__(self, *args):
         """Get a reference to eq element given its index or specifying the
         indices as separated arguments.
@@ -292,6 +257,15 @@ class Subeq(list):
         for pos in Idx(*args):
             s = s[pos]
         return s
+
+    def latex(self):
+        """Return LaTeX code of Subeq."""
+        if len(self) == 1:
+            return self[0] if isinstance(self[0], str) else self[0]._latex_code
+        elif self[0]._n_args == -1:
+            return " ".join(map(Subeq.latex, self[1:]))
+        else:
+            return self[0]._latex_code.format(*map(Subeq.latex, self[1:]))
 
     def isb(self, idx=None):
         s = self(idx)

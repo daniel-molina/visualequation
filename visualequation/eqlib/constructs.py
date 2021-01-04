@@ -24,7 +24,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from visualequation.eqlib.ops import *
+from .ops import *
 
 
 DICT = {
@@ -45,7 +45,10 @@ DICT = {
 }
 
 
+@primitive
 class MathConstruct(Op):
+    ABBREV = "MC"
+
     def __init__(self, name, **kwargs):
         if not isinstance(name, str):
             raise TypeError("Parameter name must be a str.")
@@ -84,5 +87,5 @@ class MathConstruct(Op):
 
     def to_json(self):
         return dict(
-            cls="MC", pp=self.pp.to_json(),
+            cls=self.ABBREV, pp=self.pp.to_json(),
             w=next(k for k, v in DICT.items() if v[0] == self._latex_code))

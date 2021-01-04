@@ -118,6 +118,6 @@ if __name__ == '__main__':
         for icon in e:
             png_filepath = os.path.join(ICONS_DIR, icon.name.lower() + '.png')
             if not os.path.exists(png_filepath):
-                code2icon(icon.latex(), split_file, png_filepath, temp_dirpath)
+                code2icon(icon.eq2latexeq(), split_file, png_filepath, temp_dirpath)
 
     shutil.rmtree(temp_dirpath)

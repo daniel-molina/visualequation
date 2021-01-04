@@ -12,6 +12,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from .utils import *
+from visualequation.eqlib.ops import *
 
 SINGLEDELIMITERS = [
     PanelIcon('lparenthesis', '('),
@@ -55,7 +56,7 @@ def free_delimiters(parent):
             button_l.clicked.connect(self.handle_click_l)
             self.repr_l = QLabel('')
             self.repr_l.setPixmap(QPixmap(os.path.join(
-                commons.ICONS_DIR, self.symb_l.name + ".png")))
+                commons.ICONS_DIR, self.symb_l._name + ".png")))
             self.repr_l.setAlignment(Qt.AlignCenter)
             hbox_l.addWidget(button_l)
             hbox_l.addWidget(self.repr_l)
@@ -67,7 +68,7 @@ def free_delimiters(parent):
             button_r.clicked.connect(self.handle_click_r)
             self.repr_r = QLabel('')
             self.repr_r.setPixmap(QPixmap(os.path.join(
-                commons.ICONS_DIR, self.symb_r.name + ".png")))
+                commons.ICONS_DIR, self.symb_r._name + ".png")))
             self.repr_r.setAlignment(Qt.AlignCenter)
             hbox_r.addWidget(button_r)
             hbox_r.addWidget(self.repr_r)
@@ -92,7 +93,7 @@ def free_delimiters(parent):
             if result == QDialog.Accepted:
                 self.symb_l = dialog.symb_chosen
                 self.repr_l.setPixmap(QPixmap(os.path.join(
-                    commons.ICONS_DIR, self.symb_l.name + ".png")))
+                    commons.ICONS_DIR, self.symb_l._name + ".png")))
 
         def handle_click_r(self):
             dialog = ChooseElemDialog(self, _("Right delimiter"),
@@ -101,7 +102,7 @@ def free_delimiters(parent):
             if result == QDialog.Accepted:
                 self.symb_r = dialog.symb_chosen
                 self.repr_r.setPixmap(QPixmap(os.path.join(
-                    commons.ICONS_DIR, self.symb_r.name + ".png")))
+                    commons.ICONS_DIR, self.symb_r._name + ".png")))
 
         @staticmethod
         def get_delimiter(parent=None):
@@ -114,21 +115,24 @@ def free_delimiters(parent):
 
     (delim_l, delim_r), ok = Dialog.get_delimiter(parent)
     if ok:
-        return Op(1, r'\left' + delim_l + r' {0} ' + r'\right' + delim_r)
+        return Op(myname, r'\left' + delim_l + r' {0} ' + r'\right' + delim_r,
+                  1)
     else:
         return None
 
 
 DELIMITERS = [
-    PanelIcon('parenthesisb', Op(1, r'\left( {0} \right)')),
-    PanelIcon('sqbracketsb', Op(1, r'\left[ {0} \right]')),
-    PanelIcon('vertb', Op(1, r'\left| {0} \right|')),
-    PanelIcon('uppervertb', Op(1, r'\left\| {0} \right\|')),
-    PanelIcon('bracketsb', Op(1, r'\left\{{ {0} \right\}}')),
-    PanelIcon('angleb', Op(1, r'\left\langle {0} \right\rangle')),
-    PanelIcon('floorb', Op(1, r'\left\lfloor {0} \right\rfloor')),
-    PanelIcon('ceilb', Op(1, r'\left\lceil {0} \right\rceil')),
-    PanelIcon('lcornerb', Op(1, r'\left\llcorner {0} \right\lrcorner')),
-    PanelIcon('ucornerb', Op(1, r'\left\ulcorner {0} \right\urcorner')),
+    PanelIcon('parenthesisb', Op(r'\left( {0} \right)', 1)),
+    PanelIcon('sqbracketsb', Op(r'\left[ {0} \right]', 1)),
+    PanelIcon('vertb', Op(r'\left| {0} \right|', 1)),
+    PanelIcon('uppervertb', Op(r'\left\| {0} \right\|', 1)),
+    PanelIcon('bracketsb', Op(r'\left\{{ {0} \right\}}', 1)),
+    PanelIcon('angleb', Op(r'\left\langle {0} \right\rangle', 1)),
+    PanelIcon('floorb', Op(r'\left\lfloor {0} \right\rfloor', 1)),
+    PanelIcon('ceilb', Op(r'\left\lceil {0} \right\rceil', 1)),
+    PanelIcon('lcornerb',
+              Op(r'\left\llcorner {0} \right\lrcorner', 1)),
+    PanelIcon('ucornerb',
+              Op(r'\left\ulcorner {0} \right\urcorner', 1)),
     PanelIcon('freedelimiters', free_delimiters),
 ]

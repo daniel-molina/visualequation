@@ -14,23 +14,18 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """This is the file to execute the program."""
-import argparse
-import faulthandler
 import gettext
 import locale
+import argparse
+import faulthandler
 import shutil
 import sys
 import tempfile
 import traceback
 
-faulthandler.enable()
+from PyQt5.QtWidgets import QApplication
 
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
-
-from . import commons
-from data.usage import getusage
+from visualequation import commons
 
 gettext.install('visualequation')
 # Check if user language is available for translation
@@ -41,275 +36,10 @@ if locale.getlocale()[0] is not None:
         es.install()
     # New languages here...
 
-from . import symbolstab
-from . import eqlabel
-from . import eqqueries
-from . import game
-from . import latexdialogs
-from .errors import ShowError
+from visualequation.errors import ShowError
+from visualequation import gui
 
-
-class MyScrollBar(QScrollBar):
-    """
-    Class to set focus in equation when moving the scroll bars.
-    It also moves the equation correctly when inserting new elements.
-    """
-
-    def __init__(self, orientation, parent=None):
-        super().__init__(orientation, parent)
-        self.equation = None
-        self.prev_max = None
-
-    def mouseReleaseEvent(self, event):
-        QScrollBar.mouseReleaseEvent(self, event)
-        self.equation.setFocus()
-
-    def setFocusTo(self, widget):
-        self.equation = widget
-
-    def sliderChange(self, change):
-        QScrollBar.sliderChange(self, change)
-        # Do not use/set prev_max vertically
-        if change == QAbstractSlider.SliderRangeChange and \
-                self.orientation() == Qt.Horizontal:
-            if self.prev_max is not None:
-                self.setValue(self.value() + self.maximum() - self.prev_max)
-            self.prev_max = self.maximum()
-
-
-class MyScrollArea(QScrollArea):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.vbar = MyScrollBar(Qt.Vertical, self)
-        self.hbar = MyScrollBar(Qt.Horizontal, self)
-        self.setVerticalScrollBar(self.vbar)
-        self.setHorizontalScrollBar(self.hbar)
-
-    def setWidget(self, widget):
-        QScrollArea.setWidget(self, widget)
-        self.vbar.setFocusTo(widget)
-        self.hbar.setFocusTo(widget)
-
-
-class MainWindow(QMainWindow):
-    def __init__(self, temp_dir):
-        super().__init__()
-        self.eqlabel = None
-        self.scrollarea = None
-        self.tabs = None
-        self.temp_dir = temp_dir
-        ShowError.default_parent = self
-        self.init_center_widget()
-        self.statusBar()
-        self.init_menu()
-
-        self.setWindowTitle('Visual Equation')
-        self.setWindowIcon(QIcon(commons.ICON))
-        self.resize(900, 600)
-
-    def init_menu(self):
-        # File
-        new_act = QAction(_('&New'), self)
-        new_act.setShortcut('Ctrl+N')
-        new_act.setStatusTip(_('Create a new equation'))
-        new_act.triggered.connect(self.eqlabel.maineq.new_eq)
-        open_act = QAction(_('&Open'), self)
-        open_act.setShortcut('Ctrl+O')
-        open_act.setStatusTip(_('Open equation from image'))
-        open_act.triggered.connect(self.eqlabel.maineq.open_eq)
-        save_act = QAction(_('&Save'), self)
-        save_act.setShortcut('Ctrl+S')
-        save_act.setStatusTip(_('Save image'))
-        save_act.triggered.connect(self.eqlabel.maineq.save_eq)
-        exit_act = QAction(_('&Exit'), self)
-        exit_act.setShortcut('Ctrl+Q')
-        exit_act.setStatusTip(_('Exit application'))
-        exit_act.triggered.connect(qApp.quit)
-        # Edit
-        undo_act = QAction(_('&Undo'), self)
-        undo_act.setShortcut('Ctrl+Z')
-        undo_act.setStatusTip(_('Return equation to previous state'))
-        undo_act.triggered.connect(self.eqlabel.maineq.recover_prev_eq)
-        redo_act = QAction(_('&Redo'), self)
-        redo_act.setShortcut('Ctrl+Y')
-        redo_act.setStatusTip(_('Recover next equation state'))
-        redo_act.triggered.connect(self.eqlabel.maineq.recover_next_eq)
-        copy_act = QAction(_('&Copy'), self)
-        copy_act.setShortcut('Ctrl+C')
-        copy_act.setStatusTip(_('Copy selection'))
-        copy_act.triggered.connect(self.eqlabel.maineq.sel2buffer)
-
-        def cut():
-            self.eqlabel.maineq.sel2buffer()
-            self.eqlabel.maineq.delete()
-
-        cut_act = QAction(_('C&ut'), self)
-        cut_act.setShortcut('Ctrl+X')
-        cut_act.setStatusTip(_('Cut selection'))
-        cut_act.triggered.connect(cut)
-        paste_act = QAction(_('&Paste'), self)
-        paste_act.setShortcut('Ctrl+V')
-        paste_act.setStatusTip(_('Paste previous cut or copied selection'))
-        paste_act.triggered.connect(self.eqlabel.maineq.buffer2sel)
-
-        def editlatex():
-            oldlatexcode = eqqueries.subeq2latex(self.eqlabel.maineq.eq,
-                                                 self.eqlabel.maineq.eqsel.idx)[0]
-            newlatexcode = latexdialogs.EditLatexDialog.editlatex(
-                oldlatexcode, self.temp_dir, self)
-            if newlatexcode:
-                self.eqlabel.maineq.insert_substituting(newlatexcode)
-
-        editlatex_act = QAction(_('Edit &LaTeX block'), self)
-        editlatex_act.setStatusTip(_('Edit LaTeX code of selected block'))
-        editlatex_act.triggered.connect(editlatex)
-
-        def selectall():
-            self.eqlabel.maineq.eqsel.idx = 0
-            self.eqlabel.maineq.eqsel.display()
-
-        selectall_act = QAction('&Select all', self)
-        selectall_act.setShortcut('Ctrl+A')
-        selectall_act.setStatusTip(_('Select the entire equation'))
-        selectall_act.triggered.connect(selectall)
-
-        # View
-        def zoomin():
-            if self.eqlabel.maineq.eqsel.dpi < 1000:
-                self.eqlabel.maineq.eqsel.dpi += 50
-                self.eqlabel.maineq.eqsel.display()
-            else:
-                ShowError(_('Equation will no be increased.'), False)
-
-        zoomin_act = QAction(_('Zoom &In'), self)
-        zoomin_act.setShortcut('Ctrl++')
-        zoomin_act.setStatusTip(_('Increase size of the equation'))
-        zoomin_act.triggered.connect(zoomin)
-
-        def zoomout():
-            if self.eqlabel.maineq.eqsel.dpi >= 100:
-                self.eqlabel.maineq.eqsel.dpi -= 50
-                self.eqlabel.maineq.eqsel.display()
-            else:
-                ShowError(_('Equation will no be decreased.'), False)
-
-        zoomout_act = QAction(_('Zoom &Out'), self)
-        zoomout_act.setShortcut('Ctrl+-')
-        zoomout_act.setStatusTip(_('Decrease size of the equation'))
-        zoomout_act.triggered.connect(zoomout)
-
-        def showlatex():
-            latexdialogs.ShowLatexDialog.showlatex(self.eqlabel.maineq, self)
-
-        showlatex_act = QAction(_('Show &LaTeX code'), self)
-        showlatex_act.setStatusTip(
-            _('Show the LaTeX code generating the equation'))
-        showlatex_act.triggered.connect(showlatex)
-
-        # Games
-        def alice():
-            state = activate_game_act.isChecked()
-            game.Game.activate(state)
-            self.eqlabel.maineq.eqsel.display()
-
-        activate_game_act = QAction(_('Invite &Alice'), self, checkable=True)
-        activate_game_act.triggered.connect(alice)
-        activate_game_act.setStatusTip(_('Let Alice to be with you while '
-                                         'building the equation'))
-        # Help
-        usage_act = QAction(_('&Usage'), self)
-        usage_act.setShortcut('Ctrl+H')
-        usage_act.setStatusTip(_('Usage of the program'))
-        usage_act.triggered.connect(self.usagedialog)
-        about_act = QAction(_('About &Visual Equation'), self)
-        about_act.triggered.connect(self.about)
-        about_qt_act = QAction(_('About &Qt'), self)
-        about_qt_act.triggered.connect(QApplication.aboutQt)
-
-        # Define menuBar
-        # Not using mnemonics (&) for the menubar because the focus is lost
-        # and equation cannot continue being edited.
-        menubar = self.menuBar()
-        menubar.setNativeMenuBar(False)
-        file_menu = menubar.addMenu(_('File'))
-        file_menu.addAction(new_act)
-        file_menu.addAction(open_act)
-        file_menu.addAction(save_act)
-        file_menu.addSeparator()
-        file_menu.addAction(exit_act)
-        edit_menu = menubar.addMenu(_('Edit'))
-        edit_menu.addAction(undo_act)
-        edit_menu.addAction(redo_act)
-        edit_menu.addSeparator()
-        edit_menu.addAction(copy_act)
-        edit_menu.addAction(cut_act)
-        edit_menu.addAction(paste_act)
-        edit_menu.addSeparator()
-        edit_menu.addAction(editlatex_act)
-        edit_menu.addSeparator()
-        edit_menu.addAction(selectall_act)
-        view_menu = menubar.addMenu(_('View'))
-        view_menu.addAction(zoomin_act)
-        view_menu.addAction(zoomout_act)
-        view_menu.addSeparator()
-        view_menu.addAction(showlatex_act)
-        game_menu = menubar.addMenu(_('Games'))
-        game_menu.addAction(activate_game_act)
-        help_menu = menubar.addMenu(_('Help'))
-        help_menu.addAction(usage_act)
-        help_menu.addAction(about_qt_act)
-        help_menu.addAction(about_act)
-
-    def init_center_widget(self):
-        # Create central widget
-        central_widget = QWidget(self)
-        self.setCentralWidget(central_widget)
-        layout = QVBoxLayout()
-        # Create the equation
-        self.eqlabel = eqlabel.EqLabel(self.temp_dir, self)
-        self.eqlabel.setAlignment(Qt.AlignCenter)
-        self.scrollarea = MyScrollArea(self)
-        self.scrollarea.setWidget(self.eqlabel)
-        self.scrollarea.setWidgetResizable(True)
-        # Create the symbols TabWidget
-        self.tabs = symbolstab.TabWidget(self, self.eqlabel)
-        self.tabs.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        # Add everything to the central widget
-        layout.addWidget(self.scrollarea)
-        layout.addWidget(self.tabs)
-        central_widget.setLayout(layout)
-        self.eqlabel.setFocus()
-
-    def usagedialog(self):
-        class Dialog(QDialog):
-            def __init__(self, parent=None):
-                super().__init__(parent)
-                self.setModal(False)
-                self.setWindowTitle(_('Usage'))
-                self.resize(1000, 600)
-                self.setSizeGripEnabled(True)
-                text = QTextEdit(self)
-                text.setReadOnly(True)
-                text.insertHtml(getusage())
-                text.moveCursor(QTextCursor.Start)
-                buttons = QDialogButtonBox(QDialogButtonBox.Ok, self)
-                vbox = QVBoxLayout(self)
-                vbox.addWidget(text)
-                vbox.addWidget(buttons)
-                buttons.accepted.connect(self.accept)
-
-        dialog = Dialog(self)
-        dialog.show()
-
-    def about(self):
-        msg = _("<p>Visual Equation</p>"
-                "<p><em>Version:</em> %s </p>"
-                "<p><em>Author:</em> Daniel Molina Garcia</P>"
-                '<p><em>Sources:</em> '
-                '<a href="https://github.com/daniel-molina/visualequation">'
-                "Webpage</a></p>"
-                "<p><em>License:</em> GPLv3 or above</p>") % commons.VERSION
-        QMessageBox.about(self, _("About"), msg)
+faulthandler.enable()
 
 
 def main():
@@ -320,7 +50,9 @@ def main():
         prog="visualequation")
     parser.add_argument('-v', '--version', action='version',
                         version='%(prog)s ' + commons.VERSION)
-    parser.parse_args()
+    parser.add_argument('--debug', action="store_true",
+                        help="send debug information to stdout")
+    args = parser.parse_args()
 
     # Catch all exceptions by installing a global exception hook
     # sys._excepthook = sys.excepthook
@@ -338,11 +70,17 @@ def main():
     # http://pyqt.sourceforge.net/Docs/PyQt5/gotchas.html#crashes-on-exit
     global app
     app = QApplication(sys.argv)
+    # QApplication does a setlocale(LC_ALL, '') under GNU/Linux.
+    # That affects vedvipng's calls to sstrtod, e.g.. As explained here:
+    # https://stackoverflow.com/questions/25661295/why-does-qcoreapplication
+    # -call-setlocalelc-all-by-default-on-unix-linux
+    # recommended solution is to use the following instruction
+    locale.setlocale(locale.LC_NUMERIC, 'C')
 
     # Prepare a temporal directory to manage all intermediate files
     temp_dirpath = tempfile.mkdtemp()
 
-    win = MainWindow(temp_dirpath)
+    win = gui.MainWindow(temp_dirpath, args)
 
     win.show()
 

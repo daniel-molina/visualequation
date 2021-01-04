@@ -20,8 +20,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
 from .symbols import utils
-from . import conversions
-from . import maineq
+from .eqlib import conversions
 
 
 class EqLabel(QLabel):

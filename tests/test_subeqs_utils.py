@@ -23,10 +23,10 @@ ps = PseudoSymb(r"\omega")
 class SubeqTests(unittest.TestCase):
     def test_latex(self):
         with self.assertRaises(IndexError):
-            Subeq.subeq2latex(Subeq())
+            Subeq.latex(Subeq())
         with self.assertRaises(IndexError):
             Subeq().latex()
-        self.assertEqual(Subeq.subeq2latex(Subeq(["a"])), "a")
+        self.assertEqual(Subeq.latex(Subeq(["a"])), "a")
         self.assertEqual(Subeq(["a"]).latex(), "a")
 
         self.assertEqual(Subeq([PVOID]).latex(), PVOID._latex_code)

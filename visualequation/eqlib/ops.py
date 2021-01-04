@@ -42,7 +42,7 @@ class CCls(Enum):
     INNER = 7
 
     def latex(self):
-        return r"\math" + self.name.lower() + "{{{0}}}"
+        return r"\math" + self.name.lower()
 
 
 class Color(Enum):
@@ -128,11 +128,27 @@ class PublicProperties(dict):
         return pp
 
 
+PRIMITIVES = []  # To be filed by @primitive
+JSON_ABBREVIATIONS = {"PP": PublicProperties}  # To be completed by @primitive
+
+
+def primitive(cls):
+    """Decorator to register subeq classes."""
+    if cls.ABBREV == "Invalid" or cls.ABBREV in JSON_ABBREVIATIONS:
+        raise ValueError("Classes for final primitives (PsuedoSymbs and Ops "
+                         "to be used in practice) must have a unique ABBREV.")
+    PRIMITIVES.append(cls)
+    JSON_ABBREVIATIONS[cls.ABBREV] = cls
+    return cls
+
+
 PSEUDOSYMB_WRONG_PP_ARG_ERROR_MSG = "pp must be a PublicProperties"
 PSEUDOSYMB_PP_MIXED_ERROR_MSG = "pp must be a PublicProperties"
 
 
 class PseudoSymb:
+    ABBREV = "Invalid"
+
     def __init__(self, latex_code: str, char_class: CCls = CCls.ORD,
                  pp: Optional[PublicProperties] = None,
                  **kwargs):
@@ -207,7 +223,17 @@ class PseudoSymb:
 
     @classmethod
     def from_json(cls, dct):
+        """Not intended to be used except by simple subclasses."""
         return cls(pp=dct["pp"])
+
+    def ccls(self):
+        """Just return the property.
+
+        Implementation note:
+            It may be more general, but some implementation should be
+            considered first.
+        """
+        return self._ccls
 
 
 class Op(PseudoSymb):
@@ -408,7 +434,10 @@ class Juxt(Op):
         return arg_ord - 1
 
 
+@primitive
 class PJuxt(Juxt):
+    ABBREV = "PJ"
+
     def __init__(self, initial_n: int = 2, **kwargs):
         super().__init__(initial_n, **kwargs)
 
@@ -422,7 +451,7 @@ class PJuxt(Juxt):
         return TJuxt(self.current_n, pp=deepcopy(self.pp))
 
     def to_json(self):
-        return dict(cls="PJ", n=self.current_n, pp=self.pp.to_json())
+        return dict(cls=self.ABBREV, n=self.current_n, pp=self.pp.to_json())
 
     @classmethod
     def from_json(cls, dct):
@@ -430,6 +459,8 @@ class PJuxt(Juxt):
 
 
 class TJuxt(Juxt):
+    ABBREV = "TJ"
+
     def __init__(self, initial_n: int = 2, **kwargs):
         super().__init__(initial_n, **kwargs)
 
@@ -440,7 +471,7 @@ class TJuxt(Juxt):
         return "T" + super().__repr__()
 
     def to_json(self):
-        return dict(cls="TJ", n=self.current_n, pp=self.pp.to_json())
+        return dict(cls=self.ABBREV, n=self.current_n, pp=self.pp.to_json())
 
     @classmethod
     def from_json(cls, dct):
@@ -458,7 +489,10 @@ class Void(PseudoSymb):
         return type(self).__name__.upper()
 
 
+@primitive
 class Pvoid(Void):
+    ABBREV = "PV"
+
     def __init__(self):
         super().__init__(color=Color.PURPLE)
 
@@ -470,19 +504,25 @@ class Pvoid(Void):
         return cls()
 
 
+@primitive
 class Rvoid(Void):
+    ABBREV = "RV"
+
     def __init__(self):
         super().__init__(color=Color.LIGHTGRAY)
 
     def to_json(self):
-        return dict(cls="RV")
+        return dict(cls=self.ABBREV)
 
     @classmethod
     def from_json(cls, dct):
         return cls()
 
 
+@primitive
 class Frac(Op):
+    ABBREV = "F"
+
     def __init__(self, **kwargs):
         super().__init__(r'\frac{{{0}}}{{{1}}}', n_args=2,
                          char_class=CCls.INNER, **kwargs)
@@ -503,18 +543,24 @@ class Frac(Op):
         return self._from_to(arg_ord, selmode, 1, 2)
 
     def to_json(self):
-        return dict(cls="F", pp=self.pp.to_json())
+        return dict(cls=self.ABBREV, pp=self.pp.to_json())
 
 
+@primitive
 class Sqrt(Op):
+    ABBREV = "R"
+
     def __init__(self, **kwargs):
         super().__init__(r'\sqrt{{{0}}}', n_args=1, **kwargs)
 
     def to_json(self):
-        return dict(cls="R", pp=self.pp.to_json())
+        return dict(cls=self.ABBREV, pp=self.pp.to_json())
 
 
+@primitive
 class NRoot(Op):
+    ABBREV = "NR"
+
     def __init__(self, **kwargs):
         super().__init__(r'\sqrt[{{{0}}}]{{{1}}}', n_args=2, pref_arg=2,
                          **kwargs)
@@ -535,7 +581,7 @@ class NRoot(Op):
         return self._from_to(arg_ord, selmode, 1, 2)
 
     def to_json(self):
-        return dict(cls="NR", pp=self.pp.to_json())
+        return dict(cls=self.ABBREV, pp=self.pp.to_json())
 
 
 # The following instances are defined here because they are not supposed to

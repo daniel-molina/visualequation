@@ -20,21 +20,19 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
-from . import eqqueries
 from . import commons
-from . import conversions
+from .eqlib import conversions
 
 
 class ShowLatexDialog(QDialog):
-    def __init__(self, eq, parent=None):
+    def __init__(self, eq, subeq, parent=None):
         super().__init__(parent)
-        self.eq = eq.maineq
-        self.index = eq.eqsel.idx
+        self.eq = eq
+        self.subeq = subeq
         self.setWindowTitle('LaTeX code')
         self.setSizeGripEnabled(True)
         self.text = QTextEdit(self)
-        self.text.insertPlainText(eqqueries.subeq2latex(self.eq,
-                                                        self.index)[0])
+        self.text.insertPlainText(self.eq.eq2latexeq())
         self.text.moveCursor(QTextCursor.Start)
         self.text.setReadOnly(True)
         copybutton = QPushButton(_('Copy to Clipboard'))
@@ -69,9 +67,9 @@ class ShowLatexDialog(QDialog):
     def settext(self):
         self.text.clear()
         if self.onlysel.isChecked():
-            formulalatex = eqqueries.subeq2latex(self.eq, self.index)[0]
+            formulalatex = self.subeq.eq2latexeq()
         else:
-            formulalatex = eqqueries.subeq2latex(self.eq, 0)[0]
+            formulalatex = self.eq.eq2latexeq()
         if self.fullcode.isChecked():
             with open(commons.LATEX_TEMPLATE, "r") as ftempl:
                 for line in ftempl:
@@ -81,14 +79,13 @@ class ShowLatexDialog(QDialog):
             self.text.insertPlainText(formulalatex)
 
     @staticmethod
-    def showlatex(eq, parent=None):
-        dialog = ShowLatexDialog(eq, parent)
+    def showlatex(eq, subeq, parent=None):
+        dialog = ShowLatexDialog(eq, subeq, parent)
         dialog.exec_()
-        return None
 
 
 class EditLatexDialog(QDialog):
-    def __init__(self, latexblock, temp_dir, parent=None):
+    def __init__(self, subeq, temp_dir, parent=None):
         super().__init__(parent)
         self.temp_dir = temp_dir
         self.setWindowTitle(_('Edit LaTeX code of selection'))
@@ -96,14 +93,14 @@ class EditLatexDialog(QDialog):
         self.setSizeGripEnabled(True)
         self.eqblock = QLabel(self)
         self.eqblock.setAlignment(Qt.AlignCenter)
-        eqblock_im = conversions.eq2png(latexblock, 300, None, self.temp_dir)
+        eqblock_im = conversions.eq2png(subeq, 300, None, self.temp_dir)
         self.eqblock.setPixmap(QPixmap(eqblock_im))
         self.scrollarea = QScrollArea(self)
         self.scrollarea.setWidget(self.eqblock)
         self.scrollarea.setWidgetResizable(True)
 
         self.text = QTextEdit(self)
-        self.text.insertPlainText(latexblock)
+        self.text.insertPlainText(subeq)
         self.text.moveCursor(QTextCursor.Start)
         self.text.setFocus()
         self.text.textChanged.connect(self.ontextchanged)
@@ -187,5 +184,3 @@ class EditLatexDialog(QDialog):
         result = dialog.exec_()
         if result == QDialog.Accepted:
             return dialog.text.toPlainText()
-        else:
-            return None

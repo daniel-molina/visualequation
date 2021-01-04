@@ -11,10 +11,6 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
-from enum import Enum
-
-
 ICON_ENUMS = []
 
 
@@ -39,7 +35,11 @@ def icon_class(enum_cls):
     """Decorator to register icons and extend latex method."""
     ICON_ENUMS.append(enum_cls)
     # Enums cannot be extended => Trick
-    enum_cls._latex = enum_cls.latex if hasattr(enum_cls, "latex") else None
+    if hasattr(enum_cls, "latex"):
+        enum_cls._latex = enum_cls.latex
+    else:
+        enum_cls._latex = None
+
     def latex(item): return _latex_extended(item)
     enum_cls.latex = latex
     return enum_cls

@@ -17,7 +17,7 @@ from .ops import PseudoSymb, CCls
 from visualequation.icons import icon_class
 
 
-def _class_gen(short_cls_name, enum_class, ccls: CCls = CCls.ORD):
+def _class_gen(abbrev, enum_class, ccls: CCls):
     """Return a class for PseudoSymbols grouped in an Enum.
 
     It checks if the name of the items finish at "_U" and manages it
@@ -33,6 +33,7 @@ def _class_gen(short_cls_name, enum_class, ccls: CCls = CCls.ORD):
             *   Set values manually, removing the auto().
     """
     class PSAux(PseudoSymb):
+        ABBREV = abbrev
         ENUM_CLASS = enum_class
 
         def __init__(self, ps, **kwargs):
@@ -46,7 +47,7 @@ def _class_gen(short_cls_name, enum_class, ccls: CCls = CCls.ORD):
             return cls(cls.ENUM_CLASS(dct["n"]), pp=dct["pp"])
 
         def to_json(self):
-            return dict(cls=short_cls_name, n=self.ps.value,
+            return dict(cls=self.ABBREV, n=self.ps.value,
                         pp=self.pp.to_json())
     return PSAux
 
@@ -84,7 +85,7 @@ class AlphabSymbE(Enum):
         raise NotImplemented
 
 
-AlphabSymb = _class_gen("AS", AlphabSymbE)
+AlphabSymb = _class_gen("AS", AlphabSymbE, CCls.ORD)
 
 
 @icon_class
@@ -155,7 +156,7 @@ class MiscSimpleSymbE(Enum):
         raise NotImplemented
 
 
-MiscSimpleSymb = _class_gen("MS", MiscSimpleSymbE)
+MiscSimpleSymb = _class_gen("MS", MiscSimpleSymbE, CCls.ORD)
 
 
 @icon_class

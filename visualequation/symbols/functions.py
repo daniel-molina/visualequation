@@ -12,6 +12,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from .utils import *
+from visualequation.eqlib.ops import *
 
 
 def fun_accepting_args(parent, code):
@@ -60,7 +61,7 @@ def fun_accepting_args(parent, code):
 
     (argabove, argbelow), ok = Dialog.get(parent)
     if ok:
-        base = Op(0, code, "fun_args")
+        base = Op(myname, code, 0, "fun_args")
         if argabove and argbelow:
             return [SLUNDEROVER, base], 2
         elif argabove:
